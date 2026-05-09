@@ -243,15 +243,14 @@ export default function AdminPage() {
     if (!confirm(`Reset password for ${targetUser.full_name || 'this user'} to their mobile number?`)) return;
     setActionLoading(targetUser.id);
     try {
-      const { error } = await supabase.rpc('admin_reset_user_password', {
+      const { error } = await supabase.rpc('admin_reset_user_password' as any, {
         target_user_id: targetUser.id,
         new_password: targetUser.mobile_number,
       });
       if (error) throw error;
       toast.success(`Password reset to mobile number for ${targetUser.full_name || 'user'}`);
-    } catch {
-      await supabase.from('user_profiles').update({ password_reset_required: true } as any).eq('id', targetUser.id);
-      toast.success(`Password reset initiated — user will be prompted to set a new password`);
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to reset password');
     } finally {
       setActionLoading(null);
     }
