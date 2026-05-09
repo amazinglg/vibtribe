@@ -1230,7 +1230,7 @@ export default function ChatWindowPanel() {
       <input
         ref={fileInputRef}
         type="file"
-        accept=".pdf,.doc,.docx,.txt,.zip,.rar"
+        accept=".pdf,.doc,.docx,.txt,.zip,.rar,audio/*"
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0];
