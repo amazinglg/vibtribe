@@ -7,6 +7,9 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { Toaster } from "sonner";
+import { AuthProvider } from "@/contexts/AuthContext";
+import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 
 import appCss from "../styles.css?url";
 
@@ -72,20 +75,22 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { name: "theme-color", content: "#7C3AED" },
+      { title: "VibeTribe — Where Your Vibe Finds Its Tribe" },
+      { name: "description", content: "VibeTribe is a vibrant social messaging platform for real-time chat, secure private vaults, and 24-hour status updates with your circle." },
+      { property: "og:title", content: "VibeTribe — Where Your Vibe Finds Its Tribe" },
+      { property: "og:description", content: "Real-time chat, secure private vaults, and 24-hour status updates." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "VibeTribe" },
     ],
     links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
+      { rel: "stylesheet", href: appCss },
+      { rel: "manifest", href: "/manifest.json" },
+      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "apple-touch-icon", href: "/assets/images/app_logo.png" },
     ],
   }),
   shellComponent: RootShell,
@@ -113,7 +118,21 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
+      <AuthProvider>
+        <Outlet />
+        <ServiceWorkerRegistration />
+      </AuthProvider>
+      <Toaster
+        position="bottom-right"
+        toastOptions={{
+          style: {
+            background: 'var(--card)',
+            border: '1px solid var(--border)',
+            color: 'var(--foreground)',
+            fontFamily: 'var(--font-sans)',
+          },
+        }}
+      />
     </QueryClientProvider>
   );
 }
