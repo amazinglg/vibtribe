@@ -466,12 +466,10 @@ export default function AdminPage() {
               </div>
               <div className="overflow-y-auto max-h-[calc(100vh-300px)]">
                 {filteredUsers.map(u => (
-                  <Link
-                    key={u.id}
-                    to="/admin/user/$userId"
-                    params={{ userId: u.id }}
-                    className="flex items-center gap-3 px-4 py-3 cursor-pointer transition-all border-b border-border/30 hover:bg-muted/50"
-                  >
+                  (() => {
+                    const lockedRow = (u as any).is_master_admin && !isMaster;
+                    const Inner = (
+                      <>
                     <div className="relative flex-shrink-0">
                       <div className="w-10 h-10 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-sm">
                         {u.full_name?.[0]?.toUpperCase() || '?'}
@@ -481,7 +479,9 @@ export default function AdminPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-semibold text-foreground truncate">{u.full_name || 'Unknown'}</p>
-                        {u.role === 'admin' && <span className="text-[10px] bg-vt-amber/20 text-vt-amber px-1.5 py-0.5 rounded-full font-medium">Admin</span>}
+                        {(u as any).is_master_admin
+                          ? <span className="text-[10px] bg-vt-amber/20 text-vt-amber px-1.5 py-0.5 rounded-full font-bold">MASTER</span>
+                          : u.role === 'admin' && <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full font-medium">Admin</span>}
                         {u.is_suspended && <span className="text-[10px] bg-orange-500/20 text-orange-400 px-1.5 py-0.5 rounded-full font-medium">Suspended</span>}
                       </div>
                       <p className="text-xs text-muted-foreground truncate">{u.email || u.mobile_number}</p>
@@ -493,7 +493,18 @@ export default function AdminPage() {
                     }`}>
                       {u.account_status}
                     </span>
-                  </Link>
+                      </>
+                    );
+                    return lockedRow ? (
+                      <div key={u.id} title="Master admin — protected" className="flex items-center gap-3 px-4 py-3 cursor-not-allowed transition-all border-b border-border/30 bg-vt-amber/5">
+                        {Inner}
+                      </div>
+                    ) : (
+                      <Link key={u.id} to="/admin/user/$userId" params={{ userId: u.id }} className="flex items-center gap-3 px-4 py-3 cursor-pointer transition-all border-b border-border/30 hover:bg-muted/50">
+                        {Inner}
+                      </Link>
+                    );
+                  })()
                 ))}
                 {filteredUsers.length === 0 && (
                   <div className="flex flex-col items-center justify-center py-12 gap-2">
