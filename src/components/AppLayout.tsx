@@ -1,8 +1,7 @@
 // @ts-nocheck
 
 import React, { useState, useEffect } from 'react';
-import {   Link, useLocation  } from '@tanstack/react-router';
-import { useTanstackPathname, useNavigate } from '@tanstack/react-router';
+import { Link, useLocation, useNavigate } from '@tanstack/react-router';
 import AppLogo from '@/components/ui/AppLogo';
 import { MessageCircle, CircleDot, User, Bell, Shield, Lock, ChevronLeft, ChevronRight, Wifi, LogOut } from 'lucide-react';
 import SecureVaultModal from './SecureVaultModal';
@@ -13,6 +12,7 @@ import Icon from '@/components/ui/AppIcon';
 import HelpButton from '@/components/HelpButton';
 import PermissionPrompt from '@/components/PermissionPrompt';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useChatStore } from '@/store/chatStore';
 
 
 
@@ -26,6 +26,27 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = useLocation().pathname;
   const router = useNavigate();
   const { user, profile, signOut, isAdmin } = useAuth();
+  const { isSecureSession, closeSecureChat } = useChatStore();
+
+  // Auto-relock secured chat when tab is hidden / app backgrounded / phone locked
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.hidden && useChatStore.getState().isSecureSession) {
+        closeSecureChat();
+      }
+    };
+    const onBlur = () => {
+      if (useChatStore.getState().isSecureSession) closeSecureChat();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('blur', onBlur);
+    window.addEventListener('pagehide', onBlur);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('blur', onBlur);
+      window.removeEventListener('pagehide', onBlur);
+    };
+  }, [closeSecureChat]);
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
   const [secureVaultOpen, setSecureVaultOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
