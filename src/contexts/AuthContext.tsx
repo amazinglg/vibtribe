@@ -91,9 +91,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } catch {}
   };
 
+  // Helper: derive the auth email from a mobile number — uses ONLY the
+  // last 10 digits (the local number, not the country code).
+  const buildAuthEmail = (mobileNumber: string) => {
+    const digits = mobileNumber.replace(/\D/g, '');
+    const local10 = digits.slice(-10);
+    return `${local10}@vibetribe.app`;
+  };
+
   // Mobile number + password sign up (no verification required)
   const signUp = async (mobileNumber: string, password: string, metadata: any = {}) => {
-    const emailFromMobile = `${mobileNumber.replace(/\D/g, '')}@vibetribe.app`;
+    const emailFromMobile = buildAuthEmail(mobileNumber);
     const { data, error } = await supabase.auth.signUp({
       email: emailFromMobile,
       password,
@@ -101,6 +109,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         data: {
           full_name: metadata?.fullName || '',
           mobile_number: mobileNumber,
+          country_code: metadata?.countryCode || '+91',
           avatar_url: metadata?.avatarUrl || '',
           role: 'user',
         },
@@ -108,12 +117,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     });
     if (error) throw error;
+    // Best-effort: persist country_code in profile (in case trigger doesn't pick it up)
+    try {
+      if (data?.user?.id && metadata?.countryCode) {
+        await supabase.from('user_profiles').update({ country_code: metadata.countryCode }).eq('id', data.user.id);
+      }
+    } catch {}
     return data;
   };
 
-  // Mobile number + password sign in
+  // Mobile number + password sign in (accepts any format, uses last 10 digits)
   const signIn = async (mobileNumber: string, password: string) => {
-    const emailFromMobile = `${mobileNumber.replace(/\D/g, '')}@vibetribe.app`;
+    const emailFromMobile = buildAuthEmail(mobileNumber);
     const { data, error } = await supabase.auth.signInWithPassword({
       email: emailFromMobile,
       password
@@ -122,10 +137,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return data;
   };
 
-  // Email sign in (for admin)
+  // Email sign in — supports BOTH the synthetic mobile email and a user's real
+  // email stored in user_profiles.real_email
   const signInWithEmail = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
+    const trimmed = email.trim().toLowerCase();
+    // First try direct sign-in (covers admins / synthetic emails)
+    let { data, error } = await supabase.auth.signInWithPassword({ email: trimmed, password });
+    if (error) {
+      // Fallback: look up by real_email -> get the synthetic email -> sign in with that
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('email')
+        .ilike('real_email', trimmed)
+        .maybeSingle();
+      if (profile?.email) {
+        const retry = await supabase.auth.signInWithPassword({ email: profile.email, password });
+        if (retry.error) throw retry.error;
+        return retry.data;
+      }
+      throw error;
+    }
     return data;
   };
 
