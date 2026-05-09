@@ -591,7 +591,7 @@ export default function AdminPage() {
 
         {/* Support Tab */}
         {activeTab === 'support' && (
-          <div className="flex gap-6">
+          <div className="flex flex-col lg:flex-row gap-6">
             {/* Ticket List */}
             <div className="flex-1 glass rounded-2xl border border-border overflow-hidden">
               <div className="p-4 border-b border-border space-y-3">
@@ -660,7 +660,7 @@ export default function AdminPage() {
 
             {/* Ticket Detail */}
             {selectedTicket ? (
-              <div className="w-96 flex-shrink-0 glass rounded-2xl border border-border p-5 float-up flex flex-col gap-4 overflow-y-auto max-h-[calc(100vh-200px)]">
+              <div className="w-full lg:w-96 flex-shrink-0 glass rounded-2xl border border-border p-5 float-up flex flex-col gap-4 overflow-y-auto max-h-[calc(100vh-200px)]">
                 <div className="flex items-start justify-between">
                   <div>
                     <h3 className="font-bold text-foreground text-base">{selectedTicket.issue_title}</h3>
