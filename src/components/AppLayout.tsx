@@ -111,6 +111,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   };
 
   return (
+    <CallProvider>
     <div className="gradient-bg-page min-h-screen flex">
       {/* App-level Permission Prompt */}
       {showAppPermPrompt && (
@@ -332,5 +333,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       <SecureVaultModal isOpen={secureVaultOpen} onClose={() => setSecureVaultOpen(false)} />
     </div>
+    </CallProvider>
   );
 }
