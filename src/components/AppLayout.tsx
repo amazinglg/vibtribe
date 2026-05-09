@@ -77,7 +77,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             return (
               <Link
                 key={`nav-${item.label.toLowerCase()}`}
-                href={item.href}
+                to={item.href}
                 className={`relative flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group ${
                   isActive ? 'gradient-primary text-white glow-primary' : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                 }`}
@@ -105,7 +105,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               {sidebarExpanded && <span className="font-medium text-sm">Notifications</span>}
             </button>
             <Link
-              href="/profile-screen"
+              to="/profile-screen"
               className="flex items-center gap-3 px-3 py-3 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200 group relative"
             >
               <Settings size={22} />
@@ -113,7 +113,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </Link>
             {adminUser && (
               <Link
-                href="/admin"
+                to="/admin"
                 className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group relative ${
                   pathname === '/admin' ? 'text-vt-amber bg-vt-amber/10' : 'text-vt-amber hover:bg-vt-amber/10'
                 }`}
@@ -216,7 +216,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           {/* Admin Shield — only for admin */}
           {adminUser && (
             <Link
-              href="/admin"
+              to="/admin"
               className="p-2.5 glass rounded-xl text-vt-amber hover:bg-vt-amber/10 transition-all"
               title="Admin Panel"
             >
@@ -239,7 +239,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               return (
                 <Link
                   key={`mobile-nav-${item.label.toLowerCase()}`}
-                  href={item.href}
+                  to={item.href}
                   className={`relative flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all duration-200 ${
                     isActive ? 'text-primary' : 'text-muted-foreground'
                   }`}

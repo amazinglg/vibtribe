@@ -51,7 +51,7 @@ export default function ForgotPasswordPage() {
                 We sent a password reset link to <span className="text-foreground font-medium">{email}</span>. Click the link to reset your password.
               </p>
               <Link
-                href="/sign-in"
+                to="/sign-in"
                 className="inline-flex items-center gap-2 text-primary font-semibold hover:text-primary/80 transition-colors text-sm"
               >
                 <ArrowLeft size={16} />

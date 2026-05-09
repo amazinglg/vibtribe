@@ -180,7 +180,7 @@ export default function ProfileContent() {
                   </button>
                   {isAdmin?.() && (
                     <Link
-                      href="/admin"
+                      to="/admin"
                       className="flex items-center gap-2 px-4 py-2 bg-vt-amber/10 text-vt-amber text-sm font-semibold rounded-xl hover:bg-vt-amber/20 transition-all"
                     >
                       <Shield size={14} />
