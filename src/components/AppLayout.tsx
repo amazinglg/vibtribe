@@ -216,7 +216,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             {sidebarExpanded && (
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-foreground truncate">{displayName}</p>
-                <p className="text-xs text-muted-foreground truncate">{adminUser ? 'Master Admin' : 'Member'}</p>
               </div>
             )}
             {sidebarExpanded && (
