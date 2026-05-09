@@ -388,7 +388,7 @@ export default function AdminPage() {
               <h2 className="font-bold text-base text-foreground mb-4">Recent Signups</h2>
               <div className="space-y-3">
                 {users.slice(0, 5).map(u => (
-                  <div key={u.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => { setSelectedUser(u); setActiveTab('users'); }}>
+                  <div key={u.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => router({ to: '/admin/user/$userId', params: { userId: u.id } })}>
                     <div className="w-9 h-9 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                       {u.full_name?.[0]?.toUpperCase() || '?'}
                     </div>
