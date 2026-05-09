@@ -57,6 +57,28 @@ export default function ServiceWorkerRegistration() {
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
 
+    // Never run the SW inside Lovable preview / iframe — it caches stale builds
+    // and causes the "sad face" render crash on revisit.
+    const isInIframe = (() => {
+      try { return window.self !== window.top; } catch { return true; }
+    })();
+    const host = window.location.hostname;
+    const isPreviewHost =
+      host.includes('id-preview--') ||
+      host.includes('lovableproject.com') ||
+      host.includes('lovable.app');
+
+    if (isInIframe || isPreviewHost) {
+      // Unregister any previously installed SW + clear caches so stale shells go away.
+      navigator.serviceWorker.getRegistrations().then((regs) => {
+        regs.forEach((r) => r.unregister());
+      }).catch(() => {});
+      if ('caches' in window) {
+        caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
+      }
+      return;
+    }
+
     navigator.serviceWorker.register('/sw.js').catch(() => {});
   }, []);
 
