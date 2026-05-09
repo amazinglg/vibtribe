@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useRef, useEffect } from 'react';
-import { Phone, Video, Smile, Paperclip, Mic, MicOff, Send, Lock, CheckCheck, Check, ArrowLeft, Info, Trash2, ShieldCheck, Ban, ShieldOff, X, Image, FileText, Camera, Music, VideoOff, PhoneOff, Volume2, VolumeX } from 'lucide-react';
+import { Phone, Video, Smile, Paperclip, Mic, MicOff, Send, Lock, CheckCheck, Check, ArrowLeft, Info, Trash2, ShieldCheck, Ban, ShieldOff, X, Image, FileText, Camera, Music, VideoOff, PhoneOff, Volume2, VolumeX, Timer } from 'lucide-react';
 import { useChatStore } from '@/store/chatStore';
 import MarkSecureModal from '@/components/MarkSecureModal';
 import { useAuth } from '@/contexts/AuthContext';
@@ -251,6 +251,11 @@ export default function ChatWindowPanel() {
   const [loading, setLoading] = useState(false);
   const [e2eEnabled, setE2eEnabled] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
+  const [disappearMode, setDisappearMode] = useState<'never' | '24h' | 'after_seen'>('24h');
+  const [chatType, setChatType] = useState<'normal' | 'secure' | 'group'>('normal');
+  const [showDisappearMenu, setShowDisappearMenu] = useState(false);
+  const contactPubKeyRef = useRef<string | null>(null);
+  const previousChatIdRef = useRef<string | null>(null);
   const [blockLoading, setBlockLoading] = useState(false);
   const [callActive, setCallActive] = useState(false);
   const [videoCallActive, setVideoCallActive] = useState(false);
@@ -269,6 +274,14 @@ export default function ChatWindowPanel() {
   }, [messages]);
 
   useEffect(() => {
+    // When the active chat changes, expire seen messages in the previous one if it was 'after_seen'.
+    const prev = previousChatIdRef.current;
+    if (prev && prev !== selectedChatId) {
+      // Fire-and-forget; RPC checks mode server-side.
+      supabase.rpc('expire_seen_messages', { p_chat_id: prev }).then(() => {});
+    }
+    previousChatIdRef.current = selectedChatId;
+
     if (selectedChatId && user) {
       loadChatData();
       const channel = supabase
@@ -279,8 +292,12 @@ export default function ChatWindowPanel() {
             if (newMsg.sender_id !== user.id) {
               let text = newMsg.content;
               const encrypted = isEncrypted(text);
-              if (encrypted && contact?.publicKey) {
-                text = await decryptMessage(text, contact.publicKey);
+              const pk = contactPubKeyRef.current;
+              if (encrypted && pk) {
+                text = await decryptMessage(text, pk);
+              } else if (encrypted) {
+                // Hide raw ciphertext from the user; show a friendly placeholder until keys load.
+                text = '…';
               }
               setMessages(prev => [...prev, {
                 id: newMsg.id,
@@ -319,10 +336,50 @@ export default function ChatWindowPanel() {
             }
           }
         )
+        .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages', filter: `chat_id=eq.${selectedChatId}` },
+          (payload) => {
+            const oldMsg = payload.old as any;
+            setMessages(prev => prev.filter(m => m.id !== oldMsg.id));
+          }
+        )
         .subscribe();
-      return () => { supabase.removeChannel(channel); };
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [selectedChatId, user]);
+
+  // On unmount, expire seen messages for current chat if mode is 'after_seen'.
+  useEffect(() => {
+    return () => {
+      const id = previousChatIdRef.current;
+      if (id) {
+        supabase.rpc('expire_seen_messages', { p_chat_id: id }).then(() => {});
+      }
+    };
+  }, []);
+
+  // Local sweep: hide messages whose expires_at has passed (every 30s + on focus).
+  useEffect(() => {
+    if (!selectedChatId) return;
+    const sweep = async () => {
+      try {
+        const { data } = await supabase
+          .from('messages')
+          .select('id, expires_at')
+          .eq('chat_id', selectedChatId);
+        if (!data) return;
+        const expiredIds = new Set(
+          data.filter(m => m.expires_at && new Date(m.expires_at) < new Date()).map(m => m.id)
+        );
+        if (expiredIds.size) {
+          setMessages(prev => prev.filter(m => !expiredIds.has(m.id)));
+        }
+      } catch {}
+    };
+    const interval = setInterval(sweep, 30000);
+    return () => clearInterval(interval);
+  }, [selectedChatId]);
 
   const loadChatData = async () => {
     if (!selectedChatId || !user) return;
@@ -336,11 +393,61 @@ export default function ChatWindowPanel() {
 
       const { data: chat } = await supabase
         .from('chats')
-        .select('participant_one, participant_two')
+        .select('participant_one, participant_two, disappear_mode, chat_type, is_group, name, avatar_url')
         .eq('id', selectedChatId)
         .single();
 
       if (chat) {
+        setDisappearMode((chat as any).disappear_mode || '24h');
+        setChatType(((chat as any).is_group ? 'group' : (chat as any).chat_type) || 'normal');
+
+        // Group chat path
+        if ((chat as any).is_group) {
+          const groupName = (chat as any).name || 'Group';
+          setContact({
+            name: groupName,
+            avatar: groupName[0]?.toUpperCase() || 'G',
+            online: false,
+            lastSeen: 'Group chat',
+            publicKey: undefined,
+            userId: undefined,
+          });
+          contactPubKeyRef.current = null;
+          setE2eEnabled(false);
+          setIsBlocked(false);
+
+          const { data: msgs } = await supabase
+            .from('messages')
+            .select('*')
+            .eq('chat_id', selectedChatId)
+            .order('created_at', { ascending: true });
+
+          const out: Message[] = [];
+          for (const m of (msgs || [])) {
+            let text = m.content;
+            // Group chats are not E2E-encrypted in this MVP; strip any stray ciphertext defensively.
+            if (isEncrypted(text)) text = '[Encrypted]';
+            out.push({
+              id: m.id,
+              senderId: m.sender_id,
+              text,
+              time: formatTime(m.created_at),
+              status: m.message_status || 'sent',
+              reactions: m.reactions || [],
+              encrypted: false,
+            });
+          }
+          setMessages(out);
+          await supabase
+            .from('messages')
+            .update({ message_status: 'read' })
+            .eq('chat_id', selectedChatId)
+            .neq('sender_id', user.id)
+            .neq('message_status', 'read');
+          setLoading(false);
+          return;
+        }
+
         const otherUserId = chat.participant_one === user.id ? chat.participant_two : chat.participant_one;
         const { data: otherUser } = await supabase
           .from('user_profiles')
@@ -351,15 +458,8 @@ export default function ChatWindowPanel() {
         if (otherUser) {
           const hasE2E = !!otherUser.public_key;
           setE2eEnabled(hasE2E);
+          contactPubKeyRef.current = otherUser.public_key || null;
 
-          // Check if this is a secure chat and apply preferred nickname
-          const { data: chatInfo } = await supabase
-            .from('chats')
-            .select('chat_type')
-            .eq('id', selectedChatId)
-            .single();
-
-          const isSecureChat = chatInfo?.chat_type === 'secure';
           const preferredNickname = user ? getPreferredNickname(user.id, otherUserId) : '';
           const displayName = preferredNickname || otherUser.full_name || 'Unknown';
 
@@ -388,12 +488,16 @@ export default function ChatWindowPanel() {
         .eq('chat_id', selectedChatId)
         .order('created_at', { ascending: true });
 
+      const otherKey = contactPubKeyRef.current;
       const decryptedMsgs: Message[] = [];
       for (const m of (msgs || [])) {
         let text = m.content;
         const encrypted = isEncrypted(text);
-        if (encrypted && contact?.publicKey) {
-          text = await decryptMessage(text, contact.publicKey);
+        if (encrypted && otherKey) {
+          text = await decryptMessage(text, otherKey);
+        } else if (encrypted) {
+          // Never show raw `e2e:` ciphertext to users.
+          text = '[Encrypted message]';
         }
         decryptedMsgs.push({
           id: m.id,
