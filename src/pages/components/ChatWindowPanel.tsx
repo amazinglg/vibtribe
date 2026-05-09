@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Phone, Video, Smile, Paperclip, Mic, MicOff, Send, Lock, CheckCheck, Check, ArrowLeft, Info, Trash2, ShieldCheck, Ban, ShieldOff, X, Image, FileText, Camera, Music, VideoOff, PhoneOff, Volume2, VolumeX } from 'lucide-react';
-import { useChatStore } from '../store/chatStore';
+import { useChatStore } from '@/store/chatStore';
 import MarkSecureModal from '@/components/MarkSecureModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';

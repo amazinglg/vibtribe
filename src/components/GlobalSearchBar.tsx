@@ -3,7 +3,7 @@ import { Search, X, MessageCircle, Phone, AtSign, Mail, Loader2 } from 'lucide-r
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from '@tanstack/react-router';
-import { useChatStore } from '@/app/store/chatStore';
+import { useChatStore } from '@/store/chatStore';
 
 interface SearchUser {
   id: string;

@@ -1,8 +1,6 @@
-import { useLocation as __useTLocation } from '@tanstack/react-router';
 
-const useTanstackPathname = () => __useTLocation().pathname;
 import React, { useState, useEffect } from 'react';
-import { Link } from '@tanstack/react-router';
+import {   Link, useLocation  } from '@tanstack/react-router';
 import { useTanstackPathname, useNavigate } from '@tanstack/react-router';
 import AppLogo from '@/components/ui/AppLogo';
 import { MessageCircle, CircleDot, User, Bell, Shield, Lock, ChevronLeft, ChevronRight, Wifi, LogOut } from 'lucide-react';
@@ -24,7 +22,7 @@ const NAV_ITEMS = [
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const pathname = useTanstackPathname();
+  const pathname = useLocation().pathname;
   const router = useNavigate();
   const { user, profile, signOut, isAdmin } = useAuth();
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
