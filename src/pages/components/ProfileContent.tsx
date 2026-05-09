@@ -283,19 +283,17 @@ export default function ProfileContent() {
   const handleSaveContact = async () => {
     setSavingContact(true);
     try {
-      const fullMobile = editMobileNumber.trim() ? `${editCountryCode}${editMobileNumber.trim()}` : '';
-      const updates: any = { mobile_number: fullMobile };
+      const localDigits = editMobileNumber.replace(/\D/g, '').slice(-10);
+      const fullMobile = localDigits ? `${editCountryCode}${localDigits}` : '';
+      const updates: any = { mobile_number: fullMobile, country_code: editCountryCode };
 
-      // Update email in auth if provided and different from current — no verification email
-      if (editEmail.trim() && editEmail !== user?.email) {
-        const { error: emailError } = await supabase.auth.updateUser({
-          email: editEmail.trim(),
-          options: { emailRedirectTo: undefined },
-        } as any);
-        if (emailError) throw emailError;
-        updates.email = editEmail.trim();
-      } else if (editEmail.trim()) {
-        updates.email = editEmail.trim();
+      // Save the user's REAL email separately so it doesn't replace the
+      // mobile-derived auth email (which would break mobile login). They can
+      // sign in with either mobile or real_email + same password.
+      if (editEmail.trim()) {
+        updates.real_email = editEmail.trim().toLowerCase();
+      } else {
+        updates.real_email = null;
       }
 
       await updateProfile(updates);
