@@ -256,6 +256,7 @@ export default function ChatWindowPanel() {
   const [disappearMode, setDisappearMode] = useState<'never' | '24h' | 'after_seen'>('24h');
   const [chatType, setChatType] = useState<'normal' | 'secure' | 'group'>('normal');
   const [showDisappearMenu, setShowDisappearMenu] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
   const contactPubKeyRef = useRef<string | null>(null);
   const previousChatIdRef = useRef<string | null>(null);
   const [blockLoading, setBlockLoading] = useState(false);
