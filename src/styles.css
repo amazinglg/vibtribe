@@ -146,3 +146,31 @@
     background-color: var(--background);
   }
 }
+
+/* iOS PWA polish — tap highlight, callout, overscroll, text-size adjust,
+   and prevent zoom on input focus by enforcing a 16px minimum font-size. */
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  text-size-adjust: 100%;
+}
+body {
+  -webkit-touch-callout: none;
+  overscroll-behavior-y: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+/* Allow text selection inside chat bubbles, inputs, etc. */
+input, textarea, [contenteditable], .selectable {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+/* Prevent iOS Safari from auto-zooming into form fields on focus. */
+@supports (-webkit-touch-callout: none) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
