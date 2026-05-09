@@ -641,6 +641,23 @@ export default function ChatWindowPanel() {
     } catch {}
   };
 
+  const updateDisappearMode = async (mode: 'never' | '24h' | 'after_seen') => {
+    if (!selectedChatId) return;
+    setDisappearMode(mode);
+    setShowDisappearMenu(false);
+    try {
+      await supabase.from('chats').update({ disappear_mode: mode }).eq('id', selectedChatId);
+      // Insert a system note for transparency
+      const labels = { never: 'Off', '24h': '24 hours', after_seen: 'Immediately after seen' } as const;
+      await supabase.from('messages').insert({
+        chat_id: selectedChatId,
+        sender_id: user?.id,
+        content: `⏱ Disappearing messages set to: ${labels[mode]}`,
+        message_status: 'sent',
+      });
+    } catch {}
+  };
+
   const handleBlockToggle = async () => {
     if (!contact?.userId || !user) return;
     setBlockLoading(true);
