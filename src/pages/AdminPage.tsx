@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
 import { Shield, Users, Activity, Search, Ban, Trash2, RefreshCw, AlertTriangle, CheckCircle2, ArrowLeft, KeyRound, Pencil, X, Save, Ticket, UserX, UserCheck, Send, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLayout from '@/components/AppLayout';
@@ -57,7 +57,7 @@ export default function AdminPage() {
   const router = useNavigate();
   const { user, profile, isAdmin, loading } = useAuth();
   const supabase = createClient();
-  const isMaster = !!profile?.is_master_admin;
+  const isMaster = !!profile?.is_master_admin || profile?.role === 'master_admin';
   const [users, setUsers] = useState<PlatformUser[]>([]);
   const [stats, setStats] = useState<Stats>({ totalUsers: 0, activeUsers: 0, onlineNow: 0 });
   const [loadingData, setLoadingData] = useState(true);
@@ -331,6 +331,12 @@ export default function AdminPage() {
     return matchesSearch && matchesFilter;
   });
 
+  const getUserDetailUrl = (userId: string) => `/admin/user/${encodeURIComponent(userId)}`;
+
+  const openUserDetails = (userId: string) => {
+    router({ to: '/admin/user/$userId', params: { userId } });
+  };
+
   if (loading || loadingData) {
     return (
       <div className="gradient-bg-page min-h-screen flex items-center justify-center">
@@ -437,9 +443,9 @@ export default function AdminPage() {
                         {RowInner}
                       </div>
                     ) : (
-                      <Link key={u.id} to="/admin/user/$userId" params={{ userId: u.id }} className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/50 transition-colors cursor-pointer">
+                      <a key={u.id} href={getUserDetailUrl(u.id)} onClick={(e) => { e.preventDefault(); openUserDetails(u.id); }} className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/50 transition-colors cursor-pointer">
                         {RowInner}
-                      </Link>
+                      </a>
                     );
                   })()
                 ))}
@@ -500,9 +506,9 @@ export default function AdminPage() {
                         {Inner}
                       </div>
                     ) : (
-                      <Link key={u.id} to="/admin/user/$userId" params={{ userId: u.id }} className="flex items-center gap-3 px-4 py-3 cursor-pointer transition-all border-b border-border/30 hover:bg-muted/50">
+                      <a key={u.id} href={getUserDetailUrl(u.id)} onClick={(e) => { e.preventDefault(); openUserDetails(u.id); }} className="flex items-center gap-3 px-4 py-3 cursor-pointer transition-all border-b border-border/30 hover:bg-muted/50">
                         {Inner}
-                      </Link>
+                      </a>
                     );
                   })()
                 ))}

@@ -247,7 +247,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return data;
   };
 
-  const isAdmin = () => profile?.role === 'admin';
+  const isAdmin = () => profile?.role === 'admin' || profile?.role === 'master_admin' || !!profile?.is_master_admin;
 
   const value = {
     user,
