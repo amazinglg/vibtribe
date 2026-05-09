@@ -134,6 +134,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       password
     });
     if (error) throw error;
+    if (data?.session) setSession(data.session);
+    if (data?.user) {
+      setUser(data.user);
+      fetchProfile(data.user.id);
+    }
+    setLoading(false);
     return data;
   };
 
@@ -153,10 +159,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (profile?.email) {
         const retry = await supabase.auth.signInWithPassword({ email: profile.email, password });
         if (retry.error) throw retry.error;
+        if (retry.data?.session) setSession(retry.data.session);
+        if (retry.data?.user) {
+          setUser(retry.data.user);
+          fetchProfile(retry.data.user.id);
+        }
+        setLoading(false);
         return retry.data;
       }
       throw error;
     }
+    if (data?.session) setSession(data.session);
+    if (data?.user) {
+      setUser(data.user);
+      fetchProfile(data.user.id);
+    }
+    setLoading(false);
     return data;
   };
 
