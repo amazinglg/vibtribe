@@ -10,6 +10,41 @@ interface BeforeInstallPromptEvent extends Event {
 // Global store so the prompt event survives component unmount/remount
 let _cachedPrompt: BeforeInstallPromptEvent | null = null;
 
+// Capture the prompt as early as possible (before React mounts the banner)
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeinstallprompt', (e: Event) => {
+    e.preventDefault();
+    _cachedPrompt = e as BeforeInstallPromptEvent;
+    // Notify any listeners (e.g. Install button in profile)
+    window.dispatchEvent(new CustomEvent('vt:install-available'));
+  });
+}
+
+// Helper exported for components that want to trigger install programmatically
+export async function triggerPwaInstall(): Promise<'accepted' | 'dismissed' | 'unavailable'> {
+  if (!_cachedPrompt) return 'unavailable';
+  try {
+    await _cachedPrompt.prompt();
+    const { outcome } = await _cachedPrompt.userChoice;
+    if (outcome === 'accepted') _cachedPrompt = null;
+    return outcome;
+  } catch {
+    return 'unavailable';
+  }
+}
+
+export function isPwaInstallAvailable(): boolean {
+  return _cachedPrompt !== null;
+}
+
+export function isPwaInstalled(): boolean {
+  if (typeof window === 'undefined') return false;
+  return (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (window.navigator as any).standalone === true
+  );
+}
+
 export default function PWAInstallBanner() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(_cachedPrompt);
   const [showBanner, setShowBanner] = useState(false);
