@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Trash2, Lock, Users, UserPlus } from 'lucide-react';
+import { Search, Plus, Trash2, Lock, Users, UserPlus, MessageSquare, Phone, Check } from 'lucide-react';
 import MarkSecureModal from '@/components/MarkSecureModal';
 import ContactsPanel from '@/components/ContactsPanel';
 import CreateGroupModal from '@/components/CreateGroupModal';
@@ -27,7 +27,7 @@ interface Chat {
 
 export default function ChatListPanel() {
   const [search, setSearch] = useState('');
-  const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'groups'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'groups' | 'contacts'>('all');
   const [secureModalOpen, setSecureModalOpen] = useState(false);
   const [secureTarget, setSecureTarget] = useState<{ id: string; name: string } | null>(null);
   const [contextMenu, setContextMenu] = useState<{ chatId: string; x: number; y: number } | null>(null);
@@ -35,6 +35,12 @@ export default function ChatListPanel() {
   const [loading, setLoading] = useState(true);
   const [contactsOpen, setContactsOpen] = useState(false);
   const [createGroupOpen, setCreateGroupOpen] = useState(false);
+  // ===== Contacts tab state =====
+  const [contactsPerm, setContactsPerm] = useState<'idle' | 'requesting' | 'granted' | 'denied'>('idle');
+  const [contactsList, setContactsList] = useState<any[]>([]);
+  const [contactsLoading, setContactsLoading] = useState(false);
+  const [contactsSearch, setContactsSearch] = useState('');
+  const [inviteTarget, setInviteTarget] = useState<any | null>(null);
   const { selectedChatId, setSelectedChatId } = useChatStore();
   const { user, profile } = useAuth();
   const supabase = createClient();
@@ -248,7 +254,7 @@ export default function ChatListPanel() {
             />
           </div>
           <div className="flex gap-1 mt-3 p-1 bg-muted rounded-xl">
-            {(['all', 'unread', 'groups'] as const).map((tab) => (
+            {(['all', 'unread', 'groups', 'contacts'] as const).map((tab) => (
               <button
                 key={`tab-${tab}`}
                 onClick={() => setActiveTab(tab)}
@@ -273,7 +279,7 @@ export default function ChatListPanel() {
               <UserPlus size={16} />
               Create New Group
             </button>
-          ) : (
+          ) : activeTab === 'contacts' ? null : (
             <button
               onClick={() => setContactsOpen(true)}
               className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 gradient-primary rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-all glow-primary"
@@ -286,7 +292,22 @@ export default function ChatListPanel() {
 
         {/* Chat List */}
         <div className="flex-1 overflow-y-auto">
-          {loading ? (
+          {activeTab === 'contacts' ? (
+            <ContactsTabContent
+              user={user}
+              supabase={supabase}
+              perm={contactsPerm}
+              setPerm={setContactsPerm}
+              contacts={contactsList}
+              setContacts={setContactsList}
+              loading={contactsLoading}
+              setLoading={setContactsLoading}
+              search={contactsSearch}
+              setSearch={setContactsSearch}
+              setInviteTarget={setInviteTarget}
+              onStartedChat={(chatId) => { setSelectedChatId(chatId); loadChats(); }}
+            />
+          ) : loading ? (
             <div className="flex flex-col gap-3 p-4">
               {[1, 2, 3].map(i => (
                 <div key={i} className="flex items-center gap-3 animate-pulse">
@@ -381,6 +402,13 @@ export default function ChatListPanel() {
           onCreated={(id) => { setSelectedChatId(id); loadChats(); }}
         />
       )}
+
+      {inviteTarget && (
+        <InviteOptionsModal
+          contact={inviteTarget}
+          onClose={() => setInviteTarget(null)}
+        />
+      )}
     </>
   );
 }
@@ -435,6 +463,292 @@ function ChatListItem({ chat, isSelected, onClick, onContextMenu, onDelete, onMa
               {chat.unread > 99 ? '99+' : chat.unread}
             </span>
           )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ===== Contacts Tab =====
+
+const PLATFORM_URL = typeof window !== 'undefined' ? window.location.origin : 'https://vibtribe.in';
+const INVITE_MSG = `Hey! I'm using VibeTribe — a secure messaging app. Join me here: ${PLATFORM_URL}/sign-up 🚀`;
+
+function ContactsTabContent({
+  user, supabase, perm, setPerm, contacts, setContacts,
+  loading, setLoading, search, setSearch, setInviteTarget, onStartedChat,
+}: any) {
+  const requestContacts = async () => {
+    setPerm('requesting');
+    try {
+      if ('contacts' in navigator && 'ContactsManager' in window) {
+        const raw = await (navigator as any).contacts.select(['name', 'tel'], { multiple: true });
+        setPerm('granted');
+        await matchContacts(raw);
+      } else {
+        setPerm('granted');
+        await loadDemo();
+      }
+    } catch (err: any) {
+      if (err?.name === 'SecurityError' || err?.name === 'NotAllowedError') {
+        setPerm('denied');
+      } else {
+        setPerm('granted');
+        await loadDemo();
+      }
+    }
+  };
+
+  const matchContacts = async (raw: any[]) => {
+    setLoading(true);
+    const normalized: { name: string; phone: string }[] = [];
+    for (const c of raw) {
+      const name = Array.isArray(c.name) ? c.name[0] : c.name || 'Unknown';
+      const phones: string[] = Array.isArray(c.tel) ? c.tel : [c.tel].filter(Boolean);
+      for (const phone of phones) {
+        const clean = phone.replace(/\D/g, '');
+        if (clean.length >= 7) normalized.push({ name, phone: clean });
+      }
+    }
+    const { data: platformUsers } = await supabase
+      .from('user_profiles')
+      .select('id, full_name, mobile_number')
+      .in('mobile_number', normalized.map(c => c.phone));
+    const map = new Map((platformUsers || []).map((u: any) => [u.mobile_number?.replace(/\D/g, ''), u]));
+    setContacts(normalized.map(c => {
+      const m: any = map.get(c.phone);
+      return { name: c.name, phone: c.phone, onPlatform: !!m, userId: m?.id, avatar: m?.full_name?.[0]?.toUpperCase() };
+    }));
+    setLoading(false);
+  };
+
+  const loadDemo = async () => {
+    setLoading(true);
+    const { data: users } = await supabase
+      .from('user_profiles')
+      .select('id, full_name, mobile_number')
+      .neq('id', user?.id || '')
+      .limit(50);
+    const result = (users || []).map((u: any) => ({
+      name: u.full_name || 'Unknown',
+      phone: u.mobile_number || '',
+      onPlatform: true,
+      userId: u.id,
+      avatar: u.full_name?.[0]?.toUpperCase(),
+    }));
+    setContacts(result);
+    setLoading(false);
+  };
+
+  const startChat = async (contact: any) => {
+    if (!contact.userId || !user) return;
+    const { data: existing } = await supabase
+      .from('chats')
+      .select('id')
+      .or(`and(participant_one.eq.${user.id},participant_two.eq.${contact.userId}),and(participant_one.eq.${contact.userId},participant_two.eq.${user.id})`)
+      .maybeSingle();
+    if (existing) { onStartedChat(existing.id); return; }
+    const { data: newChat } = await supabase
+      .from('chats')
+      .insert({ participant_one: user.id, participant_two: contact.userId, chat_type: 'normal' })
+      .select()
+      .single();
+    if (newChat) onStartedChat(newChat.id);
+  };
+
+  if (perm === 'idle') {
+    return (
+      <div className="p-4">
+        <div className="p-4 rounded-2xl border border-primary/30 bg-primary/5 flex flex-col gap-3">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 gradient-primary rounded-xl flex items-center justify-center flex-shrink-0">
+              <Phone size={18} className="text-white" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-foreground">Allow contacts access</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Find friends already on VibeTribe and invite the rest from your phonebook.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={requestContacts}
+            className="w-full py-2.5 gradient-primary rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-all glow-primary"
+          >
+            Allow access
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (perm === 'requesting') {
+    return (
+      <div className="p-6 text-center">
+        <div className="w-12 h-12 gradient-primary rounded-full flex items-center justify-center mx-auto mb-3 animate-pulse">
+          <Phone size={20} className="text-white" />
+        </div>
+        <p className="text-sm text-muted-foreground">Requesting contact access…</p>
+      </div>
+    );
+  }
+
+  if (perm === 'denied') {
+    return (
+      <div className="p-4">
+        <div className="p-4 rounded-2xl border border-red-500/30 bg-red-500/5">
+          <p className="text-sm font-semibold text-foreground">Contacts access denied</p>
+          <p className="text-xs text-muted-foreground mt-1 mb-3">
+            Enable contacts permission from your browser/app settings to discover friends, then try again.
+          </p>
+          <button
+            onClick={() => setPerm('idle')}
+            className="px-4 py-2 gradient-primary rounded-xl text-white text-xs font-semibold hover:opacity-90 transition-all"
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const filtered = contacts.filter((c: any) =>
+    c.name.toLowerCase().includes(search.toLowerCase()) || (c.phone || '').includes(search)
+  );
+  const onPlatform = filtered.filter((c: any) => c.onPlatform);
+  const offPlatform = filtered.filter((c: any) => !c.onPlatform);
+
+  return (
+    <div className="p-4 space-y-4">
+      <input
+        type="text"
+        placeholder="Search contacts..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="w-full px-4 py-2.5 bg-input border border-border rounded-xl text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+      />
+
+      {loading ? (
+        <div className="space-y-3">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="flex items-center gap-3 animate-pulse">
+              <div className="w-10 h-10 rounded-full bg-muted" />
+              <div className="flex-1">
+                <div className="h-3 bg-muted rounded w-24 mb-1.5" />
+                <div className="h-2 bg-muted rounded w-16" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-8">
+          <Users size={28} className="text-muted-foreground mx-auto mb-2" />
+          <p className="text-sm text-muted-foreground">No contacts found</p>
+        </div>
+      ) : (
+        <>
+          {onPlatform.length > 0 && (
+            <div>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">
+                On VibeTribe ({onPlatform.length})
+              </p>
+              <div className="space-y-2">
+                {onPlatform.map((c: any, i: number) => (
+                  <div key={`p-${i}`} className="flex items-center gap-3 p-2.5 glass rounded-xl border border-border">
+                    <div className="w-10 h-10 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                      {c.avatar || c.name[0]?.toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">{c.name}</p>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <Check size={10} className="text-vt-green" />
+                        <span className="text-[11px] text-vt-green font-medium">On VibeTribe</span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => startChat(c)}
+                      className="flex items-center gap-1 px-3 py-1.5 gradient-primary rounded-xl text-white text-xs font-semibold hover:opacity-90 transition-all"
+                    >
+                      <MessageSquare size={12} />
+                      Chat
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {offPlatform.length > 0 && (
+            <div>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">
+                Invite to VibeTribe ({offPlatform.length})
+              </p>
+              <div className="space-y-2">
+                {offPlatform.map((c: any, i: number) => (
+                  <div key={`o-${i}`} className="flex items-center gap-3 p-2.5 glass rounded-xl border border-border">
+                    <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center text-muted-foreground font-bold text-sm flex-shrink-0">
+                      {c.name[0]?.toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">{c.name}</p>
+                      <p className="text-[11px] text-muted-foreground truncate">{c.phone || 'Not on VibeTribe yet'}</p>
+                    </div>
+                    <button
+                      onClick={() => setInviteTarget(c)}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-primary/10 border border-primary/30 rounded-xl text-xs font-semibold text-primary hover:bg-primary/20 transition-all"
+                    >
+                      <UserPlus size={12} />
+                      Invite
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function InviteOptionsModal({ contact, onClose }: { contact: any; onClose: () => void }) {
+  const phone = (contact.phone || '').replace(/\D/g, '');
+  const inviteWhatsApp = () => {
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(INVITE_MSG)}`, '_blank');
+    onClose();
+  };
+  const inviteSMS = () => {
+    window.location.href = `sms:${contact.phone}?body=${encodeURIComponent(INVITE_MSG)}`;
+    onClose();
+  };
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(INVITE_MSG); } catch {}
+    onClose();
+  };
+  return (
+    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
+      <div className="w-full max-w-sm glass-strong rounded-3xl border border-border shadow-card overflow-hidden float-up" onClick={(e) => e.stopPropagation()}>
+        <div className="px-5 py-4 border-b border-border">
+          <h3 className="font-bold text-base text-foreground">Invite {contact.name}</h3>
+          <p className="text-xs text-muted-foreground">Choose how to send the invite</p>
+        </div>
+        <div className="mx-4 mt-4 p-3 bg-primary/5 border border-primary/20 rounded-xl">
+          <p className="text-[11px] text-muted-foreground mb-1 font-medium">Message Preview</p>
+          <p className="text-xs text-foreground leading-relaxed">{INVITE_MSG}</p>
+        </div>
+        <div className="p-4 space-y-2">
+          <button onClick={inviteWhatsApp} className="w-full flex items-center gap-3 p-3 glass rounded-xl border border-border hover:border-green-500/40 hover:bg-green-500/5 transition-all">
+            <span className="text-lg">💬</span>
+            <span className="text-sm font-semibold text-foreground">WhatsApp</span>
+          </button>
+          <button onClick={inviteSMS} className="w-full flex items-center gap-3 p-3 glass rounded-xl border border-border hover:border-blue-500/40 hover:bg-blue-500/5 transition-all">
+            <MessageSquare size={18} className="text-blue-400" />
+            <span className="text-sm font-semibold text-foreground">SMS / Text</span>
+          </button>
+          <button onClick={copy} className="w-full flex items-center gap-3 p-3 glass rounded-xl border border-border hover:border-primary/40 hover:bg-primary/5 transition-all">
+            <UserPlus size={18} className="text-primary" />
+            <span className="text-sm font-semibold text-foreground">Copy invite link</span>
+          </button>
         </div>
       </div>
     </div>
