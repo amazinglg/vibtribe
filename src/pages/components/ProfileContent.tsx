@@ -1227,6 +1227,63 @@ export default function ProfileContent() {
         </div>
       </div>
 
+      {deleteAccountOpen && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => !deletingAccount && setDeleteAccountOpen(false)}>
+          <div className="w-full max-w-md glass-strong rounded-3xl border border-red-500/40 p-6 shadow-card" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-red-500/20 rounded-xl flex items-center justify-center">
+                <AlertTriangle size={20} className="text-red-400" />
+              </div>
+              <div>
+                <h3 className="font-bold text-base text-foreground">Delete Account</h3>
+                <p className="text-[11px] text-red-400">This action is permanent and cannot be undone</p>
+              </div>
+            </div>
+            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 mb-4 space-y-1.5">
+              <p className="text-xs text-foreground font-semibold">⚠️ Deleting your account will permanently remove:</p>
+              <ul className="text-[11px] text-muted-foreground space-y-1 list-disc pl-4">
+                <li>Your profile, username, and personal info</li>
+                <li>All your messages, chats and secured chats</li>
+                <li>All your statuses, calls and notifications</li>
+                <li>Your blocked list, support tickets and devices</li>
+                <li>Your sign-in account itself — there is no going back</li>
+              </ul>
+            </div>
+            <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+              Type <span className="font-bold text-red-400">DELETE</span> to confirm
+            </label>
+            <input
+              type="text"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              placeholder="DELETE"
+              disabled={deletingAccount}
+              className="w-full px-3 py-2.5 bg-input border border-red-500/30 rounded-xl text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-red-500"
+            />
+            <div className="flex gap-2 mt-5">
+              <button
+                onClick={() => setDeleteAccountOpen(false)}
+                disabled={deletingAccount}
+                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold bg-muted text-foreground hover:bg-muted/70"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deletingAccount || deleteConfirmText.trim().toUpperCase() !== 'DELETE'}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-red-500 text-white hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {deletingAccount ? (
+                  <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Deleting…</>
+                ) : (
+                  <><Trash2 size={14} /> Permanently Delete</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showInstallHelp && (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => setShowInstallHelp(false)}>
           <div className="w-full max-w-md glass-strong rounded-3xl border border-primary/30 p-6 shadow-card" onClick={(e) => e.stopPropagation()}>
