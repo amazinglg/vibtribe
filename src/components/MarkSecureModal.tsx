@@ -5,13 +5,15 @@ import { toast } from 'sonner';
 interface MarkSecureModalProps {
   isOpen: boolean;
   onClose: () => void;
-  contactName: string;
+  contactName?: string;
+  chatName?: string;
   chatId: string;
 }
 
 type SecureMode = 'move' | 'split';
 
-export default function MarkSecureModal({ isOpen, onClose, contactName, chatId }: MarkSecureModalProps) {
+export default function MarkSecureModal({ isOpen, onClose, contactName, chatName, chatId }: MarkSecureModalProps) {
+  const displayName = contactName || chatName || 'Contact';
   const [step, setStep] = useState<'choose' | 'set-code'>('choose');
   const [mode, setMode] = useState<SecureMode>('move');
   const [code, setCode] = useState('');
