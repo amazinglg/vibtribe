@@ -368,18 +368,18 @@ export default function AdminPage() {
 
         {activeTab === 'overview' && (
           <div className="space-y-6">
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
               {[
                 { label: 'Total Users', value: stats.totalUsers, icon: Users, color: 'gradient-primary', glow: 'glow-primary' },
                 { label: 'Active Users', value: stats.activeUsers, icon: CheckCircle2, color: 'gradient-cyan', glow: '' },
                 { label: 'Online Now', value: stats.onlineNow, icon: Activity, color: 'gradient-tri', glow: '' },
               ].map((stat) => (
-                <div key={stat.label} className="glass rounded-2xl border border-border p-3 sm:p-5 card-3d">
-                  <div className={`w-8 h-8 sm:w-10 sm:h-10 ${stat.color} rounded-xl flex items-center justify-center mb-2 sm:mb-3 ${stat.glow}`}>
-                    <stat.icon size={18} className="text-white" />
+                <div key={stat.label} className="glass rounded-xl border border-border p-2.5 sm:p-4 card-3d flex flex-col items-center text-center sm:items-start sm:text-left">
+                  <div className={`w-7 h-7 sm:w-9 sm:h-9 ${stat.color} rounded-lg flex items-center justify-center mb-1.5 sm:mb-2 ${stat.glow}`}>
+                    <stat.icon size={14} className="text-white" />
                   </div>
-                  <p className="text-xl sm:text-2xl font-bold text-foreground">{stat.value}</p>
-                  <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1">{stat.label}</p>
+                  <p className="text-lg sm:text-2xl font-bold text-foreground leading-none">{stat.value}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 leading-tight">{stat.label}</p>
                 </div>
               ))}
             </div>
