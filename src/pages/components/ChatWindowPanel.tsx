@@ -889,6 +889,7 @@ export default function ChatWindowPanel() {
             {isBlocked ? <ShieldOff size={18} /> : <Ban size={18} />}
           </button>
           {/* Lock / Secure */}
+          {chatType !== 'group' && (
           <button
             onClick={() => setSecureModalOpen(true)}
             className="p-2 rounded-xl text-primary hover:bg-primary/10 transition-all"
@@ -896,6 +897,36 @@ export default function ChatWindowPanel() {
           >
             <Lock size={18} />
           </button>
+          )}
+          {/* Disappearing messages */}
+          <div className="relative">
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowDisappearMenu(v => !v); }}
+              className={`p-2 rounded-xl transition-all ${disappearMode !== 'never' ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
+              title="Disappearing messages"
+            >
+              <Timer size={18} />
+            </button>
+            {showDisappearMenu && (
+              <div className="absolute right-0 top-full mt-1 z-30 glass-strong rounded-xl border border-border shadow-card overflow-hidden float-up min-w-[220px]" onClick={e => e.stopPropagation()}>
+                <div className="px-3 py-2 text-[11px] uppercase tracking-wide text-muted-foreground border-b border-border">Disappearing messages</div>
+                {([
+                  { id: 'never', label: 'Off (keep forever)' },
+                  { id: '24h', label: '24 hours' },
+                  { id: 'after_seen', label: 'After seen (on chat exit)' },
+                ] as const).map(opt => (
+                  <button
+                    key={opt.id}
+                    onClick={() => updateDisappearMode(opt.id)}
+                    className={`w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex items-center justify-between ${disappearMode === opt.id ? 'text-primary font-semibold' : 'text-foreground'}`}
+                  >
+                    <span>{opt.label}</span>
+                    {disappearMode === opt.id && <Check size={14} />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           {/* Voice Call */}
           <button
             onClick={handleVoiceCallClick}
