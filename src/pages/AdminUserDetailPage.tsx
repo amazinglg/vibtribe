@@ -22,6 +22,7 @@ export default function AdminUserDetailPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editForm, setEditForm] = useState({ full_name: '', email: '', mobile_number: '' });
+  const [secureChatCount, setSecureChatCount] = useState<number | null>(null);
 
   const isMaster = !!profile?.is_master_admin;
 
@@ -38,6 +39,15 @@ export default function AdminUserDetailPage() {
     const { data } = await supabase.from('user_profiles').select('*').eq('id', userId).single();
     setTarget(data);
     setLoadingData(false);
+    // Master-admin only: count secure chats created by this user
+    if (profile?.is_master_admin) {
+      const { count } = await supabase
+        .from('chats')
+        .select('id', { count: 'exact', head: true })
+        .eq('created_by', userId)
+        .eq('is_secure', true);
+      setSecureChatCount(count || 0);
+    }
   };
 
   const update = async (updates: any, successMsg: string) => {
@@ -107,8 +117,14 @@ export default function AdminUserDetailPage() {
     finally { setActionLoading(false); }
   };
 
-  const handleChangeRole = async (newRole: 'user' | 'admin') => {
+  const handleChangeRole = async (newRole: 'user' | 'admin' | 'master_admin') => {
+    if (!isMaster) { toast.error('Only the master admin can change roles'); return; }
     if (!confirm(`Change role to "${newRole}"?`)) return;
+    if (newRole === 'master_admin') {
+      // Promote: set role=admin AND is_master_admin=true (cannot via API — blocked by trigger)
+      toast.error('The master admin flag is immutable and protected at the database level.');
+      return;
+    }
     await update({ role: newRole }, `Role updated to ${newRole}`);
   };
 
@@ -176,8 +192,28 @@ export default function AdminUserDetailPage() {
           </div>
         </div>
 
+        {/* Master-admin only: Secure chats by this user */}
+        {isMaster && (
+          <div className="glass rounded-2xl border border-vt-amber/30 p-5 mb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-vt-amber/20 rounded-xl flex items-center justify-center">
+                  <Shield size={18} className="text-vt-amber" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Secure Chats Created</p>
+                  <p className="text-[10px] text-vt-amber">Visible to master admin only</p>
+                </div>
+              </div>
+              <p className="text-3xl font-bold text-foreground">
+                {secureChatCount === null ? '—' : secureChatCount}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Role management */}
-        {!isSelf && !locked && (
+        {!isSelf && !locked && isMaster && (
           <div className="glass rounded-2xl border border-border p-5 mb-4">
             <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
               <Shield size={16} className="text-primary" />
@@ -185,26 +221,22 @@ export default function AdminUserDetailPage() {
             </h3>
             <p className="text-xs text-muted-foreground mb-3">
               Current role: <span className="font-semibold text-foreground capitalize">{target.role}</span>
+              {target.is_master_admin && <span className="ml-2 text-vt-amber">(Master Admin)</span>}
             </p>
-            <div className="flex gap-2">
-              {target.role !== 'admin' ? (
-                <button
-                  onClick={() => handleChangeRole('admin')}
-                  disabled={actionLoading}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-all"
-                >
-                  <ShieldCheck size={14} /> Promote to Admin
-                </button>
-              ) : (
-                <button
-                  onClick={() => handleChangeRole('user')}
-                  disabled={actionLoading}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 transition-all"
-                >
-                  <ShieldOff size={14} /> Demote to User
-                </button>
-              )}
-            </div>
+            <label className="text-xs text-muted-foreground mb-1 block">Change Role</label>
+            <select
+              value={target.role}
+              onChange={(e) => handleChangeRole(e.target.value as any)}
+              disabled={actionLoading}
+              className="w-full px-3 py-2.5 bg-input border border-border rounded-xl text-sm text-foreground"
+            >
+              <option value="user">User</option>
+              <option value="admin">Admin</option>
+              <option value="master_admin">Master Admin</option>
+            </select>
+            <p className="text-[10px] text-muted-foreground mt-2">
+              Only the master admin can change roles. The Master Admin flag itself is immutable and protected at the database level.
+            </p>
           </div>
         )}
 

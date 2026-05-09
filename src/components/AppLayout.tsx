@@ -14,6 +14,7 @@ import PermissionPrompt from '@/components/PermissionPrompt';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useChatStore } from '@/store/chatStore';
 import CallProvider from '@/components/CallProvider';
+import { createClient } from '@/lib/supabase/client';
 
 
 
@@ -63,6 +64,56 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [secureVaultOpen, setSecureVaultOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const supabase = createClient();
+
+  // Load notifications for the current user (admins receive ticket alerts)
+  useEffect(() => {
+    if (!user) return;
+    let mounted = true;
+    const load = async () => {
+      const { data } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      if (!mounted) return;
+      setNotifications(data || []);
+      setUnreadNotifications((data || []).filter((n: any) => !n.is_read).length);
+    };
+    load();
+    const channel = supabase
+      .channel(`notif-${user.id}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` }, (payload) => {
+        setNotifications((prev) => [payload.new as any, ...prev].slice(0, 20));
+        setUnreadNotifications((c) => c + 1);
+      })
+      .subscribe();
+    return () => { mounted = false; supabase.removeChannel(channel); };
+  }, [user]);
+
+  const handleNotifClick = async (n: any) => {
+    setNotificationsOpen(false);
+    try {
+      if (!n.is_read) {
+        await supabase.from('notifications').update({ is_read: true }).eq('id', n.id);
+        setUnreadNotifications((c) => Math.max(0, c - 1));
+      }
+    } catch {}
+    if (n.link && typeof window !== 'undefined') {
+      window.location.href = n.link;
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    if (!user) return;
+    try {
+      await supabase.from('notifications').update({ is_read: true }).eq('user_id', user.id).eq('is_read', false);
+      setUnreadNotifications(0);
+      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+    } catch {}
+  };
   const [showAppPermPrompt, setShowAppPermPrompt] = useState(false);
   const { permissions, requestNotifications, requestStorage, requestMicAndCamera, checkAllPermissions } = usePermissions();
 
@@ -273,15 +324,36 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   <h3 className="font-semibold text-sm text-foreground">Notifications</h3>
                   <button
                     className="text-xs text-primary hover:text-primary/80"
-                    onClick={() => setUnreadNotifications(0)}
+                    onClick={handleMarkAllRead}
                   >
                     Mark all read
                   </button>
                 </div>
-                <div className="px-4 py-6 text-center">
-                  <Bell size={24} className="text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">No new notifications</p>
-                </div>
+                {notifications.length === 0 ? (
+                  <div className="px-4 py-6 text-center">
+                    <Bell size={24} className="text-muted-foreground mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">No new notifications</p>
+                  </div>
+                ) : (
+                  <div className="max-h-96 overflow-y-auto">
+                    {notifications.map((n) => (
+                      <button
+                        key={n.id}
+                        onClick={() => handleNotifClick(n)}
+                        className={`w-full text-left px-4 py-3 border-b border-border/40 hover:bg-muted/50 transition-colors ${!n.is_read ? 'bg-primary/5' : ''}`}
+                      >
+                        <div className="flex items-start gap-2">
+                          {!n.is_read && <span className="w-2 h-2 mt-1.5 bg-primary rounded-full flex-shrink-0" />}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">{n.title}</p>
+                            {n.body && <p className="text-xs text-muted-foreground truncate">{n.body}</p>}
+                            <p className="text-[10px] text-muted-foreground mt-0.5">{new Date(n.created_at).toLocaleString()}</p>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
