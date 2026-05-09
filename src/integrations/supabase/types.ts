@@ -50,6 +50,42 @@ export type Database = {
           },
         ]
       }
+      calls: {
+        Row: {
+          accepted_at: string | null
+          call_type: string
+          callee_id: string
+          caller_id: string
+          chat_id: string | null
+          created_at: string
+          ended_at: string | null
+          id: string
+          status: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          call_type: string
+          callee_id: string
+          caller_id: string
+          chat_id?: string | null
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          status?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          call_type?: string
+          callee_id?: string
+          caller_id?: string
+          chat_id?: string | null
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          status?: string
+        }
+        Relationships: []
+      }
       chat_members: {
         Row: {
           chat_id: string
@@ -431,6 +467,7 @@ export type Database = {
           app_theme: string | null
           avatar_url: string | null
           bio: string | null
+          country_code: string | null
           created_at: string | null
           email: string
           full_name: string
@@ -442,6 +479,7 @@ export type Database = {
           mobile_number: string | null
           profile_completed: boolean | null
           public_key: string | null
+          real_email: string | null
           role: string
           updated_at: string | null
           username: string | null
@@ -451,6 +489,7 @@ export type Database = {
           app_theme?: string | null
           avatar_url?: string | null
           bio?: string | null
+          country_code?: string | null
           created_at?: string | null
           email: string
           full_name?: string
@@ -462,6 +501,7 @@ export type Database = {
           mobile_number?: string | null
           profile_completed?: boolean | null
           public_key?: string | null
+          real_email?: string | null
           role?: string
           updated_at?: string | null
           username?: string | null
@@ -471,6 +511,7 @@ export type Database = {
           app_theme?: string | null
           avatar_url?: string | null
           bio?: string | null
+          country_code?: string | null
           created_at?: string | null
           email?: string
           full_name?: string
@@ -482,6 +523,7 @@ export type Database = {
           mobile_number?: string | null
           profile_completed?: boolean | null
           public_key?: string | null
+          real_email?: string | null
           role?: string
           updated_at?: string | null
           username?: string | null
