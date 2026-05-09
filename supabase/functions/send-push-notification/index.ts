@@ -71,6 +71,26 @@ serve(async (req) => {
   }
 
   try {
+    // Authenticate caller — must present a valid JWT
+    const authHeader = req.headers.get('Authorization') || '';
+    if (!authHeader.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const callerToken = authHeader.replace('Bearer ', '');
+    const supabaseUrlAuth = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const authClient = createClient(supabaseUrlAuth, supabaseAnonKey);
+    const { data: authData, error: authErr } = await authClient.auth.getUser(callerToken);
+    if (authErr || !authData?.user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const { user_id, title, body, tag, url, type } = await req.json();
 
     if (!user_id) {
@@ -155,7 +175,8 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (err) {
-    return new Response(JSON.stringify({ error: String(err) }), {
+    console.error('[push-notification] Error:', err);
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
