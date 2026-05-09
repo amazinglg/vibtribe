@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
-import { Camera, Edit3, Shield, Bell, Lock, Smartphone, LogOut, Key, AlertTriangle, UserCheck, AtSign, Phone, Mail, ChevronDown, Ban, Monitor, RefreshCw, HelpCircle, Palette, Check, Download, Share, X, Copy, ExternalLink, MoreVertical } from 'lucide-react';
+import { Camera, Edit3, Shield, Bell, Lock, Smartphone, LogOut, Key, AlertTriangle, UserCheck, AtSign, Phone, Mail, ChevronDown, Ban, Monitor, RefreshCw, HelpCircle, Palette, Check, Download, Share, X, Copy, ExternalLink, MoreVertical, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from '@tanstack/react-router';
@@ -427,6 +427,27 @@ export default function ProfileContent() {
   const isAndroid = /android/i.test(ua);
   const isInAppBrowser = /MiuiBrowser|FBAN|FBAV|Instagram|Line\/|; wv\)|Twitter|TikTok|SamsungBrowser/i.test(ua);
   const [showInstallHelp, setShowInstallHelp] = useState(false);
+  const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deletingAccount, setDeletingAccount] = useState(false);
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText.trim().toUpperCase() !== 'DELETE') {
+      toast.error('Type DELETE to confirm');
+      return;
+    }
+    setDeletingAccount(true);
+    try {
+      const { error } = await supabase.rpc('delete_my_account' as any);
+      if (error) throw error;
+      toast.success('Your account has been permanently deleted');
+      try { await supabase.auth.signOut({ scope: 'global' }); } catch {}
+      if (typeof window !== 'undefined') window.location.href = '/sign-in';
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to delete account');
+      setDeletingAccount(false);
+    }
+  };
 
   const handleInstallApp = async () => {
     if (isPwaInstalled()) {
@@ -800,13 +821,22 @@ export default function ProfileContent() {
                   <AlertTriangle size={16} />
                   Danger Zone
                 </h3>
-                <button
-                  onClick={handleSignOut}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-red-500/10 text-red-400 text-sm font-semibold rounded-xl hover:bg-red-500/20 transition-all"
-                >
-                  <LogOut size={14} />
-                  Sign Out of All Devices
-                </button>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={handleSignOut}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-red-500/10 text-red-400 text-sm font-semibold rounded-xl hover:bg-red-500/20 transition-all"
+                  >
+                    <LogOut size={14} />
+                    Sign Out of All Devices
+                  </button>
+                  <button
+                    onClick={() => { setDeleteConfirmText(''); setDeleteAccountOpen(true); }}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-red-500 text-white text-sm font-semibold rounded-xl hover:bg-red-600 transition-all"
+                  >
+                    <Trash2 size={14} />
+                    Delete My Account
+                  </button>
+                </div>
               </div>
             </div>
           )}
