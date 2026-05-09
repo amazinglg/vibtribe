@@ -433,8 +433,8 @@ export default function AdminPage() {
                 {filteredUsers.map(u => (
                   <div
                     key={u.id}
-                    onClick={() => setSelectedUser(u)}
-                    className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-all border-b border-border/30 hover:bg-muted/50 ${selectedUser?.id === u.id ? 'bg-primary/10 border-l-2 border-l-primary' : ''}`}
+                    onClick={() => router({ to: '/admin/user/$userId', params: { userId: u.id } })}
+                    className="flex items-center gap-3 px-4 py-3 cursor-pointer transition-all border-b border-border/30 hover:bg-muted/50"
                   >
                     <div className="relative flex-shrink-0">
                       <div className="w-10 h-10 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-sm">
