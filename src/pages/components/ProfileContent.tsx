@@ -106,7 +106,11 @@ export default function ProfileContent() {
       setDisplayName(profile.full_name || '');
       setBio(profile.bio || '');
       setUsername(profile.username || '');
-      setEditEmail(profile.email && !profile.email.endsWith('@vibetribe.app') ? profile.email : (user?.email && !user.email.endsWith('@vibetribe.app') ? user.email : ''));
+      setEditEmail(
+        profile.real_email
+          || (profile.email && !profile.email.endsWith('@vibetribe.app') ? profile.email : '')
+          || (user?.email && !user.email.endsWith('@vibetribe.app') ? user.email : '')
+      );
       const parsed = parseCountryFromMobile(profile.mobile_number || '');
       setEditCountryCode(parsed.countryCode);
       setEditMobileNumber(parsed.number);
