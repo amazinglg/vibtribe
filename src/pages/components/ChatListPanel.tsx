@@ -1,0 +1,344 @@
+import React, { useState, useEffect } from 'react';
+import { Search, Plus, Trash2, Lock, Users } from 'lucide-react';
+import MarkSecureModal from '@/components/MarkSecureModal';
+import ContactsPanel from '@/components/ContactsPanel';
+import { useChatStore } from '../store/chatStore';
+import { useAuth } from '@/contexts/AuthContext';
+import { createClient } from '@/lib/supabase/client';
+
+interface Chat {
+  id: string;
+  name: string;
+  avatar: string;
+  avatarColor: string;
+  lastMessage: string;
+  time: string;
+  unread: number;
+  online: boolean;
+  typing: boolean;
+  pinned: boolean;
+  muted: boolean;
+  isGroup?: boolean;
+  hasMedia?: boolean;
+  participantId?: string;
+}
+
+export default function ChatListPanel() {
+  const [search, setSearch] = useState('');
+  const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'groups'>('all');
+  const [secureModalOpen, setSecureModalOpen] = useState(false);
+  const [secureTarget, setSecureTarget] = useState<{ id: string; name: string } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ chatId: string; x: number; y: number } | null>(null);
+  const [chats, setChats] = useState<Chat[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [contactsOpen, setContactsOpen] = useState(false);
+  const { selectedChatId, setSelectedChatId } = useChatStore();
+  const { user, profile } = useAuth();
+  const supabase = createClient();
+
+  useEffect(() => {
+    if (user) loadChats();
+  }, [user]);
+
+  const loadChats = async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('chats')
+        .select(`
+          id, chat_type, participant_one, participant_two,
+          messages(id, content, created_at, sender_id)
+        `)
+        .or(`participant_one.eq.${user.id},participant_two.eq.${user.id}`)
+        .eq('chat_type', 'normal')
+        .order('updated_at', { ascending: false });
+
+      if (error) throw error;
+
+      const chatList: Chat[] = [];
+      for (const chat of (data || [])) {
+        const otherUserId = chat.participant_one === user.id ? chat.participant_two : chat.participant_one;
+        const { data: otherUser } = await supabase
+          .from('user_profiles')
+          .select('id, full_name, is_online, last_seen')
+          .eq('id', otherUserId)
+          .single();
+
+        if (otherUser) {
+          const msgs = (chat as any).messages || [];
+          const lastMsg = msgs.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+          const avatarColors = ['gradient-primary', 'gradient-cyan', 'gradient-pink', 'gradient-tri'];
+          chatList.push({
+            id: chat.id,
+            name: otherUser.full_name || 'Unknown',
+            avatar: (otherUser.full_name || 'U')[0].toUpperCase(),
+            avatarColor: avatarColors[chatList.length % avatarColors.length],
+            lastMessage: lastMsg?.content || 'Start a conversation...',
+            time: lastMsg ? formatTime(lastMsg.created_at) : '',
+            unread: 0,
+            online: otherUser.is_online || false,
+            typing: false,
+            pinned: false,
+            muted: false,
+            participantId: otherUserId,
+          });
+        }
+      }
+      setChats(chatList);
+      if (chatList.length > 0 && !selectedChatId) {
+        setSelectedChatId(chatList[0].id);
+      }
+    } catch (err) {
+      setChats(getDemoChats());
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getDemoChats = (): Chat[] => [
+    {
+      id: 'demo-chat-001',
+      name: 'Alex Rivera',
+      avatar: 'A',
+      avatarColor: 'gradient-cyan',
+      lastMessage: 'Hey! Welcome to VibeTribe 🎉',
+      time: '2m',
+      unread: 1,
+      online: true,
+      typing: false,
+      pinned: false,
+      muted: false,
+    },
+  ];
+
+  const formatTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return 'now';
+    if (diffMins < 60) return `${diffMins}m`;
+    if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h`;
+    return date.toLocaleDateString('en-US', { weekday: 'short' });
+  };
+
+  const handleDeleteChat = async (chatId: string) => {
+    try {
+      await supabase.from('messages').delete().eq('chat_id', chatId);
+      await supabase.from('chats').delete().eq('id', chatId);
+      setChats(prev => prev.filter(c => c.id !== chatId));
+      if (selectedChatId === chatId) setSelectedChatId(null);
+    } catch {
+      setChats(prev => prev.filter(c => c.id !== chatId));
+      if (selectedChatId === chatId) setSelectedChatId(null);
+    }
+    setContextMenu(null);
+  };
+
+  const handleMarkSecure = (chat: Chat) => {
+    setSecureTarget({ id: chat.id, name: chat.name });
+    setSecureModalOpen(true);
+    setContextMenu(null);
+  };
+
+  const handleContactStartChat = (chatId: string, name: string) => {
+    setSelectedChatId(chatId);
+    loadChats();
+  };
+
+  const filtered = chats.filter(chat => {
+    const matchesSearch = chat.name.toLowerCase().includes(search.toLowerCase());
+    const matchesTab = activeTab === 'all' || (activeTab === 'unread' && chat.unread > 0) || (activeTab === 'groups' && chat.isGroup);
+    return matchesSearch && matchesTab;
+  });
+
+  return (
+    <>
+      <div
+        className="w-full lg:w-80 xl:w-96 flex-shrink-0 flex flex-col border-r border-border glass h-full"
+        onClick={() => contextMenu && setContextMenu(null)}
+      >
+        {/* Header */}
+        <div className="px-4 py-4 border-b border-border">
+          <div className="flex items-center justify-between mb-3">
+            <h1 className="font-bold text-xl text-foreground">Messages</h1>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setContactsOpen(true)}
+                className="p-2 glass rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+                title="Contacts"
+              >
+                <Users size={18} />
+              </button>
+              <button className="p-2 gradient-primary rounded-xl text-white hover:opacity-90 transition-all glow-primary">
+                <Plus size={18} />
+              </button>
+            </div>
+          </div>
+          <div className="relative">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search conversations..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-9 pr-4 py-2.5 bg-input border border-border rounded-xl text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+            />
+          </div>
+          <div className="flex gap-1 mt-3 p-1 bg-muted rounded-xl">
+            {(['all', 'unread', 'groups'] as const).map((tab) => (
+              <button
+                key={`tab-${tab}`}
+                onClick={() => setActiveTab(tab)}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all ${
+                  activeTab === tab ? 'gradient-primary text-white' : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {tab}
+                {tab === 'unread' && (
+                  <span className="ml-1 text-[10px]">({chats.filter(c => c.unread > 0).length})</span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Chat List */}
+        <div className="flex-1 overflow-y-auto">
+          {loading ? (
+            <div className="flex flex-col gap-3 p-4">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="flex items-center gap-3 animate-pulse">
+                  <div className="w-12 h-12 rounded-full bg-muted flex-shrink-0" />
+                  <div className="flex-1">
+                    <div className="h-3 bg-muted rounded w-24 mb-2" />
+                    <div className="h-2 bg-muted rounded w-40" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-40 gap-3 p-4">
+              <span className="text-3xl">💬</span>
+              <p className="text-sm text-muted-foreground text-center">No conversations yet</p>
+              <button
+                onClick={() => setContactsOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 gradient-primary text-white rounded-xl text-xs font-semibold hover:opacity-90 transition-all"
+              >
+                <Users size={14} />
+                Find Contacts
+              </button>
+            </div>
+          ) : (
+            filtered.map((chat) => (
+              <ChatListItem
+                key={chat.id}
+                chat={chat}
+                isSelected={selectedChatId === chat.id}
+                onClick={() => setSelectedChatId(chat.id)}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  setContextMenu({ chatId: chat.id, x: e.clientX, y: e.clientY });
+                }}
+                onDelete={() => handleDeleteChat(chat.id)}
+                onMarkSecure={() => handleMarkSecure(chat)}
+              />
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Context Menu */}
+      {contextMenu && (
+        <div
+          className="fixed z-50 glass-strong rounded-xl border border-border shadow-card overflow-hidden float-up"
+          style={{ top: contextMenu.y, left: Math.min(contextMenu.x, typeof window !== 'undefined' ? window.innerWidth - 180 : 200) }}
+        >
+          <button
+            onClick={() => {
+              const chat = chats.find(c => c.id === contextMenu.chatId);
+              if (chat) handleMarkSecure(chat);
+            }}
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted w-full text-left transition-colors"
+          >
+            <Lock size={14} className="text-primary" />
+            Mark as Secure
+          </button>
+          <button
+            onClick={() => handleDeleteChat(contextMenu.chatId)}
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 w-full text-left transition-colors"
+          >
+            <Trash2 size={14} />
+            Delete Chat
+          </button>
+        </div>
+      )}
+
+      {secureModalOpen && secureTarget && (
+        <MarkSecureModal
+          isOpen={secureModalOpen}
+          onClose={() => setSecureModalOpen(false)}
+          chatId={secureTarget.id}
+          chatName={secureTarget.name}
+        />
+      )}
+
+      {contactsOpen && (
+        <ContactsPanel
+          onClose={() => setContactsOpen(false)}
+          onStartChat={handleContactStartChat}
+        />
+      )}
+    </>
+  );
+}
+
+interface ChatListItemProps {
+  chat: Chat;
+  isSelected: boolean;
+  onClick: () => void;
+  onContextMenu: (e: React.MouseEvent) => void;
+  onDelete: () => void;
+  onMarkSecure: () => void;
+}
+
+function ChatListItem({ chat, isSelected, onClick, onContextMenu, onDelete, onMarkSecure }: ChatListItemProps) {
+  return (
+    <div
+      className={`relative flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-200 hover:bg-muted/50 ${
+        isSelected ? 'bg-primary/10 border-r-2 border-primary' : ''
+      }`}
+      onClick={onClick}
+      onContextMenu={onContextMenu}
+    >
+      {/* Avatar */}
+      <div className="relative flex-shrink-0">
+        <div className={`w-12 h-12 ${chat.avatarColor} rounded-full flex items-center justify-center text-white font-bold text-base`}>
+          {chat.avatar}
+        </div>
+        {chat.online && (
+          <span className="absolute bottom-0 right-0 w-3 h-3 bg-vt-green rounded-full border-2 border-background" />
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between gap-2">
+          <p className="font-semibold text-sm text-foreground truncate">{chat.name}</p>
+          <span className="text-[11px] text-muted-foreground flex-shrink-0">{chat.time}</span>
+        </div>
+        <div className="flex items-center justify-between gap-2 mt-0.5">
+          <p className={`text-xs truncate ${chat.typing ? 'text-primary italic' : 'text-muted-foreground'}`}>
+            {chat.typing ? 'typing...' : chat.lastMessage}
+          </p>
+          {chat.unread > 0 && (
+            <span className="flex-shrink-0 w-5 h-5 gradient-primary rounded-full text-[10px] font-bold text-white flex items-center justify-center">
+              {chat.unread}
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

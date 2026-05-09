@@ -1,0 +1,167 @@
+import { createContext, useContext, useEffect, useState } from 'react';
+import { createClient } from '@/lib/supabase/client';
+
+const AuthContext = createContext<any>({});
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within AuthProvider');
+  }
+  return context;
+};
+
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const [user, setUser] = useState<any>(null);
+  const [session, setSession] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<any>(null);
+  const supabase = createClient();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) fetchProfile(session.user.id);
+      setLoading(false);
+    });
+
+    const {
+      data: { subscription }
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) fetchProfile(session.user.id);
+      else setProfile(null);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      setProfile(data);
+    } catch {}
+  };
+
+  // Mobile number + password sign up (no verification required)
+  const signUp = async (mobileNumber: string, password: string, metadata: any = {}) => {
+    // Use mobile number as email prefix for Supabase auth
+    const emailFromMobile = `${mobileNumber.replace(/\D/g, '')}@vibetribe.app`;
+    const { data, error } = await supabase.auth.signUp({
+      email: emailFromMobile,
+      password,
+      options: {
+        data: {
+          full_name: metadata?.fullName || '',
+          mobile_number: mobileNumber,
+          avatar_url: metadata?.avatarUrl || '',
+          role: 'user',
+        },
+        emailRedirectTo: undefined,
+      }
+    });
+    if (error) throw error;
+    return data;
+  };
+
+  // Mobile number + password sign in
+  const signIn = async (mobileNumber: string, password: string) => {
+    const emailFromMobile = `${mobileNumber.replace(/\D/g, '')}@vibetribe.app`;
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: emailFromMobile,
+      password
+    });
+    if (error) throw error;
+    return data;
+  };
+
+  // Email sign in (for admin)
+  const signInWithEmail = async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    return data;
+  };
+
+  // Sign Out
+  const signOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+    setProfile(null);
+  };
+
+  // Update profile
+  const updateProfile = async (updates: any) => {
+    if (!user) throw new Error('Not authenticated');
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', user.id)
+      .select()
+      .single();
+    if (error) throw error;
+    setProfile(data);
+    return data;
+  };
+
+  // Password reset (sends reset email)
+  const resetPassword = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/reset-password`,
+    });
+    if (error) throw error;
+  };
+
+  // Update password
+  const updatePassword = async (newPassword: string) => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) throw error;
+  };
+
+  // Get Current User
+  const getCurrentUser = async () => {
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error) throw error;
+    return user;
+  };
+
+  // Get User Profile from Database
+  const getUserProfile = async () => {
+    if (!user) return null;
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+    if (error) throw error;
+    return data;
+  };
+
+  const isAdmin = () => profile?.role === 'admin';
+
+  const value = {
+    user,
+    session,
+    loading,
+    profile,
+    signUp,
+    signIn,
+    signInWithEmail,
+    signOut,
+    updateProfile,
+    resetPassword,
+    updatePassword,
+    getCurrentUser,
+    getUserProfile,
+    fetchProfile,
+    isAdmin,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
