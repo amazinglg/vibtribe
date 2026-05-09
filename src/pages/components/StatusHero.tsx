@@ -35,17 +35,12 @@ export default function StatusHero() {
 
   return (
     <div className="relative px-4 lg:px-8 pt-6 pb-4">
-      {/* Page Title */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="font-bold text-2xl text-foreground">Status</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Stories disappear after 24 hours</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="px-3 py-1.5 glass rounded-full flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Sparkles size={12} className="text-primary" />
-            <span>Active stories</span>
-          </div>
+      {/* Subheading */}
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-xs text-muted-foreground">Stories disappear after 24 hours</p>
+        <div className="px-2.5 py-1 glass rounded-full flex items-center gap-1.5 text-[11px] text-muted-foreground">
+          <Sparkles size={11} className="text-primary" />
+          <span>Active</span>
         </div>
       </div>
 
