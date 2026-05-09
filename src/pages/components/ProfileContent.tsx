@@ -1174,6 +1174,107 @@ export default function ProfileContent() {
           )}
         </div>
       </div>
+
+      {showInstallHelp && (
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => setShowInstallHelp(false)}>
+          <div className="w-full max-w-md glass-strong rounded-3xl border border-primary/30 p-6 shadow-card" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 gradient-primary rounded-xl flex items-center justify-center glow-primary">
+                  <Download size={18} className="text-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-foreground">Install VibeTribe</h3>
+                  <p className="text-[11px] text-muted-foreground">Add to home screen for the full app experience</p>
+                </div>
+              </div>
+              <button onClick={() => setShowInstallHelp(false)} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted">
+                <X size={16} />
+              </button>
+            </div>
+
+            {isIOSDevice ? (
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground mb-3">Follow these steps in <strong className="text-foreground">Safari</strong>:</p>
+                <div className="flex items-start gap-3 p-3 bg-primary/10 rounded-xl">
+                  <span className="w-6 h-6 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center flex-shrink-0">1</span>
+                  <p className="text-xs text-foreground">Tap the <Share size={12} className="inline mx-0.5" /> <strong>Share</strong> button at the bottom of Safari.</p>
+                </div>
+                <div className="flex items-start gap-3 p-3 bg-primary/10 rounded-xl">
+                  <span className="w-6 h-6 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center flex-shrink-0">2</span>
+                  <p className="text-xs text-foreground">Scroll and tap <strong>"Add to Home Screen"</strong>.</p>
+                </div>
+                <div className="flex items-start gap-3 p-3 bg-primary/10 rounded-xl">
+                  <span className="w-6 h-6 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center flex-shrink-0">3</span>
+                  <p className="text-xs text-foreground">Tap <strong>"Add"</strong> to finish installing.</p>
+                </div>
+                <p className="text-[10px] text-amber-400 mt-2">⚠️ Must be opened in Safari (not Chrome or in-app browsers).</p>
+              </div>
+            ) : isInAppBrowser ? (
+              <div className="space-y-3">
+                <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl">
+                  <p className="text-xs text-amber-300 font-semibold mb-1">⚠️ In-app browser detected</p>
+                  <p className="text-[11px] text-amber-200/80">This browser doesn't support installing apps. Please open VibeTribe in <strong>Chrome</strong> to install it.</p>
+                </div>
+                <div className="flex items-start gap-3 p-3 bg-primary/10 rounded-xl">
+                  <span className="w-6 h-6 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center flex-shrink-0">1</span>
+                  <p className="text-xs text-foreground">Tap the <MoreVertical size={12} className="inline" /> menu (top right) and choose <strong>"Open in Chrome"</strong> or <strong>"Open in browser"</strong>.</p>
+                </div>
+                <div className="flex items-start gap-3 p-3 bg-primary/10 rounded-xl">
+                  <span className="w-6 h-6 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center flex-shrink-0">2</span>
+                  <p className="text-xs text-foreground">Once in Chrome, return here and tap <strong>Install App</strong> again.</p>
+                </div>
+                <button
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(window.location.origin);
+                      toast.success('Link copied — paste it in Chrome');
+                    } catch {
+                      toast.error('Could not copy. Long-press the URL bar to copy.');
+                    }
+                  }}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 glass border border-primary/40 text-primary text-sm font-semibold rounded-xl hover:bg-primary/10"
+                >
+                  <Copy size={14} /> Copy app link
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground mb-3">Your browser didn't surface the install prompt. Install manually:</p>
+                <div className="flex items-start gap-3 p-3 bg-primary/10 rounded-xl">
+                  <span className="w-6 h-6 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center flex-shrink-0">1</span>
+                  <p className="text-xs text-foreground">Tap the <MoreVertical size={12} className="inline" /> menu (top-right of {isAndroid ? 'Chrome' : 'your browser'}).</p>
+                </div>
+                <div className="flex items-start gap-3 p-3 bg-primary/10 rounded-xl">
+                  <span className="w-6 h-6 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center flex-shrink-0">2</span>
+                  <p className="text-xs text-foreground">Tap <strong>"Install app"</strong> or <strong>"Add to Home screen"</strong>.</p>
+                </div>
+                <div className="flex items-start gap-3 p-3 bg-primary/10 rounded-xl">
+                  <span className="w-6 h-6 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center flex-shrink-0">3</span>
+                  <p className="text-xs text-foreground">Confirm <strong>Install</strong>. VibeTribe will appear on your home screen.</p>
+                </div>
+                <button
+                  onClick={async () => {
+                    const result = await triggerPwaInstall();
+                    if (result === 'accepted') {
+                      toast.success('Installing VibeTribe…');
+                      setShowInstallHelp(false);
+                      setInstallState('installed');
+                    } else if (result === 'unavailable') {
+                      toast.info('Use the browser menu to install (steps above).');
+                    } else {
+                      setShowInstallHelp(false);
+                    }
+                  }}
+                  className="w-full mt-2 flex items-center justify-center gap-2 px-4 py-2.5 gradient-primary text-white text-sm font-semibold rounded-xl glow-primary"
+                >
+                  <Download size={14} /> Try install again
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
