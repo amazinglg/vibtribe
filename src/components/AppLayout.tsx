@@ -70,7 +70,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!user) return;
     const key = `vt_perms_requested_${user.id}`;
-    const alreadyRequested = sessionStorage.getItem(key);
+    const alreadyRequested = localStorage.getItem(key);
     if (!alreadyRequested) {
       // Small delay so the UI is fully rendered first
       const t = setTimeout(() => {
@@ -84,7 +84,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const handleAppPermAllow = async () => {
     setShowAppPermPrompt(false);
-    if (user) sessionStorage.setItem(`vt_perms_requested_${user.id}`, '1');
+      if (user) localStorage.setItem(`vt_perms_requested_${user.id}`, '1');
     // Notifications + storage can be requested in parallel.
     // Microphone + camera need a user-gesture context too — fired right after click.
     await Promise.all([
@@ -96,7 +96,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const handleAppPermDeny = () => {
     setShowAppPermPrompt(false);
-    if (user) sessionStorage.setItem(`vt_perms_requested_${user.id}`, '1');
+    if (user) localStorage.setItem(`vt_perms_requested_${user.id}`, '1');
   };
 
   const displayName = profile?.full_name || user?.email?.split('@')[0] || 'User';
