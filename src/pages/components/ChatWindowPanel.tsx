@@ -12,6 +12,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { sendPushNotification } from '@/lib/pushNotifications';
 import AppImage from "@/components/ui/AppImage";
 import { useCall } from '@/components/CallProvider';
+import { toast } from 'sonner';
 
 interface Message {
   id: string;
@@ -908,11 +909,32 @@ export default function ChatWindowPanel() {
                 </button>
                 {chatType !== 'group' && (
                   <button
-                    onClick={() => { setShowMoreMenu(false); setSecureModalOpen(true); }}
+                    onClick={async () => {
+                      setShowMoreMenu(false);
+                      if (chatType === 'secure') {
+                        if (!window.confirm('Move this chat back to your normal chat list? It will no longer require a PIN/pattern to access.')) return;
+                        try {
+                          const { error: upErr } = await supabase
+                            .from('chats')
+                            .update({ chat_type: 'normal', secure_code: null })
+                            .eq('id', selectedChatId);
+                          if (upErr) throw upErr;
+                          setChatType('normal');
+                          toast.success('Chat moved back to your normal chats');
+                          // Exit the secure session view
+                          useChatStore.getState().closeSecureChat();
+                          setSelectedChatId(null);
+                        } catch (e: any) {
+                          toast.error(e?.message || 'Could not unsecure this chat');
+                        }
+                      } else {
+                        setSecureModalOpen(true);
+                      }
+                    }}
                     className="w-full text-left px-3 py-2.5 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground"
                   >
-                    <Lock size={16} className="text-primary" />
-                    Mark as secure
+                    {chatType === 'secure' ? <ShieldOff size={16} className="text-vt-amber" /> : <Lock size={16} className="text-primary" />}
+                    {chatType === 'secure' ? 'Mark as Unsecured' : 'Mark as secure'}
                   </button>
                 )}
                 <button
@@ -1240,7 +1262,7 @@ export default function ChatWindowPanel() {
       />
 
       {/* Input Area */}
-      <div className="glass border-t border-border px-2 py-2 flex items-center gap-1 flex-shrink-0 w-full max-w-full overflow-hidden">
+      <div className="glass border-t border-border px-2 pt-2 pb-3 mb-2 lg:mb-0 flex items-center gap-1 flex-shrink-0 w-full max-w-full overflow-hidden" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
         <button
           onClick={(e) => { e.stopPropagation(); setShowEmoji(!showEmoji); setShowAttachMenu(false); }}
           className={`p-2 rounded-xl transition-all flex-shrink-0 ${showEmoji ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
