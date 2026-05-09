@@ -122,7 +122,7 @@ export default function SignInPage() {
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="block text-sm font-medium text-foreground">Password</label>
-                <Link href="/forgot-password" className="text-xs text-primary hover:text-primary/80 transition-colors">
+                <Link to="/forgot-password" className="text-xs text-primary hover:text-primary/80 transition-colors">
                   Forgot password?
                 </Link>
               </div>
@@ -169,7 +169,7 @@ export default function SignInPage() {
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
               New to VibeTribe?{' '}
-              <Link href="/sign-up" className="text-primary font-semibold hover:text-primary/80 transition-colors">
+              <Link to="/sign-up" className="text-primary font-semibold hover:text-primary/80 transition-colors">
                 Create account
               </Link>
             </p>

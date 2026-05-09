@@ -8,6 +8,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import Icon from '@/components/ui/AppIcon';
 import PWAInstallBanner from './PWAInstallBanner';
 
+
+function usePathname() {
+  const loc = _useLocation();
+  return (loc as any)?.pathname ?? "";
+}
+
 function useRouter() {
   const navigate = _useNavigate();
   return {

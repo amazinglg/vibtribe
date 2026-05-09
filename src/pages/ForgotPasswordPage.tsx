@@ -60,7 +60,7 @@ export default function ForgotPasswordPage() {
             </div>
           ) : (
             <>
-              <Link href="/sign-in" className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mb-5 transition-colors">
+              <Link to="/sign-in" className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mb-5 transition-colors">
                 <ArrowLeft size={14} />
                 Back to Sign In
               </Link>
