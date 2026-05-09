@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface HelpButtonProps {
-  variant?: 'floating' | 'inline';
+  variant?: 'floating' | 'inline' | 'topbar';
 }
 
 export default function HelpButton({ variant = 'floating' }: HelpButtonProps) {
@@ -88,7 +88,16 @@ export default function HelpButton({ variant = 'floating' }: HelpButtonProps) {
 
   return (
     <>
-      {variant === 'floating' ? (
+      {variant === 'topbar' ? (
+        <button
+          onClick={handleOpen}
+          className="p-2 sm:p-2.5 glass rounded-xl text-muted-foreground hover:text-primary transition-all"
+          title="Help & Support"
+          aria-label="Help & Support"
+        >
+          <HelpCircle size={18} />
+        </button>
+      ) : variant === 'floating' ? (
         <button
           onClick={handleOpen}
           className="fixed bottom-24 right-4 lg:bottom-6 lg:right-6 z-30 w-12 h-12 gradient-primary rounded-full flex items-center justify-center shadow-lg glow-primary hover:opacity-90 transition-all"
