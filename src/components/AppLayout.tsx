@@ -13,6 +13,7 @@ import HelpButton from '@/components/HelpButton';
 import PermissionPrompt from '@/components/PermissionPrompt';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useChatStore } from '@/store/chatStore';
+import CallProvider from '@/components/CallProvider';
 
 
 
