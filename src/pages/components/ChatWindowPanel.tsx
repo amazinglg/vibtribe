@@ -1018,6 +1018,29 @@ export default function ChatWindowPanel() {
             const isMe = msg.senderId === user?.id;
             const isImageMsg = msg.text?.startsWith('[IMAGE:') || msg.mediaType === 'image';
             const isFileMsg = msg.text?.startsWith('[FILE:') || msg.mediaType === 'file';
+            const missedMatch = typeof msg.text === 'string' && msg.text.startsWith('__missed_call__:')
+              ? msg.text.split(':') : null;
+            const isMissedCall = !!missedMatch;
+            if (isMissedCall) {
+              const callKind = missedMatch![1] || 'voice';
+              return (
+                <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                  <div className="glass border border-border rounded-2xl px-4 py-2.5 text-sm flex items-center gap-3">
+                    <PhoneOff size={16} className="text-red-400" />
+                    <span className="text-foreground/80">
+                      {isMe ? `Missed ${callKind} call` : `You missed a ${callKind} call`}
+                    </span>
+                    {isMe && contact?.userId && (
+                      <button
+                        onClick={() => startCall({ calleeId: contact.userId!, chatId: selectedChatId, type: callKind as 'voice'|'video', calleeName: contact.name, calleeAvatar: contact.avatar })}
+                        className="ml-2 px-3 py-1 rounded-lg bg-primary/15 text-primary text-xs font-semibold hover:bg-primary/25 transition-all">
+                        Call back
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            }
             // Defensive: never render raw `e2e:` ciphertext
             const safeText = isEncrypted(msg.text) ? '[Encrypted message]' : msg.text;
             const displayText = isImageMsg
