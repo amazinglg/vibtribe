@@ -160,7 +160,7 @@ export default function MarkSecureModal({ isOpen, onClose, chatName, chatId, onS
           </button>
         </div>
 
-        <div className="px-6 py-6">
+        <div className="px-6 py-6 overflow-y-auto flex-1">
 
           {/* Step 1: Choose Mode */}
           {step === 'choose-mode' && (
