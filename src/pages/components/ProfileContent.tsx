@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
-import { Camera, Edit3, Shield, Bell, Lock, Smartphone, LogOut, Key, AlertTriangle, UserCheck, AtSign, Phone, Mail, ChevronDown, Ban, Monitor, RefreshCw, HelpCircle, Palette, Check } from 'lucide-react';
+import { Camera, Edit3, Shield, Bell, Lock, Smartphone, LogOut, Key, AlertTriangle, UserCheck, AtSign, Phone, Mail, ChevronDown, Ban, Monitor, RefreshCw, HelpCircle, Palette, Check, Download, Share } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from '@tanstack/react-router';
@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase/client';
 import HelpButton from '@/components/HelpButton';
 import MyTickets from '@/components/MyTickets';
 import { useTheme, APP_THEMES, ThemeId } from '@/contexts/ThemeContext';
+import { triggerPwaInstall, isPwaInstallAvailable, isPwaInstalled } from '@/components/PWAInstallBanner';
 
 type Tab = 'account' | 'privacy' | 'notifications' | 'devices' | 'themes' | 'more';
 
@@ -362,6 +363,50 @@ export default function ProfileContent() {
       setTimeout(() => window.location.reload(), 1200);
     } catch {
       toast.error('Failed to update app. Please refresh manually.');
+    }
+  };
+
+  const [installState, setInstallState] = useState<'idle' | 'installed' | 'unavailable' | 'installing'>('idle');
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (isPwaInstalled()) { setInstallState('installed'); return; }
+    if (!isPwaInstallAvailable()) setInstallState('unavailable');
+    const onAvail = () => setInstallState('idle');
+    const onInstalled = () => setInstallState('installed');
+    window.addEventListener('vt:install-available', onAvail);
+    window.addEventListener('appinstalled', onInstalled);
+    return () => {
+      window.removeEventListener('vt:install-available', onAvail);
+      window.removeEventListener('appinstalled', onInstalled);
+    };
+  }, []);
+
+  const isIOSDevice = typeof navigator !== 'undefined' && (
+    /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && (navigator as any).maxTouchPoints > 1)
+  );
+
+  const handleInstallApp = async () => {
+    if (isPwaInstalled()) {
+      toast.success('App is already installed on this device');
+      setInstallState('installed');
+      return;
+    }
+    if (isIOSDevice) {
+      toast.info('On iPhone/iPad: tap the Share button in Safari, then "Add to Home Screen".', { duration: 7000 });
+      return;
+    }
+    setInstallState('installing');
+    const result = await triggerPwaInstall();
+    if (result === 'accepted') {
+      toast.success('VibeTribe is being installed on your device');
+      setInstallState('installed');
+    } else if (result === 'dismissed') {
+      toast.info('Install cancelled');
+      setInstallState('idle');
+    } else {
+      toast.info('Install prompt is not available yet — try again in a moment, or use your browser menu → Install VibeTribe.');
+      setInstallState('unavailable');
     }
   };
 
