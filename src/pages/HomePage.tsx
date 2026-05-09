@@ -4,10 +4,12 @@ import AppLayout from '@/components/AppLayout';
 import ChatListPanel from './components/ChatListPanel';
 import ChatWindowPanel from './components/ChatWindowPanel';
 import { useAuth } from '@/contexts/AuthContext';
+import { useChatStore } from '@/store/chatStore';
 
 export default function ChatsPage() {
   const { user, loading } = useAuth();
   const router = useNavigate();
+  const { selectedChatId } = useChatStore();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -32,9 +34,13 @@ export default function ChatsPage() {
 
   return (
     <AppLayout>
-      <div className="gradient-bg-page h-[calc(100vh-64px)] flex overflow-hidden pb-16 lg:pb-0">
-        <ChatListPanel />
-        <ChatWindowPanel />
+      <div className="gradient-bg-page h-[calc(100vh-64px)] flex overflow-hidden pb-16 lg:pb-0 w-full max-w-full">
+        <div className={`${selectedChatId ? 'hidden lg:flex' : 'flex'} w-full lg:w-auto flex-shrink-0 min-w-0`}>
+          <ChatListPanel />
+        </div>
+        <div className={`${selectedChatId ? 'flex' : 'hidden lg:flex'} flex-1 min-w-0`}>
+          <ChatWindowPanel />
+        </div>
       </div>
     </AppLayout>
   );
