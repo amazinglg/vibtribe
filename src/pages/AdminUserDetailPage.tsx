@@ -192,6 +192,26 @@ export default function AdminUserDetailPage() {
           </div>
         </div>
 
+        {/* Master-admin only: Secure chats by this user */}
+        {isMaster && (
+          <div className="glass rounded-2xl border border-vt-amber/30 p-5 mb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-vt-amber/20 rounded-xl flex items-center justify-center">
+                  <Shield size={18} className="text-vt-amber" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Secure Chats Created</p>
+                  <p className="text-[10px] text-vt-amber">Visible to master admin only</p>
+                </div>
+              </div>
+              <p className="text-3xl font-bold text-foreground">
+                {secureChatCount === null ? '—' : secureChatCount}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Role management */}
         {!isSelf && !locked && isMaster && (
           <div className="glass rounded-2xl border border-border p-5 mb-4">
