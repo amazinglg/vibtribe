@@ -11,6 +11,7 @@ import PermissionPrompt from '@/components/PermissionPrompt';
 import { usePermissions } from '@/hooks/usePermissions';
 import { sendPushNotification } from '@/lib/pushNotifications';
 import AppImage from "@/components/ui/AppImage";
+import { useCall } from '@/components/CallProvider';
 
 interface Message {
   id: string;
@@ -693,8 +694,11 @@ export default function ChatWindowPanel() {
     setShowCallPermPrompt(false);
     if (pendingCall === 'video') {
       await requestMicAndCamera();
-      setVideoCallActive(true);
-      // Notify recipient of incoming video call via push
+      // Start real WebRTC video call
+      if (contact?.userId) {
+        await startCall({ calleeId: contact.userId, chatId: selectedChatId, type: 'video', calleeName: contact.name, calleeAvatar: contact.avatar });
+      }
+      // Also send push notification (best-effort)
       if (contact?.userId) {
         const callerName = profile?.full_name || 'Someone';
         await sendPushNotification(supabase, {
@@ -709,8 +713,9 @@ export default function ChatWindowPanel() {
       }
     } else {
       await requestMicrophone();
-      setCallActive(true);
-      // Notify recipient of incoming voice call via push
+      if (contact?.userId) {
+        await startCall({ calleeId: contact.userId, chatId: selectedChatId, type: 'voice', calleeName: contact.name, calleeAvatar: contact.avatar });
+      }
       if (contact?.userId) {
         const callerName = profile?.full_name || 'Someone';
         await sendPushNotification(supabase, {
@@ -729,11 +734,10 @@ export default function ChatWindowPanel() {
 
   const handleCallPermDeny = () => {
     setShowCallPermPrompt(false);
-    // Still allow call to proceed — permissions will be requested by browser natively
-    if (pendingCall === 'video') {
-      setVideoCallActive(true);
-    } else {
-      setCallActive(true);
+    // Still allow call to proceed — browser will prompt natively
+    if (contact?.userId) {
+      const t = pendingCall === 'video' ? 'video' : 'voice';
+      startCall({ calleeId: contact.userId, chatId: selectedChatId, type: t, calleeName: contact.name, calleeAvatar: contact.avatar });
     }
     setPendingCall(null);
   };
@@ -822,25 +826,7 @@ export default function ChatWindowPanel() {
         />
       )}
 
-      {/* Voice Call Modal */}
-      {callActive && contact && (
-        <CallModal
-          type="voice"
-          contactName={contact.name}
-          contactAvatar={contact.avatar}
-          onEnd={() => setCallActive(false)}
-        />
-      )}
-
-      {/* Video Call Modal */}
-      {videoCallActive && contact && (
-        <CallModal
-          type="video"
-          contactName={contact.name}
-          contactAvatar={contact.avatar}
-          onEnd={() => setVideoCallActive(false)}
-        />
-      )}
+      {/* Call UI is rendered globally by CallProvider */}
 
       {/* Chat Header */}
       <div className="glass border-b border-border px-4 py-3 flex items-center gap-3 flex-shrink-0">
