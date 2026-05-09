@@ -45,43 +45,87 @@ export default function StatusHero() {
       </div>
 
       {/* My Status Card */}
-      <div className="glass rounded-3xl border border-border p-5 mb-6 card-3d relative overflow-hidden">
+      <div className="glass rounded-3xl border border-border p-4 sm:p-5 mb-6 card-3d relative overflow-hidden">
         {/* Background gradient blob */}
         <div className="absolute inset-0 opacity-20 pointer-events-none overflow-hidden rounded-3xl">
           <div className="absolute top-0 right-0 w-32 h-32 gradient-primary rounded-full blur-3xl" />
           <div className="absolute bottom-0 left-0 w-24 h-24 gradient-cyan rounded-full blur-3xl" />
         </div>
 
-        <div className="relative flex items-center gap-4">
+        <div className="relative flex items-center gap-3 sm:gap-4">
           {/* My Status Ring */}
           <div className="relative flex-shrink-0">
             <div className="status-ring-active p-0.5 rounded-full">
-              <div className="w-16 h-16 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-xl border-2 border-background">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-lg sm:text-xl border-2 border-background">
                 {avatarLetter}
               </div>
             </div>
-            <div className="absolute bottom-0 right-0 w-6 h-6 gradient-primary rounded-full flex items-center justify-center border-2 border-background">
-              <Plus size={12} className="text-white" />
-            </div>
           </div>
 
-          <div className="flex-1">
-            <h3 className="font-bold text-base text-foreground">My Status</h3>
-            <p className="text-xs text-muted-foreground mt-0.5">Tap to add a new status</p>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-bold text-sm sm:text-base text-foreground truncate">My Status</h3>
+            <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">Tap below to add a new story</p>
+          </div>
 
-            {/* Visibility Selector */}
-            <div className="relative mt-2">
+          {/* Add Status Button */}
+          <div className="relative flex-shrink-0">
+            <button
+              onClick={() => setShowOptions(!showOptions)}
+              disabled={uploading}
+              className="gradient-primary text-white px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl flex items-center gap-1.5 font-semibold text-xs sm:text-sm hover:opacity-90 transition-all glow-primary disabled:opacity-60"
+            >
+              {uploading ? (
+                <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ) : (
+                <Plus size={14} />
+              )}
+              <span>{uploading ? 'Posting...' : 'Add'}</span>
+            </button>
+
+            {showOptions && (
+              <div className="absolute right-0 top-full mt-2 w-44 glass-strong rounded-xl border border-border shadow-card py-1 z-20 float-up">
+                {[
+                  { icon: Camera, label: 'Photo / Video', type: 'media' },
+                  { icon: Type, label: 'Text Status', type: 'text' },
+                  { icon: Music, label: 'Music Status', type: 'music' },
+                  { icon: Sparkles, label: 'AI Status', type: 'ai' },
+                ].map((opt) => {
+                  const Icon = opt.icon;
+                  return (
+                    <button
+                      key={`status-opt-${opt.type}`}
+                      onClick={() => handleUpload(opt.type)}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                    >
+                      <Icon size={16} />
+                      <span>{opt.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Visibility Selector — full width, below */}
+        <div className="relative mt-3 pt-3 border-t border-border/40">
+          <div className="relative">
               <button
                 onClick={() => setShowVisibility(!showVisibility)}
-                className="flex items-center gap-1.5 px-2.5 py-1 glass rounded-lg border border-border hover:border-primary/40 transition-all text-xs"
+                className="w-full flex items-center justify-between gap-2 px-3 py-2 glass rounded-xl border border-border hover:border-primary/40 transition-all text-xs"
               >
-                <VisibilityIcon size={11} className="text-primary" />
-                <span className="text-foreground font-medium">{currentVisibility.label}</span>
-                <ChevronDown size={11} className="text-muted-foreground" />
+                <div className="flex items-center gap-2">
+                  <VisibilityIcon size={13} className="text-primary" />
+                  <span className="text-foreground font-medium">Visible to: {currentVisibility.label}</span>
+                </div>
+                <ChevronDown size={13} className="text-muted-foreground" />
               </button>
 
               {showVisibility && (
-                <div className="absolute left-0 bottom-full mb-1 sm:bottom-auto sm:top-full sm:mt-1 w-52 max-h-[60vh] overflow-y-auto glass-strong rounded-xl border border-border shadow-card py-1 z-[100] float-up">
+                <div className="absolute left-0 right-0 top-full mt-1 max-h-[60vh] overflow-y-auto glass-strong rounded-xl border border-border shadow-card py-1 z-[100] float-up">
                   <p className="px-3 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                     Who can see this status?
                   </p>
@@ -108,49 +152,6 @@ export default function StatusHero() {
                   })}
                 </div>
               )}
-            </div>
-          </div>
-
-          {/* Add Status Button */}
-          <div className="relative">
-            <button
-              onClick={() => setShowOptions(!showOptions)}
-              disabled={uploading}
-              className="gradient-primary text-white px-4 py-2.5 rounded-xl flex items-center gap-2 font-semibold text-sm hover:opacity-90 transition-all glow-primary disabled:opacity-60"
-            >
-              {uploading ? (
-                <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-              ) : (
-                <Plus size={16} />
-              )}
-              <span>{uploading ? 'Posting...' : 'Add Status'}</span>
-            </button>
-
-            {showOptions && (
-              <div className="absolute right-0 top-full mt-2 w-44 glass-strong rounded-xl border border-border shadow-card py-1 z-20 float-up">
-                {[
-                  { icon: Camera, label: 'Photo / Video', type: 'media' },
-                  { icon: Type, label: 'Text Status', type: 'text' },
-                  { icon: Music, label: 'Music Status', type: 'music' },
-                  { icon: Sparkles, label: 'AI Status', type: 'ai' },
-                ].map((opt) => {
-                  const Icon = opt.icon;
-                  return (
-                    <button
-                      key={`status-opt-${opt.type}`}
-                      onClick={() => handleUpload(opt.type)}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
-                    >
-                      <Icon size={16} />
-                      <span>{opt.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
           </div>
         </div>
       </div>
