@@ -563,13 +563,6 @@ export default function ProfileContent() {
                 <span className="hidden lg:inline">{tab.label}</span>
               </button>
             ))}
-            <button
-              onClick={handleSignOut}
-              className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-red-400 hover:bg-red-500/10 transition-all mt-auto"
-            >
-              <LogOut size={16} />
-              <span className="hidden lg:inline">Sign Out</span>
-            </button>
           </div>
         </div>
 
@@ -774,27 +767,113 @@ export default function ProfileContent() {
               <div className="glass rounded-2xl border border-border p-5">
                 <h3 className="font-semibold text-base text-foreground mb-4">Privacy Settings</h3>
                 <div className="space-y-4">
+                  {/* Last Seen / Read Receipts kept as toggles */}
                   {[
-                    { label: 'Last Seen', desc: 'Show when you were last active', enabled: true },
-                    { label: 'Read Receipts', desc: 'Show when you have read messages', enabled: true },
-                    { label: 'Profile Photo', desc: 'Who can see your profile photo', enabled: true },
-                    { label: 'Status Updates', desc: 'Who can see your 24h statuses', enabled: true },
+                    { label: 'Last Seen', desc: 'Show when you were last active' },
+                    { label: 'Read Receipts', desc: 'Show when you have read messages' },
                   ].map((item, i) => (
                     <div key={i} className="flex items-center justify-between p-3 rounded-xl hover:bg-muted/50 transition-colors">
                       <div>
                         <p className="text-sm font-medium text-foreground">{item.label}</p>
                         <p className="text-xs text-muted-foreground">{item.desc}</p>
                       </div>
-                      <div className={`w-10 h-6 rounded-full transition-all cursor-pointer ${item.enabled ? 'gradient-primary' : 'bg-muted'} relative`}>
-                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${item.enabled ? 'right-1' : 'left-1'}`} />
+                      <div className="w-10 h-6 rounded-full gradient-primary relative">
+                        <div className="absolute top-1 right-1 w-4 h-4 bg-white rounded-full" />
                       </div>
                     </div>
                   ))}
+
+                  {/* Profile Photo Visibility */}
+                  <div className="p-3 rounded-xl bg-muted/30">
+                    <div className="flex items-center justify-between gap-3 mb-2">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">Profile Photo</p>
+                        <p className="text-xs text-muted-foreground">Who can see your profile photo</p>
+                      </div>
+                    </div>
+                    <select
+                      value={profilePhotoVisibility}
+                      onChange={async (e) => {
+                        const v = e.target.value as any;
+                        setProfilePhotoVisibility(v);
+                        try { await updateProfile({ profile_photo_visibility: v }); toast.success('Profile photo visibility updated'); } catch {}
+                      }}
+                      className="w-full px-3 py-2 bg-input border border-border rounded-xl text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                      <option value="all">All Users</option>
+                      <option value="contacts">My Contacts</option>
+                      <option value="selected">Specific Users</option>
+                    </select>
+                  </div>
+
+                  {/* Status Visibility */}
+                  <div className="p-3 rounded-xl bg-muted/30">
+                    <div className="flex items-center justify-between gap-3 mb-2">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">Status Updates</p>
+                        <p className="text-xs text-muted-foreground">Who can see your 24h statuses</p>
+                      </div>
+                    </div>
+                    <select
+                      value={statusVisibilitySetting}
+                      onChange={async (e) => {
+                        const v = e.target.value as any;
+                        setStatusVisibilitySetting(v);
+                        try { await updateProfile({ status_visibility: v }); toast.success('Status visibility updated'); } catch {}
+                      }}
+                      className="w-full px-3 py-2 bg-input border border-border rounded-xl text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                      <option value="all">All Users</option>
+                      <option value="contacts">My Contacts</option>
+                      <option value="selected">Specific Users</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
-              {/* Blocked Users */}
+              {/* Permissions */}
               <div className="glass rounded-2xl border border-border p-5">
+                <h3 className="font-semibold text-base text-foreground mb-1 flex items-center gap-2">
+                  <Shield size={16} className="text-primary" />
+                  Permissions
+                </h3>
+                <p className="text-xs text-muted-foreground mb-4">Manage app permissions for notifications, microphone, camera and storage.</p>
+                <div className="space-y-3">
+                  {[
+                    { label: 'Notifications', status: appPerms.notifications, request: requestNotifications },
+                    { label: 'Microphone & Camera', status: appPerms.microphone === 'granted' && appPerms.camera === 'granted' ? 'granted' : appPerms.microphone, request: requestMicAndCamera },
+                    { label: 'Storage', status: appPerms.storage, request: requestStorage },
+                  ].map((p) => {
+                    const granted = p.status === 'granted';
+                    return (
+                      <div key={p.label} className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+                        <div>
+                          <p className="text-sm font-medium text-foreground">{p.label}</p>
+                          <p className="text-xs text-muted-foreground capitalize">{p.status}</p>
+                        </div>
+                        <button
+                          onClick={async () => {
+                            if (granted) {
+                              toast.info('To revoke, change site permissions in your browser settings.');
+                            } else {
+                              await p.request();
+                              await checkAllPermissions();
+                            }
+                          }}
+                          className={`w-10 h-6 rounded-full relative transition-all ${granted ? 'gradient-primary' : 'bg-muted'}`}
+                        >
+                          <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${granted ? 'right-1' : 'left-1'}`} />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'blocked' && (
+            <div className="glass rounded-2xl border border-border p-5">
                 <h3 className="font-semibold text-base text-foreground mb-4 flex items-center gap-2">
                   <Ban size={16} className="text-red-400" />
                   Blocked Users
@@ -821,7 +900,7 @@ export default function ProfileContent() {
                         </div>
                         <button
                           onClick={() => handleUnblockUser(b.id, b.full_name || 'User')}
-                          className="px-3 py-1.5 text-xs font-semibold text-primary border border-primary/30 rounded-lg hover:bg-primary/10 transition-all"
+                          className="px-3 py-1.5 text-xs font-semibold text-red-400 border border-red-400/30 rounded-lg hover:bg-red-500/10 transition-all"
                         >
                           Unblock
                         </button>
@@ -829,7 +908,6 @@ export default function ProfileContent() {
                     ))}
                   </div>
                 )}
-              </div>
             </div>
           )}
 
