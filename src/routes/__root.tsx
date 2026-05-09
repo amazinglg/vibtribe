@@ -75,7 +75,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { name: "theme-color", content: "#7C3AED" },
       { title: "VibeTribe — New Way to Chat and Respect Privacy" },
       { name: "description", content: "VibeTribe is a vibrant social messaging platform for real-time chat, secure private vaults, and 24-hour status updates with your circle." },
@@ -99,7 +99,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" },
       { rel: "manifest", href: "/manifest.json" },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
-      { rel: "apple-touch-icon", href: "/assets/images/app_logo.png" },
+      { rel: "apple-touch-icon", sizes: "180x180", href: "/icons/apple-touch-icon.png" },
+      { rel: "apple-touch-icon", sizes: "167x167", href: "/icons/apple-touch-icon-167.png" },
+      { rel: "apple-touch-icon", sizes: "152x152", href: "/icons/apple-touch-icon-152.png" },
+      { rel: "icon", type: "image/png", sizes: "192x192", href: "/icons/icon-192x192.png" },
+      { rel: "icon", type: "image/png", sizes: "512x512", href: "/icons/icon-512x512.png" },
     ],
   }),
   shellComponent: RootShell,

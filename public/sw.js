@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vibetribe-v5';
+const CACHE_NAME = 'vibetribe-v6';
 const STATIC_ASSETS = [
   '/manifest.json',
   '/favicon.ico',
