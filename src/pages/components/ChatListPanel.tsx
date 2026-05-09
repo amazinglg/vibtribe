@@ -63,6 +63,8 @@ export default function ChatListPanel() {
       .channel(`chatlist-${user.id}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, debouncedReload)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chats' }, debouncedReload)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'chats' }, debouncedReload)
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'chats' }, debouncedReload)
       .subscribe();
     return () => {
       if (timer) clearTimeout(timer);
@@ -401,6 +403,12 @@ export default function ChatListPanel() {
           }}
           chatId={secureTarget.id}
           chatName={secureTarget.name}
+          onSecured={(id) => {
+            // Optimistically remove from list immediately so the chat
+            // disappears without waiting for a reload.
+            setChats((prev) => prev.filter((c) => c.id !== id));
+            if (selectedChatId === id) setSelectedChatId(null);
+          }}
         />
       )}
 
