@@ -17,8 +17,10 @@ interface ContactsPanelProps {
   onStartChat?: (userId: string, name: string) => void;
 }
 
-const PLATFORM_URL = window.location.origin || 'https://vibetribe2767.builtwithrocket.new';
-const INVITE_MSG = `Hey! I'm using VibeTribe — a secure messaging app. Join me here: ${PLATFORM_URL}/sign-up 🚀`;
+const getPlatformUrl = () =>
+  typeof window !== 'undefined' ? window.location.origin : 'https://vibtribe.in';
+const getInviteMsg = () =>
+  `Hey! I'm using VibeTribe — a secure messaging app. Join me here: ${getPlatformUrl()}/sign-up 🚀`;
 
 export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelProps) {
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -141,19 +143,19 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
 
   const handleInviteWhatsApp = (contact: Contact) => {
     const phone = contact.phone.replace(/\D/g, '');
-    const url = `https://wa.me/${phone}?text=${encodeURIComponent(INVITE_MSG)}`;
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(getInviteMsg())}`;
     window.open(url, '_blank');
     setInviteTarget(null);
   };
 
   const handleInviteSMS = (contact: Contact) => {
-    const url = `sms:${contact.phone}?body=${encodeURIComponent(INVITE_MSG)}`;
+    const url = `sms:${contact.phone}?body=${encodeURIComponent(getInviteMsg())}`;
     window.location.href = url;
     setInviteTarget(null);
   };
 
   const handleInviteCopy = async () => {
-    await navigator.clipboard.writeText(INVITE_MSG);
+    await navigator.clipboard.writeText(getInviteMsg());
     setInviteTarget(null);
   };
 
@@ -193,20 +195,22 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
               </div>
               <h3 className="font-bold text-lg text-foreground mb-2">Find Your Contacts</h3>
               <p className="text-sm text-muted-foreground mb-6">
-                Allow VibeTribe to access your contacts to see who's already on the platform and invite others.
+                VibeTribe needs access to <strong>all your contacts</strong> to find your friends on the platform and let you invite the rest.
               </p>
-              <button
-                onClick={requestContacts}
-                className="w-full gradient-primary text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-all glow-primary"
-              >
-                Allow Contact Access
-              </button>
-              <button
-                className="w-full mt-2 py-3 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-all text-sm"
-                onClick={() => { setPermissionState('granted'); loadDemoContacts(); }}
-              >
-                Skip for now
-              </button>
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={requestContacts}
+                  className="w-full gradient-primary text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-all glow-primary"
+                >
+                  Allow access to all contacts
+                </button>
+                <button
+                  onClick={() => setPermissionState('denied')}
+                  className="w-full py-3 rounded-xl border border-border text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+                >
+                  Deny
+                </button>
+              </div>
             </div>
           )}
 
