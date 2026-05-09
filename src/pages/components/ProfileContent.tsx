@@ -442,6 +442,15 @@ export default function ProfileContent() {
         </div>
 
         <div className="relative flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 text-center sm:text-left">
+          {/* Top-right logout */}
+          <button
+            onClick={handleSignOut}
+            className="absolute top-0 right-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all z-10"
+            title="Sign Out"
+          >
+            <LogOut size={14} />
+            <span className="hidden sm:inline">Sign Out</span>
+          </button>
           {/* Avatar */}
           <div className="relative flex-shrink-0">
             <div className="status-ring-active p-0.5 rounded-full">
