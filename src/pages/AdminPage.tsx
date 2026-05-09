@@ -414,7 +414,7 @@ export default function AdminPage() {
         )}
 
         {activeTab === 'users' && (
-          <div className="flex flex-col lg:flex-row gap-6">
+          <div className="flex flex-col gap-6">
             {/* User List */}
             <div className="flex-1 glass rounded-2xl border border-border overflow-hidden">
               <div className="p-4 border-b border-border">
