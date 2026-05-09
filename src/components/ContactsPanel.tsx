@@ -168,8 +168,8 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
   const nonPlatformContacts = filtered.filter(c => !c.onPlatform);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-md glass-strong rounded-3xl border border-border shadow-card overflow-hidden float-up max-h-[85vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pb-24 sm:pb-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+      <div className="w-full max-w-md glass-strong rounded-3xl border border-border shadow-card overflow-hidden float-up max-h-[calc(100dvh-7rem)] sm:max-h-[85vh] flex flex-col my-auto">
         {/* Header */}
         <div className="px-5 py-4 border-b border-border flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-3">

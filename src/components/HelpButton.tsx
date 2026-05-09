@@ -91,7 +91,7 @@ export default function HelpButton({ variant = 'floating' }: HelpButtonProps) {
       {variant === 'floating' ? (
         <button
           onClick={handleOpen}
-          className="fixed bottom-6 right-6 z-40 w-12 h-12 gradient-primary rounded-full flex items-center justify-center shadow-lg glow-primary hover:opacity-90 transition-all"
+          className="fixed bottom-24 right-4 lg:bottom-6 lg:right-6 z-30 w-12 h-12 gradient-primary rounded-full flex items-center justify-center shadow-lg glow-primary hover:opacity-90 transition-all"
           title="Help & Support"
         >
           <HelpCircle size={22} className="text-white" />
