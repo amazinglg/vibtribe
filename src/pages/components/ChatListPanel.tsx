@@ -43,6 +43,26 @@ export default function ChatListPanel() {
     if (user) loadChats();
   }, [user]);
 
+  // Lightweight realtime: refresh chat list when a new message hits any chat.
+  // Debounced so high-traffic chats don't trigger a flood of refetches.
+  useEffect(() => {
+    if (!user) return;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const debouncedReload = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => loadChats(), 600);
+    };
+    const channel = supabase
+      .channel(`chatlist-${user.id}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, debouncedReload)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chats' }, debouncedReload)
+      .subscribe();
+    return () => {
+      if (timer) clearTimeout(timer);
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   const loadChats = async () => {
     if (!user) return;
     setLoading(true);
