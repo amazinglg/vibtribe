@@ -413,7 +413,9 @@ export default function ProfileContent() {
   };
 
   const avatarLetter = profile?.full_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'V';
-  const displayEmail = profile?.email && !profile.email.endsWith('@vibetribe.app') ? profile.email : (user?.email && !user.email.endsWith('@vibetribe.app') ? user.email : null);
+  const displayEmail = profile?.real_email
+    || (profile?.email && !profile.email.endsWith('@vibetribe.app') ? profile.email : null)
+    || (user?.email && !user.email.endsWith('@vibetribe.app') ? user.email : null);
   const displayMobile = profile?.mobile_number || null;
   const selectedCountry = COUNTRY_CODES.find(c => c.code === editCountryCode) || COUNTRY_CODES[0];
 
