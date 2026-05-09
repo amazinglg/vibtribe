@@ -139,14 +139,15 @@ export default function GlobalSearchBar() {
     <div ref={containerRef} className="relative">
       <button
         onClick={() => setOpen(true)}
-        className="hidden sm:flex items-center gap-2 px-3 py-2 glass rounded-xl text-muted-foreground hover:text-foreground transition-all text-sm min-w-[120px]"
+        className="flex items-center gap-2 p-2 sm:px-3 sm:py-2 glass rounded-xl text-muted-foreground hover:text-foreground transition-all text-sm sm:min-w-[120px]"
+        title="Search users"
       >
-        <Search size={16} />
+        <Search size={18} className="sm:w-4 sm:h-4" />
         <span className="hidden md:inline">Search users...</span>
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 glass-strong rounded-2xl border border-border shadow-card z-50 float-up overflow-hidden">
+        <div className="fixed sm:absolute right-2 sm:right-0 top-16 sm:top-full sm:mt-2 w-[calc(100vw-1rem)] sm:w-96 max-w-md glass-strong rounded-2xl border border-border shadow-card z-50 float-up overflow-hidden">
           {/* Search Input */}
           <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
             <Search size={16} className="text-muted-foreground flex-shrink-0" />

@@ -329,7 +329,7 @@ export default function AdminPage() {
 
   return (
     <AppLayout>
-      <div className="max-w-screen-2xl mx-auto px-4 lg:px-8 py-6">
+      <div className="max-w-screen-2xl mx-auto px-4 lg:px-8 py-6 pb-28 lg:pb-6">
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
           <button onClick={() => window.history.back()} className="p-2 glass rounded-xl text-muted-foreground hover:text-foreground transition-all">
@@ -369,18 +369,18 @@ export default function AdminPage() {
 
         {activeTab === 'overview' && (
           <div className="space-y-6">
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
               {[
                 { label: 'Total Users', value: stats.totalUsers, icon: Users, color: 'gradient-primary', glow: 'glow-primary' },
                 { label: 'Active Users', value: stats.activeUsers, icon: CheckCircle2, color: 'gradient-cyan', glow: '' },
                 { label: 'Online Now', value: stats.onlineNow, icon: Activity, color: 'gradient-tri', glow: '' },
               ].map((stat) => (
-                <div key={stat.label} className="glass rounded-2xl border border-border p-5 card-3d">
-                  <div className={`w-10 h-10 ${stat.color} rounded-xl flex items-center justify-center mb-3 ${stat.glow}`}>
-                    <stat.icon size={20} className="text-white" />
+                <div key={stat.label} className="glass rounded-2xl border border-border p-3 sm:p-5 card-3d">
+                  <div className={`w-8 h-8 sm:w-10 sm:h-10 ${stat.color} rounded-xl flex items-center justify-center mb-2 sm:mb-3 ${stat.glow}`}>
+                    <stat.icon size={18} className="text-white" />
                   </div>
-                  <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>
+                  <p className="text-xl sm:text-2xl font-bold text-foreground">{stat.value}</p>
+                  <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1">{stat.label}</p>
                 </div>
               ))}
             </div>
@@ -471,7 +471,7 @@ export default function AdminPage() {
 
             {/* User Detail Panel */}
             {selectedUser && (
-              <div className="w-full lg:w-80 flex-shrink-0 glass rounded-2xl border border-border p-5 float-up overflow-y-auto max-h-[calc(100vh-200px)]">
+              <div className="w-full lg:w-80 flex-shrink-0 glass rounded-2xl border border-border p-5 float-up overflow-y-auto max-h-[calc(100dvh-220px)] lg:max-h-[calc(100vh-200px)] pb-24 lg:pb-5">
                 <div className="flex lg:hidden justify-end mb-2">
                   <button onClick={() => setSelectedUser(null)} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground transition-colors" title="Close">
                     <X size={16} />
@@ -620,7 +620,7 @@ export default function AdminPage() {
                   <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                 </div>
               ) : (
-                <div className="overflow-y-auto max-h-[calc(100vh-350px)]">
+                <div className="overflow-y-auto max-h-[calc(100dvh-380px)] lg:max-h-[calc(100vh-350px)]">
                   {filteredTickets.map(ticket => {
                     const cfg = TICKET_STATUS_CONFIG[ticket.ticket_status] || TICKET_STATUS_CONFIG.open;
                     return (
@@ -660,7 +660,7 @@ export default function AdminPage() {
 
             {/* Ticket Detail */}
             {selectedTicket ? (
-              <div className="w-full lg:w-96 flex-shrink-0 glass rounded-2xl border border-border p-5 float-up flex flex-col gap-4 overflow-y-auto max-h-[calc(100vh-200px)]">
+              <div className="w-full lg:w-96 flex-shrink-0 glass rounded-2xl border border-border p-5 float-up flex flex-col gap-4 overflow-y-auto max-h-[calc(100dvh-220px)] lg:max-h-[calc(100vh-200px)] pb-24 lg:pb-5">
                 <div className="flex items-start justify-between">
                   <div>
                     <h3 className="font-bold text-foreground text-base">{selectedTicket.issue_title}</h3>

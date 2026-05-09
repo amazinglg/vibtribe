@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from '@tanstack/react-router';
 import AppLogo from '@/components/ui/AppLogo';
-import { MessageCircle, CircleDot, User, Bell, Shield, Lock, ChevronLeft, ChevronRight, Wifi, LogOut } from 'lucide-react';
+import { MessageCircle, CircleDot, User, Bell, Shield, Lock, ChevronLeft, ChevronRight, Wifi, LogOut, Search } from 'lucide-react';
 import SecureVaultModal from './SecureVaultModal';
 import { useAuth } from '@/contexts/AuthContext';
 import PWAInstallBanner from './PWAInstallBanner';
@@ -224,10 +224,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Main Content */}
       <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${sidebarExpanded ? 'lg:ml-64' : 'lg:ml-20'}`}>
         {/* Topbar */}
-        <header className="glass-strong border-b border-border sticky top-0 z-30 h-16 flex items-center px-4 lg:px-6 gap-4">
-          <div className="flex lg:hidden items-center gap-2">
-            <AppLogo size={32} />
-            <span className="font-bold text-lg text-gradient-primary">VibeTribe</span>
+        <header className="glass-strong border-b border-border sticky top-0 z-30 h-16 flex items-center px-3 sm:px-4 lg:px-6 gap-2 sm:gap-3">
+          <div className="flex lg:hidden items-center gap-1.5 min-w-0">
+            <AppLogo size={28} />
+            <span className="font-bold text-base text-gradient-primary truncate hidden sm:inline">VibeTribe</span>
           </div>
 
           <div className="flex-1" />
@@ -235,7 +235,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           {/* Global Search Bar */}
           <GlobalSearchBar />
 
-          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 glass rounded-full text-xs text-vt-green font-medium">
+          <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 glass rounded-full text-xs text-vt-green font-medium">
             <Wifi size={12} />
             <span>Online</span>
           </div>
@@ -244,15 +244,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="relative">
             <button
               onClick={() => setNotificationsOpen(!notificationsOpen)}
-              className="relative p-2.5 glass rounded-xl text-muted-foreground hover:text-foreground transition-all"
+              className="relative p-2 sm:p-2.5 glass rounded-xl text-muted-foreground hover:text-foreground transition-all"
             >
-              <Bell size={20} />
+              <Bell size={18} />
               {unreadNotifications > 0 && (
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-pink rounded-full animate-pulse" />
               )}
             </button>
             {notificationsOpen && (
-              <div className="absolute right-0 top-full mt-2 w-80 glass-strong rounded-2xl border border-border shadow-card overflow-hidden z-50 float-up">
+              <div className="fixed sm:absolute right-2 sm:right-0 top-16 sm:top-full sm:mt-2 w-[calc(100vw-1rem)] sm:w-80 max-w-sm glass-strong rounded-2xl border border-border shadow-card overflow-hidden z-50 float-up">
                 <div className="px-4 py-3 border-b border-border flex items-center justify-between">
                   <h3 className="font-semibold text-sm text-foreground">Notifications</h3>
                   <button
@@ -273,20 +273,21 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           {/* 🔒 Secure Chats Button */}
           <button
             onClick={() => setSecureVaultOpen(true)}
-            className="flex items-center gap-2 px-3 py-2 glass rounded-xl border border-primary/30 text-primary hover:bg-primary/10 transition-all duration-200 hover:glow-primary group"
+            className="flex items-center gap-1.5 px-2 sm:px-3 py-2 glass rounded-xl border border-primary/30 text-primary hover:bg-primary/10 transition-all duration-200 hover:glow-primary group"
+            title="Secure Chats"
           >
             <Lock size={16} className="group-hover:animate-pulse" />
-            <span className="hidden sm:inline text-xs font-semibold">Secure</span>
+            <span className="hidden md:inline text-xs font-semibold">Secure</span>
           </button>
 
           {/* Admin Shield — only for admin */}
           {adminUser && (
             <Link
               to="/admin"
-              className="p-2.5 glass rounded-xl text-vt-amber hover:bg-vt-amber/10 transition-all"
+              className="p-2 sm:p-2.5 glass rounded-xl text-vt-amber hover:bg-vt-amber/10 transition-all"
               title="Admin Panel"
             >
-              <Shield size={20} />
+              <Shield size={18} />
             </Link>
           )}
         </header>
@@ -297,7 +298,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </main>
 
         {/* Mobile Bottom Nav */}
-        <nav className="lg:hidden fixed bottom-0 left-0 right-0 glass-strong border-t border-border z-40 px-2 py-2">
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 glass-strong border-t border-border z-40 px-2 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
           <div className="flex items-center justify-around">
             {NAV_ITEMS.map((item) => {
               const Icon = item.icon;
@@ -318,13 +319,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </Link>
               );
             })}
-            <button
-              onClick={() => setSecureVaultOpen(true)}
-              className="flex flex-col items-center gap-1 px-4 py-2 rounded-xl text-primary transition-all duration-200"
-            >
-              <Lock size={22} />
-              <span className="text-[10px] font-medium">Secure</span>
-            </button>
           </div>
         </nav>
 

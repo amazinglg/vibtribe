@@ -86,7 +86,7 @@ export default function StatusHero() {
               </button>
 
               {showVisibility && (
-                <div className="absolute left-0 top-full mt-1 w-52 glass-strong rounded-xl border border-border shadow-card py-1 z-[100] float-up">
+                <div className="absolute left-0 bottom-full mb-1 sm:bottom-auto sm:top-full sm:mt-1 w-52 max-h-[60vh] overflow-y-auto glass-strong rounded-xl border border-border shadow-card py-1 z-[100] float-up">
                   <p className="px-3 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                     Who can see this status?
                   </p>
