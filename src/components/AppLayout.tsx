@@ -29,6 +29,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, profile, signOut, isAdmin } = useAuth();
   const { isSecureSession, closeSecureChat } = useChatStore();
 
+  // Derive a short page title for the mobile topbar based on the current route.
+  const pageTitle = pathname === '/'
+    ? 'Messages'
+    : pathname.startsWith('/status')
+      ? 'Status'
+      : pathname.startsWith('/profile')
+        ? 'Profile'
+        : pathname.startsWith('/admin')
+          ? 'Admin'
+          : '';
+
   // Auto-relock secured chat when tab is hidden / app backgrounded / phone locked
   useEffect(() => {
     const onVisibility = () => {
@@ -227,12 +238,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <div className={`flex-1 flex flex-col min-h-screen min-w-0 max-w-full overflow-x-hidden transition-all duration-300 ${sidebarExpanded ? 'lg:ml-64' : 'lg:ml-20'}`}>
         {/* Topbar */}
         <header className="glass-strong border-b border-border sticky top-0 z-30 h-16 flex items-center px-3 sm:px-4 lg:px-6 gap-2 sm:gap-3">
-          <div className="flex lg:hidden items-center gap-1.5 min-w-0">
+          <div className="flex lg:hidden items-center gap-2 min-w-0 flex-shrink">
             <AppLogo size={28} />
-            <span className="font-bold text-base text-gradient-primary truncate hidden sm:inline">VibeTribe</span>
+            {pageTitle && (
+              <span className="font-bold text-base text-foreground truncate">{pageTitle}</span>
+            )}
           </div>
 
-          <div className="flex-1" />
+          <div className="flex-1 min-w-0" />
 
           {/* Global Search Bar */}
           <GlobalSearchBar />
@@ -282,6 +295,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <span className="hidden md:inline text-xs font-semibold">Secure</span>
           </button>
 
+          {/* Help — inline next to Secure */}
+          <HelpButton variant="topbar" />
+
           {/* Admin Shield — only for admin */}
           {adminUser && (
             <Link
@@ -326,9 +342,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
         {/* PWA Install Banner */}
         <PWAInstallBanner />
-
-        {/* Floating Help Button */}
-        <HelpButton variant="floating" />
       </div>
 
       <SecureVaultModal isOpen={secureVaultOpen} onClose={() => setSecureVaultOpen(false)} />

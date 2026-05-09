@@ -368,18 +368,18 @@ export default function AdminPage() {
 
         {activeTab === 'overview' && (
           <div className="space-y-6">
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
               {[
                 { label: 'Total Users', value: stats.totalUsers, icon: Users, color: 'gradient-primary', glow: 'glow-primary' },
                 { label: 'Active Users', value: stats.activeUsers, icon: CheckCircle2, color: 'gradient-cyan', glow: '' },
                 { label: 'Online Now', value: stats.onlineNow, icon: Activity, color: 'gradient-tri', glow: '' },
               ].map((stat) => (
-                <div key={stat.label} className="glass rounded-2xl border border-border p-3 sm:p-5 card-3d">
-                  <div className={`w-8 h-8 sm:w-10 sm:h-10 ${stat.color} rounded-xl flex items-center justify-center mb-2 sm:mb-3 ${stat.glow}`}>
-                    <stat.icon size={18} className="text-white" />
+                <div key={stat.label} className="glass rounded-xl border border-border p-2.5 sm:p-4 card-3d flex flex-col items-center text-center sm:items-start sm:text-left">
+                  <div className={`w-7 h-7 sm:w-9 sm:h-9 ${stat.color} rounded-lg flex items-center justify-center mb-1.5 sm:mb-2 ${stat.glow}`}>
+                    <stat.icon size={14} className="text-white" />
                   </div>
-                  <p className="text-xl sm:text-2xl font-bold text-foreground">{stat.value}</p>
-                  <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1">{stat.label}</p>
+                  <p className="text-lg sm:text-2xl font-bold text-foreground leading-none">{stat.value}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 leading-tight">{stat.label}</p>
                 </div>
               ))}
             </div>
@@ -590,7 +590,7 @@ export default function AdminPage() {
 
         {/* Support Tab */}
         {activeTab === 'support' && (
-          <div className="flex flex-col lg:flex-row gap-6">
+          <div className="flex flex-col gap-6">
             {/* Ticket List */}
             <div className="flex-1 glass rounded-2xl border border-border overflow-hidden">
               <div className="p-4 border-b border-border space-y-3">
@@ -619,7 +619,7 @@ export default function AdminPage() {
                   <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                 </div>
               ) : (
-                <div className="overflow-y-auto max-h-[calc(100dvh-380px)] lg:max-h-[calc(100vh-350px)]">
+                <div className="overflow-y-auto max-h-[calc(100dvh-340px)] lg:max-h-[calc(100vh-300px)]">
                   {filteredTickets.map(ticket => {
                     const cfg = TICKET_STATUS_CONFIG[ticket.ticket_status] || TICKET_STATUS_CONFIG.open;
                     return (
@@ -656,92 +656,87 @@ export default function AdminPage() {
                 </div>
               )}
             </div>
+          </div>
+        )}
 
-            {/* Ticket Detail */}
-            {selectedTicket ? (
-              <div className="w-full lg:w-96 flex-shrink-0 glass rounded-2xl border border-border p-5 float-up flex flex-col gap-4 overflow-y-auto max-h-[calc(100dvh-220px)] lg:max-h-[calc(100vh-200px)] pb-24 lg:pb-5">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="font-bold text-foreground text-base">{selectedTicket.issue_title}</h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">{selectedTicket.name} · {selectedTicket.email}</p>
-                    <p className="text-[10px] text-muted-foreground">{new Date(selectedTicket.created_at).toLocaleString()}</p>
-                  </div>
-                  <button onClick={() => setSelectedTicket(null)} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground transition-colors flex-shrink-0">
-                    <X size={16} />
-                  </button>
+        {/* Ticket Detail Modal */}
+        {selectedTicket && activeTab === 'support' && (
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4" onClick={() => setSelectedTicket(null)}>
+            <div
+              className="glass-strong rounded-t-3xl sm:rounded-3xl border border-border w-full max-w-lg float-up flex flex-col gap-4 p-5 max-h-[90vh] overflow-y-auto"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h3 className="font-bold text-foreground text-base truncate">{selectedTicket.issue_title}</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5 truncate">{selectedTicket.name} · {selectedTicket.email}</p>
+                  <p className="text-[10px] text-muted-foreground">{new Date(selectedTicket.created_at).toLocaleString()}</p>
                 </div>
+                <button onClick={() => setSelectedTicket(null)} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground transition-colors flex-shrink-0">
+                  <X size={18} />
+                </button>
+              </div>
 
-                {/* Status Change */}
-                <div>
-                  <p className="text-xs text-muted-foreground mb-2 font-medium">Change Status</p>
-                  <div className="flex gap-2">
-                    {(['open', 'inprocess', 'solved'] as const).map(s => {
-                      const cfg = TICKET_STATUS_CONFIG[s];
-                      return (
-                        <button key={s} onClick={() => handleUpdateTicketStatus(selectedTicket.id, s)}
-                          className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
-                            selectedTicket.ticket_status === s ? `${cfg.color} border-current` : 'bg-muted text-muted-foreground border-transparent hover:text-foreground'
-                          }`}>
-                          {s === 'inprocess' ? 'In Process' : s.charAt(0).toUpperCase() + s.slice(1)}
-                        </button>
-                      );
-                    })}
-                  </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-2 font-medium">Change Status</p>
+                <div className="flex gap-2">
+                  {(['open', 'inprocess', 'solved'] as const).map(s => {
+                    const cfg = TICKET_STATUS_CONFIG[s];
+                    return (
+                      <button key={s} onClick={() => handleUpdateTicketStatus(selectedTicket.id, s)}
+                        className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
+                          selectedTicket.ticket_status === s ? `${cfg.color} border-current` : 'bg-muted text-muted-foreground border-transparent hover:text-foreground'
+                        }`}>
+                        {s === 'inprocess' ? 'In Process' : s.charAt(0).toUpperCase() + s.slice(1)}
+                      </button>
+                    );
+                  })}
                 </div>
+              </div>
 
-                {/* Issue */}
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1.5 font-medium">Issue Description</p>
-                  <div className="bg-muted/50 rounded-xl p-3">
-                    <p className="text-sm text-foreground">{selectedTicket.issue_description}</p>
-                  </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-1.5 font-medium">Issue Description</p>
+                <div className="bg-muted/50 rounded-xl p-3">
+                  <p className="text-sm text-foreground whitespace-pre-wrap break-words">{selectedTicket.issue_description}</p>
                 </div>
+              </div>
 
-                {/* Previous Reply */}
-                {selectedTicket.admin_reply && (
-                  <div>
-                    <p className="text-xs text-primary mb-1.5 font-medium">Your Previous Reply</p>
-                    <div className="bg-primary/10 border border-primary/20 rounded-xl p-3">
-                      <p className="text-sm text-foreground">{selectedTicket.admin_reply}</p>
-                      {selectedTicket.replied_at && (
-                        <p className="text-[10px] text-muted-foreground mt-1">{new Date(selectedTicket.replied_at).toLocaleString()}</p>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Reply Box */}
+              {selectedTicket.admin_reply && (
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1.5 font-medium">
-                    {selectedTicket.admin_reply ? 'Update Reply' : 'Send Reply'}
-                  </p>
-                  <textarea
-                    value={replyText}
-                    onChange={e => setReplyText(e.target.value)}
-                    placeholder="Type your reply to the user..."
-                    rows={4}
-                    className="w-full px-3 py-2.5 bg-input border border-border rounded-xl text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all resize-none"
-                  />
-                  <button
-                    onClick={handleReplyTicket}
-                    disabled={replyLoading || !replyText.trim()}
-                    className="mt-2 w-full flex items-center justify-center gap-2 px-4 py-2.5 gradient-primary text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {replyLoading ? (
-                      <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /><span>Sending...</span></>
-                    ) : (
-                      <><Send size={14} /><span>Send Reply</span></>
+                  <p className="text-xs text-primary mb-1.5 font-medium">Your Previous Reply</p>
+                  <div className="bg-primary/10 border border-primary/20 rounded-xl p-3">
+                    <p className="text-sm text-foreground whitespace-pre-wrap break-words">{selectedTicket.admin_reply}</p>
+                    {selectedTicket.replied_at && (
+                      <p className="text-[10px] text-muted-foreground mt-1">{new Date(selectedTicket.replied_at).toLocaleString()}</p>
                     )}
-                  </button>
+                  </div>
                 </div>
+              )}
+
+              <div>
+                <p className="text-xs text-muted-foreground mb-1.5 font-medium">
+                  {selectedTicket.admin_reply ? 'Update Reply' : 'Send Reply'}
+                </p>
+                <textarea
+                  value={replyText}
+                  onChange={e => setReplyText(e.target.value)}
+                  placeholder="Type your reply to the user..."
+                  rows={4}
+                  className="w-full px-3 py-2.5 bg-input border border-border rounded-xl text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all resize-none"
+                />
+                <button
+                  onClick={handleReplyTicket}
+                  disabled={replyLoading || !replyText.trim()}
+                  className="mt-2 w-full flex items-center justify-center gap-2 px-4 py-2.5 gradient-primary text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {replyLoading ? (
+                    <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /><span>Sending...</span></>
+                  ) : (
+                    <><Send size={14} /><span>Send Reply</span></>
+                  )}
+                </button>
               </div>
-            ) : (
-              <div className="w-96 flex-shrink-0 glass rounded-2xl border border-border p-5 flex flex-col items-center justify-center text-center">
-                <Ticket size={32} className="text-muted-foreground mb-3" />
-                <p className="text-sm font-medium text-foreground">Select a ticket</p>
-                <p className="text-xs text-muted-foreground mt-1">Click on a ticket to view details and reply</p>
-              </div>
-            )}
+            </div>
           </div>
         )}
       </div>

@@ -237,32 +237,6 @@ export default function ChatListPanel() {
       >
         {/* Header */}
         <div className="px-4 py-4 border-b border-border">
-          <div className="flex items-center justify-between mb-3">
-            <h1 className="font-bold text-xl text-foreground">Messages</h1>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setCreateGroupOpen(true)}
-                className="p-2 glass rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
-                title="New Group"
-              >
-                <UserPlus size={18} />
-              </button>
-              <button
-                onClick={() => setContactsOpen(true)}
-                className="p-2 glass rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
-                title="Contacts"
-              >
-                <Users size={18} />
-              </button>
-              <button
-                onClick={() => setContactsOpen(true)}
-                className="p-2 gradient-primary rounded-xl text-white hover:opacity-90 transition-all glow-primary"
-                title="New Chat"
-              >
-                <Plus size={18} />
-              </button>
-            </div>
-          </div>
           <div className="relative">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input
@@ -289,6 +263,25 @@ export default function ChatListPanel() {
               </button>
             ))}
           </div>
+
+          {/* Tab-specific action */}
+          {activeTab === 'groups' ? (
+            <button
+              onClick={() => setCreateGroupOpen(true)}
+              className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 gradient-primary rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-all glow-primary"
+            >
+              <UserPlus size={16} />
+              Create New Group
+            </button>
+          ) : (
+            <button
+              onClick={() => setContactsOpen(true)}
+              className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 gradient-primary rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-all glow-primary"
+            >
+              <Plus size={16} />
+              New Chat
+            </button>
+          )}
         </div>
 
         {/* Chat List */}
