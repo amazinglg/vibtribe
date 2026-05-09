@@ -46,8 +46,22 @@ export default function GlobalSearchBar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Only search when the user enters a complete identifier:
+  //   - a 10+ digit phone number, or
+  //   - a username/handle (e.g. starting with @, or 3+ alphanumeric chars matched exactly)
+  const isCompleteQuery = (q: string) => {
+    const trimmed = q.trim();
+    if (!trimmed) return false;
+    const digits = trimmed.replace(/\D/g, '');
+    // Phone: at least 10 digits
+    if (digits.length >= 10) return true;
+    // Username: starts with @ and has 3+ chars, OR is a clean alphanumeric handle of 3+ chars
+    if (trimmed.startsWith('@') && trimmed.length >= 4) return true;
+    return false;
+  };
+
   useEffect(() => {
-    if (!query.trim() || query.length < 2) {
+    if (!isCompleteQuery(query)) {
       setResults([]);
       return;
     }
@@ -59,15 +73,23 @@ export default function GlobalSearchBar() {
     if (!user) return;
     setLoading(true);
     try {
-      const cleanQ = q.replace(/\D/g, '');
-      // Search by username, full_name, mobile_number, or email
+      const digits = q.replace(/\D/g, '');
+      const handle = q.startsWith('@') ? q.slice(1) : q;
+
+      let filter = '';
+      if (digits.length >= 10) {
+        // Match phone exactly (last 10 digits) or by suffix
+        filter = `mobile_number.ilike.%${digits}%`;
+      } else {
+        // Exact username match (case-insensitive)
+        filter = `username.eq.${handle},username.ilike.${handle}`;
+      }
+
       const { data } = await supabase
         .from('user_profiles')
         .select('id, full_name, username, mobile_number, email, is_online')
         .neq('id', user.id)
-        .or(
-          `full_name.ilike.%${q}%,username.ilike.%${q}%,email.ilike.%${q}%${cleanQ.length >= 4 ? `,mobile_number.ilike.%${cleanQ}%` : ''}`
-        )
+        .or(filter)
         .limit(10);
       setResults(data || []);
     } catch {
@@ -151,17 +173,17 @@ export default function GlobalSearchBar() {
               </div>
             )}
 
-            {!loading && query.length >= 2 && results.length === 0 && (
+            {!loading && isCompleteQuery(query) && results.length === 0 && (
               <div className="py-6 text-center">
                 <p className="text-sm text-muted-foreground">No users found for "{query}"</p>
               </div>
             )}
 
-            {!loading && query.length < 2 && (
+            {!loading && !isCompleteQuery(query) && (
               <div className="py-6 text-center">
                 <Search size={20} className="text-muted-foreground mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">Type at least 2 characters to search</p>
-                <p className="text-xs text-muted-foreground mt-1">Search by name, @username, phone, or email</p>
+                <p className="text-sm text-muted-foreground">Enter a full 10-digit phone number<br/>or an exact @username</p>
+                <p className="text-xs text-muted-foreground mt-1">For privacy, partial name searches are disabled</p>
               </div>
             )}
 
