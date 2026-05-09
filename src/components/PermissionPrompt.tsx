@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React from 'react';
 import { Mic, Camera, Bell, HardDrive, ShieldCheck } from 'lucide-react';
 

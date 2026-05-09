@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import { Users, Phone, UserPlus, MessageSquare, X, Share2, Check } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';

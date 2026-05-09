@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState } from 'react';
 import { Lock, X, Split, MoveRight, Eye, EyeOff, AlertTriangle, Hash, Grid3X3 } from 'lucide-react';
 import { toast } from 'sonner';

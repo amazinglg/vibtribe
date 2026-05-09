@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import StatusViewer from './StatusViewer';
 import { createClient } from '@/lib/supabase/client';

@@ -1,5 +1,4 @@
 import React, { useState, useCallback, useMemo, memo } from 'react';
-import AppImage from "@/components/ui/AppImage";
 interface AppImageProps {
     src: string;
     alt: string;
