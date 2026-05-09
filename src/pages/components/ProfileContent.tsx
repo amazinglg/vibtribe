@@ -11,7 +11,7 @@ import MyTickets from '@/components/MyTickets';
 import { useTheme, APP_THEMES, ThemeId } from '@/contexts/ThemeContext';
 import { triggerPwaInstall, isPwaInstallAvailable, isPwaInstalled } from '@/components/PWAInstallBanner';
 
-type Tab = 'account' | 'privacy' | 'notifications' | 'devices' | 'themes' | 'more';
+type Tab = 'account' | 'privacy' | 'notifications' | 'devices' | 'themes' | 'blocked' | 'more';
 
 const COUNTRY_CODES = [
   { name: 'India', code: '+91', flag: '🇮🇳' },
@@ -84,6 +84,14 @@ export default function ProfileContent() {
   const [notifStatus, setNotifStatus] = useState(true);
   const [notifSecureChats, setNotifSecureChats] = useState(false);
 
+  // Privacy visibility settings (Profile Photo / Status)
+  const [profilePhotoVisibility, setProfilePhotoVisibility] = useState<'all' | 'contacts' | 'selected'>('all');
+  const [statusVisibilitySetting, setStatusVisibilitySetting] = useState<'all' | 'contacts' | 'selected'>('all');
+
+  // App-level permissions state for the Permissions section
+  const { permissions: appPerms, requestNotifications, requestMicAndCamera, requestStorage, checkAllPermissions } = require('@/hooks/usePermissions').usePermissions();
+  useEffect(() => { checkAllPermissions(); }, [checkAllPermissions]);
+
   // Contact edit states
   const [editContact, setEditContact] = useState(false);
   const [editEmail, setEditEmail] = useState('');
@@ -114,6 +122,8 @@ export default function ProfileContent() {
       const parsed = parseCountryFromMobile(profile.mobile_number || '');
       setEditCountryCode(parsed.countryCode);
       setEditMobileNumber(parsed.number);
+      if (profile.profile_photo_visibility) setProfilePhotoVisibility(profile.profile_photo_visibility);
+      if (profile.status_visibility) setStatusVisibilitySetting(profile.status_visibility);
     }
   }, [profile, user]);
 
@@ -163,6 +173,7 @@ export default function ProfileContent() {
 
   useEffect(() => {
     if (activeTab === 'privacy') loadBlockedUsers();
+    if (activeTab === 'blocked') loadBlockedUsers();
     if (activeTab === 'devices') loadSessions();
   }, [activeTab]);
 
@@ -268,6 +279,7 @@ export default function ProfileContent() {
     { key: 'notifications', label: 'Notifications', icon: <Bell size={16} /> },
     { key: 'devices', label: 'Devices', icon: <Smartphone size={16} /> },
     { key: 'themes', label: 'Themes', icon: <Palette size={16} /> },
+    { key: 'blocked', label: 'Blocked Users', icon: <Ban size={16} /> },
     { key: 'more', label: 'More', icon: <HelpCircle size={16} /> },
   ];
 
