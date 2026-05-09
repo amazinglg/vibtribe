@@ -415,7 +415,7 @@ export default function AdminPage() {
         )}
 
         {activeTab === 'users' && (
-          <div className="flex gap-6">
+          <div className="flex flex-col lg:flex-row gap-6">
             {/* User List */}
             <div className="flex-1 glass rounded-2xl border border-border overflow-hidden">
               <div className="p-4 border-b border-border">
@@ -471,7 +471,12 @@ export default function AdminPage() {
 
             {/* User Detail Panel */}
             {selectedUser && (
-              <div className="w-80 flex-shrink-0 glass rounded-2xl border border-border p-5 float-up overflow-y-auto max-h-[calc(100vh-200px)]">
+              <div className="w-full lg:w-80 flex-shrink-0 glass rounded-2xl border border-border p-5 float-up overflow-y-auto max-h-[calc(100vh-200px)]">
+                <div className="flex lg:hidden justify-end mb-2">
+                  <button onClick={() => setSelectedUser(null)} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground transition-colors" title="Close">
+                    <X size={16} />
+                  </button>
+                </div>
                 <div className="flex items-center gap-3 mb-5">
                   <div className="w-14 h-14 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-xl">
                     {selectedUser.full_name?.[0]?.toUpperCase() || '?'}
@@ -586,7 +591,7 @@ export default function AdminPage() {
 
         {/* Support Tab */}
         {activeTab === 'support' && (
-          <div className="flex gap-6">
+          <div className="flex flex-col lg:flex-row gap-6">
             {/* Ticket List */}
             <div className="flex-1 glass rounded-2xl border border-border overflow-hidden">
               <div className="p-4 border-b border-border space-y-3">
@@ -655,7 +660,7 @@ export default function AdminPage() {
 
             {/* Ticket Detail */}
             {selectedTicket ? (
-              <div className="w-96 flex-shrink-0 glass rounded-2xl border border-border p-5 float-up flex flex-col gap-4 overflow-y-auto max-h-[calc(100vh-200px)]">
+              <div className="w-full lg:w-96 flex-shrink-0 glass rounded-2xl border border-border p-5 float-up flex flex-col gap-4 overflow-y-auto max-h-[calc(100vh-200px)]">
                 <div className="flex items-start justify-between">
                   <div>
                     <h3 className="font-bold text-foreground text-base">{selectedTicket.issue_title}</h3>
