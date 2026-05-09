@@ -7,6 +7,7 @@ import CreateGroupModal from '@/components/CreateGroupModal';
 import { useChatStore } from '@/store/chatStore';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
+import { decryptMessage, isEncrypted } from '@/lib/encryption';
 
 interface Chat {
   id: string;
@@ -139,17 +140,32 @@ export default function ChatListPanel() {
         const otherUserId = chat.participant_one === user.id ? chat.participant_two : chat.participant_one;
         const { data: otherUser } = await supabase
           .from('user_profiles')
-          .select('id, full_name, is_online, last_seen')
+          .select('id, full_name, is_online, last_seen, public_key')
           .eq('id', otherUserId)
           .single();
 
         if (otherUser) {
+          // Decrypt the last message preview so sender/receiver see plaintext.
+          let preview = lastMsg?.content || 'Start a conversation...';
+          if (lastMsg?.content && isEncrypted(lastMsg.content)) {
+            if (otherUser.public_key) {
+              try {
+                preview = await decryptMessage(lastMsg.content, otherUser.public_key);
+              } catch {
+                preview = '🔒 New message';
+              }
+            } else {
+              preview = '🔒 New message';
+            }
+          }
+          if (preview?.startsWith('[IMAGE:')) preview = '📷 Photo';
+          else if (preview?.startsWith('[FILE:')) preview = '📎 File';
           chatList.push({
             id: chat.id,
             name: otherUser.full_name || 'Unknown',
             avatar: (otherUser.full_name || 'U')[0].toUpperCase(),
             avatarColor: avatarColors[chatList.length % avatarColors.length],
-            lastMessage: lastMsg?.content?.startsWith('e2e:') ? '🔒 Encrypted message' : (lastMsg?.content || 'Start a conversation...'),
+            lastMessage: preview,
             time: lastMsg ? formatTime(lastMsg.created_at) : '',
             unread: unreadCount,
             online: otherUser.is_online || false,
