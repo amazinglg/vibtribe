@@ -31,13 +31,16 @@ export default function SignInPage() {
       // Check if account is suspended before attempting login
       let profileQuery;
       if (useEmail) {
+        const e = email.trim().toLowerCase();
         profileQuery = await supabase
           .from('user_profiles')
           .select('id, is_suspended, login_attempts, account_status')
-          .eq('email', email.trim())
+          .or(`email.eq.${e},real_email.eq.${e}`)
           .maybeSingle();
       } else {
-        const emailFromMobile = `${mobile.replace(/\D/g, '')}@vibetribe.app`;
+        const local10 = mobile.replace(/\D/g, '').slice(-10);
+        if (local10.length !== 10) { setError('Please enter a valid 10-digit mobile number'); setLoading(false); return; }
+        const emailFromMobile = `${local10}@vibetribe.app`;
         profileQuery = await supabase
           .from('user_profiles')
           .select('id, is_suspended, login_attempts, account_status')
