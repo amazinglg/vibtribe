@@ -221,26 +221,22 @@ export default function AdminUserDetailPage() {
             </h3>
             <p className="text-xs text-muted-foreground mb-3">
               Current role: <span className="font-semibold text-foreground capitalize">{target.role}</span>
+              {target.is_master_admin && <span className="ml-2 text-vt-amber">(Master Admin)</span>}
             </p>
-            <div className="flex gap-2">
-              {target.role !== 'admin' ? (
-                <button
-                  onClick={() => handleChangeRole('admin')}
-                  disabled={actionLoading}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-all"
-                >
-                  <ShieldCheck size={14} /> Promote to Admin
-                </button>
-              ) : (
-                <button
-                  onClick={() => handleChangeRole('user')}
-                  disabled={actionLoading}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 transition-all"
-                >
-                  <ShieldOff size={14} /> Demote to User
-                </button>
-              )}
-            </div>
+            <label className="text-xs text-muted-foreground mb-1 block">Change Role</label>
+            <select
+              value={target.role}
+              onChange={(e) => handleChangeRole(e.target.value as any)}
+              disabled={actionLoading}
+              className="w-full px-3 py-2.5 bg-input border border-border rounded-xl text-sm text-foreground"
+            >
+              <option value="user">User</option>
+              <option value="admin">Admin</option>
+              <option value="master_admin">Master Admin</option>
+            </select>
+            <p className="text-[10px] text-muted-foreground mt-2">
+              Only the master admin can change roles. The Master Admin flag itself is immutable and protected at the database level.
+            </p>
           </div>
         )}
 
