@@ -4,6 +4,7 @@ import { Lock, X, AlertTriangle, Eye, EyeOff, ArrowRight, ShieldAlert, Edit3, Ch
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useChatStore } from '@/store/chatStore';
 
 interface SecureVaultModalProps {
   isOpen: boolean;
@@ -46,6 +47,7 @@ export function setPreferredNickname(myUserId: string, contactUserId: string, ni
 export default function SecureVaultModal({ isOpen, onClose }: SecureVaultModalProps) {
   const { user } = useAuth();
   const supabase = createClient();
+  const openSecureChat = useChatStore((s) => s.openSecureChat);
   const [mode, setMode] = useState<Mode>('code');
   const [code, setCode] = useState('');
   const [showCode, setShowCode] = useState(false);
