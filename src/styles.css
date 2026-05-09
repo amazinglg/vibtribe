@@ -69,6 +69,10 @@
   --sidebar-accent-foreground: var(--accent-foreground);
   --sidebar-border: var(--border);
   --sidebar-ring: var(--ring);
+  --glass-bg: rgba(18,18,31,0.7);
+  --glass-strong-bg: rgba(18,18,31,0.92);
+  --glass-border: rgba(255,255,255,0.06);
+  --glass-border-strong: rgba(255,255,255,0.08);
 }
 
 .dark { color-scheme: dark; }
@@ -90,8 +94,8 @@
 }
 
 @layer utilities {
-  .glass { background: rgba(18,18,31,0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.06); }
-  .glass-strong { background: rgba(18,18,31,0.92); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); border: 1px solid rgba(255,255,255,0.08); }
+  .glass { background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--glass-border); }
+  .glass-strong { background: var(--glass-strong-bg); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); border: 1px solid var(--glass-border-strong); }
   .gradient-primary { background: linear-gradient(135deg, var(--primary) 0%, #9333ea 100%); }
   .gradient-cyan { background: linear-gradient(135deg, var(--accent) 0%, #0891b2 100%); }
   .gradient-pink { background: linear-gradient(135deg, var(--pink) 0%, #be185d 100%); }
