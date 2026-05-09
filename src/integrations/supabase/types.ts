@@ -281,6 +281,7 @@ export type Database = {
           created_at: string | null
           id: string
           is_read: boolean | null
+          link: string | null
           related_user_id: string | null
           title: string
           type: string
@@ -291,6 +292,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_read?: boolean | null
+          link?: string | null
           related_user_id?: string | null
           title: string
           type: string
@@ -301,6 +303,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_read?: boolean | null
+          link?: string | null
           related_user_id?: string | null
           title?: string
           type?: string
@@ -548,6 +551,7 @@ export type Database = {
         Args: { new_password: string; target_user_id: string }
         Returns: undefined
       }
+      delete_my_account: { Args: never; Returns: undefined }
       expire_seen_messages: { Args: { p_chat_id: string }; Returns: undefined }
       is_admin: { Args: never; Returns: boolean }
       is_admin_user: { Args: never; Returns: boolean }
