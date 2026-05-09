@@ -92,7 +92,7 @@ export default function ChatWindowPanel() {
         const { data: otherUser } = await supabase
           .from('user_profiles')
           .select('full_name, is_online, last_seen, public_key')
-          .eq('id', otherUserId)
+          .eq('id', otherUserId as string)
           .single();
 
         if (otherUser) {
@@ -124,11 +124,11 @@ export default function ChatWindowPanel() {
         }
         decryptedMsgs.push({
           id: m.id,
-          senderId: m.sender_id,
+          senderId: (m.sender_id ?? '') as string,
           text,
-          time: formatTime(m.created_at),
+          time: formatTime(m.created_at as any),
           status: m.message_status || 'sent',
-          reactions: m.reactions || [],
+          reactions: (m.reactions as any) || [],
           encrypted,
         });
       }
