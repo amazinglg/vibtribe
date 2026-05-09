@@ -12,7 +12,9 @@ export default function ChatsPage() {
   const { selectedChatId } = useChatStore();
 
   useEffect(() => {
+    console.log('[VT-HOME] state', { loading, hasUser: !!user });
     if (!loading && !user) {
+      console.warn('[VT-HOME] no user — redirecting to /sign-in');
       router?.({ to: '/sign-in', replace: true });
     }
   }, [user, loading, router]);
