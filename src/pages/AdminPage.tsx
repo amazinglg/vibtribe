@@ -411,7 +411,7 @@ export default function AdminPage() {
                       </span>
                       <p className="text-[10px] text-muted-foreground mt-1">{new Date(u.created_at).toLocaleDateString()}</p>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>
