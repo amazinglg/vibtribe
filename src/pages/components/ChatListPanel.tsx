@@ -155,7 +155,14 @@ export default function ChatListPanel() {
         }
       }
       setChats(chatList);
-      if (chatList.length > 0 && !selectedChatId) {
+      // Only auto-open the first chat on desktop side-by-side layout.
+      // On mobile/tablet the user should land on the chat list, not a chat.
+      if (
+        chatList.length > 0 &&
+        !selectedChatId &&
+        typeof window !== 'undefined' &&
+        window.matchMedia('(min-width: 1024px)').matches
+      ) {
         setSelectedChatId(chatList[0].id);
       }
     } catch (err) {

@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useRef, useEffect } from 'react';
-import { Phone, Video, Smile, Paperclip, Mic, MicOff, Send, Lock, CheckCheck, Check, ArrowLeft, Info, Trash2, ShieldCheck, Ban, ShieldOff, X, Image, FileText, Camera, Music, VideoOff, PhoneOff, Volume2, VolumeX, Timer } from 'lucide-react';
+import { Phone, Video, Smile, Paperclip, Mic, MicOff, Send, Lock, CheckCheck, Check, ArrowLeft, Info, Trash2, ShieldCheck, Ban, ShieldOff, X, Image, FileText, Camera, Music, VideoOff, PhoneOff, Volume2, VolumeX, Timer, MoreVertical } from 'lucide-react';
 import { useChatStore } from '@/store/chatStore';
 import MarkSecureModal from '@/components/MarkSecureModal';
 import { useAuth } from '@/contexts/AuthContext';
@@ -256,6 +256,7 @@ export default function ChatWindowPanel() {
   const [disappearMode, setDisappearMode] = useState<'never' | '24h' | 'after_seen'>('24h');
   const [chatType, setChatType] = useState<'normal' | 'secure' | 'group'>('normal');
   const [showDisappearMenu, setShowDisappearMenu] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
   const contactPubKeyRef = useRef<string | null>(null);
   const previousChatIdRef = useRef<string | null>(null);
   const [blockLoading, setBlockLoading] = useState(false);
@@ -773,7 +774,7 @@ export default function ChatWindowPanel() {
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full relative min-w-0 w-full max-w-full overflow-hidden" onClick={() => { setShowAttachMenu(false); }}>
+    <div className="flex-1 flex flex-col h-full relative min-w-0 w-full max-w-full overflow-hidden" onClick={() => { setShowAttachMenu(false); setShowMoreMenu(false); setShowDisappearMenu(false); }}>
       {/* Voice Call Permission Prompt */}
       {showCallPermPrompt && (
         <PermissionPrompt
@@ -864,63 +865,13 @@ export default function ChatWindowPanel() {
           </p>
         </div>
 
-        <div className="flex items-center gap-0.5 flex-shrink-0 overflow-x-auto max-w-[55%] sm:max-w-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {/* Block / Unblock */}
-          <button
-            onClick={handleBlockToggle}
-            disabled={blockLoading}
-            className={`p-2 rounded-xl transition-all flex-shrink-0 ${
-              isBlocked
-                ? 'text-vt-green bg-vt-green/10 hover:bg-vt-green/20' : 'text-muted-foreground hover:text-red-400 hover:bg-red-500/10'
-            }`}
-            title={isBlocked ? 'Unblock User' : 'Block User'}
-          >
-            {isBlocked ? <ShieldOff size={18} /> : <Ban size={18} />}
-          </button>
-          {/* Lock / Secure */}
-          {chatType !== 'group' && (
-          <button
-            onClick={() => setSecureModalOpen(true)}
-            className="p-2 rounded-xl text-primary hover:bg-primary/10 transition-all flex-shrink-0"
-            title="Mark as Secure Chat"
-          >
-            <Lock size={18} />
-          </button>
-          )}
-          {/* Disappearing messages */}
-          <div className="relative flex-shrink-0">
-            <button
-              onClick={(e) => { e.stopPropagation(); setShowDisappearMenu(v => !v); }}
-              className={`p-2 rounded-xl transition-all flex-shrink-0 ${disappearMode !== 'never' ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
-              title="Disappearing messages"
-            >
-              <Timer size={18} />
-            </button>
-            {showDisappearMenu && (
-              <div className="absolute right-0 top-full mt-1 z-30 glass-strong rounded-xl border border-border shadow-card overflow-hidden float-up min-w-[220px]" onClick={e => e.stopPropagation()}>
-                <div className="px-3 py-2 text-[11px] uppercase tracking-wide text-muted-foreground border-b border-border">Disappearing messages</div>
-                {([
-                  { id: 'never', label: 'Off (keep forever)' },
-                  { id: '24h', label: '24 hours' },
-                  { id: 'after_seen', label: 'After seen (on chat exit)' },
-                ] as const).map(opt => (
-                  <button
-                    key={opt.id}
-                    onClick={() => updateDisappearMode(opt.id)}
-                    className={`w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex items-center justify-between ${disappearMode === opt.id ? 'text-primary font-semibold' : 'text-foreground'}`}
-                  >
-                    <span>{opt.label}</span>
-                    {disappearMode === opt.id && <Check size={14} />}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+        <div className="flex items-center gap-0.5 flex-shrink-0">
           {/* Voice Call */}
           <button
             onClick={handleVoiceCallClick}
             className="p-2 rounded-xl transition-all flex-shrink-0 text-muted-foreground hover:text-vt-green hover:bg-vt-green/10"
             title="Voice Call"
+            aria-label="Voice call"
           >
             <Phone size={18} />
           </button>
@@ -929,17 +880,83 @@ export default function ChatWindowPanel() {
             onClick={handleVideoCallClick}
             className="p-2 rounded-xl transition-all flex-shrink-0 text-muted-foreground hover:text-vt-green hover:bg-vt-green/10"
             title="Video Call"
+            aria-label="Video call"
           >
             <Video size={18} />
           </button>
-          {/* Info */}
-          <button
-            onClick={() => setShowInfo(!showInfo)}
-            className={`p-2 rounded-xl transition-all flex-shrink-0 ${showInfo ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
-            title="Chat Info"
-          >
-            <Info size={18} />
-          </button>
+          {/* More menu — collapses Block / Secure / Timer / Info */}
+          <div className="relative flex-shrink-0">
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowMoreMenu(v => !v); setShowDisappearMenu(false); }}
+              className={`p-2 rounded-xl transition-all flex-shrink-0 ${showMoreMenu ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
+              title="More options"
+              aria-label="More options"
+            >
+              <MoreVertical size={18} />
+            </button>
+            {showMoreMenu && (
+              <div
+                className="absolute right-0 top-full mt-1 z-30 glass-strong rounded-xl border border-border shadow-card overflow-hidden float-up min-w-[220px]"
+                onClick={e => e.stopPropagation()}
+              >
+                <button
+                  onClick={() => { setShowMoreMenu(false); setShowInfo(true); }}
+                  className="w-full text-left px-3 py-2.5 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground"
+                >
+                  <Info size={16} className="text-muted-foreground" />
+                  Chat info
+                </button>
+                {chatType !== 'group' && (
+                  <button
+                    onClick={() => { setShowMoreMenu(false); setSecureModalOpen(true); }}
+                    className="w-full text-left px-3 py-2.5 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground"
+                  >
+                    <Lock size={16} className="text-primary" />
+                    Mark as secure
+                  </button>
+                )}
+                <button
+                  onClick={(e) => { e.stopPropagation(); setShowDisappearMenu(v => !v); }}
+                  className="w-full text-left px-3 py-2.5 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground"
+                >
+                  <Timer size={16} className={disappearMode !== 'never' ? 'text-primary' : 'text-muted-foreground'} />
+                  <span className="flex-1">Disappearing messages</span>
+                  <span className="text-[10px] text-muted-foreground">
+                    {disappearMode === 'never' ? 'Off' : disappearMode === '24h' ? '24h' : 'On seen'}
+                  </span>
+                </button>
+                {showDisappearMenu && (
+                  <div className="bg-muted/40 border-t border-border">
+                    {([
+                      { id: 'never', label: 'Off (keep forever)' },
+                      { id: '24h', label: '24 hours' },
+                      { id: 'after_seen', label: 'After seen (on chat exit)' },
+                    ] as const).map(opt => (
+                      <button
+                        key={opt.id}
+                        onClick={() => { updateDisappearMode(opt.id); setShowMoreMenu(false); }}
+                        className={`w-full text-left pl-10 pr-3 py-2 text-xs hover:bg-muted transition-colors flex items-center justify-between ${disappearMode === opt.id ? 'text-primary font-semibold' : 'text-foreground/80'}`}
+                      >
+                        <span>{opt.label}</span>
+                        {disappearMode === opt.id && <Check size={12} />}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <div className="border-t border-border" />
+                <button
+                  onClick={() => { setShowMoreMenu(false); handleBlockToggle(); }}
+                  disabled={blockLoading}
+                  className={`w-full text-left px-3 py-2.5 text-sm hover:bg-muted transition-colors flex items-center gap-3 ${
+                    isBlocked ? 'text-vt-green' : 'text-red-400'
+                  }`}
+                >
+                  {isBlocked ? <ShieldOff size={16} /> : <Ban size={16} />}
+                  {isBlocked ? `Unblock ${contact?.name || 'user'}` : `Block ${contact?.name || 'user'}`}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
