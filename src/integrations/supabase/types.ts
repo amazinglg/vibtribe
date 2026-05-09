@@ -479,9 +479,11 @@ export type Database = {
           login_attempts: number | null
           mobile_number: string | null
           profile_completed: boolean | null
+          profile_photo_visibility: string
           public_key: string | null
           real_email: string | null
           role: string
+          status_visibility: string
           updated_at: string | null
           username: string | null
         }
@@ -502,9 +504,11 @@ export type Database = {
           login_attempts?: number | null
           mobile_number?: string | null
           profile_completed?: boolean | null
+          profile_photo_visibility?: string
           public_key?: string | null
           real_email?: string | null
           role?: string
+          status_visibility?: string
           updated_at?: string | null
           username?: string | null
         }
@@ -525,9 +529,11 @@ export type Database = {
           login_attempts?: number | null
           mobile_number?: string | null
           profile_completed?: boolean | null
+          profile_photo_visibility?: string
           public_key?: string | null
           real_email?: string | null
           role?: string
+          status_visibility?: string
           updated_at?: string | null
           username?: string | null
         }
