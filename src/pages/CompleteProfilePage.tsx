@@ -1,22 +1,11 @@
 import React, { useState } from 'react';
-import { useNavigate as _useNavigate } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
 import { AtSign, FileText, Camera, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLogo from '@/components/ui/AppLogo';
 
-function useRouter() {
-  const navigate = _useNavigate();
-  return {
-    push: (to: string) => navigate({ to: to as any }),
-    replace: (to: string) => navigate({ to: to as any, replace: true }),
-    back: () => { if (typeof window !== 'undefined') window.history.back(); },
-    refresh: () => {},
-  };
-}
-
-
 export default function CompleteProfilePage() {
-  const router = useRouter();
+  const router = useNavigate();
   const { user, updateProfile, profile } = useAuth();
   const [username, setUsername] = useState('');
   const [bio, setBio] = useState('');
@@ -38,7 +27,7 @@ export default function CompleteProfilePage() {
         bio,
         profile_completed: true,
       });
-      router.replace('/');
+      router({ to: '/', replace: true });
     } catch (err: any) {
       setError(err.message || 'Failed to save profile. Please try again.');
     } finally {
@@ -51,7 +40,7 @@ export default function CompleteProfilePage() {
     try {
       await updateProfile({ profile_completed: true });
     } catch {}
-    router.replace('/');
+    router({ to: '/', replace: true });
     setSkipping(false);
   };
 

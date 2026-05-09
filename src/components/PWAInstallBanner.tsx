@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { X, Download, Smartphone } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Download, Smartphone, Share } from 'lucide-react';
 import AppLogo from '@/components/ui/AppLogo';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -7,38 +7,64 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
+// Global store so the prompt event survives component unmount/remount
+let _cachedPrompt: BeforeInstallPromptEvent | null = null;
+
 export default function PWAInstallBanner() {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(_cachedPrompt);
   const [showBanner, setShowBanner] = useState(false);
   const [installing, setInstalling] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     // Check if already installed (standalone mode)
-    const standalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
+    const standalone =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as any).standalone === true;
     setIsStandalone(standalone);
     if (standalone) return;
 
-    // Detect iOS
-    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
-    setIsIOS(ios);
+    // Check if user already dismissed
+    const dismissed = sessionStorage.getItem('pwa-banner-dismissed');
+    if (dismissed) return;
 
-    if (ios) {
-      // Show iOS instructions banner
-      setShowBanner(true);
+    // Detect iOS (iPhone, iPad, iPod)
+    const ua = navigator.userAgent;
+    const ios = /iphone|ipad|ipod/i.test(ua) && !(window as any).MSStream;
+    // Also detect iOS 13+ iPad which reports as MacIntel
+    const isIpadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+    const isIOSDevice = ios || isIpadOS;
+    setIsIOS(isIOSDevice);
+
+    if (isIOSDevice) {
+      // Show iOS instructions after a short delay post-login
+      timerRef.current = setTimeout(() => setShowBanner(true), 2500);
       return;
     }
 
-    // Listen for beforeinstallprompt (Android/Chrome)
+    // If we already have a cached prompt from before login, show immediately
+    if (_cachedPrompt) {
+      setDeferredPrompt(_cachedPrompt);
+      timerRef.current = setTimeout(() => setShowBanner(true), 2000);
+    }
+
+    // Listen for beforeinstallprompt — can fire on this page too
     const handler = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
-      setShowBanner(true);
+      const prompt = e as BeforeInstallPromptEvent;
+      _cachedPrompt = prompt;
+      setDeferredPrompt(prompt);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => setShowBanner(true), 2000);
     };
 
     window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
   }, []);
 
   const handleInstall = async () => {
@@ -48,6 +74,7 @@ export default function PWAInstallBanner() {
       await deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
       if (outcome === 'accepted') {
+        _cachedPrompt = null;
         setShowBanner(false);
         setDeferredPrompt(null);
       }
@@ -56,6 +83,7 @@ export default function PWAInstallBanner() {
   };
 
   const handleDismiss = () => {
+    sessionStorage.setItem('pwa-banner-dismissed', '1');
     setShowBanner(false);
   };
 
@@ -74,7 +102,8 @@ export default function PWAInstallBanner() {
                 <h3 className="font-bold text-sm text-foreground">Install VibeTribe</h3>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {isIOS
-                    ? 'Tap Share → "Add to Home Screen" to install' :'Add to your home screen for the best experience'}
+                    ? 'Add to your Home Screen for the best experience'
+                    : 'Add to your home screen for the best experience'}
                 </p>
               </div>
               <button
@@ -112,11 +141,28 @@ export default function PWAInstallBanner() {
             )}
 
             {isIOS && (
-              <div className="flex items-center gap-2 mt-2 p-2 bg-primary/10 rounded-xl">
-                <Smartphone size={14} className="text-primary flex-shrink-0" />
-                <p className="text-[11px] text-primary">
-                  Tap <strong>Share</strong> (↑) then <strong>"Add to Home Screen"</strong>
+              <div className="mt-3 space-y-2">
+                <div className="flex items-center gap-2 p-2.5 bg-primary/10 rounded-xl">
+                  <Share size={14} className="text-primary flex-shrink-0" />
+                  <p className="text-[11px] text-primary font-medium">
+                    Step 1: Tap the <strong>Share</strong> button (↑) in Safari
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 p-2.5 bg-primary/10 rounded-xl">
+                  <Smartphone size={14} className="text-primary flex-shrink-0" />
+                  <p className="text-[11px] text-primary font-medium">
+                    Step 2: Tap <strong>"Add to Home Screen"</strong> then <strong>"Add"</strong>
+                  </p>
+                </div>
+                <p className="text-[10px] text-muted-foreground px-1">
+                  ⚠️ Must use Safari browser on iPhone/iPad
                 </p>
+                <button
+                  onClick={handleDismiss}
+                  className="w-full px-3 py-2 glass rounded-xl text-xs text-muted-foreground hover:text-foreground transition-all text-center"
+                >
+                  Dismiss
+                </button>
               </div>
             )}
           </div>

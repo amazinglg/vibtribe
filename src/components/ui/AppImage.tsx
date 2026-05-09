@@ -1,6 +1,4 @@
 import React, { useState, useCallback, useMemo, memo } from 'react';
-// next/image removed (use <img>)
-
 interface AppImageProps {
     src: string;
     alt: string;
@@ -94,7 +92,7 @@ const AppImage = memo(function AppImage({
     if (fill) {
         return (
             <div className="relative" style={{ width: '100%', height: '100%' }}>
-                <img
+                <AppImage
                     {...imageProps}
                     fill
                     sizes={sizes || '(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'}
@@ -106,7 +104,7 @@ const AppImage = memo(function AppImage({
     }
 
     return (
-        <img
+        <AppImage
             {...imageProps}
             width={width || 400}
             height={height || 300}

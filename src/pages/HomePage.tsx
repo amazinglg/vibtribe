@@ -1,28 +1,17 @@
 import React, { useEffect } from 'react';
-import { useNavigate as _useNavigate } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
 import AppLayout from '@/components/AppLayout';
 import ChatListPanel from './components/ChatListPanel';
 import ChatWindowPanel from './components/ChatWindowPanel';
 import { useAuth } from '@/contexts/AuthContext';
 
-function useRouter() {
-  const navigate = _useNavigate();
-  return {
-    push: (to: string) => navigate({ to: to as any }),
-    replace: (to: string) => navigate({ to: to as any, replace: true }),
-    back: () => { if (typeof window !== 'undefined') window.history.back(); },
-    refresh: () => {},
-  };
-}
-
-
 export default function ChatsPage() {
   const { user, loading } = useAuth();
-  const router = useRouter();
+  const router = useNavigate();
 
   useEffect(() => {
     if (!loading && !user) {
-      router?.replace('/sign-in');
+      router?.({ to: '/sign-in', replace: true });
     }
   }, [user, loading, router]);
 

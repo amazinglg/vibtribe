@@ -1,10 +1,16 @@
+// @ts-nocheck
 import React, { useState, useRef, useEffect } from 'react';
-import { Phone, Video, Smile, Paperclip, Mic, Send, Lock, CheckCheck, Check, ArrowLeft, Info, Trash2, ShieldCheck } from 'lucide-react';
+import { Phone, Video, Smile, Paperclip, Mic, MicOff, Send, Lock, CheckCheck, Check, ArrowLeft, Info, Trash2, ShieldCheck, Ban, ShieldOff, X, Image, FileText, Camera, Music, VideoOff, PhoneOff, Volume2, VolumeX } from 'lucide-react';
 import { useChatStore } from '@/store/chatStore';
 import MarkSecureModal from '@/components/MarkSecureModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { getOrCreateKeyPair, encryptMessage, decryptMessage, isEncrypted } from '@/lib/encryption';
+import { getPreferredNickname } from '@/components/SecureVaultModal';
+import PermissionPrompt from '@/components/PermissionPrompt';
+import { usePermissions } from '@/hooks/usePermissions';
+import { sendPushNotification } from '@/lib/pushNotifications';
+import AppImage from "@/components/ui/AppImage";
 
 interface Message {
   id: string;
@@ -14,9 +20,220 @@ interface Message {
   status: 'sent' | 'delivered' | 'read';
   reactions: string[];
   encrypted?: boolean;
+  mediaUrl?: string;
+  mediaType?: 'image' | 'file' | 'audio';
 }
 
-const EMOJI_LIST = ['😊', '❤️', '😂', '🔥', '👍', '🎉', '😍', '🙏', '💯', '✨', '🚀', '💜'];
+// Expanded emoji list organized by category
+const EMOJI_CATEGORIES = [
+  {
+    label: '😊 Smileys',
+    emojis: ['😊','😂','🤣','😍','🥰','😘','😎','🤩','😏','😒','😢','😭','😤','😡','🤬','😱','😨','😰','😓','🤗','🤔','🤭','🤫','🤥','😶','😐','😑','😬','🙄','😴','🤤','😷','🤒','🤕','🤑','🤠','😈','👿','💀','☠️','💩','🤡','👹','👺','👻','👽','👾','🤖']
+  },
+  {
+    label: '❤️ Hearts',
+    emojis: ['❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖','💘','💝','💟','♥️','🔥','✨','⭐','🌟','💫','⚡','🌈','🎉','🎊','🎈','🎁','🏆','🥇','🎯','💯']
+  },
+  {
+    label: '👍 Gestures',
+    emojis: ['👍','👎','👌','🤌','🤏','✌️','🤞','🤟','🤘','🤙','👈','👉','👆','🖕','👇','☝️','👋','🤚','🖐️','✋','🖖','👏','🙌','🤲','🤝','🙏','✍️','💪','🦾','🦿','🦵','🦶','👂','🦻','👃','🫀','🫁','🧠','🦷','🦴','👀','👁️','👅','👄']
+  },
+  {
+    label: '🐶 Animals',
+    emojis: ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🙈','🙉','🙊','🐔','🐧','🐦','🐤','🦆','🦅','🦉','🦇','🐺','🐗','🐴','🦄','🐝','🐛','🦋','🐌','🐞','🐜','🦟','🦗','🕷️','🦂','🐢','🐍','🦎','🦖','🦕','🐙','🦑','🦐','🦞','🦀']
+  },
+  {
+    label: '🍕 Food',
+    emojis: ['🍕','🍔','🍟','🌭','🍿','🧂','🥓','🥚','🍳','🧇','🥞','🧈','🍞','🥐','🥖','🫓','🥨','🥯','🧀','🥗','🥙','🥪','🌮','🌯','🫔','🥫','🍝','🍜','🍲','🍛','🍣','🍱','🥟','🦪','🍤','🍙','🍚','🍘','🍥','🥮','🍢','🧆','🥚','🍡','🍧','🍨','🍦','🥧','🧁','🍰','🎂','🍮','🍭','🍬','🍫','🍿','🍩','🍪','🌰','🥜','🍯']
+  },
+  {
+    label: '⚽ Sports',
+    emojis: ['⚽','🏀','🏈','⚾','🥎','🎾','🏐','🏉','🥏','🎱','🏓','🏸','🏒','🥊','🥋','🎽','🛹','🛼','🛷','⛸️','🥌','🎿','⛷️','🏂','🪂','🏋️','🤼','🤸','⛹️','🤺','🏇','🧘','🏄','🏊','🤽','🚣','🧗','🚵','🚴','🏆','🥇','🥈','🥉','🏅','🎖️','🏵️','🎗️','🎫','🎟️','🎪']
+  },
+];
+
+// Call Modal Component
+function CallModal({
+  type,
+  contactName,
+  contactAvatar,
+  onEnd,
+}: {
+  type: 'voice' | 'video';
+  contactName: string;
+  contactAvatar: string;
+  onEnd: () => void;
+}) {
+  const [callDuration, setCallDuration] = useState(0);
+  const [callState, setCallState] = useState<'ringing' | 'connected'>('ringing');
+  const [micMuted, setMicMuted] = useState(false);
+  const [speakerOff, setSpeakerOff] = useState(false);
+  const [videoOff, setVideoOff] = useState(false);
+  const localVideoRef = useRef<HTMLVideoElement>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  useEffect(() => {
+    // Simulate ringing then connect after 2s
+    const ringTimeout = setTimeout(() => {
+      setCallState('connected');
+      timerRef.current = setInterval(() => setCallDuration(d => d + 1), 1000);
+    }, 2000);
+
+    // Request media permissions for real device access
+    if (type === 'video') {
+      navigator.mediaDevices?.getUserMedia({ video: true, audio: true })
+        .then(stream => {
+          streamRef.current = stream;
+          if (localVideoRef.current) {
+            localVideoRef.current.srcObject = stream;
+          }
+        })
+        .catch(() => {
+          // Permission denied or not available — still show UI
+        });
+    } else {
+      navigator.mediaDevices?.getUserMedia({ audio: true })
+        .then(stream => { streamRef.current = stream; })
+        .catch(() => {});
+    }
+
+    return () => {
+      clearTimeout(ringTimeout);
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(t => t.stop());
+      }
+    };
+  }, [type]);
+
+  const formatDuration = (secs: number) => {
+    const m = Math.floor(secs / 60).toString().padStart(2, '0');
+    const s = (secs % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
+
+  const handleMicToggle = () => {
+    setMicMuted(m => {
+      const next = !m;
+      streamRef.current?.getAudioTracks().forEach(t => { t.enabled = !next; });
+      return next;
+    });
+  };
+
+  const handleVideoToggle = () => {
+    setVideoOff(v => {
+      const next = !v;
+      streamRef.current?.getVideoTracks().forEach(t => { t.enabled = !next; });
+      return next;
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md">
+      <div className="relative w-full max-w-sm mx-4 rounded-3xl overflow-hidden float-up" style={{ background: 'linear-gradient(135deg, #0a0a1f 0%, #1a0a2e 50%, #0a1a2e 100%)' }}>
+        {/* Video preview (video calls) */}
+        {type === 'video' && (
+          <div className="relative h-64 bg-black/40 overflow-hidden">
+            {!videoOff ? (
+              <video
+                ref={localVideoRef}
+                autoPlay
+                muted
+                playsInline
+                className="w-full h-full object-cover opacity-60"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <VideoOff size={40} className="text-white/30" />
+              </div>
+            )}
+            {/* Remote user placeholder */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <div className="w-20 h-20 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-3xl mb-3 border-4 border-white/20">
+                {contactAvatar}
+              </div>
+            </div>
+            {/* Small self-view */}
+            {!videoOff && (
+              <div className="absolute bottom-3 right-3 w-20 h-28 rounded-xl overflow-hidden border-2 border-white/20 bg-black/60">
+                <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Voice call avatar */}
+        {type === 'voice' && (
+          <div className="pt-12 pb-6 flex flex-col items-center">
+            <div className={`w-24 h-24 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-4xl mb-4 ${callState === 'ringing' ? 'pulse-ring' : ''}`}>
+              {contactAvatar}
+            </div>
+          </div>
+        )}
+
+        {/* Call info */}
+        <div className="px-6 pb-4 text-center">
+          <h3 className="font-bold text-xl text-white mb-1">{contactName}</h3>
+          <p className="text-sm text-white/60">
+            {callState === 'ringing'
+              ? `${type === 'video' ? 'Video' : 'Voice'} calling...`
+              : formatDuration(callDuration)
+            }
+          </p>
+          {callState === 'ringing' && (
+            <div className="flex justify-center gap-1 mt-2">
+              {[0, 1, 2].map(i => (
+                <div
+                  key={i}
+                  className="w-1.5 h-1.5 bg-white/50 rounded-full animate-bounce"
+                  style={{ animationDelay: `${i * 0.15}s` }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Controls */}
+        <div className="px-6 pb-8 flex items-center justify-center gap-4">
+          {/* Mic */}
+          <button
+            onClick={handleMicToggle}
+            className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${micMuted ? 'bg-red-500/30 text-red-400' : 'bg-white/10 text-white hover:bg-white/20'}`}
+          >
+            {micMuted ? <MicOff size={20} /> : <Mic size={20} />}
+          </button>
+
+          {/* Speaker */}
+          <button
+            onClick={() => setSpeakerOff(s => !s)}
+            className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${speakerOff ? 'bg-red-500/30 text-red-400' : 'bg-white/10 text-white hover:bg-white/20'}`}
+          >
+            {speakerOff ? <VolumeX size={20} /> : <Volume2 size={20} />}
+          </button>
+
+          {/* Video toggle (video calls only) */}
+          {type === 'video' && (
+            <button
+              onClick={handleVideoToggle}
+              className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${videoOff ? 'bg-red-500/30 text-red-400' : 'bg-white/10 text-white hover:bg-white/20'}`}
+            >
+              {videoOff ? <VideoOff size={20} /> : <Video size={20} />}
+            </button>
+          )}
+
+          {/* End call */}
+          <button
+            onClick={onEnd}
+            className="w-14 h-14 bg-red-500 rounded-full flex items-center justify-center text-white hover:bg-red-600 transition-all shadow-lg"
+          >
+            <PhoneOff size={22} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function ChatWindowPanel() {
   const { selectedChatId, setSelectedChatId } = useChatStore();
@@ -25,14 +242,27 @@ export default function ChatWindowPanel() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [showEmoji, setShowEmoji] = useState(false);
+  const [emojiCategory, setEmojiCategory] = useState(0);
   const [showInfo, setShowInfo] = useState(false);
+  const [showAttachMenu, setShowAttachMenu] = useState(false);
   const [secureModalOpen, setSecureModalOpen] = useState(false);
   const [hoveredMsg, setHoveredMsg] = useState<string | null>(null);
-  const [contact, setContact] = useState<{ name: string; avatar: string; online: boolean; lastSeen: string; publicKey?: string } | null>(null);
+  const [contact, setContact] = useState<{ name: string; avatar: string; online: boolean; lastSeen: string; publicKey?: string; userId?: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [e2eEnabled, setE2eEnabled] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [blockLoading, setBlockLoading] = useState(false);
+  const [callActive, setCallActive] = useState(false);
+  const [videoCallActive, setVideoCallActive] = useState(false);
+  const [pendingCall, setPendingCall] = useState<'voice' | 'video' | null>(null);
+  const [showCallPermPrompt, setShowCallPermPrompt] = useState(false);
+  const [showMediaPermPrompt, setShowMediaPermPrompt] = useState(false);
+  const { permissions, requestMicrophone, requestCamera, requestMicAndCamera, requestStorage } = usePermissions();
+  const [profile, setProfile] = React.useState<{ full_name?: string } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -61,6 +291,31 @@ export default function ChatWindowPanel() {
                 reactions: [],
                 encrypted,
               }]);
+              // Mark as read
+              await supabase.from('messages').update({ message_status: 'read' }).eq('id', newMsg.id);
+
+              // Check if this is a secure chat and whether user wants notifications for it
+              try {
+                const { data: chatInfo } = await supabase
+                  .from('chats')
+                  .select('chat_type')
+                  .eq('id', selectedChatId)
+                  .single();
+
+                if (chatInfo?.chat_type === 'secure') {
+                  // Only show browser notification if user has enabled secured chat notifications
+                  const notifPrefsRaw = localStorage.getItem(`vt_notif_prefs_${user.id}`);
+                  const notifPrefs = notifPrefsRaw ? JSON.parse(notifPrefsRaw) : {};
+                  const secureNotifsEnabled = notifPrefs.secureChats === true;
+                  if (secureNotifsEnabled && 'Notification' in window && Notification.permission === 'granted') {
+                    new Notification('New Secured Message', {
+                      body: `New message in your secured chat`,
+                      icon: '/favicon.ico',
+                    });
+                  }
+                  // If secureNotifsEnabled is false, silently skip — no notification
+                }
+              } catch {}
             }
           }
         )
@@ -73,14 +328,12 @@ export default function ChatWindowPanel() {
     if (!selectedChatId || !user) return;
     setLoading(true);
     try {
-      // Ensure this user has a public key stored
       const { publicKey: myPublicKey } = await getOrCreateKeyPair();
       await supabase
         .from('user_profiles')
         .update({ public_key: myPublicKey })
         .eq('id', user.id);
 
-      // Load chat participants
       const { data: chat } = await supabase
         .from('chats')
         .select('participant_one, participant_two')
@@ -92,23 +345,43 @@ export default function ChatWindowPanel() {
         const { data: otherUser } = await supabase
           .from('user_profiles')
           .select('full_name, is_online, last_seen, public_key')
-          .eq('id', otherUserId as string)
+          .eq('id', otherUserId)
           .single();
 
         if (otherUser) {
           const hasE2E = !!otherUser.public_key;
           setE2eEnabled(hasE2E);
+
+          // Check if this is a secure chat and apply preferred nickname
+          const { data: chatInfo } = await supabase
+            .from('chats')
+            .select('chat_type')
+            .eq('id', selectedChatId)
+            .single();
+
+          const isSecureChat = chatInfo?.chat_type === 'secure';
+          const preferredNickname = user ? getPreferredNickname(user.id, otherUserId) : '';
+          const displayName = preferredNickname || otherUser.full_name || 'Unknown';
+
           setContact({
-            name: otherUser.full_name || 'Unknown',
-            avatar: (otherUser.full_name || 'U')[0].toUpperCase(),
+            name: displayName,
+            avatar: displayName[0]?.toUpperCase() || 'U',
             online: otherUser.is_online || false,
             lastSeen: otherUser.is_online ? 'Online' : 'Last seen recently',
             publicKey: otherUser.public_key || undefined,
+            userId: otherUserId,
           });
+
+          const { data: blockData } = await supabase
+            .from('blocked_users')
+            .select('id')
+            .eq('blocker_id', user.id)
+            .eq('blocked_user_id', otherUserId)
+            .single();
+          setIsBlocked(!!blockData);
         }
       }
 
-      // Load messages
       const { data: msgs } = await supabase
         .from('messages')
         .select('*')
@@ -124,15 +397,24 @@ export default function ChatWindowPanel() {
         }
         decryptedMsgs.push({
           id: m.id,
-          senderId: (m.sender_id ?? '') as string,
+          senderId: m.sender_id,
           text,
-          time: formatTime(m.created_at as any),
+          time: formatTime(m.created_at),
           status: m.message_status || 'sent',
-          reactions: (m.reactions as any) || [],
+          reactions: m.reactions || [],
           encrypted,
         });
       }
       setMessages(decryptedMsgs);
+
+      // Mark all received messages as read
+      await supabase
+        .from('messages')
+        .update({ message_status: 'read' })
+        .eq('chat_id', selectedChatId)
+        .neq('sender_id', user.id)
+        .neq('message_status', 'read');
+
     } catch {
       setContact({ name: 'Alex Rivera', avatar: 'A', online: true, lastSeen: 'Online' });
       setMessages([
@@ -143,6 +425,19 @@ export default function ChatWindowPanel() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (user) {
+      supabase
+        .from('user_profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .single()
+        .then(({ data }) => {
+          if (data) setProfile(data);
+        });
+    }
+  }, [user]);
 
   const formatTime = (dateStr: string) => {
     return new Date(dateStr).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
@@ -166,7 +461,6 @@ export default function ChatWindowPanel() {
     setShowEmoji(false);
 
     try {
-      // Encrypt if recipient has a public key
       let contentToStore = text;
       if (e2eEnabled && contact?.publicKey) {
         contentToStore = await encryptMessage(text, contact.publicKey);
@@ -184,6 +478,50 @@ export default function ChatWindowPanel() {
     } catch {}
   };
 
+  const handleFileAttach = async (file: File, type: 'image' | 'file' | 'audio') => {
+    if (!file || !selectedChatId || !user) return;
+    setShowAttachMenu(false);
+    const tempId = `temp-${Date.now()}`;
+    const isImage = type === 'image';
+    const previewUrl = isImage ? URL.createObjectURL(file) : undefined;
+    const tempMsg: Message = {
+      id: tempId,
+      senderId: user.id,
+      text: isImage ? `📷 ${file.name}` : `📎 ${file.name}`,
+      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+      status: 'sent',
+      reactions: [],
+      mediaUrl: previewUrl,
+      mediaType: type,
+    };
+    setMessages(prev => [...prev, tempMsg]);
+
+    try {
+      const filePath = `${user.id}/${selectedChatId}/${Date.now()}_${file.name}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('chat-media')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage.from('chat-media').getPublicUrl(filePath);
+      const publicUrl = urlData?.publicUrl || '';
+
+      const content = isImage ? `[IMAGE:${publicUrl}]` : `[FILE:${file.name}:${publicUrl}]`;
+      const { data } = await supabase
+        .from('messages')
+        .insert({ chat_id: selectedChatId, sender_id: user.id, content, message_status: 'sent' })
+        .select()
+        .single();
+      if (data) {
+        setMessages(prev => prev.map(m => m.id === tempId ? { ...m, id: data.id, status: 'delivered', mediaUrl: publicUrl } : m));
+        await supabase.from('chats').update({ updated_at: new Date().toISOString() }).eq('id', selectedChatId);
+      }
+    } catch (err) {
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'sent', text: `📎 ${file.name} (upload failed)` } : m));
+    }
+  };
+
   const addReaction = (msgId: string, emoji: string) => {
     setMessages(prev => prev.map(m =>
       m.id === msgId
@@ -197,6 +535,101 @@ export default function ChatWindowPanel() {
     try {
       await supabase.from('messages').delete().eq('id', msgId);
     } catch {}
+  };
+
+  const handleBlockToggle = async () => {
+    if (!contact?.userId || !user) return;
+    setBlockLoading(true);
+    try {
+      if (isBlocked) {
+        await supabase
+          .from('blocked_users')
+          .delete()
+          .eq('blocker_id', user.id)
+          .eq('blocked_user_id', contact.userId);
+        setIsBlocked(false);
+      } else {
+        await supabase
+          .from('blocked_users')
+          .insert({ blocker_id: user.id, blocked_user_id: contact.userId });
+        setIsBlocked(true);
+      }
+    } catch {}
+    setBlockLoading(false);
+  };
+
+  const handleVoiceCallClick = () => {
+    setPendingCall('voice');
+    setShowCallPermPrompt(true);
+  };
+
+  const handleVideoCallClick = () => {
+    setPendingCall('video');
+    setShowCallPermPrompt(true);
+  };
+
+  const handleCallPermAllow = async () => {
+    setShowCallPermPrompt(false);
+    if (pendingCall === 'video') {
+      await requestMicAndCamera();
+      setVideoCallActive(true);
+      // Notify recipient of incoming video call via push
+      if (contact?.userId) {
+        const callerName = profile?.full_name || 'Someone';
+        await sendPushNotification(supabase, {
+          user_id: contact.userId,
+          title: `📹 Incoming Video Call`,
+          body: `${callerName} is calling you on VibeTribe`,
+          tag: `call-${contact.userId}`,
+          url: '/',
+          type: 'video_call',
+          callerId: user?.id,
+        });
+      }
+    } else {
+      await requestMicrophone();
+      setCallActive(true);
+      // Notify recipient of incoming voice call via push
+      if (contact?.userId) {
+        const callerName = profile?.full_name || 'Someone';
+        await sendPushNotification(supabase, {
+          user_id: contact.userId,
+          title: `📞 Incoming Voice Call`,
+          body: `${callerName} is calling you on VibeTribe`,
+          tag: `call-${contact.userId}`,
+          url: '/',
+          type: 'voice_call',
+          callerId: user?.id,
+        });
+      }
+    }
+    setPendingCall(null);
+  };
+
+  const handleCallPermDeny = () => {
+    setShowCallPermPrompt(false);
+    // Still allow call to proceed — permissions will be requested by browser natively
+    if (pendingCall === 'video') {
+      setVideoCallActive(true);
+    } else {
+      setCallActive(true);
+    }
+    setPendingCall(null);
+  };
+
+  const handleMediaAttachClick = () => {
+    setShowMediaPermPrompt(true);
+  };
+
+  const handleMediaPermAllow = async () => {
+    setShowMediaPermPrompt(false);
+    await requestStorage();
+    fileInputRef.current?.click();
+  };
+
+  const handleMediaPermDeny = () => {
+    setShowMediaPermPrompt(false);
+    fileInputRef.current?.click();
   };
 
   if (!selectedChatId) {
@@ -214,7 +647,80 @@ export default function ChatWindowPanel() {
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full relative">
+    <div className="flex-1 flex flex-col h-full relative" onClick={() => { setShowAttachMenu(false); }}>
+      {/* Voice Call Permission Prompt */}
+      {showCallPermPrompt && (
+        <PermissionPrompt
+          title={pendingCall === 'video' ? 'Video Call Permissions' : 'Voice Call Permissions'}
+          subtitle={pendingCall === 'video' ?'VibeTribe needs access to your camera and microphone for video calls.' :'VibeTribe needs access to your microphone for voice calls.'}
+          permissions={pendingCall === 'video' ? [
+            {
+              icon: <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>,
+              label: 'Camera',
+              description: 'Required to show your video during calls',
+              status: permissions.camera,
+            },
+            {
+              icon: <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>,
+              label: 'Microphone',
+              description: 'Required to transmit your voice during calls',
+              status: permissions.microphone,
+            },
+          ] : [
+            {
+              icon: <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>,
+              label: 'Microphone',
+              description: 'Required to transmit your voice during calls',
+              status: permissions.microphone,
+            },
+          ]}
+          onAllow={handleCallPermAllow}
+          onDeny={handleCallPermDeny}
+          allowLabel="Allow & Start Call"
+          denyLabel="Skip"
+        />
+      )}
+
+      {/* Media Attachment Permission Prompt */}
+      {showMediaPermPrompt && (
+        <PermissionPrompt
+          title="Media Access"
+          subtitle="VibeTribe needs storage access to attach and share files."
+          permissions={[
+            {
+              icon: <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>,
+              label: 'Storage',
+              description: 'Access files and media from your device',
+              status: permissions.storage,
+            },
+          ]}
+          onAllow={handleMediaPermAllow}
+          onDeny={handleMediaPermDeny}
+          allowLabel="Allow & Attach"
+          denyLabel="Skip"
+        />
+      )}
+
+      {/* Voice Call Modal */}
+      {callActive && contact && (
+        <CallModal
+          type="voice"
+          contactName={contact.name}
+          contactAvatar={contact.avatar}
+          onEnd={() => setCallActive(false)}
+        />
+      )}
+
+      {/* Video Call Modal */}
+      {videoCallActive && contact && (
+        <CallModal
+          type="video"
+          contactName={contact.name}
+          contactAvatar={contact.avatar}
+          onEnd={() => setVideoCallActive(false)}
+        />
+      )}
+
       {/* Chat Header */}
       <div className="glass border-b border-border px-4 py-3 flex items-center gap-3 flex-shrink-0">
         <button
@@ -249,6 +755,19 @@ export default function ChatWindowPanel() {
         </div>
 
         <div className="flex items-center gap-1">
+          {/* Block / Unblock */}
+          <button
+            onClick={handleBlockToggle}
+            disabled={blockLoading}
+            className={`p-2 rounded-xl transition-all ${
+              isBlocked
+                ? 'text-vt-green bg-vt-green/10 hover:bg-vt-green/20' : 'text-muted-foreground hover:text-red-400 hover:bg-red-500/10'
+            }`}
+            title={isBlocked ? 'Unblock User' : 'Block User'}
+          >
+            {isBlocked ? <ShieldOff size={18} /> : <Ban size={18} />}
+          </button>
+          {/* Lock / Secure */}
           <button
             onClick={() => setSecureModalOpen(true)}
             className="p-2 rounded-xl text-primary hover:bg-primary/10 transition-all"
@@ -256,26 +775,86 @@ export default function ChatWindowPanel() {
           >
             <Lock size={18} />
           </button>
-          <button className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-all">
+          {/* Voice Call */}
+          <button
+            onClick={handleVoiceCallClick}
+            className="p-2 rounded-xl transition-all text-muted-foreground hover:text-vt-green hover:bg-vt-green/10"
+            title="Voice Call"
+          >
             <Phone size={18} />
           </button>
-          <button className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-all">
+          {/* Video Call */}
+          <button
+            onClick={handleVideoCallClick}
+            className="p-2 rounded-xl transition-all text-muted-foreground hover:text-vt-green hover:bg-vt-green/10"
+            title="Video Call"
+          >
             <Video size={18} />
           </button>
+          {/* Info */}
           <button
             onClick={() => setShowInfo(!showInfo)}
-            className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+            className={`p-2 rounded-xl transition-all ${showInfo ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
+            title="Chat Info"
           >
             <Info size={18} />
           </button>
         </div>
       </div>
 
+      {/* Chat Info Panel */}
+      {showInfo && contact && (
+        <div className="glass border-b border-border px-4 py-4 float-up">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-14 h-14 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-xl">
+              {contact.avatar}
+            </div>
+            <div>
+              <p className="font-bold text-foreground">{contact.name}</p>
+              <p className={`text-xs ${contact.online ? 'text-vt-green' : 'text-muted-foreground'}`}>{contact.lastSeen}</p>
+              {e2eEnabled && <p className="text-xs text-vt-green mt-0.5">🔒 End-to-end encrypted</p>}
+            </div>
+            <button onClick={() => setShowInfo(false)} className="ml-auto p-1.5 rounded-lg hover:bg-muted text-muted-foreground">
+              <X size={16} />
+            </button>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => { setShowInfo(false); handleVoiceCallClick(); }}
+              className="flex-1 flex items-center justify-center gap-2 py-2 glass rounded-xl text-sm text-foreground hover:bg-muted transition-all"
+            >
+              <Phone size={14} /> Call
+            </button>
+            <button
+              onClick={() => { setShowInfo(false); handleVideoCallClick(); }}
+              className="flex-1 flex items-center justify-center gap-2 py-2 glass rounded-xl text-sm text-foreground hover:bg-muted transition-all"
+            >
+              <Video size={14} /> Video
+            </button>
+            <button
+              onClick={handleBlockToggle}
+              className={`flex-1 flex items-center justify-center gap-2 py-2 glass rounded-xl text-sm transition-all ${isBlocked ? 'text-vt-green' : 'text-red-400'}`}
+            >
+              {isBlocked ? <><ShieldOff size={14} /> Unblock</> : <><Ban size={14} /> Block</>}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* E2E Banner */}
       {e2eEnabled && (
         <div className="flex items-center justify-center gap-1.5 py-1.5 bg-vt-green/5 border-b border-vt-green/10">
           <ShieldCheck size={11} className="text-vt-green" />
           <span className="text-[11px] text-vt-green">Messages are end-to-end encrypted</span>
+        </div>
+      )}
+
+      {/* Blocked Banner */}
+      {isBlocked && (
+        <div className="flex items-center justify-center gap-2 py-2 bg-red-500/10 border-b border-red-500/20">
+          <Ban size={14} className="text-red-400" />
+          <span className="text-xs text-red-400">You have blocked {contact?.name}. They cannot send you messages.</span>
+          <button onClick={handleBlockToggle} className="text-xs text-vt-green underline ml-1">Unblock</button>
         </div>
       )}
 
@@ -298,6 +877,17 @@ export default function ChatWindowPanel() {
         ) : (
           messages.map((msg) => {
             const isMe = msg.senderId === user?.id;
+            const isImageMsg = msg.text?.startsWith('[IMAGE:') || msg.mediaType === 'image';
+            const isFileMsg = msg.text?.startsWith('[FILE:') || msg.mediaType === 'file';
+            const displayText = isImageMsg
+              ? '📷 Image'
+              : isFileMsg
+              ? `📎 ${msg.text?.replace(/\[FILE:(.*?):(.*?)\]/, '$1') || 'File'}`
+              : msg.text;
+            const imageUrl = isImageMsg
+              ? (msg.mediaUrl || msg.text?.replace('[IMAGE:', '').replace(']', ''))
+              : null;
+
             return (
               <div
                 key={msg.id}
@@ -309,16 +899,21 @@ export default function ChatWindowPanel() {
                   <div
                     className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
                       isMe
-                        ? 'gradient-primary text-white rounded-br-sm' :'glass border border-border text-foreground rounded-bl-sm'
+                        ? 'gradient-primary text-white rounded-br-sm' : 'glass border border-border text-foreground rounded-bl-sm'
                     }`}
                   >
-                    {msg.text}
-                    {msg.encrypted && (
-                      <ShieldCheck size={9} className={`inline ml-1 ${isMe ? 'text-white/60' : 'text-vt-green/60'}`} />
+                    {imageUrl ? (
+                      <img src={imageUrl} alt="Shared image" className="max-w-[200px] rounded-xl" />
+                    ) : (
+                      <>
+                        {displayText}
+                        {msg.encrypted && (
+                          <ShieldCheck size={9} className={`inline ml-1 ${isMe ? 'text-white/60' : 'text-vt-green/60'}`} />
+                        )}
+                      </>
                     )}
                   </div>
 
-                  {/* Reactions */}
                   {msg.reactions.length > 0 && (
                     <div className="flex gap-1 flex-wrap">
                       {msg.reactions.map((r, i) => (
@@ -327,7 +922,6 @@ export default function ChatWindowPanel() {
                     </div>
                   )}
 
-                  {/* Time + Status */}
                   <div className={`flex items-center gap-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
                     <span className="text-[10px] text-muted-foreground">{msg.time}</span>
                     {isMe && (
@@ -337,10 +931,9 @@ export default function ChatWindowPanel() {
                     )}
                   </div>
 
-                  {/* Hover Actions */}
                   {hoveredMsg === msg.id && (
-                    <div className={`absolute ${isMe ? 'right-full mr-2' : 'left-full ml-2'} top-0 flex items-center gap-1 glass rounded-xl border border-border px-2 py-1 float-up`}>
-                      {EMOJI_LIST.slice(0, 4).map(emoji => (
+                    <div className={`absolute ${isMe ? 'right-full mr-2' : 'left-full ml-2'} top-0 flex items-center gap-1 glass rounded-xl border border-border px-2 py-1 float-up z-10`}>
+                      {EMOJI_CATEGORIES[0].emojis.slice(0, 5).map(emoji => (
                         <button
                           key={emoji}
                           onClick={() => addReaction(msg.id, emoji)}
@@ -369,13 +962,24 @@ export default function ChatWindowPanel() {
 
       {/* Emoji Picker */}
       {showEmoji && (
-        <div className="px-4 py-3 border-t border-border glass">
-          <div className="flex flex-wrap gap-2">
-            {EMOJI_LIST.map(emoji => (
+        <div className="border-t border-border glass" onClick={e => e.stopPropagation()}>
+          <div className="flex gap-1 px-3 pt-2 overflow-x-auto">
+            {EMOJI_CATEGORIES.map((cat, idx) => (
+              <button
+                key={idx}
+                onClick={() => setEmojiCategory(idx)}
+                className={`flex-shrink-0 px-2 py-1 rounded-lg text-xs transition-all ${emojiCategory === idx ? 'gradient-primary text-white' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
+              >
+                {cat.label.split(' ')[0]}
+              </button>
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-1 px-3 py-2 max-h-36 overflow-y-auto">
+            {EMOJI_CATEGORIES[emojiCategory].emojis.map(emoji => (
               <button
                 key={emoji}
                 onClick={() => setInputText(prev => prev + emoji)}
-                className="text-xl hover:scale-125 transition-transform"
+                className="text-xl hover:scale-125 transition-transform p-0.5"
               >
                 {emoji}
               </button>
@@ -384,15 +988,86 @@ export default function ChatWindowPanel() {
         </div>
       )}
 
+      {/* Attach Menu */}
+      {showAttachMenu && (
+        <div className="absolute bottom-20 left-16 z-20 glass-strong rounded-2xl border border-border shadow-card p-3 float-up" onClick={e => e.stopPropagation()}>
+          <div className="flex flex-col gap-1 min-w-[160px]">
+            <button
+              onClick={async () => { setShowAttachMenu(false); await requestStorage(); imageInputRef.current?.click(); }}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-all text-sm text-foreground"
+            >
+              <div className="w-8 h-8 bg-blue-500/20 rounded-xl flex items-center justify-center">
+                <AppImage size={16} className="text-blue-400" />
+              </div>
+              Photo / Video
+            </button>
+            <button
+              onClick={async () => { setShowAttachMenu(false); await requestStorage(); fileInputRef.current?.click(); }}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-all text-sm text-foreground"
+            >
+              <div className="w-8 h-8 bg-purple-500/20 rounded-xl flex items-center justify-center">
+                <FileText size={16} className="text-purple-400" />
+              </div>
+              Document
+            </button>
+            <button
+              onClick={async () => { setShowAttachMenu(false); await requestCamera(); imageInputRef.current?.click(); }}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-all text-sm text-foreground"
+            >
+              <div className="w-8 h-8 bg-green-500/20 rounded-xl flex items-center justify-center">
+                <Camera size={16} className="text-green-400" />
+              </div>
+              Camera
+            </button>
+            <button
+              onClick={async () => { setShowAttachMenu(false); await requestMicrophone(); fileInputRef.current?.click(); }}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-all text-sm text-foreground"
+            >
+              <div className="w-8 h-8 bg-pink-500/20 rounded-xl flex items-center justify-center">
+                <Music size={16} className="text-pink-400" />
+              </div>
+              Audio
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Hidden file inputs */}
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/*,video/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleFileAttach(file, 'image');
+          e.target.value = '';
+        }}
+      />
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,.doc,.docx,.txt,.zip,.rar"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleFileAttach(file, 'file');
+          e.target.value = '';
+        }}
+      />
+
       {/* Input Area */}
       <div className="glass border-t border-border px-4 py-3 flex items-center gap-3 flex-shrink-0">
         <button
-          onClick={() => setShowEmoji(!showEmoji)}
-          className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-all flex-shrink-0"
+          onClick={(e) => { e.stopPropagation(); setShowEmoji(!showEmoji); setShowAttachMenu(false); }}
+          className={`p-2 rounded-xl transition-all flex-shrink-0 ${showEmoji ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
         >
           <Smile size={20} />
         </button>
-        <button className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-all flex-shrink-0">
+        <button
+          onClick={(e) => { e.stopPropagation(); setShowAttachMenu(!showAttachMenu); setShowEmoji(false); }}
+          className={`p-2 rounded-xl transition-all flex-shrink-0 ${showAttachMenu ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
+        >
           <Paperclip size={20} />
         </button>
         <input

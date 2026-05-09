@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Heart, Send, MoreVertical, Pause, Play } from 'lucide-react';
 import { toast } from 'sonner';

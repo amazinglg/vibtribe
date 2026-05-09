@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      blocked_users: {
+        Row: {
+          blocked_user_id: string
+          blocker_id: string
+          created_at: string | null
+          id: string
+        }
+        Insert: {
+          blocked_user_id: string
+          blocker_id: string
+          created_at?: string | null
+          id?: string
+        }
+        Update: {
+          blocked_user_id?: string
+          blocker_id?: string
+          created_at?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blocked_users_blocked_user_id_fkey"
+            columns: ["blocked_user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blocked_users_blocker_id_fkey"
+            columns: ["blocker_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chats: {
         Row: {
           chat_type: Database["public"]["Enums"]["chat_type"] | null
@@ -23,6 +59,7 @@ export type Database = {
           parent_chat_id: string | null
           participant_one: string | null
           participant_two: string | null
+          secure_code: string | null
           secure_code_hash: string | null
           updated_at: string | null
         }
@@ -34,6 +71,7 @@ export type Database = {
           parent_chat_id?: string | null
           participant_one?: string | null
           participant_two?: string | null
+          secure_code?: string | null
           secure_code_hash?: string | null
           updated_at?: string | null
         }
@@ -45,6 +83,7 @@ export type Database = {
           parent_chat_id?: string | null
           participant_one?: string | null
           participant_two?: string | null
+          secure_code?: string | null
           secure_code_hash?: string | null
           updated_at?: string | null
         }
@@ -66,6 +105,42 @@ export type Database = {
           {
             foreignKeyName: "chats_participant_two_fkey"
             columns: ["participant_two"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      force_logout_tokens: {
+        Row: {
+          id: string
+          issued_at: string
+          issued_by: string | null
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          issued_at?: string
+          issued_by?: string | null
+          user_id: string
+        }
+        Update: {
+          id?: string
+          issued_at?: string
+          issued_by?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "force_logout_tokens_issued_by_fkey"
+            columns: ["issued_by"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "force_logout_tokens_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "user_profiles"
             referencedColumns: ["id"]
@@ -165,6 +240,44 @@ export type Database = {
           },
         ]
       }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string | null
+          endpoint: string
+          id: string
+          p256dh: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string | null
+          endpoint: string
+          id?: string
+          p256dh: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string | null
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       statuses: {
         Row: {
           background_color: string | null
@@ -215,9 +328,60 @@ export type Database = {
           },
         ]
       }
+      support_tickets: {
+        Row: {
+          admin_reply: string | null
+          created_at: string | null
+          email: string
+          id: string
+          issue_description: string
+          issue_title: string
+          name: string
+          replied_at: string | null
+          ticket_status: Database["public"]["Enums"]["ticket_status"] | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          admin_reply?: string | null
+          created_at?: string | null
+          email: string
+          id?: string
+          issue_description: string
+          issue_title: string
+          name: string
+          replied_at?: string | null
+          ticket_status?: Database["public"]["Enums"]["ticket_status"] | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          admin_reply?: string | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          issue_description?: string
+          issue_title?: string
+          name?: string
+          replied_at?: string | null
+          ticket_status?: Database["public"]["Enums"]["ticket_status"] | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_tickets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_profiles: {
         Row: {
           account_status: Database["public"]["Enums"]["user_status"] | null
+          app_theme: string | null
           avatar_url: string | null
           bio: string | null
           created_at: string | null
@@ -225,7 +389,9 @@ export type Database = {
           full_name: string
           id: string
           is_online: boolean | null
+          is_suspended: boolean | null
           last_seen: string | null
+          login_attempts: number | null
           mobile_number: string | null
           profile_completed: boolean | null
           public_key: string | null
@@ -235,6 +401,7 @@ export type Database = {
         }
         Insert: {
           account_status?: Database["public"]["Enums"]["user_status"] | null
+          app_theme?: string | null
           avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
@@ -242,7 +409,9 @@ export type Database = {
           full_name?: string
           id: string
           is_online?: boolean | null
+          is_suspended?: boolean | null
           last_seen?: string | null
+          login_attempts?: number | null
           mobile_number?: string | null
           profile_completed?: boolean | null
           public_key?: string | null
@@ -252,6 +421,7 @@ export type Database = {
         }
         Update: {
           account_status?: Database["public"]["Enums"]["user_status"] | null
+          app_theme?: string | null
           avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
@@ -259,7 +429,9 @@ export type Database = {
           full_name?: string
           id?: string
           is_online?: boolean | null
+          is_suspended?: boolean | null
           last_seen?: string | null
+          login_attempts?: number | null
           mobile_number?: string | null
           profile_completed?: boolean | null
           public_key?: string | null
@@ -275,11 +447,13 @@ export type Database = {
     }
     Functions: {
       is_admin: { Args: never; Returns: boolean }
+      is_admin_user: { Args: never; Returns: boolean }
       is_chat_participant: { Args: { chat_uuid: string }; Returns: boolean }
     }
     Enums: {
       chat_type: "normal" | "secure" | "dual_normal" | "dual_secure"
       message_status: "sent" | "delivered" | "read"
+      ticket_status: "open" | "inprocess" | "solved"
       user_status: "active" | "suspended" | "inactive"
     }
     CompositeTypes: {
@@ -410,6 +584,7 @@ export const Constants = {
     Enums: {
       chat_type: ["normal", "secure", "dual_normal", "dual_secure"],
       message_status: ["sent", "delivered", "read"],
+      ticket_status: ["open", "inprocess", "solved"],
       user_status: ["active", "suspended", "inactive"],
     },
   },

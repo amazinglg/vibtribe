@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-router";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 
 import appCss from "../styles.css?url";
@@ -122,10 +123,12 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Outlet />
-        <ServiceWorkerRegistration />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <Outlet />
+          <ServiceWorkerRegistration />
+        </AuthProvider>
+      </ThemeProvider>
       <Toaster
         position="bottom-right"
         toastOptions={{

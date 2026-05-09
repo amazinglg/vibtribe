@@ -1,46 +1,63 @@
 import React, { useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { useNavigate as _useNavigate } from '@tanstack/react-router';
-import { Phone, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle, User } from 'lucide-react';
+import { useNavigate } from '@tanstack/react-router';
+import { Phone, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle, User, ChevronDown } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLogo from '@/components/ui/AppLogo';
 
-function useRouter() {
-  const navigate = _useNavigate();
-  return {
-    push: (to: string) => navigate({ to: to as any }),
-    replace: (to: string) => navigate({ to: to as any, replace: true }),
-    back: () => { if (typeof window !== 'undefined') window.history.back(); },
-    refresh: () => {},
-  };
-}
-
+const COUNTRY_CODES = [
+  { name: 'India', code: '+91', flag: '🇮🇳' },
+  { name: 'United States', code: '+1', flag: '🇺🇸' },
+  { name: 'United Kingdom', code: '+44', flag: '🇬🇧' },
+  { name: 'Australia', code: '+61', flag: '🇦🇺' },
+  { name: 'Canada', code: '+1', flag: '🇨🇦' },
+  { name: 'Germany', code: '+49', flag: '🇩🇪' },
+  { name: 'France', code: '+33', flag: '🇫🇷' },
+  { name: 'Japan', code: '+81', flag: '🇯🇵' },
+  { name: 'China', code: '+86', flag: '🇨🇳' },
+  { name: 'Brazil', code: '+55', flag: '🇧🇷' },
+  { name: 'Mexico', code: '+52', flag: '🇲🇽' },
+  { name: 'South Africa', code: '+27', flag: '🇿🇦' },
+  { name: 'UAE', code: '+971', flag: '🇦🇪' },
+  { name: 'Singapore', code: '+65', flag: '🇸🇬' },
+  { name: 'Pakistan', code: '+92', flag: '🇵🇰' },
+  { name: 'Bangladesh', code: '+880', flag: '🇧🇩' },
+  { name: 'Sri Lanka', code: '+94', flag: '🇱🇰' },
+  { name: 'Nepal', code: '+977', flag: '🇳🇵' },
+  { name: 'Indonesia', code: '+62', flag: '🇮🇩' },
+  { name: 'Malaysia', code: '+60', flag: '🇲🇾' },
+];
 
 export default function SignUpPage() {
-  const router = useRouter();
+  const router = useNavigate();
   const { signUp } = useAuth();
   const [fullName, setFullName] = useState('');
+  const [countryCode, setCountryCode] = useState('+91');
   const [mobile, setMobile] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+
+  const selectedCountry = COUNTRY_CODES.find(c => c.code === countryCode) || COUNTRY_CODES[0];
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     if (!fullName.trim()) { setError('Please enter your full name'); return; }
     if (!mobile.trim()) { setError('Please enter your mobile number'); return; }
-    if (mobile.replace(/\D/g, '').length < 10) { setError('Please enter a valid mobile number (min 10 digits)'); return; }
+    if (mobile.replace(/\D/g, '').length < 7) { setError('Please enter a valid mobile number'); return; }
     if (!password) { setError('Please enter a password'); return; }
     if (password.length < 6) { setError('Password must be at least 6 characters'); return; }
     if (password !== confirmPassword) { setError('Passwords do not match'); return; }
 
+    const fullMobile = `${countryCode}${mobile.trim()}`;
     setLoading(true);
     try {
-      await signUp(mobile, password, { fullName });
-      router.replace('/complete-profile');
+      await signUp(fullMobile, password, { fullName });
+      router({ to: '/complete-profile', replace: true });
     } catch (err: any) {
       setError(err.message || 'Sign up failed. Please try again.');
     } finally {
@@ -85,16 +102,47 @@ export default function SignUpPage() {
 
             <div>
               <label className="block text-sm font-medium text-foreground mb-1.5">Mobile Number</label>
-              <div className="relative">
-                <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  type="tel"
-                  value={mobile}
-                  onChange={e => { setMobile(e.target.value); setError(''); }}
-                  placeholder="+91 98765 43210"
-                  className="w-full pl-9 pr-4 py-3 bg-input border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all text-sm"
-                  autoComplete="tel"
-                />
+              <div className="flex gap-2">
+                {/* Country Code Selector */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setShowCountryDropdown(!showCountryDropdown)}
+                    className="flex items-center gap-1.5 px-3 py-3 bg-input border border-border rounded-xl text-sm text-foreground hover:border-primary transition-all whitespace-nowrap h-full"
+                  >
+                    <span>{selectedCountry.flag}</span>
+                    <span className="font-medium">{selectedCountry.code}</span>
+                    <ChevronDown size={13} className="text-muted-foreground" />
+                  </button>
+                  {showCountryDropdown && (
+                    <div className="absolute top-full left-0 mt-1 w-64 bg-card border border-border rounded-xl shadow-xl z-50 max-h-56 overflow-y-auto">
+                      {COUNTRY_CODES.map(c => (
+                        <button
+                          key={`${c.name}-${c.code}`}
+                          type="button"
+                          onClick={() => { setCountryCode(c.code); setShowCountryDropdown(false); setError(''); }}
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-muted transition-colors text-left ${countryCode === c.code && selectedCountry.name === c.name ? 'text-primary font-medium' : 'text-foreground'}`}
+                        >
+                          <span>{c.flag}</span>
+                          <span className="flex-1">{c.name}</span>
+                          <span className="text-muted-foreground text-xs">{c.code}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {/* Number Input */}
+                <div className="relative flex-1">
+                  <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    type="tel"
+                    value={mobile}
+                    onChange={e => { setMobile(e.target.value.replace(/\D/g, '')); setError(''); }}
+                    placeholder="98765 43210"
+                    className="w-full pl-9 pr-4 py-3 bg-input border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all text-sm"
+                    autoComplete="tel"
+                  />
+                </div>
               </div>
               <p className="text-xs text-muted-foreground mt-1">Used as your unique identifier — no OTP required</p>
             </div>
