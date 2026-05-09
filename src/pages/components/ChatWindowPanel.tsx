@@ -1240,16 +1240,18 @@ export default function ChatWindowPanel() {
       />
 
       {/* Input Area */}
-      <div className="glass border-t border-border px-4 py-3 flex items-center gap-3 flex-shrink-0">
+      <div className="glass border-t border-border px-2 py-2 flex items-center gap-1 flex-shrink-0 w-full max-w-full overflow-hidden">
         <button
           onClick={(e) => { e.stopPropagation(); setShowEmoji(!showEmoji); setShowAttachMenu(false); }}
           className={`p-2 rounded-xl transition-all flex-shrink-0 ${showEmoji ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
+          aria-label="Emoji"
         >
           <Smile size={20} />
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); setShowAttachMenu(!showAttachMenu); setShowEmoji(false); }}
           className={`p-2 rounded-xl transition-all flex-shrink-0 ${showAttachMenu ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
+          aria-label="Attach"
         >
           <Paperclip size={20} />
         </button>
@@ -1259,18 +1261,22 @@ export default function ChatWindowPanel() {
           value={inputText}
           onChange={e => setInputText(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-          placeholder={e2eEnabled ? '🔒 Send encrypted message...' : 'Type a message...'}
-          className="flex-1 bg-input border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+          placeholder={e2eEnabled ? '🔒 Encrypted message...' : 'Type a message...'}
+          className="flex-1 min-w-0 bg-input border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all"
         />
         {inputText.trim() ? (
           <button
             onClick={sendMessage}
             className="p-2.5 gradient-primary rounded-xl text-white hover:opacity-90 transition-all glow-primary flex-shrink-0"
+            aria-label="Send"
           >
             <Send size={18} />
           </button>
         ) : (
-          <button className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-all flex-shrink-0">
+          <button
+            className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-all flex-shrink-0"
+            aria-label="Record voice"
+          >
             <Mic size={20} />
           </button>
         )}
