@@ -1004,13 +1004,30 @@ export default function ProfileContent() {
                   App Maintenance
                 </h3>
                 <p className="text-xs text-muted-foreground mb-4">Clear cached data and update to the latest version without logging out.</p>
-                <button
-                  onClick={handleUpdateApp}
-                  className="flex items-center gap-2 px-4 py-2.5 gradient-primary text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-all glow-primary"
-                >
-                  <RefreshCw size={14} />
-                  Update the App
-                </button>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={handleUpdateApp}
+                    className="flex items-center gap-2 px-4 py-2.5 gradient-primary text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-all glow-primary"
+                  >
+                    <RefreshCw size={14} />
+                    Update the App
+                  </button>
+                  <button
+                    onClick={handleInstallApp}
+                    disabled={installState === 'installed' || installState === 'installing'}
+                    className="flex items-center gap-2 px-4 py-2.5 glass border border-primary/40 text-primary text-sm font-semibold rounded-xl hover:bg-primary/10 transition-all disabled:opacity-60"
+                    title={installState === 'installed' ? 'Already installed' : 'Install VibeTribe on this device'}
+                  >
+                    {isIOSDevice ? <Share size={14} /> : <Download size={14} />}
+                    {installState === 'installed'
+                      ? 'App Installed'
+                      : installState === 'installing'
+                      ? 'Installing…'
+                      : isIOSDevice
+                      ? 'Add to Home Screen'
+                      : 'Install App'}
+                  </button>
+                </div>
               </div>
 
               {/* Help & Support */}
