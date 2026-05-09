@@ -912,7 +912,7 @@ export default function ChatWindowPanel() {
                     className="w-full text-left px-3 py-2.5 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground"
                   >
                     <Lock size={16} className="text-primary" />
-                    Mark as secure
+                    {chatType === 'secure' ? 'Mark as Unsecured' : 'Mark as secure'}
                   </button>
                 )}
                 <button
