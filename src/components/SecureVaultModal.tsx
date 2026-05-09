@@ -214,6 +214,11 @@ export default function SecureVaultModal({ isOpen, onClose }: SecureVaultModalPr
     onClose();
   };
 
+  const handleOpenSecureChat = () => {
+    if (foundChat) openSecureChat(foundChat.id);
+    handleClose();
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -333,7 +338,7 @@ export default function SecureVaultModal({ isOpen, onClose }: SecureVaultModalPr
               </div>
 
               <button
-                onClick={handleClose}
+                onClick={handleOpenSecureChat}
                 className="w-full gradient-primary text-white font-semibold py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-all glow-primary"
               >
                 <span>Open Secure Chat</span>
