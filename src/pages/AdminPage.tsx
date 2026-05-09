@@ -406,17 +406,18 @@ export default function AdminPage() {
               <h2 className="font-bold text-base text-foreground mb-4">Recent Signups</h2>
               <div className="space-y-3">
                 {users.slice(0, 5).map(u => (
-                  <Link
-                    key={u.id}
-                    to="/admin/user/$userId"
-                    params={{ userId: u.id }}
-                    className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/50 transition-colors cursor-pointer"
-                  >
+                  (() => {
+                    const lockedRow = (u as any).is_master_admin && !isMaster;
+                    const RowInner = (
+                      <>
                     <div className="w-9 h-9 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                       {u.full_name?.[0]?.toUpperCase() || '?'}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-foreground truncate">{u.full_name || 'Unknown'}</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-sm font-semibold text-foreground truncate">{u.full_name || 'Unknown'}</p>
+                        {(u as any).is_master_admin && <span className="text-[9px] bg-vt-amber/20 text-vt-amber px-1.5 py-0.5 rounded-full font-bold">MASTER</span>}
+                      </div>
                       <p className="text-xs text-muted-foreground truncate">{u.email || u.mobile_number}</p>
                     </div>
                     <div className="text-right">
@@ -429,7 +430,18 @@ export default function AdminPage() {
                       </span>
                       <p className="text-[10px] text-muted-foreground mt-1">{new Date(u.created_at).toLocaleDateString()}</p>
                     </div>
-                  </Link>
+                      </>
+                    );
+                    return lockedRow ? (
+                      <div key={u.id} title="Master admin — protected" className="flex items-center gap-3 p-3 rounded-xl bg-vt-amber/5 border border-vt-amber/20 opacity-90 cursor-not-allowed">
+                        {RowInner}
+                      </div>
+                    ) : (
+                      <Link key={u.id} to="/admin/user/$userId" params={{ userId: u.id }} className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/50 transition-colors cursor-pointer">
+                        {RowInner}
+                      </Link>
+                    );
+                  })()
                 ))}
               </div>
             </div>
