@@ -507,9 +507,6 @@ export default function ProfileContent() {
               <>
                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-1">
                   <h2 className="font-bold text-xl text-foreground">{profile?.full_name || 'Your Name'}</h2>
-                  {isAdmin?.() && (
-                    <span className="text-[10px] bg-vt-amber/20 text-vt-amber px-2 py-0.5 rounded-full font-medium whitespace-nowrap">Master Admin</span>
-                  )}
                 </div>
                 {profile?.username && (
                   <p className="text-sm text-primary mb-1">@{profile.username}</p>
