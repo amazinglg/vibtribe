@@ -436,9 +436,10 @@ export default function AdminPage() {
               </div>
               <div className="overflow-y-auto max-h-[calc(100vh-300px)]">
                 {filteredUsers.map(u => (
-                  <div
+                  <Link
                     key={u.id}
-                    onClick={() => router({ to: '/admin/user/$userId', params: { userId: u.id } })}
+                    to="/admin/user/$userId"
+                    params={{ userId: u.id }}
                     className="flex items-center gap-3 px-4 py-3 cursor-pointer transition-all border-b border-border/30 hover:bg-muted/50"
                   >
                     <div className="relative flex-shrink-0">
@@ -462,7 +463,7 @@ export default function AdminPage() {
                     }`}>
                       {u.account_status}
                     </span>
-                  </div>
+                  </Link>
                 ))}
                 {filteredUsers.length === 0 && (
                   <div className="flex flex-col items-center justify-center py-12 gap-2">
