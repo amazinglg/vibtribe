@@ -17,6 +17,7 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as CompleteProfileRouteImport } from './routes/complete-profile'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminUserRouteImport } from './routes/admin.user.'
 
 const StatusScreenRoute = StatusScreenRouteImport.update({
   id: '/status-screen',
@@ -58,37 +59,45 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminUserRoute = AdminUserRouteImport.update({
+  id: '/user/',
+  path: '/user/',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/complete-profile': typeof CompleteProfileRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/profile-screen': typeof ProfileScreenRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/status-screen': typeof StatusScreenRoute
+  '/admin/user/': typeof AdminUserRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/complete-profile': typeof CompleteProfileRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/profile-screen': typeof ProfileScreenRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/status-screen': typeof StatusScreenRoute
+  '/admin/user': typeof AdminUserRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/complete-profile': typeof CompleteProfileRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/profile-screen': typeof ProfileScreenRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/status-screen': typeof StatusScreenRoute
+  '/admin/user/': typeof AdminUserRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -101,6 +110,7 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/status-screen'
+    | '/admin/user/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -111,6 +121,7 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/status-screen'
+    | '/admin/user'
   id:
     | '__root__'
     | '/'
@@ -121,11 +132,12 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/status-screen'
+    | '/admin/user/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AdminRoute: typeof AdminRoute
+  AdminRoute: typeof AdminRouteWithChildren
   CompleteProfileRoute: typeof CompleteProfileRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   ProfileScreenRoute: typeof ProfileScreenRoute
@@ -192,12 +204,29 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/user/': {
+      id: '/admin/user/'
+      path: '/user'
+      fullPath: '/admin/user/'
+      preLoaderRoute: typeof AdminUserRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
+interface AdminRouteChildren {
+  AdminUserRoute: typeof AdminUserRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminUserRoute: AdminUserRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AdminRoute: AdminRoute,
+  AdminRoute: AdminRouteWithChildren,
   CompleteProfileRoute: CompleteProfileRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   ProfileScreenRoute: ProfileScreenRoute,

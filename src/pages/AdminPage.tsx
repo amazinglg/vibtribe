@@ -388,7 +388,7 @@ export default function AdminPage() {
               <h2 className="font-bold text-base text-foreground mb-4">Recent Signups</h2>
               <div className="space-y-3">
                 {users.slice(0, 5).map(u => (
-                  <div key={u.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => { setSelectedUser(u); setActiveTab('users'); }}>
+                  <div key={u.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => router({ to: '/admin/user/$userId', params: { userId: u.id } })}>
                     <div className="w-9 h-9 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                       {u.full_name?.[0]?.toUpperCase() || '?'}
                     </div>
@@ -414,7 +414,7 @@ export default function AdminPage() {
         )}
 
         {activeTab === 'users' && (
-          <div className="flex flex-col lg:flex-row gap-6">
+          <div className="flex flex-col gap-6">
             {/* User List */}
             <div className="flex-1 glass rounded-2xl border border-border overflow-hidden">
               <div className="p-4 border-b border-border">
@@ -433,8 +433,8 @@ export default function AdminPage() {
                 {filteredUsers.map(u => (
                   <div
                     key={u.id}
-                    onClick={() => setSelectedUser(u)}
-                    className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-all border-b border-border/30 hover:bg-muted/50 ${selectedUser?.id === u.id ? 'bg-primary/10 border-l-2 border-l-primary' : ''}`}
+                    onClick={() => router({ to: '/admin/user/$userId', params: { userId: u.id } })}
+                    className="flex items-center gap-3 px-4 py-3 cursor-pointer transition-all border-b border-border/30 hover:bg-muted/50"
                   >
                     <div className="relative flex-shrink-0">
                       <div className="w-10 h-10 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-sm">
@@ -468,123 +468,6 @@ export default function AdminPage() {
               </div>
             </div>
 
-            {/* User Detail Panel */}
-            {selectedUser && (
-              <div className="w-full lg:w-80 flex-shrink-0 glass rounded-2xl border border-border p-5 float-up overflow-y-auto max-h-[calc(100dvh-220px)] lg:max-h-[calc(100vh-200px)] pb-24 lg:pb-5">
-                <div className="flex lg:hidden justify-end mb-2">
-                  <button onClick={() => setSelectedUser(null)} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground transition-colors" title="Close">
-                    <X size={16} />
-                  </button>
-                </div>
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="w-14 h-14 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-xl">
-                    {selectedUser.full_name?.[0]?.toUpperCase() || '?'}
-                  </div>
-                  <div>
-                    <p className="font-bold text-foreground">{selectedUser.full_name || 'Unknown'}</p>
-                    <p className="text-xs text-muted-foreground">{selectedUser.role}</p>
-                  </div>
-                </div>
-
-                <div className="space-y-2 mb-5 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Email</span>
-                    <span className="text-foreground text-xs truncate max-w-[160px]">{selectedUser.email || '—'}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Mobile</span>
-                    <span className="text-foreground text-xs">{selectedUser.mobile_number || '—'}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Status</span>
-                    <span className={`text-xs font-medium ${
-                      selectedUser.account_status === 'active' ? 'text-vt-green' :
-                      selectedUser.account_status === 'suspended' ? 'text-orange-400' : 'text-red-400'
-                    }`}>
-                      {selectedUser.account_status}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Login Attempts</span>
-                    <span className={`text-xs font-medium ${(selectedUser.login_attempts || 0) >= 3 ? 'text-red-400' : 'text-foreground'}`}>
-                      {selectedUser.login_attempts || 0} / 5
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Suspended</span>
-                    <span className={`text-xs ${selectedUser.is_suspended ? 'text-orange-400' : 'text-vt-green'}`}>
-                      {selectedUser.is_suspended ? 'Yes' : 'No'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Online</span>
-                    <span className={`text-xs ${selectedUser.is_online ? 'text-vt-green' : 'text-muted-foreground'}`}>
-                      {selectedUser.is_online ? 'Yes' : 'No'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Signed Up</span>
-                    <span className="text-foreground text-xs">{new Date(selectedUser.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  {selectedUser.id !== user?.id ? (
-                    <>
-                      <button onClick={() => openEdit(selectedUser)} disabled={actionLoading === selectedUser.id}
-                        className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-all">
-                        <Pencil size={14} />Edit User Info
-                      </button>
-
-                      {/* Suspend / Unsuspend */}
-                      {selectedUser.is_suspended || selectedUser.account_status === 'suspended' ? (
-                        <button onClick={() => handleSuspendUser(selectedUser.id, false)} disabled={actionLoading === selectedUser.id}
-                          className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-vt-green/10 text-vt-green hover:bg-vt-green/20 transition-all">
-                          <UserCheck size={14} />Unsuspend Account
-                        </button>
-                      ) : (
-                        <button onClick={() => handleSuspendUser(selectedUser.id, true)} disabled={actionLoading === selectedUser.id}
-                          className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 transition-all">
-                          <UserX size={14} />Suspend Account
-                        </button>
-                      )}
-
-                      <button onClick={() => handleBlockUser(selectedUser.id, selectedUser.account_status)} disabled={actionLoading === selectedUser.id}
-                        className={`w-full flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                          selectedUser.account_status === 'blocked' ? 'bg-vt-green/10 text-vt-green hover:bg-vt-green/20' : 'bg-vt-amber/10 text-vt-amber hover:bg-vt-amber/20'
-                        }`}>
-                        <Ban size={14} />
-                        {selectedUser.account_status === 'blocked' ? 'Unblock User' : 'Block User'}
-                      </button>
-
-                      <button onClick={() => handleResetPassword(selectedUser)} disabled={actionLoading === selectedUser.id}
-                        className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-all">
-                        <KeyRound size={14} />Reset Password
-                      </button>
-
-                      <button
-                        onClick={() => handleForceLogout(selectedUser)}
-                        disabled={forceLogoutLoading === selectedUser.id}
-                        className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 transition-all disabled:opacity-50"
-                      >
-                        <LogOut size={14} />
-                        {forceLogoutLoading === selectedUser.id ? 'Issuing...' : 'Force Logout (All Devices)'}
-                      </button>
-
-                      <button onClick={() => handleDeleteUser(selectedUser.id)} disabled={actionLoading === selectedUser.id}
-                        className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all">
-                        <Trash2 size={14} />Delete User
-                      </button>
-                    </>
-                  ) : (
-                    <div className="flex items-center gap-2 p-3 bg-primary/10 border border-primary/20 rounded-xl">
-                      <AlertTriangle size={14} className="text-primary flex-shrink-0" />
-                      <p className="text-xs text-primary">This is your own account</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
         )}
 

@@ -472,15 +472,18 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          is_master_admin: boolean
           is_online: boolean | null
           is_suspended: boolean | null
           last_seen: string | null
           login_attempts: number | null
           mobile_number: string | null
           profile_completed: boolean | null
+          profile_photo_visibility: string
           public_key: string | null
           real_email: string | null
           role: string
+          status_visibility: string
           updated_at: string | null
           username: string | null
         }
@@ -494,15 +497,18 @@ export type Database = {
           email: string
           full_name?: string
           id: string
+          is_master_admin?: boolean
           is_online?: boolean | null
           is_suspended?: boolean | null
           last_seen?: string | null
           login_attempts?: number | null
           mobile_number?: string | null
           profile_completed?: boolean | null
+          profile_photo_visibility?: string
           public_key?: string | null
           real_email?: string | null
           role?: string
+          status_visibility?: string
           updated_at?: string | null
           username?: string | null
         }
@@ -516,15 +522,18 @@ export type Database = {
           email?: string
           full_name?: string
           id?: string
+          is_master_admin?: boolean
           is_online?: boolean | null
           is_suspended?: boolean | null
           last_seen?: string | null
           login_attempts?: number | null
           mobile_number?: string | null
           profile_completed?: boolean | null
+          profile_photo_visibility?: string
           public_key?: string | null
           real_email?: string | null
           role?: string
+          status_visibility?: string
           updated_at?: string | null
           username?: string | null
         }
@@ -543,6 +552,7 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
       is_admin_user: { Args: never; Returns: boolean }
       is_chat_participant: { Args: { chat_uuid: string }; Returns: boolean }
+      is_master_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       chat_type: "normal" | "secure" | "dual_normal" | "dual_secure"
