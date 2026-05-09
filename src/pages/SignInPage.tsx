@@ -71,8 +71,10 @@ export default function SignInPage() {
             .eq('id', profileData.id);
         }
 
+        console.log('[VT-LOGIN] sign-in succeeded, navigating to /');
         router({ to: '/', replace: true });
       } catch (loginErr: any) {
+        console.error('[VT-LOGIN] sign-in failed', loginErr);
         // Increment failed login attempts
         if (profileData?.id) {
           const currentAttempts = (profileData.login_attempts || 0) + 1;
