@@ -571,6 +571,13 @@ function ContactsTabContent({
               </p>
             </div>
           </div>
+          <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30">
+            <p className="text-[11px] text-foreground leading-relaxed">
+              <span className="font-bold text-amber-400">Tip:</span> When the contact picker opens, tap
+              <span className="font-bold"> "Select all"</span> at the top to import everyone in one go.
+              Browsers require you to confirm the selection — VibeTribe can't auto-pick contacts for privacy reasons.
+            </p>
+          </div>
           <button
             onClick={requestContacts}
             className="w-full py-2.5 gradient-primary rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-all glow-primary"
