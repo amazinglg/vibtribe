@@ -20,8 +20,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const supabase = createClient();
 
   useEffect(() => {
+    // Safety net — never let the loading screen hang forever even if
+    // getSession() stalls due to network / SW issues.
+    const safety = setTimeout(() => setLoading(false), 3500);
+
     // Get initial session — persists across browser restarts
     supabase.auth.getSession().then(({ data: { session } }) => {
+      clearTimeout(safety);
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -29,6 +34,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // Start polling for force-logout signal
         startForceLogoutPolling(session.user.id);
       }
+      setLoading(false);
+    }).catch(() => {
+      clearTimeout(safety);
       setLoading(false);
     });
 
@@ -45,7 +53,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(safety);
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Poll for force-logout tokens every 30 seconds

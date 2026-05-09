@@ -347,37 +347,59 @@ export default function ProfileContent() {
   };
 
   const handleUpdateApp = async () => {
+    // Background update — never blank the UI. We silently check for a new
+    // service worker / cached assets, and only reload AFTER the new version
+    // is installed and ready. The user can keep using the app meanwhile.
+    const loadingToast = toast.loading('Checking for updates in the background…');
     try {
-      // Clear all caches
-      if ('caches' in window) {
-        const cacheNames = await caches.keys();
-        await Promise.all(cacheNames.map(name => caches.delete(name)));
-      }
-      // Force service worker to update
+      let didUpdate = false;
+
       if ('serviceWorker' in navigator) {
         const registrations = await navigator.serviceWorker.getRegistrations();
+
         for (const reg of registrations) {
-          await reg.update();
-          if (reg.waiting) {
-            reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+          // Trigger a fresh check
+          await reg.update().catch(() => {});
+
+          // If a new worker is installing, wait for it to become "installed"
+          const installing = reg.installing || reg.waiting;
+          if (installing) {
+            didUpdate = true;
+            await new Promise<void>((resolve) => {
+              const check = () => {
+                if (installing.state === 'installed' || installing.state === 'activated') {
+                  resolve();
+                }
+              };
+              installing.addEventListener('statechange', check);
+              check();
+              // Hard timeout so we never block forever
+              setTimeout(resolve, 8000);
+            });
+            if (reg.waiting) {
+              reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+            }
           }
         }
-      }
-      // Clear localStorage cache keys (not auth)
-      const keysToRemove: string[] = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && !key.startsWith('sb-') && !key.startsWith('supabase')) {
-          keysToRemove.push(key);
+
+        // Refresh runtime caches in the background (non-blocking, keeps UI alive)
+        if ('caches' in window) {
+          caches.keys().then((names) =>
+            Promise.all(names.map((n) => caches.delete(n)))
+          ).catch(() => {});
         }
       }
-      keysToRemove.forEach(k => localStorage.removeItem(k));
-      // Clear sessionStorage
-      sessionStorage.clear();
-      toast.success('App updated! Reloading to apply latest version...');
-      setTimeout(() => window.location.reload(), 1200);
+
+      toast.dismiss(loadingToast);
+      if (didUpdate) {
+        toast.success('Update ready — refreshing now…');
+        setTimeout(() => window.location.reload(), 1000);
+      } else {
+        toast.success("You're already on the latest version.");
+      }
     } catch {
-      toast.error('Failed to update app. Please refresh manually.');
+      toast.dismiss(loadingToast);
+      toast.error('Could not check for updates. Please try again.');
     }
   };
 
