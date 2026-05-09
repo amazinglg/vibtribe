@@ -100,8 +100,52 @@ serve(async (req) => {
       });
     }
 
+    // Sanitize url — only allow same-origin relative paths to prevent phishing
+    let safeUrl = '/';
+    if (typeof url === 'string' && url.startsWith('/') && !url.startsWith('//')) {
+      safeUrl = url;
+    }
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+    // Authorization: caller may push to themselves OR to a user they share a chat with
+    if (user_id !== authData.user.id) {
+      const adminCheck = createClient(supabaseUrl, supabaseServiceKey);
+      const callerId = authData.user.id;
+      const { data: shared } = await adminCheck
+        .from('chats')
+        .select('id')
+        .or(
+          `and(participant_one.eq.${callerId},participant_two.eq.${user_id}),` +
+          `and(participant_one.eq.${user_id},participant_two.eq.${callerId})`
+        )
+        .limit(1);
+      if (!shared || shared.length === 0) {
+        // Also allow if both are members of the same group chat
+        const { data: groups } = await adminCheck
+          .from('chat_members')
+          .select('chat_id')
+          .eq('user_id', callerId);
+        const chatIds = (groups || []).map((g: any) => g.chat_id);
+        let allowed = false;
+        if (chatIds.length > 0) {
+          const { data: targetMember } = await adminCheck
+            .from('chat_members')
+            .select('chat_id')
+            .eq('user_id', user_id)
+            .in('chat_id', chatIds)
+            .limit(1);
+          allowed = !!(targetMember && targetMember.length > 0);
+        }
+        if (!allowed) {
+          return new Response(JSON.stringify({ error: 'Forbidden' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+      }
+    }
     const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY')!;
     const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY')!;
     const vapidSubject = Deno.env.get('VAPID_SUBJECT') || 'mailto:admin@vibetribe.app';
@@ -124,7 +168,7 @@ serve(async (req) => {
       title: title || 'VibeTribe',
       body: body || 'You have a new notification',
       tag: tag || 'vibetribe-notif',
-      url: url || '/',
+      url: safeUrl,
       type: type || 'message',
     });
 
