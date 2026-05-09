@@ -19,10 +19,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const supabase = createClient();
 
   useEffect(() => {
+    // Get initial session — persists across browser restarts
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      if (session?.user) fetchProfile(session.user.id);
+      if (session?.user) {
+        fetchProfile(session.user.id);
+        // Start polling for force-logout signal
+        startForceLogoutPolling(session.user.id);
+      }
       setLoading(false);
     });
 
@@ -31,13 +36,48 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
-      if (session?.user) fetchProfile(session.user.id);
-      else setProfile(null);
+      if (session?.user) {
+        fetchProfile(session.user.id);
+      } else {
+        setProfile(null);
+      }
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Poll for force-logout tokens every 30 seconds
+  const startForceLogoutPolling = (userId: string) => {
+    const checkForceLogout = async () => {
+      try {
+        const { data } = await supabase
+          .from('force_logout_tokens')
+          .select('id')
+          .eq('user_id', userId)
+          .limit(1);
+        if (data && data.length > 0) {
+          // Delete the token first, then sign out
+          await supabase.from('force_logout_tokens').delete().eq('user_id', userId);
+          await supabase.auth.signOut({ scope: 'global' });
+          setUser(null);
+          setSession(null);
+          setProfile(null);
+          if (typeof window !== 'undefined') {
+            window.location.href = '/sign-in';
+          }
+        }
+      } catch {}
+    };
+
+    // Check immediately then every 30s
+    checkForceLogout();
+    const interval = setInterval(checkForceLogout, 30000);
+    // Store interval id so we can clear it
+    if (typeof window !== 'undefined') {
+      (window as any).__forceLogoutInterval = interval;
+    }
+  };
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -52,7 +92,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Mobile number + password sign up (no verification required)
   const signUp = async (mobileNumber: string, password: string, metadata: any = {}) => {
-    // Use mobile number as email prefix for Supabase auth
     const emailFromMobile = `${mobileNumber.replace(/\D/g, '')}@vibetribe.app`;
     const { data, error } = await supabase.auth.signUp({
       email: emailFromMobile,
@@ -89,9 +128,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return data;
   };
 
-  // Sign Out
+  // Sign Out — manual only
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
+    // Clear force logout polling
+    if (typeof window !== 'undefined' && (window as any).__forceLogoutInterval) {
+      clearInterval((window as any).__forceLogoutInterval);
+    }
+    const { error } = await supabase.auth.signOut({ scope: 'global' });
     if (error) throw error;
     setProfile(null);
   };
@@ -110,10 +153,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return data;
   };
 
-  // Password reset (sends reset email)
+  // Password reset
   const resetPassword = async (email: string) => {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/reset-password`,
+      redirectTo: `${window.location.origin}/reset-password`,
     });
     if (error) throw error;
   };

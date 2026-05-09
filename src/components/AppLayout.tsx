@@ -1,28 +1,20 @@
-import React, { useState } from 'react';
+import { useLocation as __useTLocation } from '@tanstack/react-router';
+
+const __navWrap = (n: any) => (to: string) => n({ to });
+const useTanstackPathname = () => __useTLocation().pathname;
+import React, { useState, useEffect } from 'react';
 import { Link } from '@tanstack/react-router';
-import { useLocation as _useLocation, useNavigate as _useNavigate } from '@tanstack/react-router';
+import { useTanstackPathname, useNavigate } from '@tanstack/react-router';
 import AppLogo from '@/components/ui/AppLogo';
-import { MessageCircle, CircleDot, User, Bell, Search, Settings, Shield, Lock, ChevronLeft, ChevronRight, Wifi, LogOut } from 'lucide-react';
+import { MessageCircle, CircleDot, User, Bell, Shield, Lock, ChevronLeft, ChevronRight, Wifi, LogOut } from 'lucide-react';
 import SecureVaultModal from './SecureVaultModal';
 import { useAuth } from '@/contexts/AuthContext';
-import Icon from '@/components/ui/AppIcon';
 import PWAInstallBanner from './PWAInstallBanner';
-
-
-function usePathname() {
-  const loc = _useLocation();
-  return (loc as any)?.pathname ?? "";
-}
-
-function useRouter() {
-  const navigate = _useNavigate();
-  return {
-    push: (to: string) => navigate({ to: to as any }),
-    replace: (to: string) => navigate({ to: to as any, replace: true }),
-    back: () => { if (typeof window !== 'undefined') window.history.back(); },
-    refresh: () => {},
-  };
-}
+import GlobalSearchBar from './GlobalSearchBar';
+import Icon from '@/components/ui/AppIcon';
+import HelpButton from '@/components/HelpButton';
+import PermissionPrompt from '@/components/PermissionPrompt';
+import { usePermissions } from '@/hooks/usePermissions';
 
 
 
@@ -33,16 +25,57 @@ const NAV_ITEMS = [
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  const router = useRouter();
+  const pathname = useTanstackPathname();
+  const router = useNavigate();
   const { user, profile, signOut, isAdmin } = useAuth();
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
   const [secureVaultOpen, setSecureVaultOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [showAppPermPrompt, setShowAppPermPrompt] = useState(false);
+  const { permissions, requestNotifications, requestStorage, checkAllPermissions } = usePermissions();
+
+  // Request app-level permissions once per session after user logs in
+  useEffect(() => {
+    if (!user) return;
+    const key = `vt_perms_requested_${user.id}`;
+    const alreadyRequested = sessionStorage.getItem(key);
+    if (!alreadyRequested) {
+      // Small delay so the UI is fully rendered first
+      const t = setTimeout(() => {
+        checkAllPermissions().then(() => {
+          setShowAppPermPrompt(true);
+        });
+      }, 1500);
+      return () => clearTimeout(t);
+    }
+  }, [user, checkAllPermissions]);
+
+  const handleAppPermAllow = async () => {
+    setShowAppPermPrompt(false);
+    if (user) sessionStorage.setItem(`vt_perms_requested_${user.id}`, '1');
+    await Promise.all([requestNotifications(), requestStorage()]);
+  };
+
+  const handleAppPermDeny = () => {
+    setShowAppPermPrompt(false);
+    if (user) sessionStorage.setItem(`vt_perms_requested_${user.id}`, '1');
+  };
 
   const displayName = profile?.full_name || user?.email?.split('@')[0] || 'User';
   const avatarLetter = displayName[0]?.toUpperCase() || 'V';
   const adminUser = isAdmin?.();
+
+  // Auto-close secure vault when screen is locked / tab hidden
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden' && secureVaultOpen) {
+        setSecureVaultOpen(false);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [secureVaultOpen]);
 
   const handleSignOut = async () => {
     try {
@@ -53,6 +86,31 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="gradient-bg-page min-h-screen flex">
+      {/* App-level Permission Prompt */}
+      {showAppPermPrompt && (
+        <PermissionPrompt
+          title="Enable App Features"
+          subtitle="Allow VibeTribe to work smoothly with these permissions."
+          permissions={[
+            {
+              icon: <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>,
+              label: 'Notifications',
+              description: 'Get notified about new messages and calls',
+              status: permissions.notifications,
+            },
+            {
+              icon: <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>,
+              label: 'Storage',
+              description: 'Save media files and app data persistently',
+              status: permissions.storage,
+            },
+          ]}
+          onAllow={handleAppPermAllow}
+          onDeny={handleAppPermDeny}
+          allowLabel="Allow"
+          denyLabel="Not Now"
+        />
+      )}
       {/* Desktop Sidebar */}
       <aside
         className={`hidden lg:flex flex-col glass-strong border-r border-border transition-all duration-300 ease-in-out fixed top-0 left-0 h-full z-40 ${
@@ -94,40 +152,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </Link>
             );
           })}
-
-          <div className="mt-4 pt-4 border-t border-border">
-            <button
-              onClick={() => setNotificationsOpen(!notificationsOpen)}
-              className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200 group relative"
-            >
-              <Bell size={22} />
-              <span className="absolute top-2 left-6 w-2 h-2 bg-pink rounded-full" />
-              {sidebarExpanded && <span className="font-medium text-sm">Notifications</span>}
-            </button>
-            <Link
-              to="/profile-screen"
-              className="flex items-center gap-3 px-3 py-3 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200 group relative"
-            >
-              <Settings size={22} />
-              {sidebarExpanded && <span className="font-medium text-sm">Settings</span>}
-            </Link>
-            {adminUser && (
-              <Link
-                to="/admin"
-                className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group relative ${
-                  pathname === '/admin' ? 'text-vt-amber bg-vt-amber/10' : 'text-vt-amber hover:bg-vt-amber/10'
-                }`}
-              >
-                <Shield size={22} />
-                {sidebarExpanded && <span className="font-medium text-sm">Admin Panel</span>}
-                {!sidebarExpanded && (
-                  <div className="absolute left-full ml-3 px-2 py-1 glass rounded-lg text-xs font-medium text-foreground opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-50">
-                    Admin Panel
-                  </div>
-                )}
-              </Link>
-            )}
-          </div>
         </nav>
 
         {/* Bottom: User + Collapse */}
@@ -171,10 +195,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
           <div className="flex-1" />
 
-          <button className="hidden sm:flex items-center gap-2 px-3 py-2 glass rounded-xl text-muted-foreground hover:text-foreground transition-all text-sm">
-            <Search size={16} />
-            <span className="hidden md:inline">Search...</span>
-          </button>
+          {/* Global Search Bar */}
+          <GlobalSearchBar />
 
           <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 glass rounded-full text-xs text-vt-green font-medium">
             <Wifi size={12} />
@@ -188,13 +210,20 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               className="relative p-2.5 glass rounded-xl text-muted-foreground hover:text-foreground transition-all"
             >
               <Bell size={20} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-pink rounded-full animate-pulse" />
+              {unreadNotifications > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-pink rounded-full animate-pulse" />
+              )}
             </button>
             {notificationsOpen && (
               <div className="absolute right-0 top-full mt-2 w-80 glass-strong rounded-2xl border border-border shadow-card overflow-hidden z-50 float-up">
                 <div className="px-4 py-3 border-b border-border flex items-center justify-between">
                   <h3 className="font-semibold text-sm text-foreground">Notifications</h3>
-                  <button className="text-xs text-primary hover:text-primary/80">Mark all read</button>
+                  <button
+                    className="text-xs text-primary hover:text-primary/80"
+                    onClick={() => setUnreadNotifications(0)}
+                  >
+                    Mark all read
+                  </button>
                 </div>
                 <div className="px-4 py-6 text-center">
                   <Bell size={24} className="text-muted-foreground mx-auto mb-2" />
@@ -261,10 +290,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </button>
           </div>
         </nav>
+
+        {/* PWA Install Banner */}
+        <PWAInstallBanner />
+
+        {/* Floating Help Button */}
+        <HelpButton variant="floating" />
       </div>
 
       <SecureVaultModal isOpen={secureVaultOpen} onClose={() => setSecureVaultOpen(false)} />
-      <PWAInstallBanner />
     </div>
   );
 }

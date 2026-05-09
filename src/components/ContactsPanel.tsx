@@ -16,7 +16,7 @@ interface ContactsPanelProps {
   onStartChat?: (userId: string, name: string) => void;
 }
 
-const PLATFORM_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://vibetribe2767.builtwithrocket.new';
+const PLATFORM_URL = window.location.origin || 'https://vibetribe2767.builtwithrocket.new';
 const INVITE_MSG = `Hey! I'm using VibeTribe — a secure messaging app. Join me here: ${PLATFORM_URL}/sign-up 🚀`;
 
 export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelProps) {

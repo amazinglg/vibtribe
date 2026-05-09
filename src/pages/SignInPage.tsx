@@ -1,24 +1,18 @@
 import React, { useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { useNavigate as _useNavigate } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
 import { Phone, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLogo from '@/components/ui/AppLogo';
+import HelpButton from '@/components/HelpButton';
+import { createClient } from '@/lib/supabase/client';
 
-function useRouter() {
-  const navigate = _useNavigate();
-  return {
-    push: (to: string) => navigate({ to: to as any }),
-    replace: (to: string) => navigate({ to: to as any, replace: true }),
-    back: () => { if (typeof window !== 'undefined') window.history.back(); },
-    refresh: () => {},
-  };
-}
-
+const __navWrap = (n: any) => (to: string) => n({ to });
 
 export default function SignInPage() {
-  const router = useRouter();
+  const router = useNavigate();
   const { signIn, signInWithEmail } = useAuth();
+  const supabase = createClient();
   const [mobile, setMobile] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -36,14 +30,69 @@ export default function SignInPage() {
 
     setLoading(true);
     try {
+      // Check if account is suspended before attempting login
+      let profileQuery;
       if (useEmail) {
-        await signInWithEmail(email, password);
+        profileQuery = await supabase
+          .from('user_profiles')
+          .select('id, is_suspended, login_attempts, account_status')
+          .eq('email', email.trim())
+          .maybeSingle();
       } else {
-        await signIn(mobile, password);
+        const emailFromMobile = `${mobile.replace(/\D/g, '')}@vibetribe.app`;
+        profileQuery = await supabase
+          .from('user_profiles')
+          .select('id, is_suspended, login_attempts, account_status')
+          .eq('email', emailFromMobile)
+          .maybeSingle();
       }
-      router.replace('/');
+
+      const profileData = profileQuery?.data;
+
+      if (profileData?.is_suspended || profileData?.account_status === 'suspended') {
+        setError('Your account has been suspended due to too many failed login attempts. Please contact support or wait for admin to unsuspend your account.');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        if (useEmail) {
+          await signInWithEmail(email, password);
+        } else {
+          await signIn(mobile, password);
+        }
+
+        // Reset login attempts on successful login
+        if (profileData?.id) {
+          await supabase
+            .from('user_profiles')
+            .update({ login_attempts: 0 })
+            .eq('id', profileData.id);
+        }
+
+        router.replace('/');
+      } catch (loginErr: any) {
+        // Increment failed login attempts
+        if (profileData?.id) {
+          const currentAttempts = (profileData.login_attempts || 0) + 1;
+          const updates: any = { login_attempts: currentAttempts };
+
+          if (currentAttempts >= 5) {
+            updates.is_suspended = true;
+            updates.account_status = 'suspended';
+            setError('Your account has been suspended after 5 failed login attempts. Please contact support.');
+          } else {
+            const remaining = 5 - currentAttempts;
+            setError(`Invalid credentials. ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining before account suspension.`);
+          }
+
+          await supabase.from('user_profiles').update(updates).eq('id', profileData.id);
+        } else {
+          setError(loginErr.message || 'Invalid credentials. Please try again.');
+        }
+      }
     } catch (err: any) {
-      setError(err.message || 'Invalid credentials. Please try again.');
+      setError(err.message || 'Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -173,6 +222,11 @@ export default function SignInPage() {
                 Create account
               </Link>
             </p>
+          </div>
+
+          {/* Help button on login page */}
+          <div className="mt-4 flex justify-center">
+            <HelpButton variant="inline" />
           </div>
         </div>
       </div>

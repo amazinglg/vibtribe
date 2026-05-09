@@ -51,7 +51,7 @@ export default function StatusHero() {
       {/* My Status Card */}
       <div className="glass rounded-3xl border border-border p-5 mb-6 card-3d relative overflow-hidden">
         {/* Background gradient blob */}
-        <div className="absolute inset-0 opacity-20 pointer-events-none">
+        <div className="absolute inset-0 opacity-20 pointer-events-none overflow-hidden rounded-3xl">
           <div className="absolute top-0 right-0 w-32 h-32 gradient-primary rounded-full blur-3xl" />
           <div className="absolute bottom-0 left-0 w-24 h-24 gradient-cyan rounded-full blur-3xl" />
         </div>
@@ -85,7 +85,7 @@ export default function StatusHero() {
               </button>
 
               {showVisibility && (
-                <div className="absolute left-0 top-full mt-1 w-52 glass-strong rounded-xl border border-border shadow-card py-1 z-30 float-up">
+                <div className="absolute left-0 top-full mt-1 w-52 glass-strong rounded-xl border border-border shadow-card py-1 z-[100] float-up">
                   <p className="px-3 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                     Who can see this status?
                   </p>

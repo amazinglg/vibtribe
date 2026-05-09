@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Plus, Trash2, Lock, Users } from 'lucide-react';
 import MarkSecureModal from '@/components/MarkSecureModal';
 import ContactsPanel from '@/components/ContactsPanel';
-import { useChatStore } from '@/store/chatStore';
+import { useChatStore } from '../store/chatStore';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 
@@ -48,10 +48,10 @@ export default function ChatListPanel() {
         .from('chats')
         .select(`
           id, chat_type, participant_one, participant_two,
-          messages(id, content, created_at, sender_id)
+          messages(id, content, created_at, sender_id, message_status)
         `)
         .or(`participant_one.eq.${user.id},participant_two.eq.${user.id}`)
-        .eq('chat_type', 'normal')
+        .neq('chat_type', 'secure')
         .order('updated_at', { ascending: false });
 
       if (error) throw error;
@@ -62,12 +62,15 @@ export default function ChatListPanel() {
         const { data: otherUser } = await supabase
           .from('user_profiles')
           .select('id, full_name, is_online, last_seen')
-          .eq('id', otherUserId as string)
+          .eq('id', otherUserId)
           .single();
 
         if (otherUser) {
           const msgs = (chat as any).messages || [];
-          const lastMsg = msgs.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+          const sortedMsgs = msgs.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+          const lastMsg = sortedMsgs[0];
+          // Count unread: messages from other user that are not 'read'
+          const unreadCount = msgs.filter((m: any) => m.sender_id !== user.id && m.message_status !== 'read').length;
           const avatarColors = ['gradient-primary', 'gradient-cyan', 'gradient-pink', 'gradient-tri'];
           chatList.push({
             id: chat.id,
@@ -76,12 +79,12 @@ export default function ChatListPanel() {
             avatarColor: avatarColors[chatList.length % avatarColors.length],
             lastMessage: lastMsg?.content || 'Start a conversation...',
             time: lastMsg ? formatTime(lastMsg.created_at) : '',
-            unread: 0,
+            unread: unreadCount,
             online: otherUser.is_online || false,
             typing: false,
             pinned: false,
             muted: false,
-            participantId: (otherUserId ?? '') as string,
+            participantId: otherUserId,
           });
         }
       }
@@ -171,7 +174,11 @@ export default function ChatListPanel() {
               >
                 <Users size={18} />
               </button>
-              <button className="p-2 gradient-primary rounded-xl text-white hover:opacity-90 transition-all glow-primary">
+              <button
+                onClick={() => setContactsOpen(true)}
+                className="p-2 gradient-primary rounded-xl text-white hover:opacity-90 transition-all glow-primary"
+                title="New Chat"
+              >
                 <Plus size={18} />
               </button>
             </div>
@@ -278,7 +285,10 @@ export default function ChatListPanel() {
       {secureModalOpen && secureTarget && (
         <MarkSecureModal
           isOpen={secureModalOpen}
-          onClose={() => setSecureModalOpen(false)}
+          onClose={() => {
+            setSecureModalOpen(false);
+            loadChats();
+          }}
           chatId={secureTarget.id}
           chatName={secureTarget.name}
         />
@@ -304,10 +314,11 @@ interface ChatListItemProps {
 }
 
 function ChatListItem({ chat, isSelected, onClick, onContextMenu, onDelete, onMarkSecure }: ChatListItemProps) {
+  const hasUnread = chat.unread > 0;
   return (
     <div
       className={`relative flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-200 hover:bg-muted/50 ${
-        isSelected ? 'bg-primary/10 border-r-2 border-primary' : ''
+        isSelected ? 'bg-primary/10 border-r-2 border-primary' : hasUnread ? 'bg-primary/5' : ''
       }`}
       onClick={onClick}
       onContextMenu={onContextMenu}
@@ -325,16 +336,22 @@ function ChatListItem({ chat, isSelected, onClick, onContextMenu, onDelete, onMa
       {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
-          <p className="font-semibold text-sm text-foreground truncate">{chat.name}</p>
-          <span className="text-[11px] text-muted-foreground flex-shrink-0">{chat.time}</span>
+          <p className={`text-sm truncate ${hasUnread ? 'font-bold text-foreground' : 'font-semibold text-foreground'}`}>
+            {chat.name}
+          </p>
+          <span className={`text-[11px] flex-shrink-0 ${hasUnread ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>
+            {chat.time}
+          </span>
         </div>
         <div className="flex items-center justify-between gap-2 mt-0.5">
-          <p className={`text-xs truncate ${chat.typing ? 'text-primary italic' : 'text-muted-foreground'}`}>
+          <p className={`text-xs truncate ${
+            chat.typing ? 'text-primary italic' : hasUnread ?'text-foreground font-medium': 'text-muted-foreground'
+          }`}>
             {chat.typing ? 'typing...' : chat.lastMessage}
           </p>
-          {chat.unread > 0 && (
-            <span className="flex-shrink-0 w-5 h-5 gradient-primary rounded-full text-[10px] font-bold text-white flex items-center justify-center">
-              {chat.unread}
+          {hasUnread && (
+            <span className="flex-shrink-0 min-w-[20px] h-5 gradient-primary rounded-full text-[10px] font-bold text-white flex items-center justify-center px-1">
+              {chat.unread > 99 ? '99+' : chat.unread}
             </span>
           )}
         </div>

@@ -1,174 +1,167 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import StatusViewer from './StatusViewer';
+import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { CircleDot } from 'lucide-react';
 
-const STATUS_CONTACTS = [
-  {
-    id: 'status-001',
-    name: 'Priya Sharma',
-    avatar: 'P',
-    color: 'gradient-primary',
-    updates: 3,
-    seen: false,
-    time: '2m ago',
-    views: 45,
-    stories: [
-      { id: 'story-001-1', type: 'text', content: 'New beginnings ✨', bg: 'gradient-primary', time: '2m ago' },
-      { id: 'story-001-2', type: 'text', content: 'Feeling amazing today 🌟', bg: 'gradient-cyan', time: '1h ago' },
-      { id: 'story-001-3', type: 'text', content: 'Coffee + code = 💜', bg: 'gradient-pink', time: '3h ago' },
-    ],
-  },
-  {
-    id: 'status-002',
-    name: 'Arjun Mehta',
-    avatar: 'A',
-    color: 'gradient-cyan',
-    updates: 1,
-    seen: false,
-    time: '15m ago',
-    views: 23,
-    stories: [
-      { id: 'story-002-1', type: 'text', content: 'Shipped a feature today 🚀', bg: 'gradient-cyan', time: '15m ago' },
-    ],
-  },
-  {
-    id: 'status-003',
-    name: 'Zara Khan',
-    avatar: 'Z',
-    color: 'gradient-pink',
-    updates: 2,
-    seen: true,
-    time: '45m ago',
-    views: 67,
-    stories: [
-      { id: 'story-003-1', type: 'text', content: 'Saturday vibes 🎵', bg: 'gradient-pink', time: '45m ago' },
-      { id: 'story-003-2', type: 'text', content: 'Making memories 📸', bg: 'gradient-primary', time: '2h ago' },
-    ],
-  },
-  {
-    id: 'status-004',
-    name: 'Dev Kapoor',
-    avatar: 'D',
-    color: 'gradient-tri',
-    updates: 4,
-    seen: false,
-    time: '1h ago',
-    views: 89,
-    stories: [
-      { id: 'story-004-1', type: 'text', content: 'Team lunch was 🔥', bg: 'gradient-tri', time: '1h ago' },
-      { id: 'story-004-2', type: 'text', content: 'Productive day 💪', bg: 'gradient-primary', time: '3h ago' },
-      { id: 'story-004-3', type: 'text', content: 'New project incoming!', bg: 'gradient-cyan', time: '5h ago' },
-      { id: 'story-004-4', type: 'text', content: 'Grateful for this team 🙏', bg: 'gradient-pink', time: '8h ago' },
-    ],
-  },
-  {
-    id: 'status-005',
-    name: 'Nisha Patel',
-    avatar: 'N',
-    color: 'gradient-primary',
-    updates: 1,
-    seen: true,
-    time: '2h ago',
-    views: 34,
-    stories: [
-      { id: 'story-005-1', type: 'text', content: 'Sunsets and serenity 🌅', bg: 'gradient-pink', time: '2h ago' },
-    ],
-  },
-  {
-    id: 'status-006',
-    name: 'Rohan Verma',
-    avatar: 'R',
-    color: 'gradient-cyan',
-    updates: 2,
-    seen: false,
-    time: '3h ago',
-    views: 12,
-    stories: [
-      { id: 'story-006-1', type: 'text', content: 'Gym done ✅', bg: 'gradient-cyan', time: '3h ago' },
-      { id: 'story-006-2', type: 'text', content: 'Meal prep Sunday 🥗', bg: 'gradient-primary', time: '5h ago' },
-    ],
-  },
-  {
-    id: 'status-007',
-    name: 'Sneha Gupta',
-    avatar: 'S',
-    color: 'gradient-pink',
-    updates: 3,
-    seen: true,
-    time: '4h ago',
-    views: 56,
-    stories: [
-      { id: 'story-007-1', type: 'text', content: 'Art is life 🎨', bg: 'gradient-pink', time: '4h ago' },
-      { id: 'story-007-2', type: 'text', content: 'New painting WIP', bg: 'gradient-primary', time: '6h ago' },
-      { id: 'story-007-3', type: 'text', content: 'Inspired by everything', bg: 'gradient-tri', time: '9h ago' },
-    ],
-  },
-  {
-    id: 'status-008',
-    name: 'Kavya Reddy',
-    avatar: 'K',
-    color: 'gradient-tri',
-    updates: 1,
-    seen: false,
-    time: '5h ago',
-    views: 28,
-    stories: [
-      { id: 'story-008-1', type: 'text', content: 'Exploring new places 🗺️', bg: 'gradient-tri', time: '5h ago' },
-    ],
-  },
-  {
-    id: 'status-009',
-    name: 'Vikram Singh',
-    avatar: 'V',
-    color: 'gradient-primary',
-    updates: 2,
-    seen: true,
-    time: '8h ago',
-    views: 19,
-    stories: [
-      { id: 'story-009-1', type: 'text', content: 'Cricket match tonight 🏏', bg: 'gradient-primary', time: '8h ago' },
-      { id: 'story-009-2', type: 'text', content: 'Weekend plans sorted!', bg: 'gradient-cyan', time: '10h ago' },
-    ],
-  },
-  {
-    id: 'status-010',
-    name: 'Ananya Iyer',
-    avatar: 'AI',
-    color: 'gradient-cyan',
-    updates: 1,
-    seen: false,
-    time: '10h ago',
-    views: 41,
-    stories: [
-      { id: 'story-010-1', type: 'text', content: 'Dance practice 💃', bg: 'gradient-cyan', time: '10h ago' },
-    ],
-  },
-];
+interface ContactStatus {
+  id: string;
+  name: string;
+  avatar: string;
+  color: string;
+  updates: number;
+  seen: boolean;
+  time: string;
+  views: number;
+  stories: { id: string; type: string; content: string; bg: string; time: string }[];
+}
 
 export default function StatusGrid() {
+  const { user } = useAuth();
+  const supabase = createClient();
+  const [contactStatuses, setContactStatuses] = useState<ContactStatus[]>([]);
+  const [loading, setLoading] = useState(true);
   const [viewerOpen, setViewerOpen] = useState(false);
-  const [viewerContact, setViewerContact] = useState<typeof STATUS_CONTACTS[0] | null>(null);
+  const [viewerContact, setViewerContact] = useState<ContactStatus | null>(null);
 
-  const unseen = STATUS_CONTACTS.filter(c => !c.seen);
-  const seen = STATUS_CONTACTS.filter(c => c.seen);
+  useEffect(() => {
+    if (user) loadContactStatuses();
+  }, [user]);
 
-  const openViewer = (contact: typeof STATUS_CONTACTS[0]) => {
+  const loadContactStatuses = async () => {
+    setLoading(true);
+    try {
+      // Get user's contacts
+      const { data: contacts } = await supabase
+        .from('contacts')
+        .select('contact_id')
+        .eq('user_id', user?.id);
+
+      if (!contacts || contacts.length === 0) {
+        setContactStatuses([]);
+        setLoading(false);
+        return;
+      }
+
+      const contactIds = contacts.map(c => c.contact_id);
+
+      // Get statuses from contacts only
+      const { data: statuses } = await supabase
+        .from('statuses')
+        .select(`
+          id,
+          user_id,
+          content,
+          created_at,
+          views,
+          user_profiles!statuses_user_id_fkey(full_name)
+        `)
+        .in('user_id', contactIds)
+        .gt('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+        .order('created_at', { ascending: false });
+
+      if (!statuses || statuses.length === 0) {
+        setContactStatuses([]);
+        setLoading(false);
+        return;
+      }
+
+      // Group by user
+      const grouped: Record<string, ContactStatus> = {};
+      const COLORS = ['gradient-primary', 'gradient-cyan', 'gradient-pink', 'gradient-tri'];
+      let colorIdx = 0;
+
+      for (const s of statuses) {
+        const profile = s.user_profiles as any;
+        const name = profile?.full_name || 'Unknown';
+        if (!grouped[s.user_id]) {
+          grouped[s.user_id] = {
+            id: `status-${s.user_id}`,
+            name,
+            avatar: name[0]?.toUpperCase() || '?',
+            color: COLORS[colorIdx++ % COLORS.length],
+            updates: 0,
+            seen: false,
+            time: formatTime(s.created_at),
+            views: s.views || 0,
+            stories: [],
+          };
+        }
+        grouped[s.user_id].updates += 1;
+        grouped[s.user_id].stories.push({
+          id: s.id,
+          type: 'text',
+          content: s.content || '',
+          bg: COLORS[colorIdx % COLORS.length],
+          time: formatTime(s.created_at),
+        });
+      }
+
+      setContactStatuses(Object.values(grouped));
+    } catch {
+      setContactStatuses([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatTime = (iso: string) => {
+    const diff = Date.now() - new Date(iso).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    return `${Math.floor(hrs / 24)}d ago`;
+  };
+
+  const unseen = contactStatuses.filter(c => !c.seen);
+  const seen = contactStatuses.filter(c => c.seen);
+
+  const openViewer = (contact: ContactStatus) => {
     setViewerContact(contact);
     setViewerOpen(true);
   };
 
+  if (loading) {
+    return (
+      <div className="px-4 lg:px-8 pb-8 flex items-center justify-center py-16">
+        <div className="text-center">
+          <CircleDot size={32} className="text-muted-foreground mx-auto mb-3 animate-pulse" />
+          <p className="text-sm text-muted-foreground">Loading statuses...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (contactStatuses.length === 0) {
+    return (
+      <div className="px-4 lg:px-8 pb-8">
+        <div className="glass rounded-2xl border border-border p-10 flex flex-col items-center justify-center text-center">
+          <CircleDot size={40} className="text-muted-foreground mb-4" />
+          <p className="text-base font-semibold text-foreground mb-1">No status updates</p>
+          <p className="text-sm text-muted-foreground max-w-xs">
+            Status updates from your contacts will appear here. Add contacts to see their stories.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="px-4 lg:px-8 pb-8">
       {/* Recent Updates */}
-      <div className="mb-6">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-4">
-          Recent Updates ({unseen.length})
-        </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-3">
-          {unseen.map((contact) => (
-            <StatusCard key={contact.id} contact={contact} onClick={() => openViewer(contact)} />
-          ))}
+      {unseen.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-4">
+            Recent Updates ({unseen.length})
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-3">
+            {unseen.map((contact) => (
+              <StatusCard key={contact.id} contact={contact} onClick={() => openViewer(contact)} />
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Viewed Updates */}
       {seen.length > 0 && (
@@ -200,7 +193,7 @@ function StatusCard({
   onClick,
   seen = false,
 }: {
-  contact: typeof STATUS_CONTACTS[0];
+  contact: ContactStatus;
   onClick: () => void;
   seen?: boolean;
 }) {
