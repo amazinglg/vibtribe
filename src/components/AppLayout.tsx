@@ -14,6 +14,7 @@ import PermissionPrompt from '@/components/PermissionPrompt';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useChatStore } from '@/store/chatStore';
 import CallProvider from '@/components/CallProvider';
+import { createClient } from '@/lib/supabase/client';
 
 
 
@@ -63,6 +64,56 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [secureVaultOpen, setSecureVaultOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const supabase = createClient();
+
+  // Load notifications for the current user (admins receive ticket alerts)
+  useEffect(() => {
+    if (!user) return;
+    let mounted = true;
+    const load = async () => {
+      const { data } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      if (!mounted) return;
+      setNotifications(data || []);
+      setUnreadNotifications((data || []).filter((n: any) => !n.is_read).length);
+    };
+    load();
+    const channel = supabase
+      .channel(`notif-${user.id}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` }, (payload) => {
+        setNotifications((prev) => [payload.new as any, ...prev].slice(0, 20));
+        setUnreadNotifications((c) => c + 1);
+      })
+      .subscribe();
+    return () => { mounted = false; supabase.removeChannel(channel); };
+  }, [user]);
+
+  const handleNotifClick = async (n: any) => {
+    setNotificationsOpen(false);
+    try {
+      if (!n.is_read) {
+        await supabase.from('notifications').update({ is_read: true }).eq('id', n.id);
+        setUnreadNotifications((c) => Math.max(0, c - 1));
+      }
+    } catch {}
+    if (n.link && typeof window !== 'undefined') {
+      window.location.href = n.link;
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    if (!user) return;
+    try {
+      await supabase.from('notifications').update({ is_read: true }).eq('user_id', user.id).eq('is_read', false);
+      setUnreadNotifications(0);
+      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+    } catch {}
+  };
   const [showAppPermPrompt, setShowAppPermPrompt] = useState(false);
   const { permissions, requestNotifications, requestStorage, requestMicAndCamera, checkAllPermissions } = usePermissions();
 
