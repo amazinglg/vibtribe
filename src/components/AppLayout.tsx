@@ -52,7 +52,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [showAppPermPrompt, setShowAppPermPrompt] = useState(false);
-  const { permissions, requestNotifications, requestStorage, checkAllPermissions } = usePermissions();
+  const { permissions, requestNotifications, requestStorage, requestMicAndCamera, checkAllPermissions } = usePermissions();
 
   // Request app-level permissions once per session after user logs in
   useEffect(() => {
@@ -73,7 +73,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const handleAppPermAllow = async () => {
     setShowAppPermPrompt(false);
     if (user) sessionStorage.setItem(`vt_perms_requested_${user.id}`, '1');
-    await Promise.all([requestNotifications(), requestStorage()]);
+    // Notifications + storage can be requested in parallel.
+    // Microphone + camera need a user-gesture context too — fired right after click.
+    await Promise.all([
+      requestNotifications(),
+      requestStorage(),
+      requestMicAndCamera(),
+    ]);
   };
 
   const handleAppPermDeny = () => {
@@ -114,8 +120,20 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             {
               icon: <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>,
               label: 'Notifications',
-              description: 'Get notified about new messages and calls',
+              description: 'Get notified about new messages, calls and status updates',
               status: permissions.notifications,
+            },
+            {
+              icon: <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>,
+              label: 'Microphone',
+              description: 'Required for voice notes and voice/video calls',
+              status: permissions.microphone,
+            },
+            {
+              icon: <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>,
+              label: 'Camera',
+              description: 'Required for video calls and capturing media',
+              status: permissions.camera,
             },
             {
               icon: <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>,
