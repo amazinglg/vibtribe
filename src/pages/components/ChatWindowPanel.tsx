@@ -1031,11 +1031,13 @@ export default function ChatWindowPanel() {
             const isMe = msg.senderId === user?.id;
             const isImageMsg = msg.text?.startsWith('[IMAGE:') || msg.mediaType === 'image';
             const isFileMsg = msg.text?.startsWith('[FILE:') || msg.mediaType === 'file';
+            // Defensive: never render raw `e2e:` ciphertext
+            const safeText = isEncrypted(msg.text) ? '[Encrypted message]' : msg.text;
             const displayText = isImageMsg
               ? '📷 Image'
               : isFileMsg
-              ? `📎 ${msg.text?.replace(/\[FILE:(.*?):(.*?)\]/, '$1') || 'File'}`
-              : msg.text;
+              ? `📎 ${safeText?.replace(/\[FILE:(.*?):(.*?)\]/, '$1') || 'File'}`
+              : safeText;
             const imageUrl = isImageMsg
               ? (msg.mediaUrl || msg.text?.replace('[IMAGE:', '').replace(']', ''))
               : null;
