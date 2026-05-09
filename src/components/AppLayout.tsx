@@ -227,7 +227,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <header className="glass-strong border-b border-border sticky top-0 z-30 h-16 flex items-center px-3 sm:px-4 lg:px-6 gap-2 sm:gap-3">
           <div className="flex lg:hidden items-center gap-1.5 min-w-0">
             <AppLogo size={28} />
-            <span className="font-bold text-base text-gradient-primary truncate hidden xs:inline">VibeTribe</span>
+            <span className="font-bold text-base text-gradient-primary truncate hidden sm:inline">VibeTribe</span>
           </div>
 
           <div className="flex-1" />
