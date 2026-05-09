@@ -324,15 +324,36 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   <h3 className="font-semibold text-sm text-foreground">Notifications</h3>
                   <button
                     className="text-xs text-primary hover:text-primary/80"
-                    onClick={() => setUnreadNotifications(0)}
+                    onClick={handleMarkAllRead}
                   >
                     Mark all read
                   </button>
                 </div>
-                <div className="px-4 py-6 text-center">
-                  <Bell size={24} className="text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">No new notifications</p>
-                </div>
+                {notifications.length === 0 ? (
+                  <div className="px-4 py-6 text-center">
+                    <Bell size={24} className="text-muted-foreground mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">No new notifications</p>
+                  </div>
+                ) : (
+                  <div className="max-h-96 overflow-y-auto">
+                    {notifications.map((n) => (
+                      <button
+                        key={n.id}
+                        onClick={() => handleNotifClick(n)}
+                        className={`w-full text-left px-4 py-3 border-b border-border/40 hover:bg-muted/50 transition-colors ${!n.is_read ? 'bg-primary/5' : ''}`}
+                      >
+                        <div className="flex items-start gap-2">
+                          {!n.is_read && <span className="w-2 h-2 mt-1.5 bg-primary rounded-full flex-shrink-0" />}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">{n.title}</p>
+                            {n.body && <p className="text-xs text-muted-foreground truncate">{n.body}</p>}
+                            <p className="text-[10px] text-muted-foreground mt-0.5">{new Date(n.created_at).toLocaleString()}</p>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
