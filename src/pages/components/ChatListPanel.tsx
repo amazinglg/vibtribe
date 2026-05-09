@@ -1,8 +1,9 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Trash2, Lock, Users } from 'lucide-react';
+import { Search, Plus, Trash2, Lock, Users, UserPlus } from 'lucide-react';
 import MarkSecureModal from '@/components/MarkSecureModal';
 import ContactsPanel from '@/components/ContactsPanel';
+import CreateGroupModal from '@/components/CreateGroupModal';
 import { useChatStore } from '@/store/chatStore';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
@@ -33,6 +34,7 @@ export default function ChatListPanel() {
   const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState(true);
   const [contactsOpen, setContactsOpen] = useState(false);
+  const [createGroupOpen, setCreateGroupOpen] = useState(false);
   const { selectedChatId, setSelectedChatId } = useChatStore();
   const { user, profile } = useAuth();
   const supabase = createClient();
@@ -45,20 +47,69 @@ export default function ChatListPanel() {
     if (!user) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // 1:1 chats where I'm a participant
+      const { data: oneToOne, error: oneErr } = await supabase
         .from('chats')
         .select(`
-          id, chat_type, participant_one, participant_two,
+          id, chat_type, participant_one, participant_two, is_group, name, updated_at,
           messages(id, content, created_at, sender_id, message_status)
         `)
         .or(`participant_one.eq.${user.id},participant_two.eq.${user.id}`)
         .neq('chat_type', 'secure')
+        .eq('is_group', false)
         .order('updated_at', { ascending: false });
+      if (oneErr) throw oneErr;
 
-      if (error) throw error;
+      // Group chats I'm a member of
+      const { data: myMemberships } = await supabase
+        .from('chat_members')
+        .select('chat_id')
+        .eq('user_id', user.id);
+      const groupIds = (myMemberships || []).map(m => m.chat_id);
+      let groups: any[] = [];
+      if (groupIds.length) {
+        const { data: gData } = await supabase
+          .from('chats')
+          .select(`
+            id, chat_type, is_group, name, updated_at,
+            messages(id, content, created_at, sender_id, message_status)
+          `)
+          .in('id', groupIds)
+          .eq('is_group', true)
+          .order('updated_at', { ascending: false });
+        groups = gData || [];
+      }
+
+      const data = [...(oneToOne || []), ...groups];
 
       const chatList: Chat[] = [];
-      for (const chat of (data || [])) {
+      for (const chat of data) {
+        const isGroup = !!(chat as any).is_group;
+        const msgs = (chat as any).messages || [];
+        const sortedMsgs = msgs.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        const lastMsg = sortedMsgs[0];
+        const unreadCount = msgs.filter((m: any) => m.sender_id !== user.id && m.message_status !== 'read').length;
+        const avatarColors = ['gradient-primary', 'gradient-cyan', 'gradient-pink', 'gradient-tri'];
+
+        if (isGroup) {
+          const gname = (chat as any).name || 'Group';
+          chatList.push({
+            id: chat.id,
+            name: gname,
+            avatar: gname[0]?.toUpperCase() || 'G',
+            avatarColor: avatarColors[chatList.length % avatarColors.length],
+            lastMessage: lastMsg?.content?.startsWith('e2e:') ? '[message]' : (lastMsg?.content || 'Start the conversation...'),
+            time: lastMsg ? formatTime(lastMsg.created_at) : '',
+            unread: unreadCount,
+            online: false,
+            typing: false,
+            pinned: false,
+            muted: false,
+            isGroup: true,
+          });
+          continue;
+        }
+
         const otherUserId = chat.participant_one === user.id ? chat.participant_two : chat.participant_one;
         const { data: otherUser } = await supabase
           .from('user_profiles')
@@ -67,18 +118,12 @@ export default function ChatListPanel() {
           .single();
 
         if (otherUser) {
-          const msgs = (chat as any).messages || [];
-          const sortedMsgs = msgs.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-          const lastMsg = sortedMsgs[0];
-          // Count unread: messages from other user that are not 'read'
-          const unreadCount = msgs.filter((m: any) => m.sender_id !== user.id && m.message_status !== 'read').length;
-          const avatarColors = ['gradient-primary', 'gradient-cyan', 'gradient-pink', 'gradient-tri'];
           chatList.push({
             id: chat.id,
             name: otherUser.full_name || 'Unknown',
             avatar: (otherUser.full_name || 'U')[0].toUpperCase(),
             avatarColor: avatarColors[chatList.length % avatarColors.length],
-            lastMessage: lastMsg?.content || 'Start a conversation...',
+            lastMessage: lastMsg?.content?.startsWith('e2e:') ? '🔒 Encrypted message' : (lastMsg?.content || 'Start a conversation...'),
             time: lastMsg ? formatTime(lastMsg.created_at) : '',
             unread: unreadCount,
             online: otherUser.is_online || false,
@@ -168,6 +213,13 @@ export default function ChatListPanel() {
           <div className="flex items-center justify-between mb-3">
             <h1 className="font-bold text-xl text-foreground">Messages</h1>
             <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCreateGroupOpen(true)}
+                className="p-2 glass rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+                title="New Group"
+              >
+                <UserPlus size={18} />
+              </button>
               <button
                 onClick={() => setContactsOpen(true)}
                 className="p-2 glass rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
@@ -299,6 +351,14 @@ export default function ChatListPanel() {
         <ContactsPanel
           onClose={() => setContactsOpen(false)}
           onStartChat={handleContactStartChat}
+        />
+      )}
+
+      {createGroupOpen && (
+        <CreateGroupModal
+          isOpen={createGroupOpen}
+          onClose={() => setCreateGroupOpen(false)}
+          onCreated={(id) => { setSelectedChatId(id); loadChats(); }}
         />
       )}
     </>

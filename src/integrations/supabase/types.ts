@@ -50,12 +50,46 @@ export type Database = {
           },
         ]
       }
+      chat_members: {
+        Row: {
+          chat_id: string
+          id: string
+          joined_at: string
+          user_id: string
+        }
+        Insert: {
+          chat_id: string
+          id?: string
+          joined_at?: string
+          user_id: string
+        }
+        Update: {
+          chat_id?: string
+          id?: string
+          joined_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_members_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chats: {
         Row: {
+          avatar_url: string | null
           chat_type: Database["public"]["Enums"]["chat_type"] | null
           created_at: string | null
+          created_by: string | null
+          disappear_mode: string
           id: string
+          is_group: boolean
           is_secure: boolean | null
+          name: string | null
           parent_chat_id: string | null
           participant_one: string | null
           participant_two: string | null
@@ -64,10 +98,15 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          avatar_url?: string | null
           chat_type?: Database["public"]["Enums"]["chat_type"] | null
           created_at?: string | null
+          created_by?: string | null
+          disappear_mode?: string
           id?: string
+          is_group?: boolean
           is_secure?: boolean | null
+          name?: string | null
           parent_chat_id?: string | null
           participant_one?: string | null
           participant_two?: string | null
@@ -76,10 +115,15 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          avatar_url?: string | null
           chat_type?: Database["public"]["Enums"]["chat_type"] | null
           created_at?: string | null
+          created_by?: string | null
+          disappear_mode?: string
           id?: string
+          is_group?: boolean
           is_secure?: boolean | null
+          name?: string | null
           parent_chat_id?: string | null
           participant_one?: string | null
           participant_two?: string | null
@@ -152,6 +196,7 @@ export type Database = {
           chat_id: string | null
           content: string
           created_at: string | null
+          expires_at: string | null
           id: string
           message_status: Database["public"]["Enums"]["message_status"] | null
           reactions: Json | null
@@ -161,6 +206,7 @@ export type Database = {
           chat_id?: string | null
           content: string
           created_at?: string | null
+          expires_at?: string | null
           id?: string
           message_status?: Database["public"]["Enums"]["message_status"] | null
           reactions?: Json | null
@@ -170,6 +216,7 @@ export type Database = {
           chat_id?: string | null
           content?: string
           created_at?: string | null
+          expires_at?: string | null
           id?: string
           message_status?: Database["public"]["Enums"]["message_status"] | null
           reactions?: Json | null
@@ -446,6 +493,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      expire_seen_messages: { Args: { p_chat_id: string }; Returns: undefined }
       is_admin: { Args: never; Returns: boolean }
       is_admin_user: { Args: never; Returns: boolean }
       is_chat_participant: { Args: { chat_uuid: string }; Returns: boolean }
