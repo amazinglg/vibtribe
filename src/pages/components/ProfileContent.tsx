@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
-import { Camera, Edit3, Shield, Bell, Lock, Smartphone, LogOut, Key, AlertTriangle, UserCheck, AtSign, Phone, Mail, ChevronDown, Ban, Monitor, RefreshCw, HelpCircle, Palette, Check, Download, Share } from 'lucide-react';
+import { Camera, Edit3, Shield, Bell, Lock, Smartphone, LogOut, Key, AlertTriangle, UserCheck, AtSign, Phone, Mail, ChevronDown, Ban, Monitor, RefreshCw, HelpCircle, Palette, Check, Download, Share, X, Copy, ExternalLink, MoreVertical } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from '@tanstack/react-router';
@@ -423,6 +423,11 @@ export default function ProfileContent() {
     (navigator.platform === 'MacIntel' && (navigator as any).maxTouchPoints > 1)
   );
 
+  const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+  const isAndroid = /android/i.test(ua);
+  const isInAppBrowser = /MiuiBrowser|FBAN|FBAV|Instagram|Line\/|; wv\)|Twitter|TikTok|SamsungBrowser/i.test(ua);
+  const [showInstallHelp, setShowInstallHelp] = useState(false);
+
   const handleInstallApp = async () => {
     if (isPwaInstalled()) {
       toast.success('App is already installed on this device');
@@ -430,7 +435,7 @@ export default function ProfileContent() {
       return;
     }
     if (isIOSDevice) {
-      toast.info('On iPhone/iPad: tap the Share button in Safari, then "Add to Home Screen".', { duration: 7000 });
+      setShowInstallHelp(true);
       return;
     }
     setInstallState('installing');
@@ -442,7 +447,7 @@ export default function ProfileContent() {
       toast.info('Install cancelled');
       setInstallState('idle');
     } else {
-      toast.info('Install prompt is not available yet — try again in a moment, or use your browser menu → Install VibeTribe.');
+      setShowInstallHelp(true);
       setInstallState('unavailable');
     }
   };
