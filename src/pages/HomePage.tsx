@@ -9,7 +9,13 @@ import { useChatStore } from '@/store/chatStore';
 export default function ChatsPage() {
   const { user, loading } = useAuth();
   const router = useNavigate();
-  const { selectedChatId } = useChatStore();
+  const { selectedChatId, setSelectedChatId } = useChatStore();
+
+  // Always start on the chat list (right panel blank) when entering Home
+  useEffect(() => {
+    setSelectedChatId(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     console.log('[VT-HOME] state', { loading, hasUser: !!user });

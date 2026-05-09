@@ -830,15 +830,15 @@ export default function ChatWindowPanel() {
       {/* Call UI is rendered globally by CallProvider */}
 
       {/* Chat Header */}
-      <div className="glass border-b border-border px-4 py-3 flex items-center gap-3 flex-shrink-0">
+      <div className="glass border-b border-border px-3 py-3 flex items-center gap-2 flex-shrink-0 min-w-0 max-w-full">
         <button
-          className="lg:hidden p-2 rounded-xl hover:bg-muted text-muted-foreground transition-all"
+          className="lg:hidden p-2 rounded-xl hover:bg-muted text-muted-foreground transition-all flex-shrink-0"
           onClick={() => setSelectedChatId(null)}
         >
           <ArrowLeft size={20} />
         </button>
 
-        <div className="relative">
+        <div className="relative flex-shrink-0">
           <div className="w-10 h-10 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-sm">
             {contact?.avatar || '?'}
           </div>
@@ -847,27 +847,27 @@ export default function ChatWindowPanel() {
           )}
         </div>
 
-        <div className="flex-1">
-          <div className="flex items-center gap-1.5">
-            <h3 className="font-semibold text-sm text-foreground">{contact?.name || 'Loading...'}</h3>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <h3 className="font-semibold text-sm text-foreground truncate min-w-0">{contact?.name || 'Loading...'}</h3>
             {e2eEnabled && (
-              <div className="flex items-center gap-1 px-1.5 py-0.5 bg-vt-green/10 rounded-full" title="End-to-end encrypted">
+              <div className="flex items-center gap-1 px-1.5 py-0.5 bg-vt-green/10 rounded-full flex-shrink-0" title="End-to-end encrypted">
                 <ShieldCheck size={10} className="text-vt-green" />
                 <span className="text-[9px] text-vt-green font-medium">E2E</span>
               </div>
             )}
           </div>
-          <p className={`text-xs ${contact?.online ? 'text-vt-green' : 'text-muted-foreground'}`}>
+          <p className={`text-xs truncate ${contact?.online ? 'text-vt-green' : 'text-muted-foreground'}`}>
             {contact?.lastSeen || ''}
           </p>
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5 flex-shrink-0 overflow-x-auto max-w-[55%] sm:max-w-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {/* Block / Unblock */}
           <button
             onClick={handleBlockToggle}
             disabled={blockLoading}
-            className={`p-2 rounded-xl transition-all ${
+            className={`p-2 rounded-xl transition-all flex-shrink-0 ${
               isBlocked
                 ? 'text-vt-green bg-vt-green/10 hover:bg-vt-green/20' : 'text-muted-foreground hover:text-red-400 hover:bg-red-500/10'
             }`}
@@ -879,17 +879,17 @@ export default function ChatWindowPanel() {
           {chatType !== 'group' && (
           <button
             onClick={() => setSecureModalOpen(true)}
-            className="p-2 rounded-xl text-primary hover:bg-primary/10 transition-all"
+            className="p-2 rounded-xl text-primary hover:bg-primary/10 transition-all flex-shrink-0"
             title="Mark as Secure Chat"
           >
             <Lock size={18} />
           </button>
           )}
           {/* Disappearing messages */}
-          <div className="relative">
+          <div className="relative flex-shrink-0">
             <button
               onClick={(e) => { e.stopPropagation(); setShowDisappearMenu(v => !v); }}
-              className={`p-2 rounded-xl transition-all ${disappearMode !== 'never' ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
+              className={`p-2 rounded-xl transition-all flex-shrink-0 ${disappearMode !== 'never' ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
               title="Disappearing messages"
             >
               <Timer size={18} />
@@ -917,7 +917,7 @@ export default function ChatWindowPanel() {
           {/* Voice Call */}
           <button
             onClick={handleVoiceCallClick}
-            className="p-2 rounded-xl transition-all text-muted-foreground hover:text-vt-green hover:bg-vt-green/10"
+            className="p-2 rounded-xl transition-all flex-shrink-0 text-muted-foreground hover:text-vt-green hover:bg-vt-green/10"
             title="Voice Call"
           >
             <Phone size={18} />
@@ -925,7 +925,7 @@ export default function ChatWindowPanel() {
           {/* Video Call */}
           <button
             onClick={handleVideoCallClick}
-            className="p-2 rounded-xl transition-all text-muted-foreground hover:text-vt-green hover:bg-vt-green/10"
+            className="p-2 rounded-xl transition-all flex-shrink-0 text-muted-foreground hover:text-vt-green hover:bg-vt-green/10"
             title="Video Call"
           >
             <Video size={18} />
@@ -933,7 +933,7 @@ export default function ChatWindowPanel() {
           {/* Info */}
           <button
             onClick={() => setShowInfo(!showInfo)}
-            className={`p-2 rounded-xl transition-all ${showInfo ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
+            className={`p-2 rounded-xl transition-all flex-shrink-0 ${showInfo ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
             title="Chat Info"
           >
             <Info size={18} />
