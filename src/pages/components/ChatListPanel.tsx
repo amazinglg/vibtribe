@@ -62,7 +62,7 @@ export default function ChatListPanel() {
         const { data: otherUser } = await supabase
           .from('user_profiles')
           .select('id, full_name, is_online, last_seen')
-          .eq('id', otherUserId)
+          .eq('id', otherUserId as string)
           .single();
 
         if (otherUser) {
@@ -81,7 +81,7 @@ export default function ChatListPanel() {
             typing: false,
             pinned: false,
             muted: false,
-            participantId: otherUserId,
+            participantId: (otherUserId ?? '') as string,
           });
         }
       }
