@@ -10,12 +10,13 @@ interface MarkSecureModalProps {
   onClose: () => void;
   chatName: string;
   chatId: string;
+  onSecured?: (chatId: string) => void;
 }
 
 type SecureMode = 'move' | 'split';
 type CodeType = 'pin' | 'pattern';
 
-export default function MarkSecureModal({ isOpen, onClose, chatName, chatId }: MarkSecureModalProps) {
+export default function MarkSecureModal({ isOpen, onClose, chatName, chatId, onSecured }: MarkSecureModalProps) {
   const { user } = useAuth();
   const supabase = createClient();
   const [step, setStep] = useState<'choose-mode' | 'choose-code-type' | 'set-pin' | 'set-pattern'>('choose-mode');
@@ -98,6 +99,7 @@ export default function MarkSecureModal({ isOpen, onClose, chatName, chatId }: M
           .eq('id', chatId);
 
         if (updateError) throw updateError;
+        onSecured?.(chatId);
       } else {
         // Create a new secure channel alongside the normal chat
         const { data: chatData } = await supabase
@@ -116,6 +118,7 @@ export default function MarkSecureModal({ isOpen, onClose, chatName, chatId }: M
               secure_code: secureCode,
             });
           if (insertError) throw insertError;
+          onSecured?.(chatId);
         }
       }
 
@@ -140,9 +143,9 @@ export default function MarkSecureModal({ isOpen, onClose, chatName, chatId }: M
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-background/80 backdrop-blur-md" onClick={handleClose} />
-      <div className="relative w-full max-w-md glass-strong rounded-3xl border border-border shadow-card float-up overflow-hidden">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto">
+      <div className="fixed inset-0 bg-background/80 backdrop-blur-md" onClick={handleClose} />
+      <div className="relative w-full max-w-md my-auto glass-strong rounded-3xl border border-border shadow-card float-up overflow-hidden max-h-[calc(100dvh-2rem)] flex flex-col">
         {/* Header */}
         <div className="px-6 py-5 border-b border-border flex items-center gap-3">
           <div className="w-10 h-10 gradient-primary rounded-2xl flex items-center justify-center">
