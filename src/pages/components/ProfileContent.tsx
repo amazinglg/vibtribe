@@ -9,8 +9,6 @@ import HelpButton from '@/components/HelpButton';
 import MyTickets from '@/components/MyTickets';
 import { useTheme, APP_THEMES, ThemeId } from '@/contexts/ThemeContext';
 
-const __navWrap = (n: any) => (to: string) => n({ to });
-
 type Tab = 'account' | 'privacy' | 'notifications' | 'devices' | 'themes' | 'more';
 
 const COUNTRY_CODES = [
@@ -224,7 +222,7 @@ export default function ProfileContent() {
       // Logout current session
       try {
         await signOut();
-        router.replace('/sign-in');
+        router({ to: '/sign-in', replace: true });
       } catch {}
       return;
     }
@@ -233,7 +231,7 @@ export default function ProfileContent() {
       // For other sessions, use global sign out
       await supabase.auth.signOut({ scope: 'global' });
       toast.success('Signed out from all devices');
-      router.replace('/sign-in');
+      router({ to: '/sign-in', replace: true });
     } catch {
       toast.error('Failed to sign out from device');
     }
@@ -327,7 +325,7 @@ export default function ProfileContent() {
   const handleSignOut = async () => {
     try {
       await signOut();
-      router.replace('/sign-in');
+      router({ to: '/sign-in', replace: true });
     } catch {}
   };
 
@@ -353,7 +351,7 @@ export default function ProfileContent() {
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (key && !key.startsWith('sb-') && !key.startsWith('supabase')) {
-          __navWrap(keysToRemove)(key);
+          keysToRemove.push(key);
         }
       }
       keysToRemove.forEach(k => localStorage.removeItem(k));

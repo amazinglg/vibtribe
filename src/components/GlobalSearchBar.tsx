@@ -5,8 +5,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from '@tanstack/react-router';
 import { useChatStore } from '@/app/store/chatStore';
 
-const __navWrap = (n: any) => (to: string) => n({ to });
-
 interface SearchUser {
   id: string;
   full_name: string;
@@ -105,7 +103,7 @@ export default function GlobalSearchBar() {
 
       if (chatId) {
         setSelectedChatId(chatId);
-        __navWrap(router)('/');
+        router({ to: '/' });
       }
       setOpen(false);
       setQuery('');

@@ -4,8 +4,6 @@ import { AtSign, FileText, Camera, ArrowRight, Loader2, CheckCircle2 } from 'luc
 import { useAuth } from '@/contexts/AuthContext';
 import AppLogo from '@/components/ui/AppLogo';
 
-const __navWrap = (n: any) => (to: string) => n({ to });
-
 export default function CompleteProfilePage() {
   const router = useNavigate();
   const { user, updateProfile, profile } = useAuth();
@@ -29,7 +27,7 @@ export default function CompleteProfilePage() {
         bio,
         profile_completed: true,
       });
-      router.replace('/');
+      router({ to: '/', replace: true });
     } catch (err: any) {
       setError(err.message || 'Failed to save profile. Please try again.');
     } finally {
@@ -42,7 +40,7 @@ export default function CompleteProfilePage() {
     try {
       await updateProfile({ profile_completed: true });
     } catch {}
-    router.replace('/');
+    router({ to: '/', replace: true });
     setSkipping(false);
   };
 

@@ -6,8 +6,6 @@ import AppLayout from '@/components/AppLayout';
 import { createClient } from '../../lib/supabase/client';
 import { toast } from 'sonner';
 
-const __navWrap = (n: any) => (to: string) => n({ to });
-
 interface PlatformUser {
   id: string;
   full_name: string;
@@ -81,8 +79,8 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!loading) {
-      if (!user) { router.replace('/sign-in'); return; }
-      if (!isAdmin?.()) { router.replace('/'); return; }
+      if (!user) { router({ to: '/sign-in', replace: true }); return; }
+      if (!isAdmin?.()) { router({ to: '/', replace: true }); return; }
       loadData();
     }
   }, [user, loading]);

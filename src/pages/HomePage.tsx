@@ -5,15 +5,13 @@ import ChatListPanel from './components/ChatListPanel';
 import ChatWindowPanel from './components/ChatWindowPanel';
 import { useAuth } from '@/contexts/AuthContext';
 
-const __navWrap = (n: any) => (to: string) => n({ to });
-
 export default function ChatsPage() {
   const { user, loading } = useAuth();
   const router = useNavigate();
 
   useEffect(() => {
     if (!loading && !user) {
-      router?.replace('/sign-in');
+      router?.({ to: '/sign-in', replace: true });
     }
   }, [user, loading, router]);
 

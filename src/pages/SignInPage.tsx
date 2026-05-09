@@ -7,8 +7,6 @@ import AppLogo from '@/components/ui/AppLogo';
 import HelpButton from '@/components/HelpButton';
 import { createClient } from '@/lib/supabase/client';
 
-const __navWrap = (n: any) => (to: string) => n({ to });
-
 export default function SignInPage() {
   const router = useNavigate();
   const { signIn, signInWithEmail } = useAuth();
@@ -70,7 +68,7 @@ export default function SignInPage() {
             .eq('id', profileData.id);
         }
 
-        router.replace('/');
+        router({ to: '/', replace: true });
       } catch (loginErr: any) {
         // Increment failed login attempts
         if (profileData?.id) {

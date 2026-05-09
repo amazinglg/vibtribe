@@ -5,8 +5,6 @@ import { Phone, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle, User, Chevr
 import { useAuth } from '@/contexts/AuthContext';
 import AppLogo from '@/components/ui/AppLogo';
 
-const __navWrap = (n: any) => (to: string) => n({ to });
-
 const COUNTRY_CODES = [
   { name: 'India', code: '+91', flag: '🇮🇳' },
   { name: 'United States', code: '+1', flag: '🇺🇸' },
@@ -59,7 +57,7 @@ export default function SignUpPage() {
     setLoading(true);
     try {
       await signUp(fullMobile, password, { fullName });
-      router.replace('/complete-profile');
+      router({ to: '/complete-profile', replace: true });
     } catch (err: any) {
       setError(err.message || 'Sign up failed. Please try again.');
     } finally {

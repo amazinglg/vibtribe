@@ -1,6 +1,5 @@
 import { useLocation as __useTLocation } from '@tanstack/react-router';
 
-const __navWrap = (n: any) => (to: string) => n({ to });
 const useTanstackPathname = () => __useTLocation().pathname;
 import React, { useState, useEffect } from 'react';
 import { Link } from '@tanstack/react-router';
@@ -80,7 +79,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const handleSignOut = async () => {
     try {
       await signOut();
-      router.replace('/sign-in');
+      router({ to: '/sign-in', replace: true });
     } catch {}
   };
 
