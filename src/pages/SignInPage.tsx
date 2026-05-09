@@ -174,15 +174,6 @@ export default function SignInPage() {
               </Link>
             </p>
           </div>
-
-          {/* Demo credentials */}
-          <div className="mt-4 p-3 bg-primary/5 border border-primary/20 rounded-xl">
-            <p className="text-xs text-muted-foreground text-center mb-2 font-medium">Demo Credentials</p>
-            <div className="space-y-1 text-xs text-muted-foreground">
-              <p>📱 Admin: <span className="text-foreground font-mono">labhanshgarg.3@gmail.com</span> / <span className="text-foreground font-mono">Admin@123</span></p>
-              <p>👤 Test User: <span className="text-foreground font-mono">+911234567890</span> / <span className="text-foreground font-mono">Test@123</span></p>
-            </div>
-          </div>
         </div>
       </div>
     </div>
