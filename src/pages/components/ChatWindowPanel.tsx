@@ -832,10 +832,12 @@ export default function ChatWindowPanel() {
       {/* Chat Header */}
       <div className="glass border-b border-border px-3 py-3 flex items-center gap-2 flex-shrink-0 min-w-0 max-w-full">
         <button
-          className="lg:hidden p-2 rounded-xl hover:bg-muted text-muted-foreground transition-all flex-shrink-0"
+          className="lg:hidden -ml-1 p-2 rounded-xl text-foreground hover:bg-primary/10 active:bg-primary/20 transition-all flex-shrink-0"
           onClick={() => setSelectedChatId(null)}
+          aria-label="Back to chats"
+          title="Back to chats"
         >
-          <ArrowLeft size={20} />
+          <ArrowLeft size={22} strokeWidth={2.5} />
         </button>
 
         <div className="relative flex-shrink-0">
