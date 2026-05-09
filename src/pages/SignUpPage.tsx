@@ -53,10 +53,13 @@ export default function SignUpPage() {
     if (password.length < 6) { setError('Password must be at least 6 characters'); return; }
     if (password !== confirmPassword) { setError('Passwords do not match'); return; }
 
-    const fullMobile = `${countryCode}${mobile.trim()}`;
+    // Store full mobile (with code) in profile metadata, but the auth email
+    // will be derived from the local 10-digit number only (handled in AuthContext).
+    const local = mobile.replace(/\D/g, '').slice(-10);
+    const fullMobile = `${countryCode}${local}`;
     setLoading(true);
     try {
-      await signUp(fullMobile, password, { fullName });
+      await signUp(fullMobile, password, { fullName, countryCode });
       router({ to: '/complete-profile', replace: true });
     } catch (err: any) {
       setError(err.message || 'Sign up failed. Please try again.');

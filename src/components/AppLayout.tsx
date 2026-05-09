@@ -13,6 +13,7 @@ import HelpButton from '@/components/HelpButton';
 import PermissionPrompt from '@/components/PermissionPrompt';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useChatStore } from '@/store/chatStore';
+import CallProvider from '@/components/CallProvider';
 
 
 
@@ -110,6 +111,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   };
 
   return (
+    <CallProvider>
     <div className="gradient-bg-page min-h-screen flex">
       {/* App-level Permission Prompt */}
       {showAppPermPrompt && (
@@ -331,5 +333,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       <SecureVaultModal isOpen={secureVaultOpen} onClose={() => setSecureVaultOpen(false)} />
     </div>
+    </CallProvider>
   );
 }

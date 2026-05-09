@@ -31,13 +31,16 @@ export default function SignInPage() {
       // Check if account is suspended before attempting login
       let profileQuery;
       if (useEmail) {
+        const e = email.trim().toLowerCase();
         profileQuery = await supabase
           .from('user_profiles')
           .select('id, is_suspended, login_attempts, account_status')
-          .eq('email', email.trim())
+          .or(`email.eq.${e},real_email.eq.${e}`)
           .maybeSingle();
       } else {
-        const emailFromMobile = `${mobile.replace(/\D/g, '')}@vibetribe.app`;
+        const local10 = mobile.replace(/\D/g, '').slice(-10);
+        if (local10.length !== 10) { setError('Please enter a valid 10-digit mobile number'); setLoading(false); return; }
+        const emailFromMobile = `${local10}@vibetribe.app`;
         profileQuery = await supabase
           .from('user_profiles')
           .select('id, is_suspended, login_attempts, account_status')
@@ -145,12 +148,14 @@ export default function SignInPage() {
                   <input
                     type="tel"
                     value={mobile}
-                    onChange={e => { setMobile(e.target.value); setError(''); }}
-                    placeholder="+91 98765 43210"
+                  onChange={e => { setMobile(e.target.value.replace(/\D/g, '').slice(0, 10)); setError(''); }}
+                  placeholder="98765 43210"
+                  maxLength={10}
                     className="w-full pl-9 pr-4 py-3 bg-input border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all text-sm"
                     autoComplete="tel"
                   />
                 </div>
+              <p className="text-[11px] text-muted-foreground mt-1">Enter 10-digit number only — no country code</p>
               </div>
             ) : (
               <div>

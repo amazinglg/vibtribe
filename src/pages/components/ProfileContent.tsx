@@ -106,7 +106,11 @@ export default function ProfileContent() {
       setDisplayName(profile.full_name || '');
       setBio(profile.bio || '');
       setUsername(profile.username || '');
-      setEditEmail(profile.email && !profile.email.endsWith('@vibetribe.app') ? profile.email : (user?.email && !user.email.endsWith('@vibetribe.app') ? user.email : ''));
+      setEditEmail(
+        profile.real_email
+          || (profile.email && !profile.email.endsWith('@vibetribe.app') ? profile.email : '')
+          || (user?.email && !user.email.endsWith('@vibetribe.app') ? user.email : '')
+      );
       const parsed = parseCountryFromMobile(profile.mobile_number || '');
       setEditCountryCode(parsed.countryCode);
       setEditMobileNumber(parsed.number);
@@ -283,19 +287,17 @@ export default function ProfileContent() {
   const handleSaveContact = async () => {
     setSavingContact(true);
     try {
-      const fullMobile = editMobileNumber.trim() ? `${editCountryCode}${editMobileNumber.trim()}` : '';
-      const updates: any = { mobile_number: fullMobile };
+      const localDigits = editMobileNumber.replace(/\D/g, '').slice(-10);
+      const fullMobile = localDigits ? `${editCountryCode}${localDigits}` : '';
+      const updates: any = { mobile_number: fullMobile, country_code: editCountryCode };
 
-      // Update email in auth if provided and different from current — no verification email
-      if (editEmail.trim() && editEmail !== user?.email) {
-        const { error: emailError } = await supabase.auth.updateUser({
-          email: editEmail.trim(),
-          options: { emailRedirectTo: undefined },
-        } as any);
-        if (emailError) throw emailError;
-        updates.email = editEmail.trim();
-      } else if (editEmail.trim()) {
-        updates.email = editEmail.trim();
+      // Save the user's REAL email separately so it doesn't replace the
+      // mobile-derived auth email (which would break mobile login). They can
+      // sign in with either mobile or real_email + same password.
+      if (editEmail.trim()) {
+        updates.real_email = editEmail.trim().toLowerCase();
+      } else {
+        updates.real_email = null;
       }
 
       await updateProfile(updates);
@@ -411,7 +413,9 @@ export default function ProfileContent() {
   };
 
   const avatarLetter = profile?.full_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'V';
-  const displayEmail = profile?.email && !profile.email.endsWith('@vibetribe.app') ? profile.email : (user?.email && !user.email.endsWith('@vibetribe.app') ? user.email : null);
+  const displayEmail = profile?.real_email
+    || (profile?.email && !profile.email.endsWith('@vibetribe.app') ? profile.email : null)
+    || (user?.email && !user.email.endsWith('@vibetribe.app') ? user.email : null);
   const displayMobile = profile?.mobile_number || null;
   const selectedCountry = COUNTRY_CODES.find(c => c.code === editCountryCode) || COUNTRY_CODES[0];
 

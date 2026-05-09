@@ -11,6 +11,7 @@ import PermissionPrompt from '@/components/PermissionPrompt';
 import { usePermissions } from '@/hooks/usePermissions';
 import { sendPushNotification } from '@/lib/pushNotifications';
 import AppImage from "@/components/ui/AppImage";
+import { useCall } from '@/components/CallProvider';
 
 interface Message {
   id: string;
@@ -238,6 +239,7 @@ function CallModal({
 export default function ChatWindowPanel() {
   const { selectedChatId, setSelectedChatId } = useChatStore();
   const { user } = useAuth();
+  const { startCall } = useCall();
   const supabase = createClient();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
@@ -693,8 +695,11 @@ export default function ChatWindowPanel() {
     setShowCallPermPrompt(false);
     if (pendingCall === 'video') {
       await requestMicAndCamera();
-      setVideoCallActive(true);
-      // Notify recipient of incoming video call via push
+      // Start real WebRTC video call
+      if (contact?.userId) {
+        await startCall({ calleeId: contact.userId, chatId: selectedChatId, type: 'video', calleeName: contact.name, calleeAvatar: contact.avatar });
+      }
+      // Also send push notification (best-effort)
       if (contact?.userId) {
         const callerName = profile?.full_name || 'Someone';
         await sendPushNotification(supabase, {
@@ -709,8 +714,9 @@ export default function ChatWindowPanel() {
       }
     } else {
       await requestMicrophone();
-      setCallActive(true);
-      // Notify recipient of incoming voice call via push
+      if (contact?.userId) {
+        await startCall({ calleeId: contact.userId, chatId: selectedChatId, type: 'voice', calleeName: contact.name, calleeAvatar: contact.avatar });
+      }
       if (contact?.userId) {
         const callerName = profile?.full_name || 'Someone';
         await sendPushNotification(supabase, {
@@ -729,11 +735,10 @@ export default function ChatWindowPanel() {
 
   const handleCallPermDeny = () => {
     setShowCallPermPrompt(false);
-    // Still allow call to proceed — permissions will be requested by browser natively
-    if (pendingCall === 'video') {
-      setVideoCallActive(true);
-    } else {
-      setCallActive(true);
+    // Still allow call to proceed — browser will prompt natively
+    if (contact?.userId) {
+      const t = pendingCall === 'video' ? 'video' : 'voice';
+      startCall({ calleeId: contact.userId, chatId: selectedChatId, type: t, calleeName: contact.name, calleeAvatar: contact.avatar });
     }
     setPendingCall(null);
   };
@@ -822,25 +827,7 @@ export default function ChatWindowPanel() {
         />
       )}
 
-      {/* Voice Call Modal */}
-      {callActive && contact && (
-        <CallModal
-          type="voice"
-          contactName={contact.name}
-          contactAvatar={contact.avatar}
-          onEnd={() => setCallActive(false)}
-        />
-      )}
-
-      {/* Video Call Modal */}
-      {videoCallActive && contact && (
-        <CallModal
-          type="video"
-          contactName={contact.name}
-          contactAvatar={contact.avatar}
-          onEnd={() => setVideoCallActive(false)}
-        />
-      )}
+      {/* Call UI is rendered globally by CallProvider */}
 
       {/* Chat Header */}
       <div className="glass border-b border-border px-4 py-3 flex items-center gap-3 flex-shrink-0">
@@ -1031,6 +1018,29 @@ export default function ChatWindowPanel() {
             const isMe = msg.senderId === user?.id;
             const isImageMsg = msg.text?.startsWith('[IMAGE:') || msg.mediaType === 'image';
             const isFileMsg = msg.text?.startsWith('[FILE:') || msg.mediaType === 'file';
+            const missedMatch = typeof msg.text === 'string' && msg.text.startsWith('__missed_call__:')
+              ? msg.text.split(':') : null;
+            const isMissedCall = !!missedMatch;
+            if (isMissedCall) {
+              const callKind = missedMatch![1] || 'voice';
+              return (
+                <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                  <div className="glass border border-border rounded-2xl px-4 py-2.5 text-sm flex items-center gap-3">
+                    <PhoneOff size={16} className="text-red-400" />
+                    <span className="text-foreground/80">
+                      {isMe ? `Missed ${callKind} call` : `You missed a ${callKind} call`}
+                    </span>
+                    {isMe && contact?.userId && (
+                      <button
+                        onClick={() => startCall({ calleeId: contact.userId!, chatId: selectedChatId, type: callKind as 'voice'|'video', calleeName: contact.name, calleeAvatar: contact.avatar })}
+                        className="ml-2 px-3 py-1 rounded-lg bg-primary/15 text-primary text-xs font-semibold hover:bg-primary/25 transition-all">
+                        Call back
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            }
             // Defensive: never render raw `e2e:` ciphertext
             const safeText = isEncrypted(msg.text) ? '[Encrypted message]' : msg.text;
             const displayText = isImageMsg
