@@ -229,12 +229,12 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
                 <X size={22} className="text-red-400" />
               </div>
               <h3 className="font-semibold text-foreground mb-1">Access Denied</h3>
-              <p className="text-sm text-muted-foreground mb-4">Contact access was denied. You can still browse platform users.</p>
+              <p className="text-sm text-muted-foreground mb-4">Contact access was denied. To find friends on VibeTribe, allow contact access from your browser/app settings, or use the global search to add people by username or phone.</p>
               <button
-                onClick={() => { setPermissionState('granted'); loadDemoContacts(); }}
+                onClick={onClose}
                 className="gradient-primary text-white px-6 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-all"
               >
-                Browse Platform Users
+                Close
               </button>
             </div>
           )}
