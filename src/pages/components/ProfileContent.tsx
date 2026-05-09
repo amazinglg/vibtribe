@@ -439,7 +439,29 @@ export default function ProfileContent() {
       return;
     }
     setInstallState('installing');
-    const result = await triggerPwaInstall();
+    // If the prompt isn't ready yet, wait briefly for beforeinstallprompt to fire.
+    let result = await triggerPwaInstall();
+    if (result === 'unavailable' && !isInAppBrowser) {
+      const waitId = toast.loading('Preparing install…');
+      result = await new Promise<'accepted' | 'dismissed' | 'unavailable'>((resolve) => {
+        let done = false;
+        const onAvail = async () => {
+          if (done) return;
+          done = true;
+          window.removeEventListener('vt:install-available', onAvail);
+          const r = await triggerPwaInstall();
+          resolve(r);
+        };
+        window.addEventListener('vt:install-available', onAvail);
+        setTimeout(() => {
+          if (done) return;
+          done = true;
+          window.removeEventListener('vt:install-available', onAvail);
+          resolve('unavailable');
+        }, 3500);
+      });
+      toast.dismiss(waitId);
+    }
     if (result === 'accepted') {
       toast.success('VibeTribe is being installed on your device');
       setInstallState('installed');
