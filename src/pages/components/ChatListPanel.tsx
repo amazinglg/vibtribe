@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Trash2, Lock, Users, UserPlus } from 'lucide-react';
+import { Search, Plus, Trash2, Lock, Users, UserPlus, MessageSquare, Phone, Check } from 'lucide-react';
 import MarkSecureModal from '@/components/MarkSecureModal';
 import ContactsPanel from '@/components/ContactsPanel';
 import CreateGroupModal from '@/components/CreateGroupModal';
@@ -27,7 +27,7 @@ interface Chat {
 
 export default function ChatListPanel() {
   const [search, setSearch] = useState('');
-  const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'groups'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'groups' | 'contacts'>('all');
   const [secureModalOpen, setSecureModalOpen] = useState(false);
   const [secureTarget, setSecureTarget] = useState<{ id: string; name: string } | null>(null);
   const [contextMenu, setContextMenu] = useState<{ chatId: string; x: number; y: number } | null>(null);
@@ -35,6 +35,12 @@ export default function ChatListPanel() {
   const [loading, setLoading] = useState(true);
   const [contactsOpen, setContactsOpen] = useState(false);
   const [createGroupOpen, setCreateGroupOpen] = useState(false);
+  // ===== Contacts tab state =====
+  const [contactsPerm, setContactsPerm] = useState<'idle' | 'requesting' | 'granted' | 'denied'>('idle');
+  const [contactsList, setContactsList] = useState<any[]>([]);
+  const [contactsLoading, setContactsLoading] = useState(false);
+  const [contactsSearch, setContactsSearch] = useState('');
+  const [inviteTarget, setInviteTarget] = useState<any | null>(null);
   const { selectedChatId, setSelectedChatId } = useChatStore();
   const { user, profile } = useAuth();
   const supabase = createClient();
@@ -248,7 +254,7 @@ export default function ChatListPanel() {
             />
           </div>
           <div className="flex gap-1 mt-3 p-1 bg-muted rounded-xl">
-            {(['all', 'unread', 'groups'] as const).map((tab) => (
+            {(['all', 'unread', 'groups', 'contacts'] as const).map((tab) => (
               <button
                 key={`tab-${tab}`}
                 onClick={() => setActiveTab(tab)}
@@ -273,7 +279,7 @@ export default function ChatListPanel() {
               <UserPlus size={16} />
               Create New Group
             </button>
-          ) : (
+          ) : activeTab === 'contacts' ? null : (
             <button
               onClick={() => setContactsOpen(true)}
               className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 gradient-primary rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-all glow-primary"
@@ -286,7 +292,22 @@ export default function ChatListPanel() {
 
         {/* Chat List */}
         <div className="flex-1 overflow-y-auto">
-          {loading ? (
+          {activeTab === 'contacts' ? (
+            <ContactsTabContent
+              user={user}
+              supabase={supabase}
+              perm={contactsPerm}
+              setPerm={setContactsPerm}
+              contacts={contactsList}
+              setContacts={setContactsList}
+              loading={contactsLoading}
+              setLoading={setContactsLoading}
+              search={contactsSearch}
+              setSearch={setContactsSearch}
+              setInviteTarget={setInviteTarget}
+              onStartedChat={(chatId) => { setSelectedChatId(chatId); loadChats(); }}
+            />
+          ) : loading ? (
             <div className="flex flex-col gap-3 p-4">
               {[1, 2, 3].map(i => (
                 <div key={i} className="flex items-center gap-3 animate-pulse">
