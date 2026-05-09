@@ -862,7 +862,7 @@ export default function ChatWindowPanel() {
           </p>
         </div>
 
-        <div className="flex items-center gap-0.5 flex-shrink-0 overflow-x-auto max-w-[55%] sm:max-w-none scrollbar-none">
+        <div className="flex items-center gap-0.5 flex-shrink-0 overflow-x-auto max-w-[55%] sm:max-w-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {/* Block / Unblock */}
           <button
             onClick={handleBlockToggle}
