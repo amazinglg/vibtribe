@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from '@tanstack/react-router';
+import { useNavigate, Link } from '@tanstack/react-router';
 import { Shield, Users, Activity, Search, Ban, Trash2, RefreshCw, AlertTriangle, CheckCircle2, ArrowLeft, KeyRound, Pencil, X, Save, Ticket, UserX, UserCheck, Send, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLayout from '@/components/AppLayout';
@@ -388,7 +388,12 @@ export default function AdminPage() {
               <h2 className="font-bold text-base text-foreground mb-4">Recent Signups</h2>
               <div className="space-y-3">
                 {users.slice(0, 5).map(u => (
-                  <div key={u.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => router({ to: '/admin/user/$userId', params: { userId: u.id } })}>
+                  <Link
+                    key={u.id}
+                    to="/admin/user/$userId"
+                    params={{ userId: u.id }}
+                    className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/50 transition-colors cursor-pointer"
+                  >
                     <div className="w-9 h-9 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                       {u.full_name?.[0]?.toUpperCase() || '?'}
                     </div>
@@ -406,7 +411,7 @@ export default function AdminPage() {
                       </span>
                       <p className="text-[10px] text-muted-foreground mt-1">{new Date(u.created_at).toLocaleDateString()}</p>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>
@@ -431,9 +436,10 @@ export default function AdminPage() {
               </div>
               <div className="overflow-y-auto max-h-[calc(100vh-300px)]">
                 {filteredUsers.map(u => (
-                  <div
+                  <Link
                     key={u.id}
-                    onClick={() => router({ to: '/admin/user/$userId', params: { userId: u.id } })}
+                    to="/admin/user/$userId"
+                    params={{ userId: u.id }}
                     className="flex items-center gap-3 px-4 py-3 cursor-pointer transition-all border-b border-border/30 hover:bg-muted/50"
                   >
                     <div className="relative flex-shrink-0">
@@ -457,7 +463,7 @@ export default function AdminPage() {
                     }`}>
                       {u.account_status}
                     </span>
-                  </div>
+                  </Link>
                 ))}
                 {filteredUsers.length === 0 && (
                   <div className="flex flex-col items-center justify-center py-12 gap-2">
