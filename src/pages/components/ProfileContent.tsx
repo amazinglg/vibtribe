@@ -10,6 +10,7 @@ import HelpButton from '@/components/HelpButton';
 import MyTickets from '@/components/MyTickets';
 import { useTheme, APP_THEMES, ThemeId } from '@/contexts/ThemeContext';
 import { triggerPwaInstall, isPwaInstallAvailable, isPwaInstalled } from '@/components/PWAInstallBanner';
+import { usePermissions } from '@/hooks/usePermissions';
 
 type Tab = 'account' | 'privacy' | 'notifications' | 'devices' | 'themes' | 'blocked' | 'more';
 
@@ -89,7 +90,7 @@ export default function ProfileContent() {
   const [statusVisibilitySetting, setStatusVisibilitySetting] = useState<'all' | 'contacts' | 'selected'>('all');
 
   // App-level permissions state for the Permissions section
-  const { permissions: appPerms, requestNotifications, requestMicAndCamera, requestStorage, checkAllPermissions } = require('@/hooks/usePermissions').usePermissions();
+  const { permissions: appPerms, requestNotifications, requestMicAndCamera, requestStorage, checkAllPermissions } = usePermissions();
   useEffect(() => { checkAllPermissions(); }, [checkAllPermissions]);
 
   // Contact edit states
