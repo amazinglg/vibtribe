@@ -773,7 +773,7 @@ export default function ChatWindowPanel() {
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full relative" onClick={() => { setShowAttachMenu(false); }}>
+    <div className="flex-1 flex flex-col h-full relative min-w-0 w-full max-w-full overflow-hidden" onClick={() => { setShowAttachMenu(false); }}>
       {/* Voice Call Permission Prompt */}
       {showCallPermPrompt && (
         <PermissionPrompt

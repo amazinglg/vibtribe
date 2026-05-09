@@ -225,7 +225,7 @@ export default function ChatListPanel() {
   return (
     <>
       <div
-        className="w-full lg:w-80 xl:w-96 flex-shrink-0 flex flex-col border-r border-border glass h-full"
+        className="w-full lg:w-80 xl:w-96 flex-shrink-0 flex flex-col border-r border-border glass h-full min-w-0 max-w-full overflow-hidden"
         onClick={() => contextMenu && setContextMenu(null)}
       >
         {/* Header */}
