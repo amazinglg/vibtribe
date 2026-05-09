@@ -69,7 +69,7 @@ export default function AdminPage() {
         .from('messages')
         .select('*', { count: 'exact', head: true });
 
-      const allUsers = usersData || [];
+      const allUsers = (usersData || []) as any as PlatformUser[];
       setUsers(allUsers);
       setStats({
         totalUsers: allUsers.length,
