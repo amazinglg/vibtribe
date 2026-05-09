@@ -222,10 +222,16 @@ export default function SignInPage() {
             </p>
           </div>
 
-          {/* Help button on login page */}
-          <div className="mt-4 flex justify-center">
+          {/* Help & Support */}
+          <div className="mt-6 pt-4 border-t border-border text-center">
+            <p className="text-xs text-muted-foreground mb-2">Need help signing in?</p>
             <HelpButton variant="inline" />
           </div>
+        </div>
+
+        {/* Floating help — always visible on the auth screens */}
+        <div className="fixed bottom-4 right-4 z-40">
+          <HelpButton variant="floating" />
         </div>
       </div>
     </div>
