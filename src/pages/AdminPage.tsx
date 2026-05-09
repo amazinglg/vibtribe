@@ -3,7 +3,7 @@ import { useNavigate as _useNavigate } from '@tanstack/react-router';
 import { Shield, Users, MessageCircle, Activity, Search, Ban, Trash2, RefreshCw, AlertTriangle, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLayout from '@/components/AppLayout';
-import { createClient } from '../../lib/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 
 function useRouter() {
