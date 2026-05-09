@@ -168,14 +168,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         }`}
       >
         {/* Logo */}
-        <div className="flex items-center gap-3 px-4 py-5 border-b border-border">
+        <Link to="/" className="flex items-center gap-3 px-4 py-5 border-b border-border hover:bg-muted/40 transition-colors" aria-label="Go to Chats">
           <div className="flex-shrink-0">
             <AppLogo size={36} />
           </div>
           {sidebarExpanded && (
             <span className="font-bold text-xl text-gradient-primary tracking-tight">VibeTribe</span>
           )}
-        </div>
+        </Link>
 
         {/* Nav Items */}
         <nav className="flex-1 py-6 px-3 flex flex-col gap-1">
@@ -238,7 +238,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         {/* Topbar */}
         <header className="glass-strong border-b border-border sticky top-0 z-30 h-16 flex items-center px-3 sm:px-4 lg:px-6 gap-2 sm:gap-3">
           <div className="flex lg:hidden items-center gap-2 min-w-0 flex-shrink">
-            <AppLogo size={28} />
+            <Link to="/" className="flex-shrink-0" aria-label="Go to Chats">
+              <AppLogo size={28} />
+            </Link>
             {pageTitle && (
               <span className="font-bold text-base text-foreground truncate">{pageTitle}</span>
             )}
