@@ -424,7 +424,7 @@ export default function ProfileContent() {
           <div className="absolute bottom-0 left-0 w-32 h-32 gradient-cyan rounded-full blur-3xl" />
         </div>
 
-        <div className="relative flex items-start gap-6">
+        <div className="relative flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 text-center sm:text-left">
           {/* Avatar */}
           <div className="relative flex-shrink-0">
             <div className="status-ring-active p-0.5 rounded-full">
@@ -438,7 +438,7 @@ export default function ProfileContent() {
           </div>
 
           {/* Info */}
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 w-full">
             {editMode ? (
               <div className="space-y-3">
                 <div>
@@ -488,20 +488,20 @@ export default function ProfileContent() {
               </div>
             ) : (
               <>
-                <div className="flex items-center gap-3 mb-1">
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-1">
                   <h2 className="font-bold text-xl text-foreground">{profile?.full_name || 'Your Name'}</h2>
                   {isAdmin?.() && (
-                    <span className="text-xs bg-vt-amber/20 text-vt-amber px-2 py-0.5 rounded-full font-medium">Master Admin</span>
+                    <span className="text-[10px] bg-vt-amber/20 text-vt-amber px-2 py-0.5 rounded-full font-medium whitespace-nowrap">Master Admin</span>
                   )}
                 </div>
                 {profile?.username && (
                   <p className="text-sm text-primary mb-1">@{profile.username}</p>
                 )}
                 <p className="text-sm text-muted-foreground mb-3">{profile?.bio || 'No bio yet'}</p>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                   <button
                     onClick={() => setEditMode(true)}
-                    className="flex items-center gap-2 px-4 py-2 gradient-primary text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-all glow-primary"
+                    className="flex items-center gap-1.5 px-3 py-2 gradient-primary text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-all glow-primary whitespace-nowrap"
                   >
                     <Edit3 size={14} />
                     Edit Profile
@@ -510,7 +510,7 @@ export default function ProfileContent() {
                   {isAdmin?.() && (
                     <Link
                       to="/admin"
-                      className="flex items-center gap-2 px-4 py-2 bg-vt-amber/10 text-vt-amber text-sm font-semibold rounded-xl hover:bg-vt-amber/20 transition-all"
+                      className="flex items-center gap-1.5 px-3 py-2 bg-vt-amber/10 text-vt-amber text-sm font-semibold rounded-xl hover:bg-vt-amber/20 transition-all whitespace-nowrap"
                     >
                       <Shield size={14} />
                       Admin Panel
