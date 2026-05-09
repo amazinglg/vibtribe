@@ -57,6 +57,7 @@ export default function AdminPage() {
   const router = useNavigate();
   const { user, profile, isAdmin, loading } = useAuth();
   const supabase = createClient();
+  const isMaster = !!profile?.is_master_admin;
   const [users, setUsers] = useState<PlatformUser[]>([]);
   const [stats, setStats] = useState<Stats>({ totalUsers: 0, activeUsers: 0, onlineNow: 0 });
   const [loadingData, setLoadingData] = useState(true);
@@ -89,6 +90,23 @@ export default function AdminPage() {
   useEffect(() => {
     if (activeTab === 'support') loadTickets();
   }, [activeTab]);
+
+  // Auto-open ticket if ?ticket=<id> is in URL (from notification click)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const tid = params.get('ticket');
+    if (tid) {
+      setActiveTab('support');
+      (async () => {
+        const { data } = await supabase.from('support_tickets').select('*').eq('id', tid).maybeSingle();
+        if (data) {
+          setSelectedTicket(data as any);
+          setReplyText((data as any).admin_reply || '');
+        }
+      })();
+    }
+  }, []);
 
   // Real-time subscription for new tickets
   useEffect(() => {
