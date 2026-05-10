@@ -73,6 +73,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
 
   const endCall = useCallback(async (finalStatus: 'ended' | 'declined' | 'missed' = 'ended') => {
     const call = activeCall;
+    const finalDuration = callDuration;
     if (call) {
       try {
         await supabase
@@ -81,14 +82,22 @@ export default function CallProvider({ children }: { children: React.ReactNode }
           .eq('id', call.id)
           .in('status', ['ringing', 'accepted']);
       } catch {}
-      // Log missed-call message in chat
-      if (finalStatus === 'missed' && call.chat_id && role === 'caller') {
+      // Log a system message in chat for both missed and completed calls
+      if (call.chat_id && user?.id) {
         try {
-          await supabase.from('messages').insert({
-            chat_id: call.chat_id,
-            sender_id: user?.id,
-            content: `__missed_call__:${call.call_type}:${call.id}`,
-          });
+          if (finalStatus === 'missed') {
+            await supabase.from('messages').insert({
+              chat_id: call.chat_id,
+              sender_id: user.id,
+              content: `__missed_call__:${call.call_type}:${call.id}`,
+            });
+          } else if (finalStatus === 'ended' && finalDuration > 0) {
+            await supabase.from('messages').insert({
+              chat_id: call.chat_id,
+              sender_id: user.id,
+              content: `__call_log__:${call.call_type}:${finalDuration}:${call.id}`,
+            });
+          }
         } catch {}
       }
     }
@@ -96,7 +105,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     setActiveCall(null);
     setRole(null);
     setCallState('ended');
-  }, [activeCall, role, supabase, user?.id, cleanup]);
+  }, [activeCall, role, supabase, user?.id, cleanup, callDuration]);
 
   const playRingtone = (kind: 'outgoing' | 'incoming') => {
     try {
