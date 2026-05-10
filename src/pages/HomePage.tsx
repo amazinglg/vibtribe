@@ -42,7 +42,10 @@ export default function ChatsPage() {
 
   return (
     <AppLayout>
-      <div className="gradient-bg-page h-[calc(100dvh-64px)] flex overflow-hidden pb-16 lg:pb-0 w-full max-w-full">
+      <div
+        className="gradient-bg-page flex overflow-hidden pb-16 lg:pb-0 w-full max-w-full"
+        style={{ height: 'calc(100dvh - 64px - env(safe-area-inset-top))' }}
+      >
         <div className={`${selectedChatId ? 'hidden lg:flex' : 'flex'} w-full lg:w-auto flex-shrink-0 min-w-0`}>
           <ChatListPanel />
         </div>

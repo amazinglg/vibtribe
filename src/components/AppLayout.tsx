@@ -286,8 +286,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       {/* Main Content */}
       <div className={`flex-1 flex flex-col min-h-screen min-w-0 max-w-full overflow-x-hidden transition-all duration-300 ${sidebarExpanded ? 'lg:ml-64' : 'lg:ml-20'}`}>
-        {/* Topbar */}
-        <header className="glass-strong border-b border-border sticky top-0 z-30 h-16 flex items-center px-3 sm:px-4 lg:px-6 gap-2 sm:gap-3">
+        {/* Topbar — pad for iOS notch / Dynamic Island so content scrolls below it */}
+        <header
+          className="glass-strong border-b border-border sticky top-0 z-30 flex items-center px-3 sm:px-4 lg:px-6 gap-2 sm:gap-3"
+          style={{
+            paddingTop: 'env(safe-area-inset-top)',
+            height: 'calc(64px + env(safe-area-inset-top))',
+          }}
+        >
           <div className="flex lg:hidden items-center gap-2 min-w-0 flex-shrink">
             <Link to="/" className="flex-shrink-0" aria-label="Go to Chats">
               <AppLogo size={28} />

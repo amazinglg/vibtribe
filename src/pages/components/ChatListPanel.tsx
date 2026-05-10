@@ -62,6 +62,8 @@ export default function ChatListPanel() {
     const channel = supabase
       .channel(`chatlist-${user.id}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, debouncedReload)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, debouncedReload)
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages' }, debouncedReload)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chats' }, debouncedReload)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'chats' }, debouncedReload)
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'chats' }, debouncedReload)
@@ -242,6 +244,20 @@ export default function ChatListPanel() {
     setContextMenu(null);
   };
 
+  const handleMarkAsRead = async (chatId: string) => {
+    setContextMenu(null);
+    if (!user) return;
+    try {
+      await supabase
+        .from('messages')
+        .update({ message_status: 'read' })
+        .eq('chat_id', chatId)
+        .neq('sender_id', user.id)
+        .neq('message_status', 'read');
+      setChats(prev => prev.map(c => c.id === chatId ? { ...c, unread: 0 } : c));
+    } catch {}
+  };
+
   const handleContactStartChat = (chatId: string, name: string) => {
     setSelectedChatId(chatId);
     loadChats();
@@ -374,6 +390,13 @@ export default function ChatListPanel() {
           className="fixed z-50 glass-strong rounded-xl border border-border shadow-card overflow-hidden float-up"
           style={{ top: contextMenu.y, left: Math.min(contextMenu.x, typeof window !== 'undefined' ? window.innerWidth - 180 : 200) }}
         >
+          <button
+            onClick={() => handleMarkAsRead(contextMenu.chatId)}
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted w-full text-left transition-colors"
+          >
+            <Check size={14} className="text-vt-green" />
+            Mark as Read
+          </button>
           <button
             onClick={() => {
               const chat = chats.find(c => c.id === contextMenu.chatId);
