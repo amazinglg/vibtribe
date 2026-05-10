@@ -1071,15 +1071,38 @@ export default function ChatWindowPanel() {
             const missedMatch = typeof msg.text === 'string' && msg.text.startsWith('__missed_call__:')
               ? msg.text.split(':') : null;
             const isMissedCall = !!missedMatch;
+            const callLogMatch = typeof msg.text === 'string' && msg.text.startsWith('__call_log__:')
+              ? msg.text.split(':') : null;
+            if (callLogMatch) {
+              const kind = callLogMatch[1] || 'voice';
+              const dur = parseInt(callLogMatch[2] || '0', 10);
+              const mm = String(Math.floor(dur / 60)).padStart(2, '0');
+              const ss = String(dur % 60).padStart(2, '0');
+              const when = new Date(msg.time ? Date.now() : Date.now()).toLocaleString();
+              return (
+                <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                  <div className="glass border border-border rounded-2xl px-4 py-2.5 text-sm flex items-center gap-3">
+                    {kind === 'video' ? <Video size={16} className="text-vt-green" /> : <Phone size={16} className="text-vt-green" />}
+                    <div className="flex flex-col">
+                      <span className="text-foreground/90">{kind === 'video' ? 'Video' : 'Voice'} call · {mm}:{ss}</span>
+                      <span className="text-[10px] text-muted-foreground">{msg.time}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
             if (isMissedCall) {
               const callKind = missedMatch![1] || 'voice';
               return (
                 <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                   <div className="glass border border-border rounded-2xl px-4 py-2.5 text-sm flex items-center gap-3">
                     <PhoneOff size={16} className="text-red-400" />
-                    <span className="text-foreground/80">
-                      {isMe ? `Missed ${callKind} call` : `You missed a ${callKind} call`}
-                    </span>
+                    <div className="flex flex-col">
+                      <span className="text-red-400 font-medium">
+                        {isMe ? `Missed ${callKind} call` : `You missed a ${callKind} call`}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">{msg.time}</span>
+                    </div>
                     {isMe && contact?.userId && (
                       <button
                         onClick={() => startCall({ calleeId: contact.userId!, chatId: selectedChatId, type: callKind as 'voice'|'video', calleeName: contact.name, calleeAvatar: contact.avatar })}
