@@ -346,6 +346,15 @@ export default function ChatWindowPanel() {
             setMessages(prev => prev.filter(m => m.id !== oldMsg.id));
           }
         )
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages', filter: `chat_id=eq.${selectedChatId}` },
+          (payload) => {
+            const upd = payload.new as any;
+            setMessages(prev => prev.map(m => m.id === upd.id
+              ? { ...m, status: upd.message_status || m.status }
+              : m
+            ));
+          }
+        )
         .subscribe();
       return () => {
         supabase.removeChannel(channel);
