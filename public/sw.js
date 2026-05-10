@@ -57,12 +57,10 @@ self.addEventListener('fetch', (event) => {
 
 // Push notification handler
 self.addEventListener('push', (event) => {
-  if (!event.data) return;
-  let data = {};
-  try {
-    data = event.data.json();
-  } catch {
-    data = { title: 'VibeTribe', body: event.data.text() };
+  let data = { title: 'VibeTribe', body: 'You have a new message' };
+  if (event.data) {
+    try { data = { ...data, ...event.data.json() }; }
+    catch { try { data.body = event.data.text(); } catch {} }
   }
 
   const title = data.title || 'VibeTribe';
