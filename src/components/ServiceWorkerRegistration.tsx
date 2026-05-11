@@ -65,8 +65,8 @@ export default function ServiceWorkerRegistration() {
     const host = window.location.hostname;
     const isPreviewHost =
       host.includes('id-preview--') ||
-      host.includes('lovableproject.com') ||
-      host.includes('lovable.app');
+      host.includes('-dev.lovable.app') ||
+      host.includes('lovableproject.com');
 
     if (isInIframe || isPreviewHost) {
       // Unregister any previously installed SW + clear caches so stale shells go away.
@@ -79,7 +79,7 @@ export default function ServiceWorkerRegistration() {
       return;
     }
 
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
+    navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
   }, []);
 
   // Save push subscription when user logs in
