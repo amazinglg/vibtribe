@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { subscribeToPush, savePushSubscription, sendPushNotification } from '@/lib/pushNotifications';
+import { ensurePushSubscription } from '@/lib/pushNotifications';
 
 // Ringtone audio context for incoming calls
 let ringtoneInterval: ReturnType<typeof setInterval> | null = null;
@@ -65,8 +65,8 @@ export default function ServiceWorkerRegistration() {
     const host = window.location.hostname;
     const isPreviewHost =
       host.includes('id-preview--') ||
-      host.includes('lovableproject.com') ||
-      host.includes('lovable.app');
+      host.includes('-dev.lovable.app') ||
+      host.includes('lovableproject.com');
 
     if (isInIframe || isPreviewHost) {
       // Unregister any previously installed SW + clear caches so stale shells go away.
@@ -79,7 +79,7 @@ export default function ServiceWorkerRegistration() {
       return;
     }
 
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
+    navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
   }, []);
 
   // Save push subscription when user logs in
@@ -88,11 +88,7 @@ export default function ServiceWorkerRegistration() {
 
     const setupPush = async () => {
       try {
-        const subscription = await subscribeToPush();
-        if (subscription) {
-          await savePushSubscription(supabase, user.id, subscription);
-          subscriptionSavedRef.current = true;
-        }
+        subscriptionSavedRef.current = await ensurePushSubscription(supabase, user.id);
       } catch {}
     };
 
@@ -120,88 +116,6 @@ export default function ServiceWorkerRegistration() {
       stopRingtone();
     };
   }, []);
-
-  // Listen for new messages and send push notifications to recipient
-  useEffect(() => {
-    if (!user) return;
-
-    const channel = supabase
-      .channel('global-messages-push-notif')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `sender_id=eq.${user.id}`,
-        },
-        async (payload) => {
-          const msg = payload.new as any;
-
-          // Get the chat to find the recipient
-          const { data: chat } = await supabase
-            .from('chats')
-            .select('participant_one, participant_two')
-            .eq('id', msg.chat_id)
-            .single();
-
-          if (!chat) return;
-
-          const recipientId =
-            chat.participant_one === user.id
-              ? chat.participant_two
-              : chat.participant_one;
-
-          if (!recipientId) return;
-
-          // Get sender name
-          const { data: sender } = await supabase
-            .from('user_profiles')
-            .select('full_name')
-            .eq('id', user.id)
-            .single();
-
-          const senderName = sender?.full_name || 'Someone';
-          const messageText = msg.content
-            ? msg.content.length > 60
-              ? msg.content.substring(0, 60) + '…'
-              : msg.content
-            : 'Sent you a message';
-
-          // Check secured chat notification preference for recipient
-          const recipientSecureNotifKey = `vt_secure_notif_${recipientId}`;
-          const isSecureChat = msg.is_encrypted || msg.encrypted;
-
-          // Send push to recipient
-          await sendPushNotification(supabase, {
-            user_id: recipientId,
-            title: `${senderName} — VibeTribe`,
-            body: isSecureChat ? '🔒 New secure message' : messageText,
-            tag: `msg-${msg.chat_id}`,
-            url: '/',
-            type: 'message',
-          });
-
-          // Also show local notification if app is in background
-          if (
-            'Notification' in window &&
-            Notification.permission === 'granted' &&
-            document.hidden
-          ) {
-            new Notification(`${senderName} — VibeTribe`, {
-              body: isSecureChat ? '🔒 New secure message' : messageText,
-              icon: '/favicon.ico',
-              tag: `msg-${msg.chat_id}`,
-            });
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user]);
 
   return null;
 }

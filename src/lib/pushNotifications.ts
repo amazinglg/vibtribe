@@ -1,126 +1,113 @@
-/**
- * Web Push Notification utilities
- * Handles VAPID subscription, saving to Supabase, and triggering push via Edge Function
- */
+type PushKind = 'message' | 'voice_call' | 'video_call' | 'status';
 
-const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || '';
+export type PushPayload = {
+  recipient_user_id?: string;
+  user_id?: string;
+  chat_id?: string | null;
+  title: string;
+  body: string;
+  tag?: string;
+  url?: string;
+  type?: PushKind;
+  callerId?: string;
+};
 
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
-  }
-  return outputArray;
+const PUBLIC_KEY_CACHE = 'vt_vapid_public_key';
+
+function base64UrlToUint8Array(value: string): Uint8Array {
+  const padding = '='.repeat((4 - (value.length % 4)) % 4);
+  const base64 = (value + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = window.atob(base64);
+  const output = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i += 1) output[i] = raw.charCodeAt(i);
+  return output;
 }
 
-/**
- * Subscribe the current device to Web Push notifications.
- * Returns the PushSubscription or null if not supported / permission denied.
- */
-export async function subscribeToPush(): Promise<PushSubscription | null> {
-  if (typeof window === 'undefined') return null;
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return null;
-  if (!VAPID_PUBLIC_KEY) {
-    console.warn('[Push] NEXT_PUBLIC_VAPID_PUBLIC_KEY not set — push disabled');
-    return null;
+export function isWebPushSupported(): boolean {
+  return typeof window !== 'undefined'
+    && 'serviceWorker' in navigator
+    && 'PushManager' in window
+    && 'Notification' in window;
+}
+
+async function getVapidPublicKey(supabase: any): Promise<string | null> {
+  const cached = sessionStorage.getItem(PUBLIC_KEY_CACHE);
+  if (cached) return cached;
+
+  const envKey = import.meta.env.VITE_VAPID_PUBLIC_KEY || '';
+  if (envKey) {
+    sessionStorage.setItem(PUBLIC_KEY_CACHE, envKey);
+    return envKey;
   }
 
-  try {
-    const registration = await navigator.serviceWorker.ready;
+  const { data, error } = await supabase.functions.invoke('send-push-notification', {
+    body: { action: 'getPublicKey' },
+  });
+  if (error || !data?.publicKey) return null;
+  sessionStorage.setItem(PUBLIC_KEY_CACHE, data.publicKey);
+  return data.publicKey;
+}
 
-    // Check existing subscription first
-    const existing = await registration.pushManager.getSubscription();
-    if (existing) return existing;
+export async function ensurePushSubscription(supabase: any, userId: string): Promise<boolean> {
+  if (!isWebPushSupported() || !userId) return false;
 
-    // Request permission
-    const permission = await Notification.requestPermission();
-    if (permission !== 'granted') return null;
+  const permission = Notification.permission === 'default'
+    ? await Notification.requestPermission()
+    : Notification.permission;
+  if (permission !== 'granted') return false;
 
-    // Subscribe
-    const subscription = await registration.pushManager.subscribe({
+  const publicKey = await getVapidPublicKey(supabase);
+  if (!publicKey) return false;
+
+  const registration = await navigator.serviceWorker.ready;
+  let subscription = await registration.pushManager.getSubscription();
+
+  if (!subscription) {
+    subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as BufferSource,
+      applicationServerKey: base64UrlToUint8Array(publicKey) as BufferSource,
     });
-
-    return subscription;
-  } catch (err) {
-    console.error('[Push] Subscribe error:', err);
-    return null;
   }
-}
 
-/**
- * Save a PushSubscription to Supabase for the given user.
- */
-export async function savePushSubscription(
-  supabase: any,
-  userId: string,
-  subscription: PushSubscription
-): Promise<void> {
   const json = subscription.toJSON();
-  if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) return;
+  if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) return false;
 
-  await supabase.from('push_subscriptions').upsert(
-    {
-      user_id: userId,
-      endpoint: json.endpoint,
-      p256dh: json.keys.p256dh,
-      auth: json.keys.auth,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: 'endpoint' }
-  );
+  const { error } = await supabase.from('push_subscriptions').upsert({
+    user_id: userId,
+    endpoint: json.endpoint,
+    p256dh: json.keys.p256dh,
+    auth: json.keys.auth,
+    updated_at: new Date().toISOString(),
+  }, { onConflict: 'endpoint' });
+
+  return !error;
 }
 
-/**
- * Remove the current device's push subscription from Supabase.
- */
-export async function removePushSubscription(
-  supabase: any,
-  userId: string
-): Promise<void> {
-  if (typeof window === 'undefined') return;
-  if (!('serviceWorker' in navigator)) return;
-
-  try {
-    const registration = await navigator.serviceWorker.ready;
-    const subscription = await registration.pushManager.getSubscription();
-    if (subscription) {
-      const endpoint = subscription.endpoint;
-      await subscription.unsubscribe();
-      await supabase
-        .from('push_subscriptions')
-        .delete()
-        .eq('user_id', userId)
-        .eq('endpoint', endpoint);
-    }
-  } catch {}
+export async function removePushSubscription(supabase: any, userId: string): Promise<void> {
+  if (!isWebPushSupported() || !userId) return;
+  const registration = await navigator.serviceWorker.ready;
+  const subscription = await registration.pushManager.getSubscription();
+  if (!subscription) return;
+  const endpoint = subscription.endpoint;
+  await subscription.unsubscribe();
+  await supabase.from('push_subscriptions').delete().eq('user_id', userId).eq('endpoint', endpoint);
 }
 
-/**
- * Trigger a push notification for a user via Supabase Edge Function.
- * Called server-side or from a trusted context (e.g., after inserting a message).
- */
-export async function sendPushNotification(
-  supabase: any,
-  payload: {
-    user_id: string;
-    title: string;
-    body: string;
-    tag?: string;
-    url?: string;
-    type?: 'message' | 'voice_call' | 'video_call';
-    callerId?: string;
-  }
-): Promise<void> {
+export async function sendPushNotification(supabase: any, payload: PushPayload): Promise<boolean> {
+  const recipientId = payload.recipient_user_id || payload.user_id;
+  if (!recipientId && !payload.chat_id) return false;
+
   try {
-    await supabase.functions.invoke('send-push-notification', {
-      body: payload,
+    const { error } = await supabase.functions.invoke('send-push-notification', {
+      body: {
+        action: 'send',
+        ...payload,
+        recipient_user_id: recipientId,
+      },
     });
-  } catch (err) {
-    console.error('[Push] Send error:', err);
+    return !error;
+  } catch (error) {
+    console.error('[Push] send failed', error);
+    return false;
   }
 }
