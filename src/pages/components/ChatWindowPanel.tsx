@@ -591,6 +591,18 @@ export default function ChatWindowPanel() {
       if (data) {
         setMessages(prev => prev.map(m => m.id === tempId ? { ...m, id: data.id, status: 'delivered' } : m));
         await supabase.from('chats').update({ updated_at: new Date().toISOString() }).eq('id', selectedChatId);
+        if (contact?.userId) {
+          const senderName = profile?.full_name || 'Someone';
+          await sendPushNotification(supabase, {
+            recipient_user_id: contact.userId,
+            chat_id: selectedChatId,
+            title: senderName,
+            body: chatType === 'secure' ? '🔒 New secure message' : text,
+            tag: `chat-${selectedChatId}`,
+            url: '/',
+            type: 'message',
+          });
+        }
       }
     } catch {}
   };
@@ -633,6 +645,18 @@ export default function ChatWindowPanel() {
       if (data) {
         setMessages(prev => prev.map(m => m.id === tempId ? { ...m, id: data.id, status: 'delivered', mediaUrl: publicUrl } : m));
         await supabase.from('chats').update({ updated_at: new Date().toISOString() }).eq('id', selectedChatId);
+        if (contact?.userId) {
+          const senderName = profile?.full_name || 'Someone';
+          await sendPushNotification(supabase, {
+            recipient_user_id: contact.userId,
+            chat_id: selectedChatId,
+            title: senderName,
+            body: isImage ? '📷 Photo' : `📎 ${file.name}`,
+            tag: `chat-${selectedChatId}`,
+            url: '/',
+            type: 'message',
+          });
+        }
       }
     } catch (err) {
       setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'sent', text: `📎 ${file.name} (upload failed)` } : m));
