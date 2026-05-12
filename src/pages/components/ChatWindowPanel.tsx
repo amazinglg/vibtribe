@@ -739,6 +739,7 @@ export default function ChatWindowPanel() {
         const callerName = profile?.full_name || 'Someone';
         await sendPushNotification(supabase, {
           user_id: contact.userId,
+          chat_id: selectedChatId,
           title: `📹 Incoming Video Call`,
           body: `${callerName} is calling you on VibeTribe`,
           tag: `call-${contact.userId}`,
@@ -756,6 +757,7 @@ export default function ChatWindowPanel() {
         const callerName = profile?.full_name || 'Someone';
         await sendPushNotification(supabase, {
           user_id: contact.userId,
+          chat_id: selectedChatId,
           title: `📞 Incoming Voice Call`,
           body: `${callerName} is calling you on VibeTribe`,
           tag: `call-${contact.userId}`,
