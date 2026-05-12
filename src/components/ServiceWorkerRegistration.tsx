@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { ensurePushSubscription } from '@/lib/pushNotifications';
+import { useChatStore } from '@/store/chatStore';
 
 // Ringtone audio context for incoming calls
 let ringtoneInterval: ReturnType<typeof setInterval> | null = null;
@@ -50,6 +51,7 @@ function stopRingtone() {
 
 export default function ServiceWorkerRegistration() {
   const { user } = useAuth();
+  const { setSelectedChatId } = useChatStore();
   const supabase = createClient();
   const subscriptionSavedRef = useRef(false);
 
@@ -93,6 +95,16 @@ export default function ServiceWorkerRegistration() {
     };
 
     setupPush();
+
+    const onFocusOrVisible = () => {
+      if (document.visibilityState === 'visible') setupPush();
+    };
+    window.addEventListener('focus', onFocusOrVisible);
+    document.addEventListener('visibilitychange', onFocusOrVisible);
+    return () => {
+      window.removeEventListener('focus', onFocusOrVisible);
+      document.removeEventListener('visibilitychange', onFocusOrVisible);
+    };
   }, [user]);
 
   // Listen for SW messages (incoming call from push)
@@ -107,6 +119,11 @@ export default function ServiceWorkerRegistration() {
         event.data?.type === 'ANSWER_CALL'
       ) {
         stopRingtone();
+        const chatId = event.data?.payload?.chatId;
+        if (chatId) setSelectedChatId(chatId);
+      } else if (event.data?.type === 'OPEN_NOTIFICATION') {
+        const chatId = event.data?.payload?.chatId;
+        if (chatId) setSelectedChatId(chatId);
       }
     };
 
@@ -115,7 +132,7 @@ export default function ServiceWorkerRegistration() {
       navigator.serviceWorker.removeEventListener('message', handleSWMessage);
       stopRingtone();
     };
-  }, []);
+  }, [setSelectedChatId]);
 
   return null;
 }
