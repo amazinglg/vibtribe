@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vibetribe-v8';
+const CACHE_NAME = 'vibetribe-v9';
 const STATIC_ASSETS = ['/manifest.json', '/favicon.ico'];
 
 self.addEventListener('install', (event) => {
@@ -51,19 +51,22 @@ self.addEventListener('push', (event) => {
   const data = parsePush(event);
   const isCall = data.type === 'voice_call' || data.type === 'video_call';
   const title = data.title || (isCall ? 'Incoming call' : 'VibeTribe');
-  const url = data.url || '/';
+  const targetUrl = new URL(data.url || '/', self.location.origin);
+  if (data.chatId && !targetUrl.searchParams.get('chat')) targetUrl.searchParams.set('chat', data.chatId);
+  const url = targetUrl.pathname + targetUrl.search + targetUrl.hash;
+  const tag = data.tag || (isCall ? `call-${data.callId || data.callerId || Date.now()}` : `message-${data.chatId || 'chat'}-${data.timestamp || Date.now()}`);
 
   const options = {
     body: data.body || (isCall ? 'Incoming VibeTribe call' : 'You have a new message'),
     icon: '/icons/icon-192x192.png',
     badge: '/favicon.ico',
-    tag: data.tag || (isCall ? `call-${data.callerId || Date.now()}` : 'vibetribe-message'),
+    tag,
     renotify: true,
     requireInteraction: isCall,
     silent: false,
     vibrate: isCall ? [400, 150, 400, 150, 700] : [180, 80, 180],
     timestamp: data.timestamp || Date.now(),
-    data: { url, type: data.type, chatId: data.chatId, callerId: data.callerId },
+    data: { url, type: data.type, chatId: data.chatId, callerId: data.callerId, callId: data.callId },
     actions: isCall
       ? [{ action: 'answer', title: 'Answer' }, { action: 'decline', title: 'Decline' }]
       : [{ action: 'open', title: 'Open' }, { action: 'dismiss', title: 'Dismiss' }],
@@ -82,17 +85,20 @@ self.addEventListener('notificationclick', (event) => {
   if (event.action === 'dismiss' || event.action === 'decline') return;
 
   const data = event.notification.data || {};
-  const url = data.url || '/';
+  const targetUrl = new URL(data.url || '/', self.location.origin);
+  if (data.chatId && !targetUrl.searchParams.get('chat')) targetUrl.searchParams.set('chat', data.chatId);
+  if (event.action === 'answer') targetUrl.searchParams.set('answerCall', data.callId || '1');
+  const message = event.action === 'answer' ? { type: 'ANSWER_CALL', payload: data } : { type: 'OPEN_NOTIFICATION', payload: data };
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {
         if (client.url.startsWith(self.location.origin) && 'focus' in client) {
-          client.postMessage(event.action === 'answer' ? { type: 'ANSWER_CALL', payload: data } : { type: 'OPEN_NOTIFICATION', payload: data });
-          client.navigate(url);
-          return client.focus();
+          client.postMessage(message);
+          const nav = 'navigate' in client ? client.navigate(targetUrl.href).catch(() => null) : Promise.resolve(null);
+          return nav.then(() => client.focus());
         }
       }
-      return self.clients.openWindow(url);
+      return self.clients.openWindow(targetUrl.href);
     })
   );
 });

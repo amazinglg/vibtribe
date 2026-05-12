@@ -11,9 +11,10 @@ export default function ChatsPage() {
   const router = useNavigate();
   const { selectedChatId, setSelectedChatId } = useChatStore();
 
-  // Always start on the chat list (right panel blank) when entering Home
+  // Open a chat directly when launched from a notification; otherwise start on the list.
   useEffect(() => {
-    setSelectedChatId(null);
+    const chatId = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('chat') : null;
+    setSelectedChatId(chatId || null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

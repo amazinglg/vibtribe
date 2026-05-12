@@ -10,6 +10,7 @@ export type PushPayload = {
   url?: string;
   type?: PushKind;
   callerId?: string;
+  callId?: string;
 };
 
 const PUBLIC_KEY_CACHE = 'vt_vapid_public_key';
@@ -60,6 +61,7 @@ export async function ensurePushSubscription(supabase: any, userId: string): Pro
   if (!publicKey) return false;
 
   const registration = await navigator.serviceWorker.ready;
+  await registration.update().catch(() => {});
   let subscription = await registration.pushManager.getSubscription();
 
   if (!subscription) {
@@ -98,14 +100,22 @@ export async function sendPushNotification(supabase: any, payload: PushPayload):
   if (!recipientId && !payload.chat_id) return false;
 
   try {
-    const { error } = await supabase.functions.invoke('send-push-notification', {
+    const chatId = payload.chat_id || null;
+    const notificationId = `${payload.type || 'message'}-${chatId || recipientId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const url = payload.url || (chatId ? `/?chat=${encodeURIComponent(chatId)}` : '/');
+    const tag = payload.type === 'message' ? notificationId : (payload.tag || notificationId);
+    const { data, error } = await supabase.functions.invoke('send-push-notification', {
       body: {
         action: 'send',
         ...payload,
+        chat_id: chatId,
+        url,
+        tag,
+        notification_id: notificationId,
         recipient_user_id: recipientId,
       },
     });
-    return !error;
+    return !error && data?.sent !== 0;
   } catch (error) {
     console.error('[Push] send failed', error);
     return false;
