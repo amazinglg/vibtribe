@@ -103,7 +103,7 @@ export async function sendPushNotification(supabase: any, payload: PushPayload):
     const chatId = payload.chat_id || null;
     const notificationId = `${payload.type || 'message'}-${chatId || recipientId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const url = payload.url || (chatId ? `/?chat=${encodeURIComponent(chatId)}` : '/');
-    const tag = payload.tag || notificationId;
+    const tag = payload.type === 'message' ? notificationId : (payload.tag || notificationId);
     const { data, error } = await supabase.functions.invoke('send-push-notification', {
       body: {
         action: 'send',
