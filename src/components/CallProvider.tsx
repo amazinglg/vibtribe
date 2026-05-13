@@ -167,8 +167,8 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   };
 
   const startCall: CallContextValue['startCall'] = async (opts) => {
-    if (!user) return;
-    if (activeCall) return;
+    if (!user) return null;
+    if (activeCall) return null;
     try {
       const { data: callRow, error } = await supabase
         .from('calls')
@@ -241,15 +241,43 @@ export default function CallProvider({ children }: { children: React.ReactNode }
       ringTimerRef.current = setTimeout(() => {
         endCall('missed');
       }, RING_TIMEOUT_MS);
+      return callRow;
     } catch (e) {
       console.error('startCall failed', e);
       cleanup();
       setActiveCall(null);
       setRole(null);
+      return null;
     }
   };
 
   // Listen for incoming calls (callee side)
+  const handleIncomingCall = useCallback(async (row: any, autoAccept = false) => {
+    if (!user?.id || activeCall) return;
+    if (!row || row.status !== 'ringing' || row.callee_id !== user.id) return;
+
+    let callerName = 'Unknown'; let callerAvatar = 'U';
+    try {
+      const { data: p } = await supabase
+        .from('user_profiles').select('full_name, avatar_url').eq('id', row.caller_id).maybeSingle();
+      if (p?.full_name) { callerName = p.full_name; callerAvatar = p.full_name[0]?.toUpperCase() || 'U'; }
+    } catch {}
+    setActiveCall(row);
+    setRole('callee');
+    setCallState('ringing');
+    setRemoteName(callerName);
+    setRemoteAvatar(callerAvatar);
+    playRingtone('incoming');
+    ringTimerRef.current = setTimeout(async () => {
+      try {
+        await supabase.from('calls').update({ status: 'missed', ended_at: new Date().toISOString() })
+          .eq('id', row.id).eq('status', 'ringing');
+      } catch {}
+      cleanup(); setActiveCall(null); setRole(null);
+    }, RING_TIMEOUT_MS);
+    if (autoAccept) setTimeout(() => acceptCall(), 250);
+  }, [user?.id, activeCall, supabase, cleanup]);
+
   useEffect(() => {
     if (!user?.id) return;
     const chan = supabase
