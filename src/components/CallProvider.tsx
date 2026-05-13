@@ -284,34 +284,19 @@ export default function CallProvider({ children }: { children: React.ReactNode }
       .channel(`incoming-calls:${user.id}`)
       .on('postgres_changes', {
         event: 'INSERT', schema: 'public', table: 'calls', filter: `callee_id=eq.${user.id}`,
-      }, async ({ new: row }: any) => {
-        if (activeCall) return; // already in a call
-        if (row.status !== 'ringing') return;
-        // Fetch caller profile for name/avatar
-        let callerName = 'Unknown'; let callerAvatar = 'U';
-        try {
-          const { data: p } = await supabase
-            .from('user_profiles').select('full_name, avatar_url').eq('id', row.caller_id).maybeSingle();
-          if (p?.full_name) { callerName = p.full_name; callerAvatar = p.full_name[0]?.toUpperCase() || 'U'; }
-        } catch {}
-        setActiveCall(row);
-        setRole('callee');
-        setCallState('ringing');
-        setRemoteName(callerName);
-        setRemoteAvatar(callerAvatar);
-        playRingtone('incoming');
-        // Auto-mark missed if not answered
-        ringTimerRef.current = setTimeout(async () => {
-          try {
-            await supabase.from('calls').update({ status: 'missed', ended_at: new Date().toISOString() })
-              .eq('id', row.id).eq('status', 'ringing');
-          } catch {}
-          cleanup(); setActiveCall(null); setRole(null);
-        }, RING_TIMEOUT_MS);
-      })
+      }, async ({ new: row }: any) => handleIncomingCall(row))
       .subscribe();
     return () => { try { supabase.removeChannel(chan); } catch {} };
-  }, [user?.id, supabase, activeCall, cleanup]);
+  }, [user?.id, supabase, handleIncomingCall]);
+
+  useEffect(() => {
+    if (!user?.id || activeCall || typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const callId = params.get('call') || params.get('answerCall');
+    if (!callId) return;
+    supabase.from('calls').select('*').eq('id', callId).eq('callee_id', user.id).eq('status', 'ringing').maybeSingle()
+      .then(({ data }) => { if (data) handleIncomingCall(data); });
+  }, [user?.id, activeCall, supabase, handleIncomingCall]);
 
   // Callee accept handler
   const acceptCall = async () => {
