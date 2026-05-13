@@ -53,6 +53,7 @@ self.addEventListener('push', (event) => {
   const title = data.title || (isCall ? 'Incoming call' : 'VibeTribe');
   const targetUrl = new URL(data.url || '/', self.location.origin);
   if (data.chatId && !targetUrl.searchParams.get('chat')) targetUrl.searchParams.set('chat', data.chatId);
+  if (isCall && data.callId && !targetUrl.searchParams.get('call')) targetUrl.searchParams.set('call', data.callId);
   const url = targetUrl.pathname + targetUrl.search + targetUrl.hash;
   const tag = data.tag || (isCall ? `call-${data.callId || data.callerId || Date.now()}` : `message-${data.chatId || 'chat'}-${data.timestamp || Date.now()}`);
 
@@ -87,6 +88,7 @@ self.addEventListener('notificationclick', (event) => {
   const data = event.notification.data || {};
   const targetUrl = new URL(data.url || '/', self.location.origin);
   if (data.chatId && !targetUrl.searchParams.get('chat')) targetUrl.searchParams.set('chat', data.chatId);
+  if (data.callId && !targetUrl.searchParams.get('call')) targetUrl.searchParams.set('call', data.callId);
   if (event.action === 'answer') targetUrl.searchParams.set('answerCall', data.callId || '1');
   const message = event.action === 'answer' ? { type: 'ANSWER_CALL', payload: data } : { type: 'OPEN_NOTIFICATION', payload: data };
   event.waitUntil(

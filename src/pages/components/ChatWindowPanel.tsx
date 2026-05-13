@@ -731,11 +731,12 @@ export default function ChatWindowPanel() {
     if (pendingCall === 'video') {
       await requestMicAndCamera();
       // Start real WebRTC video call
+      let callRow: any = null;
       if (contact?.userId) {
-        await startCall({ calleeId: contact.userId, chatId: selectedChatId, type: 'video', calleeName: contact.name, calleeAvatar: contact.avatar });
+        callRow = await startCall({ calleeId: contact.userId, chatId: selectedChatId, type: 'video', calleeName: contact.name, calleeAvatar: contact.avatar });
       }
       // Also send push notification (best-effort)
-      if (contact?.userId) {
+      if (contact?.userId && callRow?.id) {
         const callerName = profile?.full_name || 'Someone';
         await sendPushNotification(supabase, {
           user_id: contact.userId,
@@ -746,14 +747,16 @@ export default function ChatWindowPanel() {
           url: '/',
           type: 'video_call',
           callerId: user?.id,
+          callId: callRow.id,
         });
       }
     } else {
       await requestMicrophone();
+      let callRow: any = null;
       if (contact?.userId) {
-        await startCall({ calleeId: contact.userId, chatId: selectedChatId, type: 'voice', calleeName: contact.name, calleeAvatar: contact.avatar });
+        callRow = await startCall({ calleeId: contact.userId, chatId: selectedChatId, type: 'voice', calleeName: contact.name, calleeAvatar: contact.avatar });
       }
-      if (contact?.userId) {
+      if (contact?.userId && callRow?.id) {
         const callerName = profile?.full_name || 'Someone';
         await sendPushNotification(supabase, {
           user_id: contact.userId,
@@ -764,6 +767,7 @@ export default function ChatWindowPanel() {
           url: '/',
           type: 'voice_call',
           callerId: user?.id,
+          callId: callRow.id,
         });
       }
     }

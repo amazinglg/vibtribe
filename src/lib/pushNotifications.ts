@@ -102,7 +102,8 @@ export async function sendPushNotification(supabase: any, payload: PushPayload):
   try {
     const chatId = payload.chat_id || null;
     const notificationId = `${payload.type || 'message'}-${chatId || recipientId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    const url = payload.url || (chatId ? `/?chat=${encodeURIComponent(chatId)}` : '/');
+    const isCall = payload.type === 'voice_call' || payload.type === 'video_call';
+    const url = payload.url || (payload.callId ? `/?call=${encodeURIComponent(payload.callId)}${chatId ? `&chat=${encodeURIComponent(chatId)}` : ''}` : (chatId ? `/?chat=${encodeURIComponent(chatId)}` : '/'));
     const tag = payload.type === 'message' ? notificationId : (payload.tag || notificationId);
     const { data, error } = await supabase.functions.invoke('send-push-notification', {
       body: {
@@ -112,6 +113,8 @@ export async function sendPushNotification(supabase: any, payload: PushPayload):
         url,
         tag,
         notification_id: notificationId,
+        call_id: payload.callId,
+        require_interaction: isCall,
         recipient_user_id: recipientId,
       },
     });
