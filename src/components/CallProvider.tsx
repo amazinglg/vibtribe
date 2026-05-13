@@ -15,10 +15,10 @@ type CallRow = {
 };
 
 interface CallContextValue {
-  startCall: (opts: { calleeId: string; chatId?: string | null; type: CallType; calleeName?: string; calleeAvatar?: string }) => Promise<void>;
+  startCall: (opts: { calleeId: string; chatId?: string | null; type: CallType; calleeName?: string; calleeAvatar?: string }) => Promise<CallRow | null>;
 }
 
-const CallContext = createContext<CallContextValue>({ startCall: async () => {} });
+const CallContext = createContext<CallContextValue>({ startCall: async () => null });
 export const useCall = () => useContext(CallContext);
 
 const ICE_SERVERS = [
@@ -59,7 +59,9 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     localStreamRef.current = null;
     remoteStreamRef.current = null;
     if (channelRef.current) {
-      try { supabase.removeChannel(channelRef.current); } catch {}
+      const ref = channelRef.current as any;
+      if (ref?._chans) ref._chans.forEach((c: any) => { try { supabase.removeChannel(c); } catch {} });
+      else { try { supabase.removeChannel(ref); } catch {} }
       channelRef.current = null;
     }
     if (ringTimerRef.current) clearTimeout(ringTimerRef.current);
