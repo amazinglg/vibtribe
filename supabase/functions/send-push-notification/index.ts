@@ -91,6 +91,7 @@ serve(async (req) => {
       type: body.type || 'message',
       chatId,
       callerId,
+      callId: body.call_id || body.callId || null,
       timestamp: Date.now(),
     });
 
