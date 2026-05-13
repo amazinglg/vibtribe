@@ -252,7 +252,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   };
 
   // Listen for incoming calls (callee side)
-  const handleIncomingCall = useCallback(async (row: any, autoAccept = false) => {
+  const handleIncomingCall = useCallback(async (row: any) => {
     if (!user?.id || activeCall) return;
     if (!row || row.status !== 'ringing' || row.callee_id !== user.id) return;
 
@@ -275,7 +275,6 @@ export default function CallProvider({ children }: { children: React.ReactNode }
       } catch {}
       cleanup(); setActiveCall(null); setRole(null);
     }, RING_TIMEOUT_MS);
-    if (autoAccept) setTimeout(() => acceptCall(), 250);
   }, [user?.id, activeCall, supabase, cleanup]);
 
   useEffect(() => {
