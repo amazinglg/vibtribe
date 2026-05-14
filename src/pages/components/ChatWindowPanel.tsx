@@ -312,8 +312,8 @@ export default function ChatWindowPanel() {
                 reactions: [],
                 encrypted,
               }]);
-              // Mark as read
-              await supabase.from('messages').update({ message_status: 'read' }).eq('id', newMsg.id);
+              // Mark as read (recipient — uses RPC to bypass RLS sender restriction)
+              await supabase.rpc('mark_messages_read', { _chat_id: selectedChatId });
 
               // Check if this is a secure chat and whether user wants notifications for it
               try {
