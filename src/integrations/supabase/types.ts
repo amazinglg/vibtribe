@@ -557,6 +557,7 @@ export type Database = {
       is_admin_user: { Args: never; Returns: boolean }
       is_chat_participant: { Args: { chat_uuid: string }; Returns: boolean }
       is_master_admin: { Args: never; Returns: boolean }
+      mark_messages_read: { Args: { _chat_id: string }; Returns: undefined }
     }
     Enums: {
       chat_type: "normal" | "secure" | "dual_normal" | "dual_secure"

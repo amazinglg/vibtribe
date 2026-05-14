@@ -312,8 +312,8 @@ export default function ChatWindowPanel() {
                 reactions: [],
                 encrypted,
               }]);
-              // Mark as read
-              await supabase.from('messages').update({ message_status: 'read' }).eq('id', newMsg.id);
+              // Mark as read (recipient — uses RPC to bypass RLS sender restriction)
+              await supabase.rpc('mark_messages_read', { _chat_id: selectedChatId });
 
               // Check if this is a secure chat and whether user wants notifications for it
               try {
@@ -451,12 +451,7 @@ export default function ChatWindowPanel() {
             });
           }
           setMessages(out);
-          await supabase
-            .from('messages')
-            .update({ message_status: 'read' })
-            .eq('chat_id', selectedChatId)
-            .neq('sender_id', user.id)
-            .neq('message_status', 'read');
+          await supabase.rpc('mark_messages_read', { _chat_id: selectedChatId });
           setLoading(false);
           return;
         }
@@ -524,13 +519,8 @@ export default function ChatWindowPanel() {
       }
       setMessages(decryptedMsgs);
 
-      // Mark all received messages as read
-      await supabase
-        .from('messages')
-        .update({ message_status: 'read' })
-        .eq('chat_id', selectedChatId)
-        .neq('sender_id', user.id)
-        .neq('message_status', 'read');
+      // Mark all received messages as read (uses SECURITY DEFINER RPC so RLS allows recipient updates)
+      await supabase.rpc('mark_messages_read', { _chat_id: selectedChatId });
 
     } catch {
       setContact({ name: 'Alex Rivera', avatar: 'A', online: true, lastSeen: 'Online' });

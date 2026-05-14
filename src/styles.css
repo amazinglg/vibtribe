@@ -156,13 +156,19 @@ html {
 }
 body {
   -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
   overscroll-behavior-y: none;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-/* Allow text selection inside chat bubbles, inputs, etc. */
-input, textarea, [contenteditable], .selectable {
+/* Allow text selection ONLY inside editable fields and explicit .selectable nodes. */
+input, textarea, [contenteditable="true"], .selectable {
   -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
   user-select: text;
   -webkit-touch-callout: default;
 }

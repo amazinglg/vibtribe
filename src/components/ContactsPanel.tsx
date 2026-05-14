@@ -59,34 +59,56 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
 
   const matchContactsWithPlatform = async (rawContacts: any[]) => {
     setLoading(true);
+    // Normalise. Each raw contact may have multiple numbers — keep them all but tied to one display name.
     const normalized: { name: string; phone: string }[] = [];
     for (const c of rawContacts) {
       const name = Array.isArray(c.name) ? c.name[0] : c.name || 'Unknown';
       const phones: string[] = Array.isArray(c.tel) ? c.tel : [c.tel].filter(Boolean);
+      // Dedupe phones within the same contact card (a contact may list home+mobile that resolve to the same digits)
+      const seenForContact = new Set<string>();
       for (const phone of phones) {
         const clean = phone.replace(/\D/g, '');
-        if (clean.length >= 7) normalized.push({ name, phone: clean });
+        if (clean.length < 7 || seenForContact.has(clean)) continue;
+        seenForContact.add(clean);
+        normalized.push({ name, phone: clean });
       }
     }
 
-    // Check which phones are on platform
+    // Match against platform users — also try last-10-digit match (handles country-code mismatches like +91)
+    const allPhones = normalized.map(c => c.phone);
     const { data: platformUsers } = await supabase
       .from('user_profiles')
       .select('id, full_name, mobile_number')
-      .in('mobile_number', normalized.map(c => c.phone));
+      .or(allPhones.length ? allPhones.map(p => `mobile_number.ilike.%${p.slice(-10)}%`).join(',') : 'id.eq.00000000-0000-0000-0000-000000000000');
 
-    const platformMap = new Map((platformUsers || []).map(u => [u.mobile_number?.replace(/\D/g, ''), u]));
+    const platformByLast10 = new Map<string, any>();
+    for (const u of (platformUsers || [])) {
+      const digits = (u.mobile_number || '').replace(/\D/g, '');
+      if (digits.length >= 10) platformByLast10.set(digits.slice(-10), u);
+    }
 
-    const result: Contact[] = normalized.map(c => {
-      const match = platformMap.get(c.phone);
-      return {
-        name: c.name,
-        phone: c.phone,
-        onPlatform: !!match,
-        userId: match?.id,
-        avatar: match?.full_name?.[0]?.toUpperCase(),
-      };
-    });
+    // Build cards: one per unique person. Prefer matched platform user; otherwise unique by phone.
+    const platformSeen = new Set<string>();
+    const phoneSeen = new Set<string>();
+    const result: Contact[] = [];
+    for (const c of normalized) {
+      const match = platformByLast10.get(c.phone.slice(-10));
+      if (match) {
+        if (platformSeen.has(match.id)) continue;
+        platformSeen.add(match.id);
+        result.push({
+          name: c.name,
+          phone: c.phone,
+          onPlatform: true,
+          userId: match.id,
+          avatar: match.full_name?.[0]?.toUpperCase(),
+        });
+      } else {
+        if (phoneSeen.has(c.phone)) continue;
+        phoneSeen.add(c.phone);
+        result.push({ name: c.name, phone: c.phone, onPlatform: false });
+      }
+    }
 
     setContacts(result);
     setLoading(false);
@@ -194,8 +216,11 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
                 <Phone size={28} className="text-white" />
               </div>
               <h3 className="font-bold text-lg text-foreground mb-2">Find Your Contacts</h3>
-              <p className="text-sm text-muted-foreground mb-6">
-                VibeTribe needs access to <strong>all your contacts</strong> to find your friends on the platform and let you invite the rest.
+              <p className="text-sm text-muted-foreground mb-3">
+                VibeTribe needs access to your contacts to find your friends on the platform and let you invite the rest.
+              </p>
+              <p className="text-[11px] text-muted-foreground/80 mb-6 leading-relaxed">
+                Note: Web apps can only read contacts you tap to select in the picker — your browser will not allow a one-tap "all contacts" import. To pick everyone, tap the contact list header in the picker (Android Chrome supports this). For a true single-tap import we'd need a native app build.
               </p>
               <div className="flex flex-col gap-2">
                 <button
@@ -357,7 +382,7 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
             {/* Pre-draft message preview */}
             <div className="mx-4 mt-4 p-3 bg-primary/5 border border-primary/20 rounded-xl">
               <p className="text-xs text-muted-foreground mb-1 font-medium">Message Preview</p>
-              <p className="text-xs text-foreground leading-relaxed">{INVITE_MSG}</p>
+              <p className="text-xs text-foreground leading-relaxed">{getInviteMsg()}</p>
             </div>
 
             <div className="p-4 space-y-2">

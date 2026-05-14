@@ -1,16 +1,15 @@
 // @ts-nocheck
-import React, { useState } from 'react';
-import { Plus, Camera, Type, Music, Sparkles, Globe, Users, UserCheck, ChevronDown } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Plus, Camera, Type, Sparkles, Globe, Users, UserCheck, ChevronDown } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import Icon from '@/components/ui/AppIcon';
-
+import { supabase } from '@/integrations/supabase/client';
 
 type VisibilityOption = 'all' | 'contacts' | 'selected';
 
 const VISIBILITY_OPTIONS: { value: VisibilityOption; label: string; desc: string; icon: React.ElementType }[] = [
   { value: 'all', label: 'All Users', desc: 'Everyone on VibeTribe', icon: Globe },
   { value: 'contacts', label: 'My Contacts', desc: 'Only people in your contacts', icon: Users },
-  { value: 'selected', label: 'Selected Users', desc: 'Choose specific people', icon: UserCheck },
+  { value: 'selected', label: 'Specific Contacts', desc: 'Choose specific people', icon: UserCheck },
 ];
 
 export default function StatusHero() {
@@ -18,16 +17,77 @@ export default function StatusHero() {
   const [showOptions, setShowOptions] = useState(false);
   const [showVisibility, setShowVisibility] = useState(false);
   const [visibility, setVisibility] = useState<VisibilityOption>('all');
-  const { profile } = useAuth();
+  const [textPrompt, setTextPrompt] = useState<null | string>(null);
+  const [textValue, setTextValue] = useState('');
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const { profile, user } = useAuth();
 
   const displayName = profile?.full_name || 'You';
   const avatarLetter = displayName[0]?.toUpperCase() || 'V';
 
-  const handleUpload = async (type: string) => {
-    setUploading(true);
+  // Load persisted visibility preference
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase.from('user_profiles').select('status_visibility').eq('id', user.id).maybeSingle()
+      .then(({ data }) => { if (data?.status_visibility) setVisibility(data.status_visibility as VisibilityOption); });
+  }, [user?.id]);
+
+  const persistVisibility = async (next: VisibilityOption) => {
+    setVisibility(next);
+    setShowVisibility(false);
+    if (!user?.id) return;
+    try { await supabase.from('user_profiles').update({ status_visibility: next }).eq('id', user.id); } catch {}
+  };
+
+  const insertStatus = async (row: { content?: string; media_url?: string; media_type: string; background_color?: string }) => {
+    if (!user?.id) return;
+    const { error } = await supabase.from('statuses').insert({
+      user_id: user.id,
+      visibility,
+      ...row,
+    });
+    if (error) { console.error('status insert', error); alert('Failed to post status: ' + error.message); }
+  };
+
+  const handlePickMedia = () => {
     setShowOptions(false);
-    await new Promise(r => setTimeout(r, 1000));
-    setUploading(false);
+    fileInputRef.current?.click();
+  };
+
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || !user?.id) return;
+    setUploading(true);
+    try {
+      const ext = file.name.split('.').pop() || 'bin';
+      const path = `${user.id}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from('status-media').upload(path, file, { contentType: file.type });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from('status-media').getPublicUrl(path);
+      await insertStatus({
+        media_url: pub.publicUrl,
+        media_type: file.type.startsWith('video') ? 'video' : 'image',
+      });
+    } catch (err: any) {
+      console.error(err); alert('Upload failed: ' + (err?.message || 'unknown'));
+    } finally { setUploading(false); }
+  };
+
+  const handleTextPost = async () => {
+    if (!textValue.trim()) { setTextPrompt(null); return; }
+    setUploading(true);
+    try {
+      await insertStatus({ content: textValue.trim(), media_type: 'text', background_color: '#7C3AED' });
+      setTextValue(''); setTextPrompt(null);
+    } finally { setUploading(false); }
+  };
+
+  const handleOption = (type: string) => {
+    if (type === 'media') return handlePickMedia();
+    if (type === 'text') { setShowOptions(false); setTextPrompt(''); return; }
+    setShowOptions(false);
+    alert('Coming soon');
   };
 
   const currentVisibility = VISIBILITY_OPTIONS.find(o => o.value === visibility)!;
@@ -90,14 +150,13 @@ export default function StatusHero() {
                 {[
                   { icon: Camera, label: 'Photo / Video', type: 'media' },
                   { icon: Type, label: 'Text Status', type: 'text' },
-                  { icon: Music, label: 'Music Status', type: 'music' },
                   { icon: Sparkles, label: 'AI Status', type: 'ai' },
                 ].map((opt) => {
                   const Icon = opt.icon;
                   return (
                     <button
                       key={`status-opt-${opt.type}`}
-                      onClick={() => handleUpload(opt.type)}
+                      onClick={() => handleOption(opt.type)}
                       className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
                     >
                       <Icon size={16} />
@@ -125,7 +184,7 @@ export default function StatusHero() {
               </button>
 
               {showVisibility && (
-                <div className="absolute left-0 right-0 top-full mt-1 max-h-[60vh] overflow-y-auto glass-strong rounded-xl border border-border shadow-card py-1 z-[100] float-up">
+                <div className="absolute left-0 right-0 bottom-full mb-1 max-h-[60vh] overflow-y-auto glass-strong rounded-xl border border-border shadow-card py-1 z-[100] float-up">
                   <p className="px-3 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                     Who can see this status?
                   </p>
@@ -134,7 +193,7 @@ export default function StatusHero() {
                     return (
                       <button
                         key={opt.value}
-                        onClick={() => { setVisibility(opt.value); setShowVisibility(false); }}
+                        onClick={() => persistVisibility(opt.value)}
                         className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-muted transition-colors ${
                           visibility === opt.value ? 'text-primary' : 'text-foreground'
                         }`}
@@ -155,6 +214,24 @@ export default function StatusHero() {
           </div>
         </div>
       </div>
+      <input ref={fileInputRef} type="file" accept="image/*,video/*" className="hidden" onChange={handleFile} />
+      {textPrompt !== null && (
+        <div className="fixed inset-0 z-[120] bg-black/70 flex items-center justify-center p-4" onClick={() => setTextPrompt(null)}>
+          <div className="bg-card border border-border rounded-2xl p-5 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-semibold text-foreground mb-3">Text Status</h3>
+            <textarea autoFocus value={textValue} onChange={(e) => setTextValue(e.target.value)} maxLength={280}
+              placeholder="What's on your mind?"
+              className="w-full h-28 px-3 py-2 rounded-lg bg-muted text-foreground border border-border focus:outline-none focus:border-primary text-sm" />
+            <div className="flex justify-end gap-2 mt-3">
+              <button onClick={() => { setTextPrompt(null); setTextValue(''); }} className="px-3 py-1.5 text-sm text-muted-foreground">Cancel</button>
+              <button disabled={uploading || !textValue.trim()} onClick={handleTextPost}
+                className="px-3 py-1.5 text-sm rounded-lg gradient-primary text-white disabled:opacity-50">
+                {uploading ? 'Posting...' : 'Post'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

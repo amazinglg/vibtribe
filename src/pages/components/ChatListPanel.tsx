@@ -248,12 +248,7 @@ export default function ChatListPanel() {
     setContextMenu(null);
     if (!user) return;
     try {
-      await supabase
-        .from('messages')
-        .update({ message_status: 'read' })
-        .eq('chat_id', chatId)
-        .neq('sender_id', user.id)
-        .neq('message_status', 'read');
+      await supabase.rpc('mark_messages_read', { _chat_id: chatId });
       setChats(prev => prev.map(c => c.id === chatId ? { ...c, unread: 0 } : c));
     } catch {}
   };
