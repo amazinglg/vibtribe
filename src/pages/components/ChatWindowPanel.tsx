@@ -708,12 +708,21 @@ export default function ChatWindowPanel() {
 
   const handleVoiceCallClick = () => {
     setPendingCall('voice');
-    setShowCallPermPrompt(true);
+    if (permissions.microphone === 'granted') {
+      // Permissions already granted — skip the prompt and start immediately
+      setTimeout(() => handleCallPermAllow(), 0);
+    } else {
+      setShowCallPermPrompt(true);
+    }
   };
 
   const handleVideoCallClick = () => {
     setPendingCall('video');
-    setShowCallPermPrompt(true);
+    if (permissions.microphone === 'granted' && permissions.camera === 'granted') {
+      setTimeout(() => handleCallPermAllow(), 0);
+    } else {
+      setShowCallPermPrompt(true);
+    }
   };
 
   const handleCallPermAllow = async () => {
