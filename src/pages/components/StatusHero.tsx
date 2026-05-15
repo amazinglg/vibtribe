@@ -105,7 +105,7 @@ export default function StatusHero() {
       </div>
 
       {/* My Status Card */}
-      <div className="glass rounded-3xl border border-border p-4 sm:p-5 mb-6 card-3d relative overflow-hidden">
+      <div className="glass rounded-3xl border border-border p-4 sm:p-5 mb-6 card-3d relative">
         {/* Background gradient blob */}
         <div className="absolute inset-0 opacity-20 pointer-events-none overflow-hidden rounded-3xl">
           <div className="absolute top-0 right-0 w-32 h-32 gradient-primary rounded-full blur-3xl" />
@@ -146,7 +146,9 @@ export default function StatusHero() {
             </button>
 
             {showOptions && (
-              <div className="absolute right-0 top-full mt-2 w-44 glass-strong rounded-xl border border-border shadow-card py-1 z-20 float-up">
+              <>
+              <div className="fixed inset-0 z-[105]" onClick={() => setShowOptions(false)} />
+              <div className="absolute right-0 top-full mt-2 w-44 glass-strong rounded-xl border border-border shadow-card py-1 z-[110] float-up">
                 {[
                   { icon: Camera, label: 'Photo / Video', type: 'media' },
                   { icon: Type, label: 'Text Status', type: 'text' },
@@ -165,6 +167,7 @@ export default function StatusHero() {
                   );
                 })}
               </div>
+              </>
             )}
           </div>
         </div>
