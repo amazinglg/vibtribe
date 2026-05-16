@@ -14,11 +14,21 @@ export default function ForgotPasswordPage() {
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (!email.trim()) { setError('Please enter your email address'); return; }
+    const raw = email.trim();
+    if (!raw) { setError('Please enter your email or mobile number'); return; }
+
+    // If input looks like a mobile number (mostly digits), strip country code and map to the synthetic email
+    let target = raw;
+    const digitsOnly = raw.replace(/\D/g, '');
+    const looksLikeMobile = !raw.includes('@') && digitsOnly.length >= 10;
+    if (looksLikeMobile) {
+      const local10 = digitsOnly.slice(-10);
+      target = `${local10}@vibetribe.app`;
+    }
 
     setLoading(true);
     try {
-      await resetPassword(email);
+      await resetPassword(target);
       setSent(true);
     } catch (err: any) {
       setError(err.message || 'Failed to send reset email. Please try again.');
@@ -65,23 +75,23 @@ export default function ForgotPasswordPage() {
                 Back to Sign In
               </Link>
               <h1 className="font-bold text-2xl text-foreground mb-1">Reset password</h1>
-              <p className="text-muted-foreground text-sm mb-6">Enter your email and we will send you a reset link</p>
+              <p className="text-muted-foreground text-sm mb-6">Enter your email or mobile number and we will send you a reset link</p>
 
               <form onSubmit={handleReset} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">Email Address</label>
+                  <label className="block text-sm font-medium text-foreground mb-1.5">Email or Mobile Number</label>
                   <div className="relative">
                     <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                     <input
-                      type="email"
+                      type="text"
                       value={email}
                       onChange={e => { setEmail(e.target.value); setError(''); }}
-                      placeholder="you@example.com"
+                      placeholder="you@example.com or 10-digit mobile"
                       className="w-full pl-9 pr-4 py-3 bg-input border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all text-sm"
-                      autoComplete="email"
+                      autoComplete="username"
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">For mobile accounts, use your mobile number as email: <span className="font-mono">91XXXXXXXXXX@vibetribe.app</span></p>
+                  <p className="text-xs text-muted-foreground mt-1">Mobile users: just enter your 10-digit number — country codes are handled automatically.</p>
                 </div>
 
                 {error && (
