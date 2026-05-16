@@ -110,6 +110,34 @@ export default function ProfileContent() {
   const [loadingSessions, setLoadingSessions] = useState(false);
   const [loggingOutSession, setLoggingOutSession] = useState<string | null>(null);
 
+  // Avatar upload state
+  const avatarInputRef = React.useRef<HTMLInputElement | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  const handleAvatarFile = async (file: File) => {
+    if (!file || !user) return;
+    if (!file.type.startsWith('image/')) { toast.error('Please choose an image'); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error('Image must be under 5MB'); return; }
+    setUploadingAvatar(true);
+    try {
+      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+      const path = `${user.id}/avatar-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from('profile-photos').upload(path, file, {
+        upsert: true, contentType: file.type, cacheControl: '3600',
+      });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from('profile-photos').getPublicUrl(path);
+      const url = pub.publicUrl;
+      await updateProfile({ avatar_url: url });
+      toast.success('Profile photo updated');
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to upload photo');
+    } finally {
+      setUploadingAvatar(false);
+      if (avatarInputRef.current) avatarInputRef.current.value = '';
+    }
+  };
+
   useEffect(() => {
     if (profile) {
       setDisplayName(profile.full_name || '');
@@ -524,13 +552,30 @@ export default function ProfileContent() {
           {/* Avatar */}
           <div className="relative flex-shrink-0">
             <div className="status-ring-active p-0.5 rounded-full">
-              <div className="w-20 h-20 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-2xl border-2 border-background">
-                {avatarLetter}
+              <div className="w-20 h-20 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-2xl border-2 border-background overflow-hidden">
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  avatarLetter
+                )}
               </div>
             </div>
-            <button className="absolute bottom-0 right-0 w-7 h-7 gradient-cyan rounded-full flex items-center justify-center border-2 border-background text-white hover:opacity-80 transition-all">
-              <Camera size={12} />
+            <button
+              type="button"
+              onClick={() => avatarInputRef.current?.click()}
+              disabled={uploadingAvatar}
+              className="absolute bottom-0 right-0 w-7 h-7 gradient-cyan rounded-full flex items-center justify-center border-2 border-background text-white hover:opacity-80 transition-all disabled:opacity-50"
+              title="Change profile photo"
+            >
+              {uploadingAvatar ? <RefreshCw size={12} className="animate-spin" /> : <Camera size={12} />}
             </button>
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleAvatarFile(f); }}
+            />
           </div>
 
           {/* Info */}
