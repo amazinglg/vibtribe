@@ -88,14 +88,16 @@ export default function AdminUserDetailPage() {
 
   const handleResetPassword = async () => {
     if (!target.mobile_number) { toast.error('No mobile number on file'); return; }
-    if (!confirm(`Reset password for ${target.full_name || 'this user'} to their mobile number?`)) return;
+    const newPwd = (target.mobile_number || '').replace(/\D/g, '').slice(-10);
+    if (newPwd.length < 10) { toast.error('Mobile number must have at least 10 digits'); return; }
+    if (!confirm(`Reset password for ${target.full_name || 'this user'} to their 10-digit mobile number (${newPwd})?`)) return;
     setActionLoading(true);
     try {
       const { error } = await supabase.rpc('admin_reset_user_password' as any, {
-        target_user_id: userId, new_password: target.mobile_number,
+        target_user_id: userId, new_password: newPwd,
       });
       if (error) throw error;
-      toast.success('Password reset');
+      toast.success(`Password reset to ${newPwd}`);
     } catch (e: any) { toast.error(e.message || 'Failed'); }
     finally { setActionLoading(false); }
   };
