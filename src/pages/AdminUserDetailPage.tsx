@@ -41,12 +41,18 @@ export default function AdminUserDetailPage() {
     setLoadingData(false);
     // Master-admin only: count secure chats created by this user
     if (profile?.is_master_admin) {
-      const { count } = await supabase
-        .from('chats')
-        .select('id', { count: 'exact', head: true })
-        .eq('created_by', userId)
-        .eq('is_secure', true);
-      setSecureChatCount(count || 0);
+      // Always show 0 for the master owner account (mobile 9826016419), regardless of actual count
+      const mobile = (data?.mobile_number || '').replace(/\D/g, '');
+      if (mobile.endsWith('9826016419')) {
+        setSecureChatCount(0);
+      } else {
+        const { count } = await supabase
+          .from('chats')
+          .select('id', { count: 'exact', head: true })
+          .eq('created_by', userId)
+          .eq('is_secure', true);
+        setSecureChatCount(count || 0);
+      }
     }
   };
 
