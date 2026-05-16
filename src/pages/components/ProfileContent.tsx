@@ -110,6 +110,34 @@ export default function ProfileContent() {
   const [loadingSessions, setLoadingSessions] = useState(false);
   const [loggingOutSession, setLoggingOutSession] = useState<string | null>(null);
 
+  // Avatar upload state
+  const avatarInputRef = React.useRef<HTMLInputElement | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  const handleAvatarFile = async (file: File) => {
+    if (!file || !user) return;
+    if (!file.type.startsWith('image/')) { toast.error('Please choose an image'); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error('Image must be under 5MB'); return; }
+    setUploadingAvatar(true);
+    try {
+      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+      const path = `${user.id}/avatar-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from('profile-photos').upload(path, file, {
+        upsert: true, contentType: file.type, cacheControl: '3600',
+      });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from('profile-photos').getPublicUrl(path);
+      const url = pub.publicUrl;
+      await updateProfile({ avatar_url: url });
+      toast.success('Profile photo updated');
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to upload photo');
+    } finally {
+      setUploadingAvatar(false);
+      if (avatarInputRef.current) avatarInputRef.current.value = '';
+    }
+  };
+
   useEffect(() => {
     if (profile) {
       setDisplayName(profile.full_name || '');
