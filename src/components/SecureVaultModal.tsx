@@ -4,6 +4,7 @@ import { Lock, X, AlertTriangle, Eye, EyeOff, ArrowRight, ShieldAlert, Edit3, Ch
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import PatternLock from '@/components/PatternLock';
 import { useChatStore } from '@/store/chatStore';
 
 interface SecureVaultModalProps {
@@ -222,10 +223,10 @@ export default function SecureVaultModal({ isOpen, onClose }: SecureVaultModalPr
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 pb-24 sm:pb-4 overflow-y-auto">
       <div className="absolute inset-0 bg-background/80 backdrop-blur-md" onClick={handleClose} />
       <div
-        className={`relative w-full max-w-md glass-strong rounded-3xl border border-border shadow-card overflow-hidden float-up ${shaking ? 'secure-shake' : ''}`}
+        className={`relative w-full max-w-md my-auto glass-strong rounded-3xl border border-border shadow-card overflow-hidden float-up max-h-[calc(100dvh-7rem)] sm:max-h-[calc(100dvh-2rem)] ${shaking ? 'secure-shake' : ''}`}
       >
         {/* Header */}
         <div className="relative px-6 py-5 border-b border-border flex items-center gap-3">
@@ -405,21 +406,49 @@ export default function SecureVaultModal({ isOpen, onClose }: SecureVaultModalPr
             /* Pattern Input */
             <div>
               <p className="text-sm font-medium text-foreground mb-1">Draw Your Pattern</p>
-              <p className="text-xs text-muted-foreground mb-4">Tap the dots in the same order you used when securing the chat.</p>
-              <div className="grid grid-cols-3 gap-4 max-w-[200px] mx-auto mb-4">
-                {Array.from({ length: 9 }, (_, i) => i + 1).map((dot) => (
-                  <button
-                    key={`pattern-dot-${dot}`}
-                    onClick={() => handlePatternDot(dot)}
-                    className={`w-12 h-12 rounded-full border-2 flex items-center justify-center text-sm font-bold transition-all ${
-                      patternSelected.includes(dot)
-                        ? 'border-primary bg-primary text-white scale-110' :'border-border bg-muted/50 text-muted-foreground hover:border-primary/50'
-                    }`}
-                  >
-                    {patternSelected.includes(dot) ? patternSelected.indexOf(dot) + 1 : ''}
-                  </button>
-                ))}
-              </div>
+              <p className="text-xs text-muted-foreground mb-4">Drag across the dots in the same order you used when securing the chat.</p>
+              <PatternLock
+                size={240}
+                value={patternSelected}
+                onChange={(next) => { setPatternSelected(next); setError(''); }}
+                onComplete={async (final) => {
+                  if (final.length < 4 || !user) return;
+                  const patternCode = final.join('-');
+                  try {
+                    const { data: chats } = await supabase
+                      .from('chats')
+                      .select('id, participant_one, participant_two, secure_code')
+                      .or(`participant_one.eq.${user.id},participant_two.eq.${user.id}`)
+                      .eq('chat_type', 'secure')
+                      .eq('secure_code', patternCode);
+                    if (chats && chats.length > 0) {
+                      const chat = chats[0];
+                      const otherUserId = chat.participant_one === user.id ? chat.participant_two : chat.participant_one;
+                      const { data: otherUser } = await supabase
+                        .from('user_profiles').select('full_name').eq('id', otherUserId).single();
+                      const realName = otherUser?.full_name || 'Secure Contact';
+                      const nickname = getPreferredNickname(user.id, otherUserId);
+                      const displayName = nickname || realName;
+                      setFoundChat({
+                        id: chat.id, name: displayName,
+                        avatar: displayName[0]?.toUpperCase() || 'S',
+                        lastMessage: 'Secure conversation',
+                        code: patternCode, otherUserId,
+                      });
+                      setError('');
+                      toast.success(`Opening secure chat with ${displayName}`);
+                    } else {
+                      setAttempts(a => a + 1);
+                      setError('Pattern does not match any secured chat for your account.');
+                      triggerShake();
+                      setTimeout(() => setPatternSelected([]), 600);
+                    }
+                  } catch {
+                    setError('Unable to verify pattern. Please try again.');
+                    triggerShake();
+                  }
+                }}
+              />
 
               {patternSelected.length > 0 && (
                 <p className="text-center text-xs text-muted-foreground mb-3">

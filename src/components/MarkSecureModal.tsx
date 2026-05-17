@@ -4,6 +4,7 @@ import { Lock, X, Split, MoveRight, Eye, EyeOff, AlertTriangle, Hash, Grid3X3 } 
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import PatternLock from '@/components/PatternLock';
 
 interface MarkSecureModalProps {
   isOpen: boolean;
@@ -143,9 +144,9 @@ export default function MarkSecureModal({ isOpen, onClose, chatName, chatId, onS
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-[100] flex items-start sm:items-center justify-center p-4 pb-24 sm:pb-4 overflow-y-auto">
       <div className="fixed inset-0 bg-background/80 backdrop-blur-md" onClick={handleClose} />
-      <div className="relative w-full max-w-md my-auto glass-strong rounded-3xl border border-border shadow-card float-up overflow-hidden max-h-[calc(100dvh-2rem)] flex flex-col">
+      <div className="relative w-full max-w-md my-auto glass-strong rounded-3xl border border-border shadow-card float-up overflow-hidden max-h-[calc(100dvh-7rem)] sm:max-h-[calc(100dvh-2rem)] flex flex-col">
         {/* Header */}
         <div className="px-6 py-5 border-b border-border flex items-center gap-3">
           <div className="w-10 h-10 gradient-primary rounded-2xl flex items-center justify-center">
@@ -321,25 +322,15 @@ export default function MarkSecureModal({ isOpen, onClose, chatName, chatId, onS
               <p className="text-xs text-muted-foreground mb-4">
                 {patternStage === 'draw' ?'Tap at least 4 dots in order to create your pattern.' :'Draw the same pattern again to confirm.'}
               </p>
-              <div className="grid grid-cols-3 gap-4 max-w-[180px] mx-auto mb-4">
-                {Array.from({ length: 9 }, (_, i) => i + 1).map((dot) => {
-                  const activeList = patternStage === 'draw' ? patternSelected : confirmPattern;
-                  const isActive = activeList.includes(dot);
-                  const dotIndex = activeList.indexOf(dot);
-                  return (
-                    <button
-                      key={`pattern-dot-${dot}`}
-                      onClick={() => handlePatternDot(dot)}
-                      className={`w-12 h-12 rounded-full border-2 flex items-center justify-center text-sm font-bold transition-all ${
-                        isActive
-                          ? 'border-primary bg-primary text-white scale-110' :'border-border bg-muted/50 text-muted-foreground hover:border-primary/50'
-                      }`}
-                    >
-                      {isActive ? dotIndex + 1 : ''}
-                    </button>
-                  );
-                })}
-              </div>
+              <PatternLock
+                size={240}
+                value={patternStage === 'draw' ? patternSelected : confirmPattern}
+                onChange={(next) => {
+                  if (patternStage === 'draw') setPatternSelected(next);
+                  else setConfirmPattern(next);
+                  setError('');
+                }}
+              />
               <p className="text-center text-xs text-muted-foreground mb-3">
                 {patternStage === 'draw'
                   ? `${patternSelected.length} dot${patternSelected.length !== 1 ? 's' : ''} selected${patternSelected.length < 4 ? ' — need at least 4' : ' ✓'}`
