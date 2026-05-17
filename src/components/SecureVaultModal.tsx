@@ -222,10 +222,10 @@ export default function SecureVaultModal({ isOpen, onClose }: SecureVaultModalPr
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 pb-24 sm:pb-4 overflow-y-auto">
       <div className="absolute inset-0 bg-background/80 backdrop-blur-md" onClick={handleClose} />
       <div
-        className={`relative w-full max-w-md glass-strong rounded-3xl border border-border shadow-card overflow-hidden float-up ${shaking ? 'secure-shake' : ''}`}
+        className={`relative w-full max-w-md my-auto glass-strong rounded-3xl border border-border shadow-card overflow-hidden float-up max-h-[calc(100dvh-7rem)] sm:max-h-[calc(100dvh-2rem)] ${shaking ? 'secure-shake' : ''}`}
       >
         {/* Header */}
         <div className="relative px-6 py-5 border-b border-border flex items-center gap-3">
