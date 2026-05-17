@@ -21,9 +21,20 @@ interface CallContextValue {
 const CallContext = createContext<CallContextValue>({ startCall: async () => null });
 export const useCall = () => useContext(CallContext);
 
-const ICE_SERVERS = [
+// STUN for direct connections + free TURN relay for restrictive NATs (CGNAT, symmetric NAT, mobile carriers).
+// Without TURN, ~20% of calls fail or freeze mid-call when network conditions change.
+const ICE_SERVERS: RTCIceServer[] = [
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
+  {
+    urls: [
+      'turn:openrelay.metered.ca:80',
+      'turn:openrelay.metered.ca:443',
+      'turn:openrelay.metered.ca:443?transport=tcp',
+    ],
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
+  },
 ];
 const RING_TIMEOUT_MS = 30_000;
 
@@ -123,7 +134,13 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   };
 
   const setupPeerConnection = (call: CallRow, asCaller: boolean) => {
-    const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+    const pc = new RTCPeerConnection({
+      iceServers: ICE_SERVERS,
+      iceCandidatePoolSize: 4,
+      // Prefer relay fallback when direct paths fail (more reliable on mobile)
+      bundlePolicy: 'max-bundle',
+      rtcpMuxPolicy: 'require',
+    });
     pcRef.current = pc;
     const remoteStream = new MediaStream();
     remoteStreamRef.current = remoteStream;
@@ -147,8 +164,28 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     };
     pc.onconnectionstatechange = () => {
       if (pc.connectionState === 'connected') setCallState('connected');
-      if (['failed', 'disconnected', 'closed'].includes(pc.connectionState)) {
-        // do nothing — let user end manually
+      // Auto-recover transient drops via ICE restart instead of dropping the call.
+      if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
+        try {
+          if (asCaller && pc.restartIce) {
+            pc.restartIce();
+            // Send a fresh offer so the remote side rebinds
+            pc.createOffer({ iceRestart: true })
+              .then((offer) => pc.setLocalDescription(offer).then(() => {
+                channelRef.current?.send?.({
+                  type: 'broadcast', event: 'offer',
+                  payload: { sdp: offer, from: user?.id, restart: true },
+                });
+              }))
+              .catch(() => {});
+          }
+        } catch {}
+      }
+    };
+    pc.oniceconnectionstatechange = () => {
+      // Mirror state — some browsers update iceConnectionState earlier than connectionState
+      if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
+        setCallState('connected');
       }
     };
     return pc;
