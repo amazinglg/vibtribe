@@ -1439,6 +1439,15 @@ export default function ProfileContent() {
           </div>
         </div>
       )}
+      <ImageCropModal
+        isOpen={cropOpen}
+        file={pendingAvatarFile}
+        onClose={() => { setCropOpen(false); setPendingAvatarFile(null); if (avatarInputRef.current) avatarInputRef.current.value=''; }}
+        onCropped={handleCroppedAvatar}
+        aspect={1}
+        title="Crop Profile Photo"
+        output={{ width: 512, height: 512, mime: 'image/jpeg', quality: 0.9 }}
+      />
     </div>
   );
 }
