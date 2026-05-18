@@ -485,9 +485,17 @@ function ChatListItem({ chat, isSelected, onClick, onContextMenu, onDelete, onMa
     >
       {/* Avatar */}
       <div className="relative flex-shrink-0">
-        <div className={`w-12 h-12 ${chat.avatarColor} rounded-full flex items-center justify-center text-white font-bold text-base`}>
-          {chat.avatar}
-        </div>
+        {chat.avatarUrl ? (
+          <img
+            src={chat.avatarUrl}
+            alt={chat.name}
+            className="w-12 h-12 rounded-full object-cover"
+          />
+        ) : (
+          <div className={`w-12 h-12 ${chat.avatarColor} rounded-full flex items-center justify-center text-white font-bold text-base`}>
+            {chat.avatar}
+          </div>
+        )}
         {chat.online && (
           <span className="absolute bottom-0 right-0 w-3 h-3 bg-vt-green rounded-full border-2 border-background" />
         )}
