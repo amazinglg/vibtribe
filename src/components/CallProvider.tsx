@@ -38,13 +38,11 @@ const ICE_SERVERS: RTCIceServer[] = [
   },
   {
     urls: [
-      'turn:global.relay.metered.ca:80',
-      'turn:global.relay.metered.ca:80?transport=tcp',
-      'turn:global.relay.metered.ca:443',
-      'turns:global.relay.metered.ca:443?transport=tcp',
+      'turn:relay1.expressturn.com:3478',
+      'turn:relay1.expressturn.com:3478?transport=tcp',
     ],
-    username: 'e8c7f7b0d4cf0b1c0d6f4b1e',
-    credential: 'L8KqJqQz3vRk6vqM',
+    username: 'efGH8K9YK9Y3J2QX0V',
+    credential: 'sJBuQp9QmZ4kZqWq',
   },
 ];
 const RING_TIMEOUT_MS = 30_000;
