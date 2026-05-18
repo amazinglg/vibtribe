@@ -26,6 +26,7 @@ export const useCall = () => useContext(CallContext);
 const ICE_SERVERS: RTCIceServer[] = [
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
+  { urls: 'stun:stun.cloudflare.com:3478' },
   {
     urls: [
       'turn:openrelay.metered.ca:80',
@@ -34,6 +35,16 @@ const ICE_SERVERS: RTCIceServer[] = [
     ],
     username: 'openrelayproject',
     credential: 'openrelayproject',
+  },
+  {
+    urls: [
+      'turn:global.relay.metered.ca:80',
+      'turn:global.relay.metered.ca:80?transport=tcp',
+      'turn:global.relay.metered.ca:443',
+      'turns:global.relay.metered.ca:443?transport=tcp',
+    ],
+    username: 'e8c7f7b0d4cf0b1c0d6f4b1e',
+    credential: 'L8KqJqQz3vRk6vqM',
   },
 ];
 const RING_TIMEOUT_MS = 30_000;
