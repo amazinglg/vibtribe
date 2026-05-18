@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Cropper, { Area } from 'react-easy-crop';
 import { X, Check, RefreshCw } from 'lucide-react';
 
@@ -81,15 +82,16 @@ export default function ImageCropModal({
 
   if (!isOpen || !file) return null;
 
-  return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+  const node = (
+    <div className="fixed inset-0 z-[200] flex items-start sm:items-center justify-center p-3 sm:p-4 overflow-y-auto">
       <div className="fixed inset-0 bg-background/85 backdrop-blur-md" onClick={onClose} />
-      <div className="relative w-full max-w-md glass-strong rounded-3xl border border-border shadow-card overflow-hidden flex flex-col max-h-[calc(100dvh-2rem)]">
+      <div className="relative w-full max-w-md my-auto glass-strong rounded-3xl border border-border shadow-card overflow-hidden flex flex-col"
+           style={{ maxHeight: 'calc(100dvh - 1.5rem)' }}>
         <div className="px-5 py-4 border-b border-border flex items-center justify-between">
           <h3 className="font-bold text-foreground">{title}</h3>
           <button onClick={onClose} className="p-2 rounded-xl hover:bg-muted text-muted-foreground"><X size={18} /></button>
         </div>
-        <div className="relative bg-black" style={{ height: 320 }}>
+        <div className="relative bg-black" style={{ height: 'min(60vh, 360px)' }}>
           {src && (
             <Cropper
               image={src}
@@ -128,4 +130,6 @@ export default function ImageCropModal({
       </div>
     </div>
   );
+  if (typeof document === 'undefined') return node;
+  return createPortal(node, document.body);
 }
