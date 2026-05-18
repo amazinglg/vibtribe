@@ -279,6 +279,56 @@ export default function StatusHero() {
           </div>
         </div>
       )}
+
+      {mediaFile && mediaPreviewUrl && (
+        <div className="fixed inset-0 z-[120] bg-black/90 flex flex-col" onClick={closeMediaModal}>
+          <div className="flex items-center justify-between px-4 py-3 text-white" onClick={(e) => e.stopPropagation()}>
+            <button onClick={closeMediaModal} className="p-2"><X size={20} /></button>
+            <span className="text-sm font-medium">New status</span>
+            <span className="w-9" />
+          </div>
+          <div className="flex-1 flex items-center justify-center px-4" onClick={(e) => e.stopPropagation()}>
+            {mediaFile.type.startsWith('video') ? (
+              <video src={mediaPreviewUrl} controls className="max-h-full max-w-full" />
+            ) : (
+              <img src={mediaPreviewUrl} alt="" className="max-h-full max-w-full object-contain" />
+            )}
+          </div>
+          <div className="p-3 flex items-center gap-2 bg-black/60" onClick={(e) => e.stopPropagation()}>
+            <input
+              type="text" value={mediaCaption} maxLength={200}
+              onChange={(e) => setMediaCaption(e.target.value)}
+              placeholder="Add a caption…"
+              className="flex-1 px-4 py-2.5 rounded-full bg-white/10 text-white placeholder-white/60 border border-white/20 text-sm focus:outline-none"
+            />
+            <button onClick={handleMediaPost} disabled={uploading}
+              className="p-3 rounded-full gradient-primary text-white disabled:opacity-50">
+              <Send size={18} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {myViewerOpen && myStatuses.length > 0 && (
+        <StatusViewer
+          contact={{
+            id: `status-${user?.id}`,
+            name: 'My Status',
+            avatar: avatarLetter,
+            avatarUrl: profile?.avatar_url || null,
+            color: 'gradient-primary',
+            stories: myStatuses.map((s: any) => ({
+              id: s.id,
+              type: s.media_type || 'text',
+              content: s.content || '',
+              media_url: s.media_url || null,
+              bg: s.background_color ? '' : 'gradient-primary',
+              time: new Date(s.created_at).toLocaleString(),
+            })),
+          }}
+          onClose={() => setMyViewerOpen(false)}
+        />
+      )}
     </div>
   );
 }
