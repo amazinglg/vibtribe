@@ -153,19 +153,24 @@ export default function StatusHero() {
         </div>
 
         <div className="relative flex items-center gap-3 sm:gap-4">
-          {/* My Status Ring */}
-          <div className="relative flex-shrink-0">
+          {/* My Status Ring — tap to view your own statuses */}
+          <button onClick={openMyStatuses} className="relative flex-shrink-0 focus:outline-none">
             <div className="status-ring-active p-0.5 rounded-full">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-lg sm:text-xl border-2 border-background">
-                {avatarLetter}
-              </div>
+              {profile?.avatar_url ? (
+                <img src={profile.avatar_url} alt="me"
+                     className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-background" />
+              ) : (
+                <div className="w-14 h-14 sm:w-16 sm:h-16 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-lg sm:text-xl border-2 border-background">
+                  {avatarLetter}
+                </div>
+              )}
             </div>
-          </div>
+          </button>
 
-          <div className="flex-1 min-w-0">
+          <button onClick={openMyStatuses} className="flex-1 min-w-0 text-left">
             <h3 className="font-bold text-sm sm:text-base text-foreground truncate">My Status</h3>
-            <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">Tap below to add a new story</p>
-          </div>
+            <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">Tap to view · Add a new story</p>
+          </button>
 
           {/* Add Status Button */}
           <div className="relative flex-shrink-0">
@@ -192,7 +197,6 @@ export default function StatusHero() {
                 {[
                   { icon: Camera, label: 'Photo / Video', type: 'media' },
                   { icon: Type, label: 'Text Status', type: 'text' },
-                  { icon: Sparkles, label: 'AI Status', type: 'ai' },
                 ].map((opt) => {
                   const Icon = opt.icon;
                   return (
