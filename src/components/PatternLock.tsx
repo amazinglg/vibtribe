@@ -142,24 +142,21 @@ export default function PatternLock({
         const col = (id - 1) % 3;
         const cellW = size / 3;
         const isActive = value.includes(id);
-        const idx = value.indexOf(id);
         return (
           <div
             key={id}
             className={`absolute rounded-full border-2 flex items-center justify-center text-sm font-bold transition-all pointer-events-none ${
               isActive
-                ? 'border-primary bg-primary text-white scale-110'
-                : 'border-border bg-muted/40 text-muted-foreground'
+                ? 'border-primary bg-primary scale-110'
+                : 'border-border bg-muted/40'
             }`}
             style={{
-              width: cellW * 0.5,
-              height: cellW * 0.5,
-              left: col * cellW + cellW * 0.25,
-              top: row * cellW + cellW * 0.25,
+              width: cellW * 0.32,
+              height: cellW * 0.32,
+              left: col * cellW + cellW * 0.34,
+              top: row * cellW + cellW * 0.34,
             }}
-          >
-            {!hideNumbers && isActive ? idx + 1 : ''}
-          </div>
+          />
         );
       })}
     </div>

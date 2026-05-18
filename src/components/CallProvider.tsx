@@ -26,6 +26,7 @@ export const useCall = () => useContext(CallContext);
 const ICE_SERVERS: RTCIceServer[] = [
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
+  { urls: 'stun:stun.cloudflare.com:3478' },
   {
     urls: [
       'turn:openrelay.metered.ca:80',
@@ -165,21 +166,27 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     pc.onconnectionstatechange = () => {
       if (pc.connectionState === 'connected') setCallState('connected');
       // Auto-recover transient drops via ICE restart instead of dropping the call.
+      // Wait briefly to ride out very short Wi-Fi hiccups before kicking ICE restart.
       if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
-        try {
-          if (asCaller && pc.restartIce) {
-            pc.restartIce();
-            // Send a fresh offer so the remote side rebinds
-            pc.createOffer({ iceRestart: true })
-              .then((offer) => pc.setLocalDescription(offer).then(() => {
-                channelRef.current?.send?.({
-                  type: 'broadcast', event: 'offer',
-                  payload: { sdp: offer, from: user?.id, restart: true },
-                });
-              }))
-              .catch(() => {});
-          }
-        } catch {}
+        const wait = pc.connectionState === 'failed' ? 0 : 1500;
+        setTimeout(() => {
+          if (!pcRef.current || pcRef.current !== pc) return;
+          const s = pc.connectionState;
+          if (s !== 'disconnected' && s !== 'failed') return;
+          try {
+            if (asCaller && pc.restartIce) {
+              pc.restartIce();
+              pc.createOffer({ iceRestart: true })
+                .then((offer) => pc.setLocalDescription(offer).then(() => {
+                  channelRef.current?.send?.({
+                    type: 'broadcast', event: 'offer',
+                    payload: { sdp: offer, from: user?.id, restart: true },
+                  });
+                }))
+                .catch(() => {});
+            }
+          } catch {}
+        }, wait);
       }
     };
     pc.oniceconnectionstatechange = () => {

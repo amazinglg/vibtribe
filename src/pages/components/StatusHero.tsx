@@ -1,8 +1,9 @@
 // @ts-nocheck
 import React, { useEffect, useRef, useState } from 'react';
-import { Plus, Camera, Type, Sparkles, Globe, Users, UserCheck, ChevronDown } from 'lucide-react';
+import { Plus, Camera, Type, Sparkles, Globe, Users, UserCheck, ChevronDown, X, Send } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import StatusViewer from './StatusViewer';
 
 type VisibilityOption = 'all' | 'contacts' | 'selected';
 
@@ -21,6 +22,13 @@ export default function StatusHero() {
   const [textValue, setTextValue] = useState('');
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const { profile, user } = useAuth();
+  // Media compose modal (preview + caption)
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [mediaPreviewUrl, setMediaPreviewUrl] = useState<string | null>(null);
+  const [mediaCaption, setMediaCaption] = useState('');
+  // My status viewer
+  const [myViewerOpen, setMyViewerOpen] = useState(false);
+  const [myStatuses, setMyStatuses] = useState<any[]>([]);
 
   const displayName = profile?.full_name || 'You';
   const avatarLetter = displayName[0]?.toUpperCase() || 'V';
@@ -58,20 +66,53 @@ export default function StatusHero() {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file || !user?.id) return;
+    // Open preview + caption modal instead of posting immediately
+    setMediaFile(file);
+    setMediaPreviewUrl(URL.createObjectURL(file));
+    setMediaCaption('');
+  };
+
+  const handleMediaPost = async () => {
+    if (!mediaFile || !user?.id) return;
     setUploading(true);
     try {
-      const ext = file.name.split('.').pop() || 'bin';
+      const ext = mediaFile.name.split('.').pop() || 'bin';
       const path = `${user.id}/${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from('status-media').upload(path, file, { contentType: file.type });
+      const { error: upErr } = await supabase.storage.from('status-media').upload(path, mediaFile, { contentType: mediaFile.type });
       if (upErr) throw upErr;
       const { data: pub } = supabase.storage.from('status-media').getPublicUrl(path);
       await insertStatus({
         media_url: pub.publicUrl,
-        media_type: file.type.startsWith('video') ? 'video' : 'image',
+        media_type: mediaFile.type.startsWith('video') ? 'video' : 'image',
+        content: mediaCaption.trim() || undefined,
       });
+      setMediaFile(null);
+      if (mediaPreviewUrl) URL.revokeObjectURL(mediaPreviewUrl);
+      setMediaPreviewUrl(null);
+      setMediaCaption('');
     } catch (err: any) {
       console.error(err); alert('Upload failed: ' + (err?.message || 'unknown'));
     } finally { setUploading(false); }
+  };
+
+  const closeMediaModal = () => {
+    setMediaFile(null);
+    if (mediaPreviewUrl) URL.revokeObjectURL(mediaPreviewUrl);
+    setMediaPreviewUrl(null);
+    setMediaCaption('');
+  };
+
+  const openMyStatuses = async () => {
+    if (!user?.id) return;
+    const { data } = await supabase
+      .from('statuses')
+      .select('id, content, media_url, media_type, background_color, created_at')
+      .eq('user_id', user.id)
+      .gt('expires_at', new Date().toISOString())
+      .order('created_at', { ascending: true });
+    if (!data || data.length === 0) { alert("You haven't posted any status in the last 24 hours."); return; }
+    setMyStatuses(data);
+    setMyViewerOpen(true);
   };
 
   const handleTextPost = async () => {
@@ -87,7 +128,6 @@ export default function StatusHero() {
     if (type === 'media') return handlePickMedia();
     if (type === 'text') { setShowOptions(false); setTextPrompt(''); return; }
     setShowOptions(false);
-    alert('Coming soon');
   };
 
   const currentVisibility = VISIBILITY_OPTIONS.find(o => o.value === visibility)!;
@@ -113,19 +153,24 @@ export default function StatusHero() {
         </div>
 
         <div className="relative flex items-center gap-3 sm:gap-4">
-          {/* My Status Ring */}
-          <div className="relative flex-shrink-0">
+          {/* My Status Ring — tap to view your own statuses */}
+          <button onClick={openMyStatuses} className="relative flex-shrink-0 focus:outline-none">
             <div className="status-ring-active p-0.5 rounded-full">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-lg sm:text-xl border-2 border-background">
-                {avatarLetter}
-              </div>
+              {profile?.avatar_url ? (
+                <img src={profile.avatar_url} alt="me"
+                     className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-background" />
+              ) : (
+                <div className="w-14 h-14 sm:w-16 sm:h-16 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-lg sm:text-xl border-2 border-background">
+                  {avatarLetter}
+                </div>
+              )}
             </div>
-          </div>
+          </button>
 
-          <div className="flex-1 min-w-0">
+          <button onClick={openMyStatuses} className="flex-1 min-w-0 text-left">
             <h3 className="font-bold text-sm sm:text-base text-foreground truncate">My Status</h3>
-            <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">Tap below to add a new story</p>
-          </div>
+            <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">Tap to view · Add a new story</p>
+          </button>
 
           {/* Add Status Button */}
           <div className="relative flex-shrink-0">
@@ -152,7 +197,6 @@ export default function StatusHero() {
                 {[
                   { icon: Camera, label: 'Photo / Video', type: 'media' },
                   { icon: Type, label: 'Text Status', type: 'text' },
-                  { icon: Sparkles, label: 'AI Status', type: 'ai' },
                 ].map((opt) => {
                   const Icon = opt.icon;
                   return (
@@ -234,6 +278,56 @@ export default function StatusHero() {
             </div>
           </div>
         </div>
+      )}
+
+      {mediaFile && mediaPreviewUrl && (
+        <div className="fixed inset-0 z-[120] bg-black/90 flex flex-col" onClick={closeMediaModal}>
+          <div className="flex items-center justify-between px-4 py-3 text-white" onClick={(e) => e.stopPropagation()}>
+            <button onClick={closeMediaModal} className="p-2"><X size={20} /></button>
+            <span className="text-sm font-medium">New status</span>
+            <span className="w-9" />
+          </div>
+          <div className="flex-1 flex items-center justify-center px-4" onClick={(e) => e.stopPropagation()}>
+            {mediaFile.type.startsWith('video') ? (
+              <video src={mediaPreviewUrl} controls className="max-h-full max-w-full" />
+            ) : (
+              <img src={mediaPreviewUrl} alt="" className="max-h-full max-w-full object-contain" />
+            )}
+          </div>
+          <div className="p-3 flex items-center gap-2 bg-black/60" onClick={(e) => e.stopPropagation()}>
+            <input
+              type="text" value={mediaCaption} maxLength={200}
+              onChange={(e) => setMediaCaption(e.target.value)}
+              placeholder="Add a caption…"
+              className="flex-1 px-4 py-2.5 rounded-full bg-white/10 text-white placeholder-white/60 border border-white/20 text-sm focus:outline-none"
+            />
+            <button onClick={handleMediaPost} disabled={uploading}
+              className="p-3 rounded-full gradient-primary text-white disabled:opacity-50">
+              <Send size={18} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {myViewerOpen && myStatuses.length > 0 && (
+        <StatusViewer
+          contact={{
+            id: `status-${user?.id}`,
+            name: 'My Status',
+            avatar: avatarLetter,
+            avatarUrl: profile?.avatar_url || null,
+            color: 'gradient-primary',
+            stories: myStatuses.map((s: any) => ({
+              id: s.id,
+              type: s.media_type || 'text',
+              content: s.content || '',
+              media_url: s.media_url || null,
+              bg: s.background_color ? '' : 'gradient-primary',
+              time: new Date(s.created_at).toLocaleString(),
+            })),
+          }}
+          onClose={() => setMyViewerOpen(false)}
+        />
       )}
     </div>
   );
