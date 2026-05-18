@@ -1,8 +1,9 @@
 // @ts-nocheck
 import React, { useEffect, useRef, useState } from 'react';
-import { Plus, Camera, Type, Sparkles, Globe, Users, UserCheck, ChevronDown } from 'lucide-react';
+import { Plus, Camera, Type, Sparkles, Globe, Users, UserCheck, ChevronDown, X, Send } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import StatusViewer from './StatusViewer';
 
 type VisibilityOption = 'all' | 'contacts' | 'selected';
 
@@ -21,6 +22,13 @@ export default function StatusHero() {
   const [textValue, setTextValue] = useState('');
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const { profile, user } = useAuth();
+  // Media compose modal (preview + caption)
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [mediaPreviewUrl, setMediaPreviewUrl] = useState<string | null>(null);
+  const [mediaCaption, setMediaCaption] = useState('');
+  // My status viewer
+  const [myViewerOpen, setMyViewerOpen] = useState(false);
+  const [myStatuses, setMyStatuses] = useState<any[]>([]);
 
   const displayName = profile?.full_name || 'You';
   const avatarLetter = displayName[0]?.toUpperCase() || 'V';
@@ -58,20 +66,53 @@ export default function StatusHero() {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file || !user?.id) return;
+    // Open preview + caption modal instead of posting immediately
+    setMediaFile(file);
+    setMediaPreviewUrl(URL.createObjectURL(file));
+    setMediaCaption('');
+  };
+
+  const handleMediaPost = async () => {
+    if (!mediaFile || !user?.id) return;
     setUploading(true);
     try {
-      const ext = file.name.split('.').pop() || 'bin';
+      const ext = mediaFile.name.split('.').pop() || 'bin';
       const path = `${user.id}/${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from('status-media').upload(path, file, { contentType: file.type });
+      const { error: upErr } = await supabase.storage.from('status-media').upload(path, mediaFile, { contentType: mediaFile.type });
       if (upErr) throw upErr;
       const { data: pub } = supabase.storage.from('status-media').getPublicUrl(path);
       await insertStatus({
         media_url: pub.publicUrl,
-        media_type: file.type.startsWith('video') ? 'video' : 'image',
+        media_type: mediaFile.type.startsWith('video') ? 'video' : 'image',
+        content: mediaCaption.trim() || undefined,
       });
+      setMediaFile(null);
+      if (mediaPreviewUrl) URL.revokeObjectURL(mediaPreviewUrl);
+      setMediaPreviewUrl(null);
+      setMediaCaption('');
     } catch (err: any) {
       console.error(err); alert('Upload failed: ' + (err?.message || 'unknown'));
     } finally { setUploading(false); }
+  };
+
+  const closeMediaModal = () => {
+    setMediaFile(null);
+    if (mediaPreviewUrl) URL.revokeObjectURL(mediaPreviewUrl);
+    setMediaPreviewUrl(null);
+    setMediaCaption('');
+  };
+
+  const openMyStatuses = async () => {
+    if (!user?.id) return;
+    const { data } = await supabase
+      .from('statuses')
+      .select('id, content, media_url, media_type, background_color, created_at')
+      .eq('user_id', user.id)
+      .gt('expires_at', new Date().toISOString())
+      .order('created_at', { ascending: true });
+    if (!data || data.length === 0) { alert("You haven't posted any status in the last 24 hours."); return; }
+    setMyStatuses(data);
+    setMyViewerOpen(true);
   };
 
   const handleTextPost = async () => {
