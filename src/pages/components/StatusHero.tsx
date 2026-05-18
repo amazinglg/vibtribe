@@ -128,7 +128,6 @@ export default function StatusHero() {
     if (type === 'media') return handlePickMedia();
     if (type === 'text') { setShowOptions(false); setTextPrompt(''); return; }
     setShowOptions(false);
-    alert('Coming soon');
   };
 
   const currentVisibility = VISIBILITY_OPTIONS.find(o => o.value === visibility)!;
