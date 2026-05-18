@@ -145,7 +145,7 @@ export default function ChatListPanel() {
         const otherUserId = chat.participant_one === user.id ? chat.participant_two : chat.participant_one;
         const { data: otherUser } = await supabase
           .from('user_profiles')
-          .select('id, full_name, is_online, last_seen, public_key')
+          .select('id, full_name, is_online, last_seen, public_key, avatar_url, profile_photo_visibility')
           .eq('id', otherUserId)
           .single();
 
@@ -165,11 +165,19 @@ export default function ChatListPanel() {
           }
           if (preview?.startsWith('[IMAGE:')) preview = '📷 Photo';
           else if (preview?.startsWith('[FILE:')) preview = '📎 File';
+          else if (preview?.startsWith('__call_log__:')) {
+            const parts = preview.split(':');
+            preview = parts[1] === 'video' ? '📹 Video call' : '📞 Voice call';
+          } else if (preview?.startsWith('__missed_call__:')) {
+            const parts = preview.split(':');
+            preview = parts[1] === 'video' ? '📹 Missed video call' : '📞 Missed voice call';
+          }
           chatList.push({
             id: chat.id,
             name: otherUser.full_name || 'Unknown',
             avatar: (otherUser.full_name || 'U')[0].toUpperCase(),
             avatarColor: avatarColors[chatList.length % avatarColors.length],
+            avatarUrl: (otherUser.profile_photo_visibility ?? 'all') === 'all' ? (otherUser.avatar_url || null) : null,
             lastMessage: preview,
             time: lastMsg ? formatTime(lastMsg.created_at) : '',
             unread: unreadCount,
