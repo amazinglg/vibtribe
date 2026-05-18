@@ -9,12 +9,13 @@ interface ContactStatus {
   id: string;
   name: string;
   avatar: string;
+  avatarUrl?: string | null;
   color: string;
   updates: number;
   seen: boolean;
   time: string;
   views: number;
-  stories: { id: string; type: string; content: string; bg: string; time: string }[];
+  stories: { id: string; type: string; content: string; media_url?: string | null; bg: string; time: string }[];
 }
 
 export default function StatusGrid() {
@@ -38,13 +39,10 @@ export default function StatusGrid() {
         .select('contact_id')
         .eq('user_id', user?.id);
 
-      if (!contacts || contacts.length === 0) {
-        setContactStatuses([]);
-        setLoading(false);
-        return;
-      }
-
-      const contactIds = contacts.map(c => c.contact_id);
+      const contactIds = (contacts || []).map(c => c.contact_id);
+      // Always include self so "My Updates" shows up too
+      const userIds = Array.from(new Set([...(contactIds || []), user?.id].filter(Boolean) as string[]));
+      if (userIds.length === 0) { setContactStatuses([]); setLoading(false); return; }
 
       // Get statuses from contacts only
       const { data: statuses } = await supabase
@@ -53,11 +51,14 @@ export default function StatusGrid() {
           id,
           user_id,
           content,
+          media_url,
+          media_type,
+          background_color,
           created_at,
-          views,
-          user_profiles!statuses_user_id_fkey(full_name)
+          view_count,
+          user_profiles!statuses_user_id_fkey(full_name, avatar_url, profile_photo_visibility)
         `)
-        .in('user_id', contactIds)
+        .in('user_id', userIds)
         .gt('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
         .order('created_at', { ascending: false });
 
@@ -74,31 +75,38 @@ export default function StatusGrid() {
 
       for (const s of statuses) {
         const profile = s.user_profiles as any;
-        const name = profile?.full_name || 'Unknown';
+        const isMe = s.user_id === user?.id;
+        const name = isMe ? 'My Status' : (profile?.full_name || 'Unknown');
+        const showAvatar = isMe || (profile?.profile_photo_visibility ?? 'all') === 'all';
         if (!grouped[s.user_id]) {
           grouped[s.user_id] = {
             id: `status-${s.user_id}`,
             name,
             avatar: name[0]?.toUpperCase() || '?',
+            avatarUrl: showAvatar ? (profile?.avatar_url || null) : null,
             color: COLORS[colorIdx++ % COLORS.length],
             updates: 0,
             seen: false,
             time: formatTime(s.created_at),
-            views: s.views || 0,
+            views: s.view_count || 0,
             stories: [],
           };
         }
         grouped[s.user_id].updates += 1;
         grouped[s.user_id].stories.push({
           id: s.id,
-          type: 'text',
+          type: s.media_type || 'text',
           content: s.content || '',
-          bg: COLORS[colorIdx % COLORS.length],
+          media_url: s.media_url || null,
+          bg: s.background_color ? '' : COLORS[colorIdx % COLORS.length],
           time: formatTime(s.created_at),
         });
       }
 
-      setContactStatuses(Object.values(grouped));
+      // Put own status first
+      const all = Object.values(grouped);
+      all.sort((a, b) => (a.id.endsWith(user?.id || '') ? -1 : b.id.endsWith(user?.id || '') ? 1 : 0));
+      setContactStatuses(all);
     } catch {
       setContactStatuses([]);
     } finally {
@@ -205,9 +213,14 @@ function StatusCard({
     >
       {/* Ring + Avatar */}
       <div className={`relative ${seen ? 'status-ring-seen' : 'status-ring-active'} p-0.5 rounded-full`}>
-        <div className={`w-14 h-14 ${contact.color} rounded-full flex items-center justify-center text-white font-bold text-base border-2 border-background`}>
-          {contact.avatar}
-        </div>
+        {contact.avatarUrl ? (
+          <img src={contact.avatarUrl} alt={contact.name}
+               className="w-14 h-14 rounded-full object-cover border-2 border-background" />
+        ) : (
+          <div className={`w-14 h-14 ${contact.color} rounded-full flex items-center justify-center text-white font-bold text-base border-2 border-background`}>
+            {contact.avatar}
+          </div>
+        )}
         {contact.updates > 1 && (
           <span className="absolute -bottom-1 -right-1 w-5 h-5 gradient-primary rounded-full text-[9px] font-bold text-white flex items-center justify-center border border-background">
             {contact.updates}
