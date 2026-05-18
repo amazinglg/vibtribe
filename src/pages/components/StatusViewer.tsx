@@ -7,6 +7,7 @@ interface Story {
   id: string;
   type: string;
   content: string;
+  media_url?: string | null;
   bg: string;
   time: string;
 }
@@ -15,6 +16,7 @@ interface Contact {
   id: string;
   name: string;
   avatar: string;
+  avatarUrl?: string | null;
   color: string;
   stories: Story[];
 }
@@ -98,9 +100,14 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
 
         {/* Header */}
         <div className="absolute top-0 left-0 right-0 z-10 pt-7 px-4 pb-3 flex items-center gap-3">
-          <div className={`w-9 h-9 ${contact.color} rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0`}>
-            {contact.avatar}
-          </div>
+          {contact.avatarUrl ? (
+            <img src={contact.avatarUrl} alt={contact.name}
+                 className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
+          ) : (
+            <div className={`w-9 h-9 ${contact.color} rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0`}>
+              {contact.avatar}
+            </div>
+          )}
           <div>
             <p className="font-semibold text-sm text-white">{contact.name}</p>
             <p className="text-[10px] text-white/70">{story.time}</p>
@@ -119,11 +126,31 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
         </div>
 
         {/* Story Content */}
-        <div className={`absolute inset-0 ${story.bg} flex items-center justify-center`}>
-          <div className="text-center px-6">
-            <p className="text-3xl font-bold text-white leading-tight">{story.content}</p>
+        {story.type === 'image' && story.media_url ? (
+          <div className="absolute inset-0 bg-black flex items-center justify-center">
+            <img src={story.media_url} alt="" className="max-h-full max-w-full object-contain" />
+            {story.content && (
+              <div className="absolute bottom-20 left-0 right-0 px-6 text-center">
+                <p className="text-base text-white bg-black/50 inline-block px-3 py-1.5 rounded-lg">{story.content}</p>
+              </div>
+            )}
           </div>
-        </div>
+        ) : story.type === 'video' && story.media_url ? (
+          <div className="absolute inset-0 bg-black flex items-center justify-center">
+            <video src={story.media_url} autoPlay playsInline controls className="max-h-full max-w-full" />
+            {story.content && (
+              <div className="absolute bottom-20 left-0 right-0 px-6 text-center">
+                <p className="text-base text-white bg-black/50 inline-block px-3 py-1.5 rounded-lg">{story.content}</p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className={`absolute inset-0 ${story.bg || 'gradient-primary'} flex items-center justify-center`}>
+            <div className="text-center px-6">
+              <p className="text-3xl font-bold text-white leading-tight">{story.content}</p>
+            </div>
+          </div>
+        )}
 
         {/* Navigation Zones */}
         <button
