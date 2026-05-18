@@ -14,6 +14,7 @@ interface Chat {
   name: string;
   avatar: string;
   avatarColor: string;
+  avatarUrl?: string | null;
   lastMessage: string;
   time: string;
   unread: number;
