@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useRef, useEffect } from 'react';
-import { Phone, Video, Smile, Paperclip, Mic, MicOff, Send, Lock, CheckCheck, Check, ArrowLeft, Info, Trash2, ShieldCheck, Ban, ShieldOff, X, Image, FileText, Camera, Music, VideoOff, PhoneOff, Volume2, VolumeX, Timer, MoreVertical } from 'lucide-react';
+import { Phone, Video, Smile, Paperclip, Mic, MicOff, Send, Lock, CheckCheck, Check, ArrowLeft, Info, Trash2, ShieldCheck, Ban, ShieldOff, X, Image, FileText, Camera, Music, VideoOff, PhoneOff, Volume2, VolumeX, Timer, MoreVertical, UserPlus } from 'lucide-react';
 import { useChatStore } from '@/store/chatStore';
 import MarkSecureModal from '@/components/MarkSecureModal';
 import { useAuth } from '@/contexts/AuthContext';
@@ -250,7 +250,7 @@ export default function ChatWindowPanel() {
   const [showAttachMenu, setShowAttachMenu] = useState(false);
   const [secureModalOpen, setSecureModalOpen] = useState(false);
   const [hoveredMsg, setHoveredMsg] = useState<string | null>(null);
-  const [contact, setContact] = useState<{ name: string; avatar: string; online: boolean; lastSeen: string; publicKey?: string; userId?: string } | null>(null);
+  const [contact, setContact] = useState<{ name: string; avatar: string; online: boolean; lastSeen: string; publicKey?: string; userId?: string; isContact?: boolean } | null>(null);
   const [loading, setLoading] = useState(false);
   const [e2eEnabled, setE2eEnabled] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
@@ -424,6 +424,7 @@ export default function ChatWindowPanel() {
             lastSeen: 'Group chat',
             publicKey: undefined,
             userId: undefined,
+            isContact: false,
           });
           contactPubKeyRef.current = null;
           setE2eEnabled(false);
@@ -470,6 +471,12 @@ export default function ChatWindowPanel() {
 
           const preferredNickname = user ? getPreferredNickname(user.id, otherUserId) : '';
           const displayName = preferredNickname || otherUser.full_name || 'Unknown';
+          const { data: existingContact } = await supabase
+            .from('contacts')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('contact_id', otherUserId)
+            .maybeSingle();
 
           setContact({
             name: displayName,
@@ -478,6 +485,7 @@ export default function ChatWindowPanel() {
             lastSeen: otherUser.is_online ? 'Online' : 'Last seen recently',
             publicKey: otherUser.public_key || undefined,
             userId: otherUserId,
+            isContact: !!existingContact,
           });
 
           const { data: blockData } = await supabase
@@ -569,8 +577,10 @@ export default function ChatWindowPanel() {
 
     try {
       let contentToStore = text;
-      if (e2eEnabled && contact?.publicKey) {
+      if (e2eEnabled) {
+        if (!contact?.publicKey) throw new Error('Encryption key is not available for this contact');
         contentToStore = await encryptMessage(text, contact.publicKey);
+        if (!isEncrypted(contentToStore)) throw new Error('Encryption failed');
       }
 
       const { data } = await supabase
@@ -594,11 +604,18 @@ export default function ChatWindowPanel() {
           });
         }
       }
-    } catch {}
+    } catch (err: any) {
+      setMessages(prev => prev.filter(m => m.id !== tempId));
+      toast.error(err?.message || 'Message could not be sent');
+    }
   };
 
   const handleFileAttach = async (file: File, type: 'image' | 'file' | 'audio') => {
     if (!file || !selectedChatId || !user) return;
+    if (e2eEnabled) {
+      toast.error('Encrypted media sharing is not available yet. Send text in secure chats.');
+      return;
+    }
     setShowAttachMenu(false);
     const tempId = `temp-${Date.now()}`;
     const isImage = type === 'image';
@@ -704,6 +721,20 @@ export default function ChatWindowPanel() {
       }
     } catch {}
     setBlockLoading(false);
+  };
+
+  const handleAddToContacts = async () => {
+    if (!contact?.userId || !user) return;
+    try {
+      const { error } = await supabase
+        .from('contacts')
+        .upsert({ user_id: user.id, contact_id: contact.userId, contact_name: contact.name }, { onConflict: 'user_id,contact_id' });
+      if (error) throw error;
+      setContact(prev => prev ? { ...prev, isContact: true } : prev);
+      toast.success(`${contact.name} added to contacts`);
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not add contact');
+    }
   };
 
   const handleVoiceCallClick = () => {
@@ -1003,6 +1034,15 @@ export default function ChatWindowPanel() {
                     ))}
                   </div>
                 )}
+                {chatType !== 'group' && contact?.userId && !contact.isContact && (
+                  <button
+                    onClick={() => { setShowMoreMenu(false); handleAddToContacts(); }}
+                    className="w-full text-left px-3 py-2.5 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground"
+                  >
+                    <UserPlus size={16} className="text-vt-green" />
+                    Add to contacts
+                  </button>
+                )}
                 <div className="border-t border-border" />
                 <button
                   onClick={() => { setShowMoreMenu(false); handleBlockToggle(); }}
@@ -1055,6 +1095,14 @@ export default function ChatWindowPanel() {
             >
               {isBlocked ? <><ShieldOff size={14} /> Unblock</> : <><Ban size={14} /> Block</>}
             </button>
+            {contact.userId && !contact.isContact && (
+              <button
+                onClick={handleAddToContacts}
+                className="flex-1 flex items-center justify-center gap-2 py-2 glass rounded-xl text-sm text-vt-green hover:bg-vt-green/10 transition-all"
+              >
+                <UserPlus size={14} /> Add
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -1064,6 +1112,11 @@ export default function ChatWindowPanel() {
         <div className="flex items-center justify-center gap-1.5 py-1.5 bg-vt-green/5 border-b border-vt-green/10">
           <ShieldCheck size={11} className="text-vt-green" />
           <span className="text-[11px] text-vt-green">Messages are end-to-end encrypted</span>
+        </div>
+      )}
+      {e2eEnabled && contact && !contact.publicKey && (
+        <div className="px-4 py-2 bg-vt-amber/10 border-b border-vt-amber/20 text-center text-[11px] text-vt-amber">
+          Waiting for {contact.name}'s encryption key before secure messages can be sent.
         </div>
       )}
 

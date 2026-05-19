@@ -116,6 +116,7 @@ export default function ProfileContent() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null);
   const [cropOpen, setCropOpen] = useState(false);
+  const [avatarPreviewOpen, setAvatarPreviewOpen] = useState(false);
 
   const handleAvatarFile = (file: File) => {
     if (!file || !user) return;
@@ -325,7 +326,17 @@ export default function ProfileContent() {
   const handleSaveProfile = async () => {
     setSavingProfile(true);
     try {
-      await updateProfile({ full_name: displayName, bio, username: username.toLowerCase() });
+      const normalizedUsername = username.trim().toLowerCase();
+      if (normalizedUsername) {
+        const { data: existing } = await supabase
+          .from('user_profiles')
+          .select('id')
+          .ilike('username', normalizedUsername)
+          .neq('id', user.id)
+          .maybeSingle();
+        if (existing) throw new Error('This username is already taken');
+      }
+      await updateProfile({ full_name: displayName, bio, username: normalizedUsername || null });
       setEditMode(false);
       toast.success('Profile updated successfully ✓');
     } catch (err: any) {
@@ -562,13 +573,19 @@ export default function ProfileContent() {
           {/* Avatar */}
           <div className="relative flex-shrink-0">
             <div className="status-ring-active p-0.5 rounded-full">
-              <div className="w-20 h-20 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-2xl border-2 border-background overflow-hidden">
+              <button
+                type="button"
+                onClick={() => profile?.avatar_url && setAvatarPreviewOpen(true)}
+                disabled={!profile?.avatar_url}
+                className="w-20 h-20 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-2xl border-2 border-background overflow-hidden disabled:cursor-default"
+                title={profile?.avatar_url ? 'View profile photo' : 'Profile photo'}
+              >
                 {profile?.avatar_url ? (
                   <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
                   avatarLetter
                 )}
-              </div>
+              </button>
             </div>
             <button
               type="button"
@@ -1448,6 +1465,14 @@ export default function ProfileContent() {
         title="Crop Profile Photo"
         output={{ width: 512, height: 512, mime: 'image/jpeg', quality: 0.9 }}
       />
+      {avatarPreviewOpen && profile?.avatar_url && (
+        <div className="fixed inset-0 z-[140] bg-black/90 flex items-center justify-center p-4" onClick={() => setAvatarPreviewOpen(false)}>
+          <button className="absolute top-4 right-4 p-2 rounded-full bg-white/10 text-white" onClick={() => setAvatarPreviewOpen(false)} aria-label="Close profile photo">
+            <X size={20} />
+          </button>
+          <img src={profile.avatar_url} alt="Profile enlarged" className="max-w-full max-h-[85vh] rounded-2xl object-contain" onClick={(e) => e.stopPropagation()} />
+        </div>
+      )}
     </div>
   );
 }

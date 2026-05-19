@@ -33,6 +33,7 @@ export default function StatusGrid() {
   const loadContactStatuses = async () => {
     setLoading(true);
     try {
+      try { await supabase.rpc('cleanup_expired_statuses'); } catch {}
       // Get user's contacts
       const { data: contacts } = await supabase
         .from('contacts')
@@ -55,11 +56,12 @@ export default function StatusGrid() {
           media_type,
           background_color,
           created_at,
+          expires_at,
           view_count,
           user_profiles!statuses_user_id_fkey(full_name, avatar_url, profile_photo_visibility)
         `)
         .in('user_id', userIds)
-        .gt('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+        .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false });
 
       if (!statuses || statuses.length === 0) {

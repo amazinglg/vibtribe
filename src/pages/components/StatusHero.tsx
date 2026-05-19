@@ -1,6 +1,6 @@
 // @ts-nocheck
-import React, { useEffect, useRef, useState } from 'react';
-import { Plus, Camera, Type, Sparkles, Globe, Users, UserCheck, ChevronDown, X, Send } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Plus, Camera, Type, Sparkles, Globe, Users, UserCheck, ChevronDown, X, Send, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import StatusViewer from './StatusViewer';
@@ -33,12 +33,27 @@ export default function StatusHero() {
   const displayName = profile?.full_name || 'You';
   const avatarLetter = displayName[0]?.toUpperCase() || 'V';
 
+  const loadMyStatuses = useCallback(async () => {
+    if (!user?.id) return [];
+    try { await supabase.rpc('cleanup_expired_statuses'); } catch {}
+    const { data } = await supabase
+      .from('statuses')
+      .select('id, content, media_url, media_type, background_color, created_at, expires_at, view_count')
+      .eq('user_id', user.id)
+      .gt('expires_at', new Date().toISOString())
+      .order('created_at', { ascending: false });
+    const rows = data || [];
+    setMyStatuses(rows);
+    return rows;
+  }, [user?.id]);
+
   // Load persisted visibility preference
   useEffect(() => {
     if (!user?.id) return;
     supabase.from('user_profiles').select('status_visibility').eq('id', user.id).maybeSingle()
       .then(({ data }) => { if (data?.status_visibility) setVisibility(data.status_visibility as VisibilityOption); });
-  }, [user?.id]);
+    loadMyStatuses();
+  }, [user?.id, loadMyStatuses]);
 
   const persistVisibility = async (next: VisibilityOption) => {
     setVisibility(next);
@@ -54,7 +69,28 @@ export default function StatusHero() {
       visibility,
       ...row,
     });
-    if (error) { console.error('status insert', error); alert('Failed to post status: ' + error.message); }
+    if (error) { console.error('status insert', error); throw error; }
+  };
+
+  const statusStoragePath = (url?: string | null) => {
+    if (!url) return null;
+    const marker = '/status-media/';
+    const idx = url.indexOf(marker);
+    return idx >= 0 ? decodeURIComponent(url.slice(idx + marker.length).split('?')[0]) : null;
+  };
+
+  const deleteStatus = async (status: any) => {
+    if (!status?.id || !user?.id) return;
+    if (!window.confirm('Delete this status?')) return;
+    try {
+      const path = statusStoragePath(status.media_url);
+      if (path) await supabase.storage.from('status-media').remove([path]).catch(() => {});
+      const { error } = await supabase.from('statuses').delete().eq('id', status.id).eq('user_id', user.id);
+      if (error) throw error;
+      setMyStatuses(prev => prev.filter(s => s.id !== status.id));
+    } catch (err: any) {
+      alert(err?.message || 'Could not delete status');
+    }
   };
 
   const handlePickMedia = () => {
@@ -86,6 +122,7 @@ export default function StatusHero() {
         media_type: mediaFile.type.startsWith('video') ? 'video' : 'image',
         content: mediaCaption.trim() || undefined,
       });
+      await loadMyStatuses();
       setMediaFile(null);
       if (mediaPreviewUrl) URL.revokeObjectURL(mediaPreviewUrl);
       setMediaPreviewUrl(null);
@@ -104,14 +141,8 @@ export default function StatusHero() {
 
   const openMyStatuses = async () => {
     if (!user?.id) return;
-    const { data } = await supabase
-      .from('statuses')
-      .select('id, content, media_url, media_type, background_color, created_at')
-      .eq('user_id', user.id)
-      .gt('expires_at', new Date().toISOString())
-      .order('created_at', { ascending: true });
+    const data = await loadMyStatuses();
     if (!data || data.length === 0) { alert("You haven't posted any status in the last 24 hours."); return; }
-    setMyStatuses(data);
     setMyViewerOpen(true);
   };
 
@@ -120,6 +151,7 @@ export default function StatusHero() {
     setUploading(true);
     try {
       await insertStatus({ content: textValue.trim(), media_type: 'text', background_color: '#7C3AED' });
+      await loadMyStatuses();
       setTextValue(''); setTextPrompt(null);
     } finally { setUploading(false); }
   };
@@ -259,6 +291,45 @@ export default function StatusHero() {
                 </div>
               )}
           </div>
+        </div>
+
+        {/* My uploaded statuses */}
+        <div className="relative mt-3 pt-3 border-t border-border/40">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-semibold text-foreground">My uploads</p>
+            <button onClick={loadMyStatuses} className="text-[11px] text-primary hover:text-primary/80">Refresh</button>
+          </div>
+          {myStatuses.length === 0 ? (
+            <p className="text-[11px] text-muted-foreground">No active status uploads.</p>
+          ) : (
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {myStatuses.map((status) => (
+                <div key={status.id} className="relative w-20 h-24 flex-shrink-0 overflow-hidden rounded-xl border border-border bg-muted">
+                  <button onClick={() => { setMyViewerOpen(true); }} className="absolute inset-0 text-left">
+                    {status.media_type === 'image' && status.media_url ? (
+                      <img src={status.media_url} alt="My status" className="w-full h-full object-cover" />
+                    ) : status.media_type === 'video' && status.media_url ? (
+                      <video src={status.media_url} className="w-full h-full object-cover" muted playsInline />
+                    ) : (
+                      <div className="w-full h-full gradient-primary flex items-center justify-center p-2 text-center text-[11px] font-semibold text-white line-clamp-4">
+                        {status.content || 'Text status'}
+                      </div>
+                    )}
+                    <div className="absolute inset-x-0 bottom-0 bg-black/55 px-1 py-1 text-[9px] text-white">
+                      {Math.max(0, Math.ceil((new Date(status.expires_at).getTime() - Date.now()) / 3600000))}h left
+                    </div>
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); deleteStatus(status); }}
+                    className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center"
+                    title="Delete status"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
       <input ref={fileInputRef} type="file" accept="image/*,video/*" className="hidden" onChange={handleFile} />
