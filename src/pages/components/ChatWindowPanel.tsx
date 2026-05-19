@@ -612,6 +612,10 @@ export default function ChatWindowPanel() {
 
   const handleFileAttach = async (file: File, type: 'image' | 'file' | 'audio') => {
     if (!file || !selectedChatId || !user) return;
+    if (e2eEnabled) {
+      toast.error('Encrypted media sharing is not available yet. Send text in secure chats.');
+      return;
+    }
     setShowAttachMenu(false);
     const tempId = `temp-${Date.now()}`;
     const isImage = type === 'image';
@@ -1108,6 +1112,11 @@ export default function ChatWindowPanel() {
         <div className="flex items-center justify-center gap-1.5 py-1.5 bg-vt-green/5 border-b border-vt-green/10">
           <ShieldCheck size={11} className="text-vt-green" />
           <span className="text-[11px] text-vt-green">Messages are end-to-end encrypted</span>
+        </div>
+      )}
+      {e2eEnabled && contact && !contact.publicKey && (
+        <div className="px-4 py-2 bg-vt-amber/10 border-b border-vt-amber/20 text-center text-[11px] text-vt-amber">
+          Waiting for {contact.name}'s encryption key before secure messages can be sent.
         </div>
       )}
 
