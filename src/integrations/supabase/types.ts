@@ -191,6 +191,30 @@ export type Database = {
           },
         ]
       }
+      contacts: {
+        Row: {
+          contact_id: string
+          contact_name: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          contact_id: string
+          contact_name?: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          contact_id?: string
+          contact_name?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       force_logout_tokens: {
         Row: {
           id: string
@@ -551,11 +575,16 @@ export type Database = {
         Args: { new_password: string; target_user_id: string }
         Returns: undefined
       }
+      cleanup_expired_statuses_for_user: { Args: never; Returns: number }
       delete_my_account: { Args: never; Returns: undefined }
       expire_seen_messages: { Args: { p_chat_id: string }; Returns: undefined }
       is_admin: { Args: never; Returns: boolean }
       is_admin_user: { Args: never; Returns: boolean }
       is_chat_participant: { Args: { chat_uuid: string }; Returns: boolean }
+      is_contact: {
+        Args: { _owner_id: string; _viewer_id: string }
+        Returns: boolean
+      }
       is_master_admin: { Args: never; Returns: boolean }
       mark_messages_read: { Args: { _chat_id: string }; Returns: undefined }
     }
