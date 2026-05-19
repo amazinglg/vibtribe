@@ -575,6 +575,7 @@ export type Database = {
         Args: { new_password: string; target_user_id: string }
         Returns: undefined
       }
+      cleanup_expired_statuses: { Args: never; Returns: undefined }
       cleanup_expired_statuses_for_user: { Args: never; Returns: number }
       delete_my_account: { Args: never; Returns: undefined }
       expire_seen_messages: { Args: { p_chat_id: string }; Returns: undefined }
