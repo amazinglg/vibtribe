@@ -1,6 +1,6 @@
 // @ts-nocheck
-import React, { useEffect, useRef, useState } from 'react';
-import { Plus, Camera, Type, Sparkles, Globe, Users, UserCheck, ChevronDown, X, Send } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Plus, Camera, Type, Sparkles, Globe, Users, UserCheck, ChevronDown, X, Send, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import StatusViewer from './StatusViewer';
@@ -33,12 +33,27 @@ export default function StatusHero() {
   const displayName = profile?.full_name || 'You';
   const avatarLetter = displayName[0]?.toUpperCase() || 'V';
 
+  const loadMyStatuses = useCallback(async () => {
+    if (!user?.id) return [];
+    await supabase.rpc('cleanup_expired_statuses').catch(() => {});
+    const { data } = await supabase
+      .from('statuses')
+      .select('id, content, media_url, media_type, background_color, created_at, expires_at, view_count')
+      .eq('user_id', user.id)
+      .gt('expires_at', new Date().toISOString())
+      .order('created_at', { ascending: false });
+    const rows = data || [];
+    setMyStatuses(rows);
+    return rows;
+  }, [user?.id]);
+
   // Load persisted visibility preference
   useEffect(() => {
     if (!user?.id) return;
     supabase.from('user_profiles').select('status_visibility').eq('id', user.id).maybeSingle()
       .then(({ data }) => { if (data?.status_visibility) setVisibility(data.status_visibility as VisibilityOption); });
-  }, [user?.id]);
+    loadMyStatuses();
+  }, [user?.id, loadMyStatuses]);
 
   const persistVisibility = async (next: VisibilityOption) => {
     setVisibility(next);
@@ -54,7 +69,28 @@ export default function StatusHero() {
       visibility,
       ...row,
     });
-    if (error) { console.error('status insert', error); alert('Failed to post status: ' + error.message); }
+    if (error) { console.error('status insert', error); throw error; }
+  };
+
+  const statusStoragePath = (url?: string | null) => {
+    if (!url) return null;
+    const marker = '/status-media/';
+    const idx = url.indexOf(marker);
+    return idx >= 0 ? decodeURIComponent(url.slice(idx + marker.length).split('?')[0]) : null;
+  };
+
+  const deleteStatus = async (status: any) => {
+    if (!status?.id || !user?.id) return;
+    if (!window.confirm('Delete this status?')) return;
+    try {
+      const path = statusStoragePath(status.media_url);
+      if (path) await supabase.storage.from('status-media').remove([path]).catch(() => {});
+      const { error } = await supabase.from('statuses').delete().eq('id', status.id).eq('user_id', user.id);
+      if (error) throw error;
+      setMyStatuses(prev => prev.filter(s => s.id !== status.id));
+    } catch (err: any) {
+      alert(err?.message || 'Could not delete status');
+    }
   };
 
   const handlePickMedia = () => {
