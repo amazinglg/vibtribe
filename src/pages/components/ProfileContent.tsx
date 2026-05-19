@@ -1465,6 +1465,14 @@ export default function ProfileContent() {
         title="Crop Profile Photo"
         output={{ width: 512, height: 512, mime: 'image/jpeg', quality: 0.9 }}
       />
+      {avatarPreviewOpen && profile?.avatar_url && (
+        <div className="fixed inset-0 z-[140] bg-black/90 flex items-center justify-center p-4" onClick={() => setAvatarPreviewOpen(false)}>
+          <button className="absolute top-4 right-4 p-2 rounded-full bg-white/10 text-white" onClick={() => setAvatarPreviewOpen(false)} aria-label="Close profile photo">
+            <X size={20} />
+          </button>
+          <img src={profile.avatar_url} alt="Profile enlarged" className="max-w-full max-h-[85vh] rounded-2xl object-contain" onClick={(e) => e.stopPropagation()} />
+        </div>
+      )}
     </div>
   );
 }
