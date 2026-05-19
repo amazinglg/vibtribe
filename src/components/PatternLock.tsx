@@ -22,8 +22,13 @@ export default function PatternLock({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [drawing, setDrawing] = useState(false);
   const [pointer, setPointer] = useState<{ x: number; y: number } | null>(null);
+  const selectedRef = useRef<number[]>(value);
 
   const dotPositions = useRef<{ id: number; x: number; y: number }[]>([]);
+
+  useEffect(() => {
+    selectedRef.current = value;
+  }, [value]);
 
   // Compute centers for 9 dots in a 3x3 grid
   const recomputeDots = useCallback(() => {
@@ -73,8 +78,10 @@ export default function PatternLock({
     const rect = el.getBoundingClientRect();
     setPointer({ x: clientX - rect.left, y: clientY - rect.top });
     const hit = hitTest(clientX, clientY);
-    if (hit && !value.includes(hit)) {
-      onChange([...value, hit]);
+    if (hit && !selectedRef.current.includes(hit)) {
+      const next = [...selectedRef.current, hit];
+      selectedRef.current = next;
+      onChange(next);
     }
   };
 
@@ -83,16 +90,17 @@ export default function PatternLock({
     (e.target as Element).setPointerCapture?.(e.pointerId);
     recomputeDots();
     setDrawing(true);
+    selectedRef.current = [];
     onChange([]);
     // Hit-test the starting point too
-    setTimeout(() => handleMove(e.clientX, e.clientY), 0);
+    handleMove(e.clientX, e.clientY);
   };
 
   const handleUp = () => {
     if (!drawing) return;
     setDrawing(false);
     setPointer(null);
-    onComplete?.(value);
+    onComplete?.(selectedRef.current);
   };
 
   // SVG line points
@@ -107,20 +115,20 @@ export default function PatternLock({
       onPointerMove={(e) => drawing && handleMove(e.clientX, e.clientY)}
       onPointerUp={handleUp}
       onPointerCancel={handleUp}
-      onPointerLeave={handleUp}
       className="relative mx-auto touch-none select-none"
       style={{ width: size, height: size }}
     >
       {/* Connecting lines */}
-      <svg className="absolute inset-0 pointer-events-none" width={size} height={size}>
+      <svg className="absolute inset-0 z-10 pointer-events-none overflow-visible" width="100%" height="100%" viewBox={`0 0 ${size} ${size}`}>
         {linePoints.length > 1 && (
           <polyline
             points={linePoints.map((p) => `${p.x},${p.y}`).join(' ')}
             fill="none"
             stroke="hsl(var(--primary))"
-            strokeWidth={4}
+            strokeWidth={6}
             strokeLinecap="round"
             strokeLinejoin="round"
+            filter="drop-shadow(0 0 8px rgba(124,58,237,0.7))"
           />
         )}
         {linePoints.length > 0 && pointer && drawing && (
@@ -130,9 +138,10 @@ export default function PatternLock({
             x2={pointer.x}
             y2={pointer.y}
             stroke="hsl(var(--primary))"
-            strokeWidth={4}
+            strokeWidth={6}
             strokeOpacity={0.6}
             strokeLinecap="round"
+            filter="drop-shadow(0 0 8px rgba(124,58,237,0.55))"
           />
         )}
       </svg>
@@ -145,10 +154,10 @@ export default function PatternLock({
         return (
           <div
             key={id}
-            className={`absolute rounded-full border-2 flex items-center justify-center text-sm font-bold transition-all pointer-events-none ${
+            className={`absolute z-20 rounded-full border-2 flex items-center justify-center text-sm font-bold transition-all pointer-events-none ${
               isActive
-                ? 'border-primary bg-primary scale-110'
-                : 'border-border bg-muted/40'
+                ? 'border-primary bg-primary scale-110 shadow-[0_0_16px_rgba(124,58,237,0.75)]'
+                : 'border-border bg-muted/80'
             }`}
             style={{
               width: cellW * 0.32,
