@@ -122,6 +122,7 @@ export default function StatusHero() {
         media_type: mediaFile.type.startsWith('video') ? 'video' : 'image',
         content: mediaCaption.trim() || undefined,
       });
+      await loadMyStatuses();
       setMediaFile(null);
       if (mediaPreviewUrl) URL.revokeObjectURL(mediaPreviewUrl);
       setMediaPreviewUrl(null);
@@ -140,14 +141,8 @@ export default function StatusHero() {
 
   const openMyStatuses = async () => {
     if (!user?.id) return;
-    const { data } = await supabase
-      .from('statuses')
-      .select('id, content, media_url, media_type, background_color, created_at')
-      .eq('user_id', user.id)
-      .gt('expires_at', new Date().toISOString())
-      .order('created_at', { ascending: true });
+    const data = await loadMyStatuses();
     if (!data || data.length === 0) { alert("You haven't posted any status in the last 24 hours."); return; }
-    setMyStatuses(data);
     setMyViewerOpen(true);
   };
 
@@ -156,6 +151,7 @@ export default function StatusHero() {
     setUploading(true);
     try {
       await insertStatus({ content: textValue.trim(), media_type: 'text', background_color: '#7C3AED' });
+      await loadMyStatuses();
       setTextValue(''); setTextPrompt(null);
     } finally { setUploading(false); }
   };
