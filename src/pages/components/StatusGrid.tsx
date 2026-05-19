@@ -33,7 +33,7 @@ export default function StatusGrid() {
   const loadContactStatuses = async () => {
     setLoading(true);
     try {
-      await supabase.rpc('cleanup_expired_statuses').catch(() => {});
+      try { await supabase.rpc('cleanup_expired_statuses'); } catch {}
       // Get user's contacts
       const { data: contacts } = await supabase
         .from('contacts')
