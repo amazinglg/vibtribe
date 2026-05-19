@@ -424,6 +424,7 @@ export default function ChatWindowPanel() {
             lastSeen: 'Group chat',
             publicKey: undefined,
             userId: undefined,
+            isContact: false,
           });
           contactPubKeyRef.current = null;
           setE2eEnabled(false);
@@ -470,6 +471,12 @@ export default function ChatWindowPanel() {
 
           const preferredNickname = user ? getPreferredNickname(user.id, otherUserId) : '';
           const displayName = preferredNickname || otherUser.full_name || 'Unknown';
+          const { data: existingContact } = await supabase
+            .from('contacts')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('contact_id', otherUserId)
+            .maybeSingle();
 
           setContact({
             name: displayName,
@@ -478,6 +485,7 @@ export default function ChatWindowPanel() {
             lastSeen: otherUser.is_online ? 'Online' : 'Last seen recently',
             publicKey: otherUser.public_key || undefined,
             userId: otherUserId,
+            isContact: !!existingContact,
           });
 
           const { data: blockData } = await supabase
