@@ -116,6 +116,7 @@ export default function ProfileContent() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null);
   const [cropOpen, setCropOpen] = useState(false);
+  const [avatarPreviewOpen, setAvatarPreviewOpen] = useState(false);
 
   const handleAvatarFile = (file: File) => {
     if (!file || !user) return;
@@ -325,7 +326,17 @@ export default function ProfileContent() {
   const handleSaveProfile = async () => {
     setSavingProfile(true);
     try {
-      await updateProfile({ full_name: displayName, bio, username: username.toLowerCase() });
+      const normalizedUsername = username.trim().toLowerCase();
+      if (normalizedUsername) {
+        const { data: existing } = await supabase
+          .from('user_profiles')
+          .select('id')
+          .ilike('username', normalizedUsername)
+          .neq('id', user.id)
+          .maybeSingle();
+        if (existing) throw new Error('This username is already taken');
+      }
+      await updateProfile({ full_name: displayName, bio, username: normalizedUsername || null });
       setEditMode(false);
       toast.success('Profile updated successfully ✓');
     } catch (err: any) {
