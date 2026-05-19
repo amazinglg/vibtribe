@@ -35,7 +35,7 @@ export default function StatusHero() {
 
   const loadMyStatuses = useCallback(async () => {
     if (!user?.id) return [];
-    await supabase.rpc('cleanup_expired_statuses').catch(() => {});
+    try { await supabase.rpc('cleanup_expired_statuses'); } catch {}
     const { data } = await supabase
       .from('statuses')
       .select('id, content, media_url, media_type, background_color, created_at, expires_at, view_count')
