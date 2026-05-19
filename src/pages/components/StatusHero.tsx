@@ -292,6 +292,45 @@ export default function StatusHero() {
               )}
           </div>
         </div>
+
+        {/* My uploaded statuses */}
+        <div className="relative mt-3 pt-3 border-t border-border/40">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-semibold text-foreground">My uploads</p>
+            <button onClick={loadMyStatuses} className="text-[11px] text-primary hover:text-primary/80">Refresh</button>
+          </div>
+          {myStatuses.length === 0 ? (
+            <p className="text-[11px] text-muted-foreground">No active status uploads.</p>
+          ) : (
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {myStatuses.map((status) => (
+                <div key={status.id} className="relative w-20 h-24 flex-shrink-0 overflow-hidden rounded-xl border border-border bg-muted">
+                  <button onClick={() => { setMyViewerOpen(true); }} className="absolute inset-0 text-left">
+                    {status.media_type === 'image' && status.media_url ? (
+                      <img src={status.media_url} alt="My status" className="w-full h-full object-cover" />
+                    ) : status.media_type === 'video' && status.media_url ? (
+                      <video src={status.media_url} className="w-full h-full object-cover" muted playsInline />
+                    ) : (
+                      <div className="w-full h-full gradient-primary flex items-center justify-center p-2 text-center text-[11px] font-semibold text-white line-clamp-4">
+                        {status.content || 'Text status'}
+                      </div>
+                    )}
+                    <div className="absolute inset-x-0 bottom-0 bg-black/55 px-1 py-1 text-[9px] text-white">
+                      {Math.max(0, Math.ceil((new Date(status.expires_at).getTime() - Date.now()) / 3600000))}h left
+                    </div>
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); deleteStatus(status); }}
+                    className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center"
+                    title="Delete status"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
       <input ref={fileInputRef} type="file" accept="image/*,video/*" className="hidden" onChange={handleFile} />
       {textPrompt !== null && (
