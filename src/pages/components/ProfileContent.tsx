@@ -573,13 +573,19 @@ export default function ProfileContent() {
           {/* Avatar */}
           <div className="relative flex-shrink-0">
             <div className="status-ring-active p-0.5 rounded-full">
-              <div className="w-20 h-20 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-2xl border-2 border-background overflow-hidden">
+              <button
+                type="button"
+                onClick={() => profile?.avatar_url && setAvatarPreviewOpen(true)}
+                disabled={!profile?.avatar_url}
+                className="w-20 h-20 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-2xl border-2 border-background overflow-hidden disabled:cursor-default"
+                title={profile?.avatar_url ? 'View profile photo' : 'Profile photo'}
+              >
                 {profile?.avatar_url ? (
                   <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
                   avatarLetter
                 )}
-              </div>
+              </button>
             </div>
             <button
               type="button"
