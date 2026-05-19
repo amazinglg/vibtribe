@@ -577,8 +577,10 @@ export default function ChatWindowPanel() {
 
     try {
       let contentToStore = text;
-      if (e2eEnabled && contact?.publicKey) {
+      if (e2eEnabled) {
+        if (!contact?.publicKey) throw new Error('Encryption key is not available for this contact');
         contentToStore = await encryptMessage(text, contact.publicKey);
+        if (!isEncrypted(contentToStore)) throw new Error('Encryption failed');
       }
 
       const { data } = await supabase
@@ -602,7 +604,10 @@ export default function ChatWindowPanel() {
           });
         }
       }
-    } catch {}
+    } catch (err: any) {
+      setMessages(prev => prev.filter(m => m.id !== tempId));
+      toast.error(err?.message || 'Message could not be sent');
+    }
   };
 
   const handleFileAttach = async (file: File, type: 'image' | 'file' | 'audio') => {
@@ -712,6 +717,20 @@ export default function ChatWindowPanel() {
       }
     } catch {}
     setBlockLoading(false);
+  };
+
+  const handleAddToContacts = async () => {
+    if (!contact?.userId || !user) return;
+    try {
+      const { error } = await supabase
+        .from('contacts')
+        .upsert({ user_id: user.id, contact_id: contact.userId, contact_name: contact.name }, { onConflict: 'user_id,contact_id' });
+      if (error) throw error;
+      setContact(prev => prev ? { ...prev, isContact: true } : prev);
+      toast.success(`${contact.name} added to contacts`);
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not add contact');
+    }
   };
 
   const handleVoiceCallClick = () => {
