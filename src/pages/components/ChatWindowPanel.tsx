@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useRef, useEffect } from 'react';
-import { Phone, Video, Smile, Paperclip, Mic, MicOff, Send, Lock, CheckCheck, Check, ArrowLeft, Info, Trash2, ShieldCheck, Ban, ShieldOff, X, Image, FileText, Camera, Music, VideoOff, PhoneOff, Volume2, VolumeX, Timer, MoreVertical } from 'lucide-react';
+import { Phone, Video, Smile, Paperclip, Mic, MicOff, Send, Lock, CheckCheck, Check, ArrowLeft, Info, Trash2, ShieldCheck, Ban, ShieldOff, X, Image, FileText, Camera, Music, VideoOff, PhoneOff, Volume2, VolumeX, Timer, MoreVertical, UserPlus } from 'lucide-react';
 import { useChatStore } from '@/store/chatStore';
 import MarkSecureModal from '@/components/MarkSecureModal';
 import { useAuth } from '@/contexts/AuthContext';
@@ -250,7 +250,7 @@ export default function ChatWindowPanel() {
   const [showAttachMenu, setShowAttachMenu] = useState(false);
   const [secureModalOpen, setSecureModalOpen] = useState(false);
   const [hoveredMsg, setHoveredMsg] = useState<string | null>(null);
-  const [contact, setContact] = useState<{ name: string; avatar: string; online: boolean; lastSeen: string; publicKey?: string; userId?: string } | null>(null);
+  const [contact, setContact] = useState<{ name: string; avatar: string; online: boolean; lastSeen: string; publicKey?: string; userId?: string; isContact?: boolean } | null>(null);
   const [loading, setLoading] = useState(false);
   const [e2eEnabled, setE2eEnabled] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
