@@ -1091,6 +1091,14 @@ export default function ChatWindowPanel() {
             >
               {isBlocked ? <><ShieldOff size={14} /> Unblock</> : <><Ban size={14} /> Block</>}
             </button>
+            {contact.userId && !contact.isContact && (
+              <button
+                onClick={handleAddToContacts}
+                className="flex-1 flex items-center justify-center gap-2 py-2 glass rounded-xl text-sm text-vt-green hover:bg-vt-green/10 transition-all"
+              >
+                <UserPlus size={14} /> Add
+              </button>
+            )}
           </div>
         </div>
       )}
