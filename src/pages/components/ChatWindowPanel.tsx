@@ -1030,6 +1030,15 @@ export default function ChatWindowPanel() {
                     ))}
                   </div>
                 )}
+                {chatType !== 'group' && contact?.userId && !contact.isContact && (
+                  <button
+                    onClick={() => { setShowMoreMenu(false); handleAddToContacts(); }}
+                    className="w-full text-left px-3 py-2.5 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground"
+                  >
+                    <UserPlus size={16} className="text-vt-green" />
+                    Add to contacts
+                  </button>
+                )}
                 <div className="border-t border-border" />
                 <button
                   onClick={() => { setShowMoreMenu(false); handleBlockToggle(); }}
