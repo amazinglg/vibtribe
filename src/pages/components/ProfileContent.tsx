@@ -1467,12 +1467,29 @@ export default function ProfileContent() {
         output={{ width: 512, height: 512, mime: 'image/jpeg', quality: 0.9 }}
       />
       {avatarPreviewOpen && profile?.avatar_url && (
-        <div className="fixed inset-0 z-[140] bg-black/90 flex items-center justify-center p-4" onClick={() => setAvatarPreviewOpen(false)}>
-          <button className="absolute top-4 right-4 p-2 rounded-full bg-white/10 text-white" onClick={() => setAvatarPreviewOpen(false)} aria-label="Close profile photo">
-            <X size={20} />
-          </button>
-          <img src={profile.avatar_url} alt="Profile enlarged" className="max-w-full max-h-[85vh] rounded-2xl object-contain" onClick={(e) => e.stopPropagation()} />
-        </div>
+        typeof document !== 'undefined' && createPortal(
+          <div
+            className="fixed inset-0 z-[200] bg-black/95 flex items-center justify-center"
+            style={{ padding: 'env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)' }}
+            onClick={() => setAvatarPreviewOpen(false)}
+          >
+            <button
+              className="absolute top-3 right-3 p-2 rounded-full bg-white/15 text-white z-[210]"
+              onClick={(e) => { e.stopPropagation(); setAvatarPreviewOpen(false); }}
+              aria-label="Close profile photo"
+            >
+              <X size={20} />
+            </button>
+            <img
+              src={profile.avatar_url}
+              alt="Profile enlarged"
+              className="rounded-2xl"
+              style={{ maxWidth: '92vw', maxHeight: '85dvh', objectFit: 'contain' }}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>,
+          document.body
+        )
       )}
     </div>
   );
