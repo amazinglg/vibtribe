@@ -95,7 +95,11 @@ export default function StatusHero() {
 
   const handlePickMedia = () => {
     setShowOptions(false);
-    fileInputRef.current?.click();
+    // Defer the click so the dropdown can unmount first — important on Android Chrome
+    // where overlay tap-handlers can otherwise swallow the native file picker invocation.
+    requestAnimationFrame(() => {
+      try { fileInputRef.current?.click(); } catch { /* noop */ }
+    });
   };
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
