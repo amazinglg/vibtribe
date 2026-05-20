@@ -57,6 +57,39 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
     }
   };
 
+  // Always load the saved contacts from the user's account once the panel opens
+  // so that anyone added via "Add to contacts" from a chat appears here too.
+  useEffect(() => {
+    (async () => {
+      if (!user?.id) return;
+      try {
+        const { data: saved } = await supabase
+          .from('contacts')
+          .select('contact_id, contact_name, user_profiles!contacts_contact_id_fkey(full_name, mobile_number)')
+          .eq('user_id', user.id);
+        const savedContacts: Contact[] = (saved || []).map((s: any) => ({
+          name: s.contact_name || s.user_profiles?.full_name || 'Saved contact',
+          phone: s.user_profiles?.mobile_number || '',
+          onPlatform: true,
+          userId: s.contact_id,
+          avatar: (s.contact_name || s.user_profiles?.full_name || '?')[0]?.toUpperCase(),
+        }));
+        if (savedContacts.length > 0) {
+          setPermissionState('granted');
+          setContacts(prev => {
+            const byId = new Map<string, Contact>();
+            for (const c of [...savedContacts, ...prev]) {
+              const key = c.userId || c.phone;
+              if (!byId.has(key)) byId.set(key, c);
+            }
+            return Array.from(byId.values());
+          });
+        }
+      } catch { /* silent */ }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
   const matchContactsWithPlatform = async (rawContacts: any[]) => {
     setLoading(true);
     // Normalise. Each raw contact may have multiple numbers — keep them all but tied to one display name.
