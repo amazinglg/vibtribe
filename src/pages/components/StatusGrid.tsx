@@ -8,6 +8,7 @@ import { CircleDot } from 'lucide-react';
 interface ContactStatus {
   id: string;
   name: string;
+  userId: string;
   avatar: string;
   avatarUrl?: string | null;
   color: string;
@@ -84,6 +85,7 @@ export default function StatusGrid() {
           grouped[s.user_id] = {
             id: `status-${s.user_id}`,
             name,
+            userId: s.user_id,
             avatar: name[0]?.toUpperCase() || '?',
             avatarUrl: showAvatar ? (profile?.avatar_url || null) : null,
             color: COLORS[colorIdx++ % COLORS.length],
