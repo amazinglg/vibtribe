@@ -94,12 +94,10 @@ export default function StatusHero() {
   };
 
   const handlePickMedia = () => {
+    // IMPORTANT: Android Chrome requires .click() to fire inside the user gesture
+    // (no setTimeout / rAF). Trigger the picker first, then close the menu.
+    try { fileInputRef.current?.click(); } catch { /* noop */ }
     setShowOptions(false);
-    // Defer the click so the dropdown can unmount first — important on Android Chrome
-    // where overlay tap-handlers can otherwise swallow the native file picker invocation.
-    requestAnimationFrame(() => {
-      try { fileInputRef.current?.click(); } catch { /* noop */ }
-    });
   };
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
