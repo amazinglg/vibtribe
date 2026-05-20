@@ -94,8 +94,10 @@ export default function StatusHero() {
   };
 
   const handlePickMedia = () => {
+    // IMPORTANT: Android Chrome requires .click() to fire inside the user gesture
+    // (no setTimeout / rAF). Trigger the picker first, then close the menu.
+    try { fileInputRef.current?.click(); } catch { /* noop */ }
     setShowOptions(false);
-    fileInputRef.current?.click();
   };
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -332,7 +334,13 @@ export default function StatusHero() {
           )}
         </div>
       </div>
-      <input ref={fileInputRef} type="file" accept="image/*,video/*" className="hidden" onChange={handleFile} />
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*,video/*"
+        onChange={handleFile}
+        style={{ position: 'absolute', width: 1, height: 1, opacity: 0, pointerEvents: 'none', left: -9999, top: -9999 }}
+      />
       {textPrompt !== null && (
         <div className="fixed inset-0 z-[120] bg-black/70 flex items-center justify-center p-4" onClick={() => setTextPrompt(null)}>
           <div className="bg-card border border-border rounded-2xl p-5 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
@@ -385,6 +393,7 @@ export default function StatusHero() {
           contact={{
             id: `status-${user?.id}`,
             name: 'My Status',
+            userId: user?.id,
             avatar: avatarLetter,
             avatarUrl: profile?.avatar_url || null,
             color: 'gradient-primary',
