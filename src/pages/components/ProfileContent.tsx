@@ -1,5 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Camera, Edit3, Shield, Bell, Lock, Smartphone, LogOut, Key, AlertTriangle, UserCheck, AtSign, Phone, Mail, ChevronDown, Ban, Monitor, RefreshCw, HelpCircle, Palette, Check, Download, Share, X, Copy, ExternalLink, MoreVertical, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import ImageCropModal from '@/components/ImageCropModal';
