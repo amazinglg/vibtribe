@@ -119,16 +119,20 @@ export default function PatternLock({
       style={{ width: size, height: size }}
     >
       {/* Connecting lines */}
-      <svg className="absolute inset-0 z-10 pointer-events-none overflow-visible" width="100%" height="100%" viewBox={`0 0 ${size} ${size}`}>
+      <svg
+        className="absolute inset-0 z-10 pointer-events-none overflow-visible"
+        width={size}
+        height={size}
+        viewBox={`0 0 ${size} ${size}`}
+      >
         {linePoints.length > 1 && (
           <polyline
             points={linePoints.map((p) => `${p.x},${p.y}`).join(' ')}
             fill="none"
-            stroke="hsl(var(--primary))"
-            strokeWidth={6}
+            stroke="#7c3aed"
+            strokeWidth={5}
             strokeLinecap="round"
             strokeLinejoin="round"
-            filter="drop-shadow(0 0 8px rgba(124,58,237,0.7))"
           />
         )}
         {linePoints.length > 0 && pointer && drawing && (
@@ -137,13 +141,29 @@ export default function PatternLock({
             y1={linePoints[linePoints.length - 1].y}
             x2={pointer.x}
             y2={pointer.y}
-            stroke="hsl(var(--primary))"
-            strokeWidth={6}
+            stroke="#7c3aed"
+            strokeWidth={5}
             strokeOpacity={0.6}
             strokeLinecap="round"
-            filter="drop-shadow(0 0 8px rgba(124,58,237,0.55))"
           />
         )}
+        {/* Direction arrows along the connected segments */}
+        {linePoints.length > 1 && linePoints.slice(1).map((p, i) => {
+          const prev = linePoints[i];
+          const dx = p.x - prev.x;
+          const dy = p.y - prev.y;
+          const len = Math.sqrt(dx*dx + dy*dy) || 1;
+          const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+          // Place arrow ~70% along the segment toward the destination dot
+          const t = 0.6;
+          const cx = prev.x + dx * t;
+          const cy = prev.y + dy * t;
+          return (
+            <g key={`arr-${i}`} transform={`translate(${cx} ${cy}) rotate(${angle})`}>
+              <polygon points="-6,-5 6,0 -6,5" fill="#7c3aed" />
+            </g>
+          );
+        })}
       </svg>
       {/* Dots */}
       {Array.from({ length: 9 }, (_, i) => i + 1).map((id) => {
