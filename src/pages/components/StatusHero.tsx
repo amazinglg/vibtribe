@@ -385,6 +385,7 @@ export default function StatusHero() {
           contact={{
             id: `status-${user?.id}`,
             name: 'My Status',
+            userId: user?.id,
             avatar: avatarLetter,
             avatarUrl: profile?.avatar_url || null,
             color: 'gradient-primary',
