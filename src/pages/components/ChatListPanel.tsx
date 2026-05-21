@@ -48,8 +48,62 @@ export default function ChatListPanel() {
   const supabase = createClient();
 
   useEffect(() => {
-    if (user) loadChats();
+    if (user) {
+      loadChats();
+      loadSavedContacts();
+    }
   }, [user]);
+
+  useEffect(() => {
+    const refreshContacts = () => loadSavedContacts();
+    window.addEventListener('vt-contacts-changed', refreshContacts);
+    return () => window.removeEventListener('vt-contacts-changed', refreshContacts);
+  }, [user?.id]);
+
+  const loadSavedContacts = async () => {
+    if (!user?.id) return [];
+    setContactsLoading(true);
+    try {
+      const { data: saved, error } = await supabase
+        .from('contacts')
+        .select('contact_id, contact_name, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+
+      const ids = [...new Set((saved || []).map((row: any) => row.contact_id).filter(Boolean))];
+      const profileMap = new Map<string, any>();
+      if (ids.length > 0) {
+        const { data: profiles } = await supabase
+          .from('user_profiles')
+          .select('id, full_name, mobile_number, avatar_url, profile_photo_visibility')
+          .in('id', ids);
+        for (const p of (profiles || [])) profileMap.set(p.id, p);
+      }
+
+      const rows = (saved || []).map((row: any) => {
+        const p = profileMap.get(row.contact_id);
+        const name = row.contact_name || p?.full_name || 'Saved contact';
+        return {
+          name,
+          phone: p?.mobile_number || '',
+          onPlatform: true,
+          userId: row.contact_id,
+          avatar: name[0]?.toUpperCase() || 'U',
+          avatarUrl: (p?.profile_photo_visibility ?? 'all') === 'all' ? (p?.avatar_url || null) : null,
+          saved: true,
+        };
+      });
+      setContactsList(rows);
+      if (rows.length > 0) setContactsPerm('granted');
+      return rows;
+    } catch (err) {
+      console.error('load saved contacts', err);
+      return [];
+    } finally {
+      setContactsLoading(false);
+    }
+  };
 
   // Lightweight realtime: refresh chat list when a new message hits any chat.
   // Debounced so high-traffic chats don't trigger a flood of refetches.
