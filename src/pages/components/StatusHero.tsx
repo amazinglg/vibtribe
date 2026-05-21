@@ -1,6 +1,6 @@
 // @ts-nocheck
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Plus, Camera, Type, Sparkles, Globe, Users, UserCheck, ChevronDown, X, Send, Trash2 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Camera, Type, Sparkles, Globe, Users, UserCheck, ChevronDown, X, Send, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import StatusViewer from './StatusViewer';
@@ -15,12 +15,10 @@ const VISIBILITY_OPTIONS: { value: VisibilityOption; label: string; desc: string
 
 export default function StatusHero() {
   const [uploading, setUploading] = useState(false);
-  const [showOptions, setShowOptions] = useState(false);
   const [showVisibility, setShowVisibility] = useState(false);
   const [visibility, setVisibility] = useState<VisibilityOption>('all');
   const [textPrompt, setTextPrompt] = useState<null | string>(null);
   const [textValue, setTextValue] = useState('');
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const { profile, user } = useAuth();
   // Media compose modal (preview + caption)
   const [mediaFile, setMediaFile] = useState<File | null>(null);
@@ -93,30 +91,37 @@ export default function StatusHero() {
     }
   };
 
-  const handlePickMedia = () => {
-    // IMPORTANT: Android Chrome requires .click() to fire inside the user gesture
-    // (no setTimeout / rAF). Trigger the picker first, then close the menu.
-    try { fileInputRef.current?.click(); } catch { /* noop */ }
-    setShowOptions(false);
-  };
-
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
-    if (!file || !user?.id) return;
+    if (!file) return;
+    if (!user?.id) { alert('Please sign in again before posting a status.'); return; }
     // Open preview + caption modal instead of posting immediately
     setMediaFile(file);
     setMediaPreviewUrl(URL.createObjectURL(file));
     setMediaCaption('');
   };
 
+  const getMediaExtension = (file: File) => {
+    const namedExt = file.name?.split('.').pop()?.toLowerCase();
+    if (namedExt && namedExt !== file.name.toLowerCase()) return namedExt;
+    if (file.type === 'image/png') return 'png';
+    if (file.type === 'image/webp') return 'webp';
+    if (file.type === 'image/gif') return 'gif';
+    if (file.type === 'video/mp4') return 'mp4';
+    if (file.type === 'video/webm') return 'webm';
+    return file.type.startsWith('video') ? 'mp4' : 'jpg';
+  };
+
   const handleMediaPost = async () => {
     if (!mediaFile || !user?.id) return;
     setUploading(true);
     try {
-      const ext = mediaFile.name.split('.').pop() || 'bin';
-      const path = `${user.id}/${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from('status-media').upload(path, mediaFile, { contentType: mediaFile.type });
+      const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${getMediaExtension(mediaFile)}`;
+      const { error: upErr } = await supabase.storage.from('status-media').upload(path, mediaFile, {
+        contentType: mediaFile.type || 'application/octet-stream',
+        upsert: false,
+      });
       if (upErr) throw upErr;
       const { data: pub } = supabase.storage.from('status-media').getPublicUrl(path);
       await insertStatus({
@@ -155,13 +160,9 @@ export default function StatusHero() {
       await insertStatus({ content: textValue.trim(), media_type: 'text', background_color: '#7C3AED' });
       await loadMyStatuses();
       setTextValue(''); setTextPrompt(null);
+    } catch (err: any) {
+      console.error(err); alert('Status failed: ' + (err?.message || 'unknown'));
     } finally { setUploading(false); }
-  };
-
-  const handleOption = (type: string) => {
-    if (type === 'media') return handlePickMedia();
-    if (type === 'text') { setShowOptions(false); setTextPrompt(''); return; }
-    setShowOptions(false);
   };
 
   const currentVisibility = VISIBILITY_OPTIONS.find(o => o.value === visibility)!;
@@ -206,47 +207,32 @@ export default function StatusHero() {
             <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">Tap to view · Add a new story</p>
           </button>
 
-          {/* Add Status Button */}
-          <div className="relative flex-shrink-0">
-            <button
-              onClick={() => setShowOptions(!showOptions)}
-              disabled={uploading}
-              className="gradient-primary text-white px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl flex items-center gap-1.5 font-semibold text-xs sm:text-sm hover:opacity-90 transition-all glow-primary disabled:opacity-60"
-            >
+          <div className="flex flex-col gap-2 flex-shrink-0">
+            <label className={`relative overflow-hidden gradient-primary text-white px-3 py-2 rounded-xl flex items-center justify-center gap-1.5 font-semibold text-xs hover:opacity-90 transition-all glow-primary ${uploading ? 'opacity-60 pointer-events-none' : 'cursor-pointer'}`}>
               {uploading ? (
                 <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
-              ) : (
-                <Plus size={14} />
-              )}
-              <span>{uploading ? 'Posting...' : 'Add'}</span>
+              ) : <Camera size={14} />}
+              <span>{uploading ? 'Posting...' : 'Photo'}</span>
+              <input
+                type="file"
+                accept="image/*,video/*"
+                onChange={handleFile}
+                disabled={uploading}
+                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+              />
+            </label>
+            <button
+              type="button"
+              onClick={() => setTextPrompt('')}
+              disabled={uploading}
+              className="px-3 py-2 glass rounded-xl border border-border flex items-center justify-center gap-1.5 text-xs font-semibold text-foreground hover:border-primary/40 hover:text-primary transition-all disabled:opacity-60"
+            >
+              <Type size={14} />
+              Text
             </button>
-
-            {showOptions && (
-              <>
-              <div className="fixed inset-0 z-[105]" onClick={() => setShowOptions(false)} />
-              <div className="absolute right-0 top-full mt-2 w-44 glass-strong rounded-xl border border-border shadow-card py-1 z-[110] float-up">
-                {[
-                  { icon: Camera, label: 'Photo / Video', type: 'media' },
-                  { icon: Type, label: 'Text Status', type: 'text' },
-                ].map((opt) => {
-                  const Icon = opt.icon;
-                  return (
-                    <button
-                      key={`status-opt-${opt.type}`}
-                      onClick={() => handleOption(opt.type)}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
-                    >
-                      <Icon size={16} />
-                      <span>{opt.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-              </>
-            )}
           </div>
         </div>
 
@@ -334,13 +320,6 @@ export default function StatusHero() {
           )}
         </div>
       </div>
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*,video/*"
-        onChange={handleFile}
-        style={{ position: 'absolute', width: 1, height: 1, opacity: 0, pointerEvents: 'none', left: -9999, top: -9999 }}
-      />
       {textPrompt !== null && (
         <div className="fixed inset-0 z-[120] bg-black/70 flex items-center justify-center p-4" onClick={() => setTextPrompt(null)}>
           <div className="bg-card border border-border rounded-2xl p-5 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>

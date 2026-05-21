@@ -63,16 +63,26 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
     (async () => {
       if (!user?.id) return;
       try {
-        const { data: saved } = await supabase
+        const { data: saved, error } = await supabase
           .from('contacts')
-          .select('contact_id, contact_name, user_profiles!contacts_contact_id_fkey(full_name, mobile_number)')
+          .select('contact_id, contact_name, created_at')
           .eq('user_id', user.id);
+        if (error) throw error;
+        const ids = [...new Set((saved || []).map((s: any) => s.contact_id).filter(Boolean))];
+        const profileMap = new Map<string, any>();
+        if (ids.length > 0) {
+          const { data: profiles } = await supabase
+            .from('user_profiles')
+            .select('id, full_name, mobile_number, avatar_url, profile_photo_visibility')
+            .in('id', ids);
+          for (const p of (profiles || [])) profileMap.set(p.id, p);
+        }
         const savedContacts: Contact[] = (saved || []).map((s: any) => ({
-          name: s.contact_name || s.user_profiles?.full_name || 'Saved contact',
-          phone: s.user_profiles?.mobile_number || '',
+          name: s.contact_name || profileMap.get(s.contact_id)?.full_name || 'Saved contact',
+          phone: profileMap.get(s.contact_id)?.mobile_number || '',
           onPlatform: true,
           userId: s.contact_id,
-          avatar: (s.contact_name || s.user_profiles?.full_name || '?')[0]?.toUpperCase(),
+          avatar: (s.contact_name || profileMap.get(s.contact_id)?.full_name || '?')[0]?.toUpperCase(),
         }));
         if (savedContacts.length > 0) {
           setPermissionState('granted');
