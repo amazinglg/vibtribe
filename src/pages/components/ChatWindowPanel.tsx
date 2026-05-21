@@ -726,11 +726,23 @@ export default function ChatWindowPanel() {
   const handleAddToContacts = async () => {
     if (!contact?.userId || !user) return;
     try {
-      const { error } = await supabase
+      const { data: existing, error: lookupError } = await supabase
         .from('contacts')
-        .upsert({ user_id: user.id, contact_id: contact.userId, contact_name: contact.name }, { onConflict: 'user_id,contact_id' });
-      if (error) throw error;
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('contact_id', contact.userId)
+        .maybeSingle();
+      if (lookupError) throw lookupError;
+      if (!existing) {
+        const { error } = await supabase
+          .from('contacts')
+          .insert({ user_id: user.id, contact_id: contact.userId, contact_name: contact.name });
+        if (error) throw error;
+      }
       setContact(prev => prev ? { ...prev, isContact: true } : prev);
+      window.dispatchEvent(new CustomEvent('vt-contacts-changed', {
+        detail: { contactId: contact.userId, contactName: contact.name },
+      }));
       toast.success(`${contact.name} added to contacts`);
     } catch (err: any) {
       toast.error(err?.message || 'Could not add contact');
