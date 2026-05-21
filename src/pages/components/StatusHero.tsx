@@ -94,20 +94,34 @@ export default function StatusHero() {
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
-    if (!file || !user?.id) return;
+    if (!file) return;
+    if (!user?.id) { alert('Please sign in again before posting a status.'); return; }
     // Open preview + caption modal instead of posting immediately
     setMediaFile(file);
     setMediaPreviewUrl(URL.createObjectURL(file));
     setMediaCaption('');
   };
 
+  const getMediaExtension = (file: File) => {
+    const namedExt = file.name?.split('.').pop()?.toLowerCase();
+    if (namedExt && namedExt !== file.name.toLowerCase()) return namedExt;
+    if (file.type === 'image/png') return 'png';
+    if (file.type === 'image/webp') return 'webp';
+    if (file.type === 'image/gif') return 'gif';
+    if (file.type === 'video/mp4') return 'mp4';
+    if (file.type === 'video/webm') return 'webm';
+    return file.type.startsWith('video') ? 'mp4' : 'jpg';
+  };
+
   const handleMediaPost = async () => {
     if (!mediaFile || !user?.id) return;
     setUploading(true);
     try {
-      const ext = mediaFile.name.split('.').pop() || 'bin';
-      const path = `${user.id}/${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from('status-media').upload(path, mediaFile, { contentType: mediaFile.type });
+      const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${getMediaExtension(mediaFile)}`;
+      const { error: upErr } = await supabase.storage.from('status-media').upload(path, mediaFile, {
+        contentType: mediaFile.type || 'application/octet-stream',
+        upsert: false,
+      });
       if (upErr) throw upErr;
       const { data: pub } = supabase.storage.from('status-media').getPublicUrl(path);
       await insertStatus({
@@ -146,6 +160,8 @@ export default function StatusHero() {
       await insertStatus({ content: textValue.trim(), media_type: 'text', background_color: '#7C3AED' });
       await loadMyStatuses();
       setTextValue(''); setTextPrompt(null);
+    } catch (err: any) {
+      console.error(err); alert('Status failed: ' + (err?.message || 'unknown'));
     } finally { setUploading(false); }
   };
 
