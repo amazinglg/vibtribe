@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Plus, Camera, Type, Sparkles, Globe, Users, UserCheck, ChevronDown, X, Send, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,12 +15,10 @@ const VISIBILITY_OPTIONS: { value: VisibilityOption; label: string; desc: string
 
 export default function StatusHero() {
   const [uploading, setUploading] = useState(false);
-  const [showOptions, setShowOptions] = useState(false);
   const [showVisibility, setShowVisibility] = useState(false);
   const [visibility, setVisibility] = useState<VisibilityOption>('all');
   const [textPrompt, setTextPrompt] = useState<null | string>(null);
   const [textValue, setTextValue] = useState('');
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const { profile, user } = useAuth();
   // Media compose modal (preview + caption)
   const [mediaFile, setMediaFile] = useState<File | null>(null);
@@ -93,13 +91,6 @@ export default function StatusHero() {
     }
   };
 
-  const handlePickMedia = () => {
-    // IMPORTANT: Android Chrome requires .click() to fire inside the user gesture
-    // (no setTimeout / rAF). Trigger the picker first, then close the menu.
-    try { fileInputRef.current?.click(); } catch { /* noop */ }
-    setShowOptions(false);
-  };
-
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
@@ -156,12 +147,6 @@ export default function StatusHero() {
       await loadMyStatuses();
       setTextValue(''); setTextPrompt(null);
     } finally { setUploading(false); }
-  };
-
-  const handleOption = (type: string) => {
-    if (type === 'media') return handlePickMedia();
-    if (type === 'text') { setShowOptions(false); setTextPrompt(''); return; }
-    setShowOptions(false);
   };
 
   const currentVisibility = VISIBILITY_OPTIONS.find(o => o.value === visibility)!;
