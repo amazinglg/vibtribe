@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useCallback, useEffect, useState } from 'react';
-import { Camera, Type, Sparkles, Globe, Users, UserCheck, ChevronDown, X, Send, Trash2 } from 'lucide-react';
+import { Camera, Type, Sparkles, Globe, Users, UserCheck, ChevronDown, X, Send, Trash2, Pencil, Check, Search } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import StatusViewer from './StatusViewer';
@@ -27,6 +27,11 @@ export default function StatusHero() {
   // My status viewer
   const [myViewerOpen, setMyViewerOpen] = useState(false);
   const [myStatuses, setMyStatuses] = useState<any[]>([]);
+  // Selected viewers picker
+  const [selectedViewers, setSelectedViewers] = useState<string[]>([]);
+  const [viewerPickerOpen, setViewerPickerOpen] = useState(false);
+  const [contactsList, setContactsList] = useState<{ id: string; name: string; avatar_url?: string | null }[]>([]);
+  const [contactSearch, setContactSearch] = useState('');
 
   const displayName = profile?.full_name || 'You';
   const avatarLetter = displayName[0]?.toUpperCase() || 'V';
@@ -50,21 +55,47 @@ export default function StatusHero() {
     if (!user?.id) return;
     supabase.from('user_profiles').select('status_visibility').eq('id', user.id).maybeSingle()
       .then(({ data }) => { if (data?.status_visibility) setVisibility(data.status_visibility as VisibilityOption); });
+    // Load latest selected_viewers list from most recent status
+    supabase.from('statuses').select('selected_viewers').eq('user_id', user.id)
+      .order('created_at', { ascending: false }).limit(1).maybeSingle()
+      .then(({ data }) => { if (Array.isArray(data?.selected_viewers)) setSelectedViewers(data.selected_viewers); });
     loadMyStatuses();
   }, [user?.id, loadMyStatuses]);
 
+  const loadContacts = useCallback(async () => {
+    if (!user?.id) return;
+    const { data: saved } = await supabase.from('contacts').select('contact_id, contact_name').eq('user_id', user.id);
+    const ids = [...new Set((saved || []).map((s: any) => s.contact_id).filter(Boolean))];
+    if (ids.length === 0) { setContactsList([]); return; }
+    const { data: profiles } = await supabase.from('user_profiles').select('id, full_name, avatar_url').in('id', ids);
+    const pMap = new Map((profiles || []).map((p: any) => [p.id, p]));
+    setContactsList((saved || []).map((s: any) => ({
+      id: s.contact_id,
+      name: s.contact_name || pMap.get(s.contact_id)?.full_name || 'Contact',
+      avatar_url: pMap.get(s.contact_id)?.avatar_url,
+    })));
+  }, [user?.id]);
+
   const persistVisibility = async (next: VisibilityOption) => {
-    setVisibility(next);
     setShowVisibility(false);
+    if (next === 'selected') {
+      await loadContacts();
+      setViewerPickerOpen(true);
+    }
+    setVisibility(next);
     if (!user?.id) return;
     try { await supabase.from('user_profiles').update({ status_visibility: next }).eq('id', user.id); } catch {}
   };
 
   const insertStatus = async (row: { content?: string; media_url?: string; media_type: string; background_color?: string }) => {
     if (!user?.id) return;
+    if (visibility === 'selected' && selectedViewers.length === 0) {
+      throw new Error('Please pick at least one contact for "Specific Contacts" visibility.');
+    }
     const { error } = await supabase.from('statuses').insert({
       user_id: user.id,
       visibility,
+      selected_viewers: visibility === 'selected' ? selectedViewers : [],
       ...row,
     });
     if (error) { console.error('status insert', error); throw error; }
