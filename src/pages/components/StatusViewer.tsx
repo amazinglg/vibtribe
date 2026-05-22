@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Heart, Send, MoreVertical, Pause, Play, Eye } from 'lucide-react';
+import { X, Heart, Send, Pause, Play, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -44,29 +44,37 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
   const [viewers, setViewers] = useState<{ id: string; name: string; viewed_at: string }[]>([]);
   const [showViewers, setShowViewers] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const progressRef = useRef(0);
   const DURATION = 5000;
 
   const story = contact.stories[currentIdx];
 
+  // Reset progress when switching stories
+  useEffect(() => {
+    progressRef.current = 0;
+    setProgress(0);
+  }, [currentIdx]);
+
+  // Tick progress — paused holds, resume continues from where it stopped
   useEffect(() => {
     if (paused) return;
-    setProgress(0);
     intervalRef.current = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(intervalRef.current!);
-          if (currentIdx < contact.stories.length - 1) {
-            setCurrentIdx(i => i + 1);
-          } else {
-            onClose();
-          }
-          return 100;
+      progressRef.current = progressRef.current + 100 / (DURATION / 100);
+      if (progressRef.current >= 100) {
+        clearInterval(intervalRef.current!);
+        progressRef.current = 100;
+        setProgress(100);
+        if (currentIdx < contact.stories.length - 1) {
+          setCurrentIdx(i => i + 1);
+        } else {
+          onClose();
         }
-        return prev + 100 / (DURATION / 100);
-      });
+        return;
+      }
+      setProgress(progressRef.current);
     }, 100);
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [currentIdx, paused, contact.stories.length, onClose]);
+  }, [paused, currentIdx, contact.stories.length, onClose]);
 
   // Record a view when a story is shown (non-owner only)
   useEffect(() => {
@@ -187,13 +195,11 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
               </button>
             )}
             <button
-              onClick={() => setPaused(!paused)}
+              onClick={() => setPaused(p => !p)}
               className="p-1.5 text-white/80 hover:text-white transition-colors"
+              aria-label={paused ? 'Resume' : 'Pause'}
             >
               {paused ? <Play size={18} /> : <Pause size={18} />}
-            </button>
-            <button className="p-1.5 text-white/80 hover:text-white transition-colors">
-              <MoreVertical size={18} />
             </button>
           </div>
         </div>
