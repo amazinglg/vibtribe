@@ -1443,6 +1443,40 @@ export default function ChatWindowPanel() {
           chatName={contact?.name || 'Chat'}
         />
       )}
+
+      {showE2EInfo && (
+        <div className="fixed inset-0 z-[200] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowE2EInfo(false)}>
+          <div className="bg-card border border-border rounded-2xl max-w-md w-full p-5 shadow-card" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-10 h-10 rounded-full bg-vt-green/15 flex items-center justify-center">
+                <ShieldCheck size={20} className="text-vt-green" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground text-sm">End-to-end encrypted</h3>
+                <p className="text-[11px] text-muted-foreground">Your privacy is our priority</p>
+              </div>
+              <button onClick={() => setShowE2EInfo(false)} className="ml-auto p-1.5 text-muted-foreground hover:text-foreground"><X size={16} /></button>
+            </div>
+            <div className="space-y-3 text-xs text-foreground/90 leading-relaxed">
+              <p>
+                Messages and calls in this chat are secured with <strong>end-to-end encryption</strong>.
+                Only you and <strong>{contact?.name || 'the other person'}</strong> can read what is sent —
+                <strong> no one else, not even VibeTribe</strong>, can access them.
+              </p>
+              <div className="rounded-lg bg-vt-green/5 border border-vt-green/15 p-3 space-y-1.5">
+                <p className="flex items-start gap-2"><ShieldCheck size={13} className="text-vt-green mt-0.5"/> Messages are encrypted on your device before being sent.</p>
+                <p className="flex items-start gap-2"><Lock size={13} className="text-vt-green mt-0.5"/> Only the recipient's device holds the key to decrypt them.</p>
+                <p className="flex items-start gap-2"><ShieldOff size={13} className="text-vt-green mt-0.5"/> Our servers store only ciphertext we cannot read.</p>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Encryption uses ECDH (P-256) for key exchange and AES-GCM (256-bit) for message confidentiality.
+              </p>
+            </div>
+            <button onClick={() => setShowE2EInfo(false)}
+                    className="mt-4 w-full py-2.5 rounded-lg gradient-primary text-white text-sm font-semibold">Got it</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
