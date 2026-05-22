@@ -259,7 +259,8 @@ export default function StatusHero() {
               type="button"
               onClick={() => setTextPrompt('')}
               disabled={uploading}
-              className="px-3 py-2 glass rounded-xl border border-border flex items-center justify-center gap-1.5 text-xs font-semibold text-foreground hover:border-primary/40 hover:text-primary transition-all disabled:opacity-60"
+              className="px-3 py-2 rounded-xl flex items-center justify-center gap-1.5 text-xs font-semibold text-white transition-all disabled:opacity-60 hover:opacity-90 glow-primary"
+              style={{ background: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 50%, #ec4899 100%)' }}
             >
               <Type size={14} />
               Text
@@ -282,32 +283,54 @@ export default function StatusHero() {
               </button>
 
               {showVisibility && (
-                <div className="absolute left-0 right-0 bottom-full mb-1 max-h-[60vh] overflow-y-auto glass-strong rounded-xl border border-border shadow-card py-1 z-[100] float-up">
+                <>
+                  {/* Click-blocking backdrop so taps don't pass through to status cards behind */}
+                  <div
+                    className="fixed inset-0 z-[95]"
+                    onClick={(e) => { e.stopPropagation(); setShowVisibility(false); }}
+                  />
+                <div className="absolute left-0 right-0 bottom-full mb-1 max-h-[60vh] overflow-y-auto glass-strong rounded-xl border border-border shadow-card py-1 z-[100] float-up"
+                     onClick={(e) => e.stopPropagation()}>
                   <p className="px-3 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                     Who can see this status?
                   </p>
                   {VISIBILITY_OPTIONS.map((opt) => {
                     const Icon = opt.icon;
                     return (
+                      <div key={opt.value} className="flex items-center">
                       <button
-                        key={opt.value}
                         onClick={() => persistVisibility(opt.value)}
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-muted transition-colors ${
+                        className={`flex-1 flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-muted transition-colors ${
                           visibility === opt.value ? 'text-primary' : 'text-foreground'
                         }`}
                       >
                         <Icon size={15} className={visibility === opt.value ? 'text-primary' : 'text-muted-foreground'} />
                         <div className="text-left">
                           <p className="text-xs font-semibold">{opt.label}</p>
-                          <p className="text-[10px] text-muted-foreground">{opt.desc}</p>
+                          <p className="text-[10px] text-muted-foreground">
+                            {opt.value === 'selected' && selectedViewers.length > 0
+                              ? `${selectedViewers.length} selected`
+                              : opt.desc}
+                          </p>
                         </div>
                         {visibility === opt.value && (
                           <div className="ml-auto w-2 h-2 bg-primary rounded-full" />
                         )}
                       </button>
+                        {opt.value === 'selected' && (
+                          <button
+                            onClick={async (e) => { e.stopPropagation(); await loadContacts(); setShowVisibility(false); setViewerPickerOpen(true); }}
+                            className="px-2 py-2 mr-1 text-primary hover:text-primary/80"
+                            title="Edit specific contacts list"
+                          >
+                            <Pencil size={14} />
+                          </button>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
+                </>
               )}
           </div>
         </div>
