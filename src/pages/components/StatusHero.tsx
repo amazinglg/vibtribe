@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useCallback, useEffect, useState } from 'react';
-import { Camera, Type, Sparkles, Globe, Users, UserCheck, ChevronDown, X, Send, Trash2 } from 'lucide-react';
+import { Camera, Type, Sparkles, Globe, Users, UserCheck, ChevronDown, X, Send, Trash2, Pencil, Check, Search } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import StatusViewer from './StatusViewer';
@@ -27,6 +27,11 @@ export default function StatusHero() {
   // My status viewer
   const [myViewerOpen, setMyViewerOpen] = useState(false);
   const [myStatuses, setMyStatuses] = useState<any[]>([]);
+  // Selected viewers picker
+  const [selectedViewers, setSelectedViewers] = useState<string[]>([]);
+  const [viewerPickerOpen, setViewerPickerOpen] = useState(false);
+  const [contactsList, setContactsList] = useState<{ id: string; name: string; avatar_url?: string | null }[]>([]);
+  const [contactSearch, setContactSearch] = useState('');
 
   const displayName = profile?.full_name || 'You';
   const avatarLetter = displayName[0]?.toUpperCase() || 'V';
@@ -50,21 +55,47 @@ export default function StatusHero() {
     if (!user?.id) return;
     supabase.from('user_profiles').select('status_visibility').eq('id', user.id).maybeSingle()
       .then(({ data }) => { if (data?.status_visibility) setVisibility(data.status_visibility as VisibilityOption); });
+    // Load latest selected_viewers list from most recent status
+    supabase.from('statuses').select('selected_viewers').eq('user_id', user.id)
+      .order('created_at', { ascending: false }).limit(1).maybeSingle()
+      .then(({ data }) => { if (Array.isArray(data?.selected_viewers)) setSelectedViewers(data.selected_viewers); });
     loadMyStatuses();
   }, [user?.id, loadMyStatuses]);
 
+  const loadContacts = useCallback(async () => {
+    if (!user?.id) return;
+    const { data: saved } = await supabase.from('contacts').select('contact_id, contact_name').eq('user_id', user.id);
+    const ids = [...new Set((saved || []).map((s: any) => s.contact_id).filter(Boolean))];
+    if (ids.length === 0) { setContactsList([]); return; }
+    const { data: profiles } = await supabase.from('user_profiles').select('id, full_name, avatar_url').in('id', ids);
+    const pMap = new Map((profiles || []).map((p: any) => [p.id, p]));
+    setContactsList((saved || []).map((s: any) => ({
+      id: s.contact_id,
+      name: s.contact_name || pMap.get(s.contact_id)?.full_name || 'Contact',
+      avatar_url: pMap.get(s.contact_id)?.avatar_url,
+    })));
+  }, [user?.id]);
+
   const persistVisibility = async (next: VisibilityOption) => {
-    setVisibility(next);
     setShowVisibility(false);
+    if (next === 'selected') {
+      await loadContacts();
+      setViewerPickerOpen(true);
+    }
+    setVisibility(next);
     if (!user?.id) return;
     try { await supabase.from('user_profiles').update({ status_visibility: next }).eq('id', user.id); } catch {}
   };
 
   const insertStatus = async (row: { content?: string; media_url?: string; media_type: string; background_color?: string }) => {
     if (!user?.id) return;
+    if (visibility === 'selected' && selectedViewers.length === 0) {
+      throw new Error('Please pick at least one contact for "Specific Contacts" visibility.');
+    }
     const { error } = await supabase.from('statuses').insert({
       user_id: user.id,
       visibility,
+      selected_viewers: visibility === 'selected' ? selectedViewers : [],
       ...row,
     });
     if (error) { console.error('status insert', error); throw error; }
@@ -228,7 +259,8 @@ export default function StatusHero() {
               type="button"
               onClick={() => setTextPrompt('')}
               disabled={uploading}
-              className="px-3 py-2 glass rounded-xl border border-border flex items-center justify-center gap-1.5 text-xs font-semibold text-foreground hover:border-primary/40 hover:text-primary transition-all disabled:opacity-60"
+              className="px-3 py-2 rounded-xl flex items-center justify-center gap-1.5 text-xs font-semibold text-white transition-all disabled:opacity-60 hover:opacity-90 glow-primary"
+              style={{ background: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 50%, #ec4899 100%)' }}
             >
               <Type size={14} />
               Text
@@ -251,32 +283,54 @@ export default function StatusHero() {
               </button>
 
               {showVisibility && (
-                <div className="absolute left-0 right-0 bottom-full mb-1 max-h-[60vh] overflow-y-auto glass-strong rounded-xl border border-border shadow-card py-1 z-[100] float-up">
+                <>
+                  {/* Click-blocking backdrop so taps don't pass through to status cards behind */}
+                  <div
+                    className="fixed inset-0 z-[95]"
+                    onClick={(e) => { e.stopPropagation(); setShowVisibility(false); }}
+                  />
+                <div className="absolute left-0 right-0 bottom-full mb-1 max-h-[60vh] overflow-y-auto glass-strong rounded-xl border border-border shadow-card py-1 z-[100] float-up"
+                     onClick={(e) => e.stopPropagation()}>
                   <p className="px-3 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                     Who can see this status?
                   </p>
                   {VISIBILITY_OPTIONS.map((opt) => {
                     const Icon = opt.icon;
                     return (
+                      <div key={opt.value} className="flex items-center">
                       <button
-                        key={opt.value}
                         onClick={() => persistVisibility(opt.value)}
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-muted transition-colors ${
+                        className={`flex-1 flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-muted transition-colors ${
                           visibility === opt.value ? 'text-primary' : 'text-foreground'
                         }`}
                       >
                         <Icon size={15} className={visibility === opt.value ? 'text-primary' : 'text-muted-foreground'} />
                         <div className="text-left">
                           <p className="text-xs font-semibold">{opt.label}</p>
-                          <p className="text-[10px] text-muted-foreground">{opt.desc}</p>
+                          <p className="text-[10px] text-muted-foreground">
+                            {opt.value === 'selected' && selectedViewers.length > 0
+                              ? `${selectedViewers.length} selected`
+                              : opt.desc}
+                          </p>
                         </div>
                         {visibility === opt.value && (
                           <div className="ml-auto w-2 h-2 bg-primary rounded-full" />
                         )}
                       </button>
+                        {opt.value === 'selected' && (
+                          <button
+                            onClick={async (e) => { e.stopPropagation(); await loadContacts(); setShowVisibility(false); setViewerPickerOpen(true); }}
+                            className="px-2 py-2 mr-1 text-primary hover:text-primary/80"
+                            title="Edit specific contacts list"
+                          >
+                            <Pencil size={14} />
+                          </button>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
+                </>
               )}
           </div>
         </div>
@@ -339,20 +393,21 @@ export default function StatusHero() {
       )}
 
       {mediaFile && mediaPreviewUrl && (
-        <div className="fixed inset-0 z-[120] bg-black/90 flex flex-col" onClick={closeMediaModal}>
+        <div className="fixed inset-0 z-[300] bg-black/95 flex flex-col" onClick={closeMediaModal}
+             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
           <div className="flex items-center justify-between px-4 py-3 text-white" onClick={(e) => e.stopPropagation()}>
             <button onClick={closeMediaModal} className="p-2"><X size={20} /></button>
             <span className="text-sm font-medium">New status</span>
             <span className="w-9" />
           </div>
-          <div className="flex-1 flex items-center justify-center px-4" onClick={(e) => e.stopPropagation()}>
+          <div className="flex-1 min-h-0 flex items-center justify-center px-4 overflow-hidden" onClick={(e) => e.stopPropagation()}>
             {mediaFile.type.startsWith('video') ? (
-              <video src={mediaPreviewUrl} controls className="max-h-full max-w-full" />
+              <video src={mediaPreviewUrl} controls className="max-h-full max-w-full object-contain" />
             ) : (
               <img src={mediaPreviewUrl} alt="" className="max-h-full max-w-full object-contain" />
             )}
           </div>
-          <div className="p-3 flex items-center gap-2 bg-black/60" onClick={(e) => e.stopPropagation()}>
+          <div className="p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex items-center gap-2 bg-black/80" onClick={(e) => e.stopPropagation()}>
             <input
               type="text" value={mediaCaption} maxLength={200}
               onChange={(e) => setMediaCaption(e.target.value)}
@@ -363,6 +418,68 @@ export default function StatusHero() {
               className="p-3 rounded-full gradient-primary text-white disabled:opacity-50">
               <Send size={18} />
             </button>
+          </div>
+        </div>
+      )}
+
+      {viewerPickerOpen && (
+        <div className="fixed inset-0 z-[300] bg-black/80 flex items-end sm:items-center justify-center" onClick={() => setViewerPickerOpen(false)}>
+          <div className="bg-card border border-border rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-sm text-foreground">Specific contacts</h3>
+                <p className="text-[11px] text-muted-foreground">Only selected contacts will see your future statuses</p>
+              </div>
+              <button onClick={() => setViewerPickerOpen(false)} className="p-1.5 text-muted-foreground hover:text-foreground"><X size={18} /></button>
+            </div>
+            <div className="px-3 pt-3">
+              <div className="relative">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  value={contactSearch} onChange={(e) => setContactSearch(e.target.value)}
+                  placeholder="Search contacts…"
+                  className="w-full pl-9 pr-3 py-2 rounded-lg bg-muted text-foreground text-sm border border-border focus:outline-none focus:border-primary"
+                />
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto px-2 py-2">
+              {contactsList.length === 0 ? (
+                <p className="text-center text-xs text-muted-foreground py-6">
+                  No saved contacts yet. Add contacts from a chat first (3-dot menu → Add to contacts).
+                </p>
+              ) : (
+                contactsList
+                  .filter(c => c.name.toLowerCase().includes(contactSearch.toLowerCase()))
+                  .map(c => {
+                    const checked = selectedViewers.includes(c.id);
+                    return (
+                      <button key={c.id}
+                        onClick={() => setSelectedViewers(prev => checked ? prev.filter(x => x !== c.id) : [...prev, c.id])}
+                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg ${checked ? 'bg-primary/10' : 'hover:bg-muted'}`}>
+                        {c.avatar_url ? (
+                          <img src={c.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover" />
+                        ) : (
+                          <div className="w-9 h-9 rounded-full gradient-primary flex items-center justify-center text-white text-sm font-semibold">
+                            {c.name[0]?.toUpperCase() || '?'}
+                          </div>
+                        )}
+                        <span className="flex-1 text-left text-sm text-foreground truncate">{c.name}</span>
+                        <span className={`w-5 h-5 rounded-md border flex items-center justify-center ${checked ? 'bg-primary border-primary text-white' : 'border-border'}`}>
+                          {checked && <Check size={13} />}
+                        </span>
+                      </button>
+                    );
+                  })
+              )}
+            </div>
+            <div className="px-3 py-3 border-t border-border flex items-center justify-between gap-2">
+              <span className="text-xs text-muted-foreground">{selectedViewers.length} selected</span>
+              <div className="flex gap-2">
+                <button onClick={() => setSelectedViewers([])} className="px-3 py-1.5 text-xs text-muted-foreground">Clear</button>
+                <button onClick={() => setViewerPickerOpen(false)}
+                        className="px-4 py-1.5 text-xs rounded-lg gradient-primary text-white font-semibold">Done</button>
+              </div>
+            </div>
           </div>
         </div>
       )}

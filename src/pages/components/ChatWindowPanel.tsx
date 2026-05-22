@@ -253,6 +253,7 @@ export default function ChatWindowPanel() {
   const [contact, setContact] = useState<{ name: string; avatar: string; online: boolean; lastSeen: string; publicKey?: string; userId?: string; isContact?: boolean } | null>(null);
   const [loading, setLoading] = useState(false);
   const [e2eEnabled, setE2eEnabled] = useState(false);
+  const [showE2EInfo, setShowE2EInfo] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
   const [disappearMode, setDisappearMode] = useState<'never' | '24h' | 'after_seen'>('24h');
   const [chatType, setChatType] = useState<'normal' | 'secure' | 'group'>('normal');
@@ -1121,10 +1122,14 @@ export default function ChatWindowPanel() {
 
       {/* E2E Banner */}
       {e2eEnabled && (
-        <div className="flex items-center justify-center gap-1.5 py-1.5 bg-vt-green/5 border-b border-vt-green/10">
+        <button
+          type="button"
+          onClick={() => setShowE2EInfo(true)}
+          className="w-full flex items-center justify-center gap-1.5 py-1.5 bg-vt-green/5 border-b border-vt-green/10 hover:bg-vt-green/10 transition-colors"
+        >
           <ShieldCheck size={11} className="text-vt-green" />
-          <span className="text-[11px] text-vt-green">Messages are end-to-end encrypted</span>
-        </div>
+          <span className="text-[11px] text-vt-green underline-offset-2 hover:underline">Messages are end-to-end encrypted · Tap to learn more</span>
+        </button>
       )}
       {e2eEnabled && contact && !contact.publicKey && (
         <div className="px-4 py-2 bg-vt-amber/10 border-b border-vt-amber/20 text-center text-[11px] text-vt-amber">
@@ -1437,6 +1442,40 @@ export default function ChatWindowPanel() {
           chatId={selectedChatId}
           chatName={contact?.name || 'Chat'}
         />
+      )}
+
+      {showE2EInfo && (
+        <div className="fixed inset-0 z-[200] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowE2EInfo(false)}>
+          <div className="bg-card border border-border rounded-2xl max-w-md w-full p-5 shadow-card" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-10 h-10 rounded-full bg-vt-green/15 flex items-center justify-center">
+                <ShieldCheck size={20} className="text-vt-green" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground text-sm">End-to-end encrypted</h3>
+                <p className="text-[11px] text-muted-foreground">Your privacy is our priority</p>
+              </div>
+              <button onClick={() => setShowE2EInfo(false)} className="ml-auto p-1.5 text-muted-foreground hover:text-foreground"><X size={16} /></button>
+            </div>
+            <div className="space-y-3 text-xs text-foreground/90 leading-relaxed">
+              <p>
+                Messages and calls in this chat are secured with <strong>end-to-end encryption</strong>.
+                Only you and <strong>{contact?.name || 'the other person'}</strong> can read what is sent —
+                <strong> no one else, not even VibeTribe</strong>, can access them.
+              </p>
+              <div className="rounded-lg bg-vt-green/5 border border-vt-green/15 p-3 space-y-1.5">
+                <p className="flex items-start gap-2"><ShieldCheck size={13} className="text-vt-green mt-0.5"/> Messages are encrypted on your device before being sent.</p>
+                <p className="flex items-start gap-2"><Lock size={13} className="text-vt-green mt-0.5"/> Only the recipient's device holds the key to decrypt them.</p>
+                <p className="flex items-start gap-2"><ShieldOff size={13} className="text-vt-green mt-0.5"/> Our servers store only ciphertext we cannot read.</p>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Encryption uses ECDH (P-256) for key exchange and AES-GCM (256-bit) for message confidentiality.
+              </p>
+            </div>
+            <button onClick={() => setShowE2EInfo(false)}
+                    className="mt-4 w-full py-2.5 rounded-lg gradient-primary text-white text-sm font-semibold">Got it</button>
+          </div>
+        </div>
       )}
     </div>
   );
