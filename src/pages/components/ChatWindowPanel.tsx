@@ -1121,10 +1121,14 @@ export default function ChatWindowPanel() {
 
       {/* E2E Banner */}
       {e2eEnabled && (
-        <div className="flex items-center justify-center gap-1.5 py-1.5 bg-vt-green/5 border-b border-vt-green/10">
+        <button
+          type="button"
+          onClick={() => setShowE2EInfo(true)}
+          className="w-full flex items-center justify-center gap-1.5 py-1.5 bg-vt-green/5 border-b border-vt-green/10 hover:bg-vt-green/10 transition-colors"
+        >
           <ShieldCheck size={11} className="text-vt-green" />
-          <span className="text-[11px] text-vt-green">Messages are end-to-end encrypted</span>
-        </div>
+          <span className="text-[11px] text-vt-green underline-offset-2 hover:underline">Messages are end-to-end encrypted · Tap to learn more</span>
+        </button>
       )}
       {e2eEnabled && contact && !contact.publicKey && (
         <div className="px-4 py-2 bg-vt-amber/10 border-b border-vt-amber/20 text-center text-[11px] text-vt-amber">
