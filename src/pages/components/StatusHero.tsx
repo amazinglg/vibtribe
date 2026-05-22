@@ -393,20 +393,21 @@ export default function StatusHero() {
       )}
 
       {mediaFile && mediaPreviewUrl && (
-        <div className="fixed inset-0 z-[120] bg-black/90 flex flex-col" onClick={closeMediaModal}>
+        <div className="fixed inset-0 z-[300] bg-black/95 flex flex-col" onClick={closeMediaModal}
+             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
           <div className="flex items-center justify-between px-4 py-3 text-white" onClick={(e) => e.stopPropagation()}>
             <button onClick={closeMediaModal} className="p-2"><X size={20} /></button>
             <span className="text-sm font-medium">New status</span>
             <span className="w-9" />
           </div>
-          <div className="flex-1 flex items-center justify-center px-4" onClick={(e) => e.stopPropagation()}>
+          <div className="flex-1 min-h-0 flex items-center justify-center px-4 overflow-hidden" onClick={(e) => e.stopPropagation()}>
             {mediaFile.type.startsWith('video') ? (
-              <video src={mediaPreviewUrl} controls className="max-h-full max-w-full" />
+              <video src={mediaPreviewUrl} controls className="max-h-full max-w-full object-contain" />
             ) : (
               <img src={mediaPreviewUrl} alt="" className="max-h-full max-w-full object-contain" />
             )}
           </div>
-          <div className="p-3 flex items-center gap-2 bg-black/60" onClick={(e) => e.stopPropagation()}>
+          <div className="p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex items-center gap-2 bg-black/80" onClick={(e) => e.stopPropagation()}>
             <input
               type="text" value={mediaCaption} maxLength={200}
               onChange={(e) => setMediaCaption(e.target.value)}
@@ -417,6 +418,68 @@ export default function StatusHero() {
               className="p-3 rounded-full gradient-primary text-white disabled:opacity-50">
               <Send size={18} />
             </button>
+          </div>
+        </div>
+      )}
+
+      {viewerPickerOpen && (
+        <div className="fixed inset-0 z-[300] bg-black/80 flex items-end sm:items-center justify-center" onClick={() => setViewerPickerOpen(false)}>
+          <div className="bg-card border border-border rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-sm text-foreground">Specific contacts</h3>
+                <p className="text-[11px] text-muted-foreground">Only selected contacts will see your future statuses</p>
+              </div>
+              <button onClick={() => setViewerPickerOpen(false)} className="p-1.5 text-muted-foreground hover:text-foreground"><X size={18} /></button>
+            </div>
+            <div className="px-3 pt-3">
+              <div className="relative">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  value={contactSearch} onChange={(e) => setContactSearch(e.target.value)}
+                  placeholder="Search contacts…"
+                  className="w-full pl-9 pr-3 py-2 rounded-lg bg-muted text-foreground text-sm border border-border focus:outline-none focus:border-primary"
+                />
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto px-2 py-2">
+              {contactsList.length === 0 ? (
+                <p className="text-center text-xs text-muted-foreground py-6">
+                  No saved contacts yet. Add contacts from a chat first (3-dot menu → Add to contacts).
+                </p>
+              ) : (
+                contactsList
+                  .filter(c => c.name.toLowerCase().includes(contactSearch.toLowerCase()))
+                  .map(c => {
+                    const checked = selectedViewers.includes(c.id);
+                    return (
+                      <button key={c.id}
+                        onClick={() => setSelectedViewers(prev => checked ? prev.filter(x => x !== c.id) : [...prev, c.id])}
+                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg ${checked ? 'bg-primary/10' : 'hover:bg-muted'}`}>
+                        {c.avatar_url ? (
+                          <img src={c.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover" />
+                        ) : (
+                          <div className="w-9 h-9 rounded-full gradient-primary flex items-center justify-center text-white text-sm font-semibold">
+                            {c.name[0]?.toUpperCase() || '?'}
+                          </div>
+                        )}
+                        <span className="flex-1 text-left text-sm text-foreground truncate">{c.name}</span>
+                        <span className={`w-5 h-5 rounded-md border flex items-center justify-center ${checked ? 'bg-primary border-primary text-white' : 'border-border'}`}>
+                          {checked && <Check size={13} />}
+                        </span>
+                      </button>
+                    );
+                  })
+              )}
+            </div>
+            <div className="px-3 py-3 border-t border-border flex items-center justify-between gap-2">
+              <span className="text-xs text-muted-foreground">{selectedViewers.length} selected</span>
+              <div className="flex gap-2">
+                <button onClick={() => setSelectedViewers([])} className="px-3 py-1.5 text-xs text-muted-foreground">Clear</button>
+                <button onClick={() => setViewerPickerOpen(false)}
+                        className="px-4 py-1.5 text-xs rounded-lg gradient-primary text-white font-semibold">Done</button>
+              </div>
+            </div>
           </div>
         </div>
       )}
