@@ -253,6 +253,7 @@ export default function ChatWindowPanel() {
   const [contact, setContact] = useState<{ name: string; avatar: string; online: boolean; lastSeen: string; publicKey?: string; userId?: string; isContact?: boolean } | null>(null);
   const [loading, setLoading] = useState(false);
   const [e2eEnabled, setE2eEnabled] = useState(false);
+  const [showE2EInfo, setShowE2EInfo] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
   const [disappearMode, setDisappearMode] = useState<'never' | '24h' | 'after_seen'>('24h');
   const [chatType, setChatType] = useState<'normal' | 'secure' | 'group'>('normal');
