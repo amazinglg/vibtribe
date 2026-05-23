@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /$
+Disallow: /sign-in
+Disallow: /sign-up
+Disallow: /forgot-password
+Disallow: /complete-profile
+Disallow: /profile-screen
+Disallow: /status-screen
+Disallow: /admin
+Disallow: /admin/
+Disallow: /api/
+
+Sitemap: https://www.vibtribe.in/sitemap.xml
