@@ -39,11 +39,13 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [progress, setProgress] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [holding, setHolding] = useState(false);
   const [reply, setReply] = useState('');
   const [showReactions, setShowReactions] = useState(false);
   const [sending, setSending] = useState(false);
   const [viewers, setViewers] = useState<{ id: string; name: string; viewed_at: string }[]>([]);
   const [showViewers, setShowViewers] = useState(false);
+  const [liking, setLiking] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const progressRef = useRef(0);
   const DURATION = 5000;
@@ -56,9 +58,9 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
     setProgress(0);
   }, [currentIdx]);
 
-  // Tick progress — paused holds, resume continues from where it stopped
+  // Tick progress — paused OR holding holds, resume continues from where it stopped
   useEffect(() => {
-    if (paused) return;
+    if (paused || holding) return;
     intervalRef.current = setInterval(() => {
       progressRef.current = progressRef.current + 100 / (DURATION / 100);
       if (progressRef.current >= 100) {
@@ -75,7 +77,7 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
       setProgress(progressRef.current);
     }, 100);
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [paused, currentIdx, contact.stories.length, onClose]);
+  }, [paused, holding, currentIdx, contact.stories.length, onClose]);
 
   // Record a view when a story is shown (non-owner only)
   useEffect(() => {
@@ -145,14 +147,62 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
     setShowReactions(false);
   };
 
+  // ❤️ Like — fire a quick reaction message without opening reply composer
+  const handleLike = async () => {
+    if (liking || isOwner) return;
+    if (!user?.id || !contact.userId) { toast.error('Cannot react to this status'); return; }
+    setLiking(true);
+    try {
+      const { data: existing } = await supabase
+        .from('chats')
+        .select('id')
+        .or(`and(participant_one.eq.${user.id},participant_two.eq.${contact.userId}),and(participant_one.eq.${contact.userId},participant_two.eq.${user.id})`)
+        .maybeSingle();
+      let chatId = existing?.id as string | undefined;
+      if (!chatId) {
+        const { data: created } = await supabase
+          .from('chats')
+          .insert({ participant_one: user.id, participant_two: contact.userId, chat_type: 'normal' })
+          .select('id').single();
+        chatId = created?.id;
+      }
+      if (!chatId) throw new Error('Chat unavailable');
+      const quote = (story?.content || (story?.media_url ? '[media]' : '')).slice(0, 60);
+      await supabase.from('messages').insert({
+        chat_id: chatId, sender_id: user.id,
+        content: `❤️ Liked your status${quote ? ` ("${quote}")` : ''}`,
+        message_status: 'sent',
+      });
+      toast.success(`Liked ${contact.name}'s status`);
+    } catch (e: any) {
+      toast.error(e?.message || 'Could not send like');
+    } finally {
+      setLiking(false);
+    }
+  };
+
   const viewer = (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-background/95 backdrop-blur-xl">
+    <div
+      className="fixed inset-0 z-[1000] flex items-center justify-center bg-background/95 backdrop-blur-xl select-none"
+      onPointerDown={(e) => {
+        // Hold anywhere on the backdrop to pause
+        const tgt = e.target as HTMLElement;
+        if (tgt.closest('button') || tgt.closest('input') || tgt.closest('a')) return;
+        setHolding(true);
+      }}
+      onPointerUp={() => setHolding(false)}
+      onPointerLeave={() => setHolding(false)}
+      onPointerCancel={() => setHolding(false)}
+    >
       {/* Close */}
       <button
-        onClick={onClose}
-        className="absolute top-4 right-4 z-50 p-2 glass rounded-full text-foreground hover:bg-muted transition-all"
+        onPointerDown={(e) => { e.stopPropagation(); }}
+        onPointerUp={(e) => { e.stopPropagation(); onClose(); }}
+        onClick={(e) => { e.stopPropagation(); onClose(); }}
+        className="absolute top-4 right-4 z-[1100] p-3 glass rounded-full text-foreground hover:bg-muted transition-all touch-manipulation"
+        aria-label="Close"
       >
-        <X size={20} />
+        <X size={22} />
       </button>
 
       {/* Story Card */}
@@ -188,6 +238,7 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
           <div className="ml-auto flex items-center gap-2">
             {isOwner && (
               <button
+                onPointerDown={(e) => e.stopPropagation()}
                 onClick={(e) => { e.stopPropagation(); setShowViewers(v => !v); setPaused(true); }}
                 className="relative z-50 flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-black/40 text-white border border-white/20"
               >
@@ -196,6 +247,7 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
               </button>
             )}
             <button
+              onPointerDown={(e) => e.stopPropagation()}
               onClick={(e) => { e.stopPropagation(); setPaused(p => !p); }}
               className="relative z-50 p-1.5 text-white/80 hover:text-white transition-colors"
               aria-label={paused ? 'Resume' : 'Pause'}
@@ -265,8 +317,11 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
             </div>
 
             <button
-              onClick={(e) => { e.stopPropagation(); setShowReactions(!showReactions); }}
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => { e.stopPropagation(); handleLike(); }}
+              disabled={liking}
               className="p-2.5 bg-black/40 border border-white/20 rounded-full text-white hover:bg-white/10 transition-all backdrop-blur-sm"
+              aria-label="Like status"
             >
               <Heart size={18} />
             </button>

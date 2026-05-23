@@ -22,27 +22,27 @@ export default function CompleteProfilePage() {
 
     setLoading(true);
     try {
-      await updateProfile({
+      // Hard timeout so the page can never freeze on a stalled refetch
+      const update = updateProfile({
         username: username.toLowerCase(),
         bio,
         profile_completed: true,
       });
+      await Promise.race([
+        update,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000)),
+      ]).catch(() => {});
       router({ to: '/', replace: true });
     } catch (err: any) {
       setError(err.message || 'Failed to save profile. Please try again.');
-    } finally {
       setLoading(false);
+      return;
+    } finally {
+      // loading stays true until navigation completes
     }
   };
 
-  const handleSkip = async () => {
-    setSkipping(true);
-    try {
-      await updateProfile({ profile_completed: true });
-    } catch {}
-    router({ to: '/', replace: true });
-    setSkipping(false);
-  };
+  // Username is now mandatory — Skip option removed (kept handler for backwards compat but unused)
 
   return (
     <div className="gradient-bg-page min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
@@ -128,14 +128,9 @@ export default function CompleteProfilePage() {
               )}
             </button>
 
-            <button
-              type="button"
-              onClick={handleSkip}
-              disabled={skipping}
-              className="w-full py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {skipping ? 'Redirecting...' : 'Skip for now →'}
-            </button>
+            <p className="text-center text-[11px] text-muted-foreground pt-1">
+              Username is required to continue
+            </p>
           </form>
         </div>
       </div>

@@ -750,22 +750,32 @@ export default function ChatWindowPanel() {
     }
   };
 
-  const handleVoiceCallClick = () => {
-    setPendingCall('voice');
-    if (permissions.microphone === 'granted') {
-      // Permissions already granted — skip the prompt and start immediately
-      setTimeout(() => handleCallPermAllow(), 0);
-    } else {
-      setShowCallPermPrompt(true);
+  // Calls now start immediately — the browser's native permission prompt handles mic/camera.
+  const handleVoiceCallClick = async () => {
+    if (!contact?.userId) return;
+    const callRow = await startCall({ calleeId: contact.userId, chatId: selectedChatId, type: 'voice', calleeName: contact.name, calleeAvatar: contact.avatar });
+    if (callRow?.id) {
+      const callerName = profile?.full_name || 'Someone';
+      sendPushNotification(supabase, {
+        user_id: contact.userId, chat_id: selectedChatId,
+        title: `📞 Incoming Voice Call`, body: `${callerName} is calling you on VibTribe`,
+        tag: `call-${contact.userId}`, url: '/', type: 'voice_call',
+        callerId: user?.id, callId: callRow.id,
+      }).catch(() => {});
     }
   };
 
-  const handleVideoCallClick = () => {
-    setPendingCall('video');
-    if (permissions.microphone === 'granted' && permissions.camera === 'granted') {
-      setTimeout(() => handleCallPermAllow(), 0);
-    } else {
-      setShowCallPermPrompt(true);
+  const handleVideoCallClick = async () => {
+    if (!contact?.userId) return;
+    const callRow = await startCall({ calleeId: contact.userId, chatId: selectedChatId, type: 'video', calleeName: contact.name, calleeAvatar: contact.avatar });
+    if (callRow?.id) {
+      const callerName = profile?.full_name || 'Someone';
+      sendPushNotification(supabase, {
+        user_id: contact.userId, chat_id: selectedChatId,
+        title: `📹 Incoming Video Call`, body: `${callerName} is calling you on VibTribe`,
+        tag: `call-${contact.userId}`, url: '/', type: 'video_call',
+        callerId: user?.id, callId: callRow.id,
+      }).catch(() => {});
     }
   };
 
