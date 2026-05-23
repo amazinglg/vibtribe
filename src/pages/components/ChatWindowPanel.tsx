@@ -524,9 +524,14 @@ export default function ChatWindowPanel() {
       const otherKey = contactPubKeyRef.current;
       const decryptedMsgs: Message[] = [];
       for (const m of (msgs || [])) {
+        // Skip messages this user has deleted-for-me
+        if (Array.isArray((m as any).deleted_for) && (m as any).deleted_for.includes(user.id)) continue;
         let text = m.content;
+        const tombstone = !!(m as any).deleted_for_everyone;
         const encrypted = isEncrypted(text);
-        if (encrypted && otherKey) {
+        if (tombstone) {
+          text = '🚫 This message was deleted';
+        } else if (encrypted && otherKey) {
           text = await decryptMessage(text, otherKey);
         } else if (encrypted) {
           // Never show raw `e2e:` ciphertext to users.
@@ -540,6 +545,9 @@ export default function ChatWindowPanel() {
           status: m.message_status || 'sent',
           reactions: m.reactions || [],
           encrypted,
+          editedAt: (m as any).edited_at || null,
+          deletedForEveryone: tombstone,
+          createdAt: m.created_at,
         });
       }
       setMessages(decryptedMsgs);
