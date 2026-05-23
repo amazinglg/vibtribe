@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vibetribe-v9';
+const CACHE_NAME = 'vibtribe-v10';
 const STATIC_ASSETS = ['/manifest.json', '/favicon.ico'];
 
 self.addEventListener('install', (event) => {
