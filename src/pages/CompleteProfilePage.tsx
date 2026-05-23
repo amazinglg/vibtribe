@@ -53,7 +53,7 @@ export default function CompleteProfilePage() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-3">
             <AppLogo size={48} />
-            <span className="font-bold text-3xl text-gradient-primary tracking-tight">VibeTribe</span>
+            <span className="font-bold text-3xl text-gradient-primary tracking-tight">VibTribe</span>
           </div>
           <div className="flex items-center justify-center gap-2 text-vt-green">
             <CheckCircle2 size={18} />
@@ -63,7 +63,7 @@ export default function CompleteProfilePage() {
 
         <div className="glass-strong rounded-3xl border border-border p-8 shadow-card">
           <h1 className="font-bold text-2xl text-foreground mb-1">Complete your profile</h1>
-          <p className="text-muted-foreground text-sm mb-6">Add a few details to personalize your VibeTribe experience</p>
+          <p className="text-muted-foreground text-sm mb-6">Add a few details to personalize your VibTribe experience</p>
 
           {/* Avatar placeholder */}
           <div className="flex justify-center mb-6">

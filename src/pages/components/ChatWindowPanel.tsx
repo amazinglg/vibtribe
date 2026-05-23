@@ -534,7 +534,7 @@ export default function ChatWindowPanel() {
     } catch {
       setContact({ name: 'Alex Rivera', avatar: 'A', online: true, lastSeen: 'Online' });
       setMessages([
-        { id: 'demo-1', senderId: 'other', text: 'Hey! Welcome to VibeTribe 🎉', time: '10:30 AM', status: 'read', reactions: [] },
+        { id: 'demo-1', senderId: 'other', text: 'Hey! Welcome to VibTribe 🎉', time: '10:30 AM', status: 'read', reactions: [] },
         { id: 'demo-2', senderId: user?.id || 'me', text: 'Thanks! This platform is amazing 🚀', time: '10:31 AM', status: 'read', reactions: ['❤️'] },
       ]);
     } finally {
@@ -785,7 +785,7 @@ export default function ChatWindowPanel() {
           user_id: contact.userId,
           chat_id: selectedChatId,
           title: `📹 Incoming Video Call`,
-          body: `${callerName} is calling you on VibeTribe`,
+          body: `${callerName} is calling you on VibTribe`,
           tag: `call-${contact.userId}`,
           url: '/',
           type: 'video_call',
@@ -805,7 +805,7 @@ export default function ChatWindowPanel() {
           user_id: contact.userId,
           chat_id: selectedChatId,
           title: `📞 Incoming Voice Call`,
-          body: `${callerName} is calling you on VibeTribe`,
+          body: `${callerName} is calling you on VibTribe`,
           tag: `call-${contact.userId}`,
           url: '/',
           type: 'voice_call',
@@ -862,7 +862,7 @@ export default function ChatWindowPanel() {
       {showCallPermPrompt && (
         <PermissionPrompt
           title={pendingCall === 'video' ? 'Video Call Permissions' : 'Voice Call Permissions'}
-          subtitle={pendingCall === 'video' ?'VibeTribe needs access to your camera and microphone for video calls.' :'VibeTribe needs access to your microphone for voice calls.'}
+          subtitle={pendingCall === 'video' ?'VibTribe needs access to your camera and microphone for video calls.' :'VibTribe needs access to your microphone for voice calls.'}
           permissions={pendingCall === 'video' ? [
             {
               icon: <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>,
@@ -895,7 +895,7 @@ export default function ChatWindowPanel() {
       {showMediaPermPrompt && (
         <PermissionPrompt
           title="Media Access"
-          subtitle="VibeTribe needs storage access to attach and share files."
+          subtitle="VibTribe needs storage access to attach and share files."
           permissions={[
             {
               icon: <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>,
@@ -1461,12 +1461,12 @@ export default function ChatWindowPanel() {
               <p>
                 Messages and calls in this chat are secured with <strong>end-to-end encryption</strong>.
                 Only you and <strong>{contact?.name || 'the other person'}</strong> can read what is sent —
-                <strong> no one else, not even VibeTribe</strong>, can access them.
+                <strong> no one else, not even VibTribe</strong>, can access them.
               </p>
               <div className="rounded-lg bg-vt-green/5 border border-vt-green/15 p-3 space-y-1.5">
                 <p className="flex items-start gap-2"><ShieldCheck size={13} className="text-vt-green mt-0.5"/> Your message is locked before it leaves your phone.</p>
                 <p className="flex items-start gap-2"><Lock size={13} className="text-vt-green mt-0.5"/> Only you and {contact?.name || 'the other person'} can open and read it.</p>
-                <p className="flex items-start gap-2"><ShieldOff size={13} className="text-vt-green mt-0.5"/> VibeTribe cannot see your private chat content.</p>
+                <p className="flex items-start gap-2"><ShieldOff size={13} className="text-vt-green mt-0.5"/> VibTribe cannot see your private chat content.</p>
               </div>
             </div>
             <button onClick={() => setShowE2EInfo(false)}

@@ -134,7 +134,7 @@ export default function PWAInstallBanner() {
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <div>
-                <h3 className="font-bold text-sm text-foreground">Install VibeTribe</h3>
+                <h3 className="font-bold text-sm text-foreground">Install VibTribe</h3>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {isIOS
                     ? 'Add to your Home Screen for the best experience'

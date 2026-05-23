@@ -267,7 +267,7 @@ export default function ChatListPanel() {
       name: 'Alex Rivera',
       avatar: 'A',
       avatarColor: 'gradient-cyan',
-      lastMessage: 'Hey! Welcome to VibeTribe 🎉',
+      lastMessage: 'Hey! Welcome to VibTribe 🎉',
       time: '2m',
       unread: 1,
       online: true,
@@ -585,7 +585,7 @@ function ChatListItem({ chat, isSelected, onClick, onContextMenu, onDelete, onMa
 // ===== Contacts Tab =====
 
 const PLATFORM_URL = typeof window !== 'undefined' ? window.location.origin : 'https://vibtribe.in';
-const INVITE_MSG = `Hey! I'm using VibeTribe — a secure messaging app. Join me here: ${PLATFORM_URL}/sign-up 🚀`;
+const INVITE_MSG = `Hey! I'm using VibTribe — a secure messaging app. Join me here: ${PLATFORM_URL}/sign-up 🚀`;
 
 function ContactsTabContent({
   user, supabase, perm, setPerm, contacts, setContacts,
@@ -680,7 +680,7 @@ function ContactsTabContent({
             <div>
               <p className="text-sm font-bold text-foreground">Allow contacts access</p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Find friends already on VibeTribe and invite the rest from your phonebook.
+                Find friends already on VibTribe and invite the rest from your phonebook.
               </p>
             </div>
           </div>
@@ -688,7 +688,7 @@ function ContactsTabContent({
             <p className="text-[11px] text-foreground leading-relaxed">
               <span className="font-bold text-amber-400">Tip:</span> When the contact picker opens, tap
               <span className="font-bold"> "Select all"</span> at the top to import everyone in one go.
-              Browsers require you to confirm the selection — VibeTribe can't auto-pick contacts for privacy reasons.
+              Browsers require you to confirm the selection — VibTribe can't auto-pick contacts for privacy reasons.
             </p>
           </div>
           <button
@@ -770,7 +770,7 @@ function ContactsTabContent({
           {onPlatform.length > 0 && (
             <div>
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">
-                On VibeTribe ({onPlatform.length})
+                On VibTribe ({onPlatform.length})
               </p>
               <div className="space-y-2">
                 {onPlatform.map((c: any, i: number) => (
@@ -782,7 +782,7 @@ function ContactsTabContent({
                       <p className="text-sm font-semibold text-foreground truncate">{c.name}</p>
                       <div className="flex items-center gap-1 mt-0.5">
                         <Check size={10} className="text-vt-green" />
-                        <span className="text-[11px] text-vt-green font-medium">On VibeTribe</span>
+                        <span className="text-[11px] text-vt-green font-medium">On VibTribe</span>
                       </div>
                     </div>
                     <button
@@ -801,7 +801,7 @@ function ContactsTabContent({
           {offPlatform.length > 0 && (
             <div>
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">
-                Invite to VibeTribe ({offPlatform.length})
+                Invite to VibTribe ({offPlatform.length})
               </p>
               <div className="space-y-2">
                 {offPlatform.map((c: any, i: number) => (
@@ -811,7 +811,7 @@ function ContactsTabContent({
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-foreground truncate">{c.name}</p>
-                      <p className="text-[11px] text-muted-foreground truncate">{c.phone || 'Not on VibeTribe yet'}</p>
+                      <p className="text-[11px] text-muted-foreground truncate">{c.phone || 'Not on VibTribe yet'}</p>
                     </div>
                     <button
                       onClick={() => setInviteTarget(c)}
