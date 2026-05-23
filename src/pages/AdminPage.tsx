@@ -494,6 +494,7 @@ export default function AdminPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-semibold text-foreground truncate">{u.full_name || 'Unknown'}</p>
+                        {u.username && <span className="text-[11px] text-primary truncate">@{u.username}</span>}
                         {(u as any).is_master_admin
                           ? <span className="text-[10px] bg-vt-amber/20 text-vt-amber px-1.5 py-0.5 rounded-full font-bold">MASTER</span>
                           : u.role === 'admin' && <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full font-medium">Admin</span>}
