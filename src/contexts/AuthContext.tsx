@@ -63,6 +63,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
+  // Keep the session warm: when the tab becomes visible (esp. on mobile
+  // where the OS aggressively suspends JS) refresh the access token so
+  // the user is not silently logged out on a stale JWT.
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return;
+      supabase.auth.getSession().then(({ data }) => {
+        const exp = data.session?.expires_at ? data.session.expires_at * 1000 : 0;
+        // Refresh proactively if token expires within 5 minutes
+        if (exp && exp - Date.now() < 5 * 60 * 1000) {
+          supabase.auth.refreshSession().catch(() => {});
+        }
+      }).catch(() => {});
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
+    };
+  }, []);
+
   // Presence heartbeat: ping last_seen + is_online every 30s while tab is visible.
   const startPresenceHeartbeat = (userId: string) => {
     if (typeof window === 'undefined') return;
