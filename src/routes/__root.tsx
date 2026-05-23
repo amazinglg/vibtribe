@@ -92,8 +92,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "msapplication-tap-highlight", content: "no" },
       { name: "twitter:title", content: "VibTribe — New Way to Chat and Respect Privacy" },
       { name: "twitter:description", content: "VibTribe is a vibrant social messaging platform for real-time chat, secure private vaults, and 24-hour status updates with your circle." },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/f243ed34-27a0-4089-a999-69791082cdb9" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/f243ed34-27a0-4089-a999-69791082cdb9" },
+      { property: "og:site_name", content: "VibTribe" },
+      { property: "og:locale", content: "en_US" },
+      { name: "application-name", content: "VibTribe" },
+      { name: "robots", content: "index, follow, max-image-preview:large, max-snippet:-1" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -107,6 +109,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "apple-touch-icon", sizes: "152x152", href: "/icons/apple-touch-icon-152.png" },
       { rel: "icon", type: "image/png", sizes: "192x192", href: "/icons/icon-192x192.png" },
       { rel: "icon", type: "image/png", sizes: "512x512", href: "/icons/icon-512x512.png" },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: "VibTribe",
+          url: "https://www.vibtribe.in",
+          logo: "https://www.vibtribe.in/icons/icon-512x512.png",
+          sameAs: ["https://vibtribe.lovable.app"],
+        }),
+      },
     ],
   }),
   shellComponent: RootShell,
