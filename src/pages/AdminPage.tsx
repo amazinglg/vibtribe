@@ -133,10 +133,17 @@ export default function AdminPage() {
 
       const allUsers = usersData || [];
       setUsers(allUsers);
+      // Online = active heartbeat within last 2 minutes (more accurate than stale is_online flag)
+      const TWO_MIN = 2 * 60 * 1000;
+      const now = Date.now();
+      const onlineCount = allUsers.filter(u => {
+        if (!u.last_seen) return false;
+        return (now - new Date(u.last_seen).getTime()) < TWO_MIN;
+      }).length;
       setStats({
         totalUsers: allUsers.length,
         activeUsers: allUsers.filter(u => u.account_status === 'active').length,
-        onlineNow: allUsers.filter(u => u.is_online).length,
+        onlineNow: onlineCount,
       });
 
       // Count unread (open) tickets
@@ -320,6 +327,7 @@ export default function AdminPage() {
 
   const filteredUsers = users.filter(u =>
     u.full_name?.toLowerCase().includes(search.toLowerCase()) ||
+    u.username?.toLowerCase().includes(search.toLowerCase()) ||
     u.email?.toLowerCase().includes(search.toLowerCase()) ||
     u.mobile_number?.includes(search)
   );
