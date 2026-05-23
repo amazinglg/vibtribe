@@ -250,7 +250,8 @@ export default function ChatWindowPanel() {
   const [showAttachMenu, setShowAttachMenu] = useState(false);
   const [secureModalOpen, setSecureModalOpen] = useState(false);
   const [hoveredMsg, setHoveredMsg] = useState<string | null>(null);
-  const [contact, setContact] = useState<{ name: string; avatar: string; online: boolean; lastSeen: string; publicKey?: string; userId?: string; isContact?: boolean } | null>(null);
+  const [contact, setContact] = useState<{ name: string; avatar: string; avatarUrl?: string | null; online: boolean; lastSeen: string; publicKey?: string; userId?: string; isContact?: boolean } | null>(null);
+  const [enlargeAvatar, setEnlargeAvatar] = useState(false);
   const [loading, setLoading] = useState(false);
   const [e2eEnabled, setE2eEnabled] = useState(false);
   const [showE2EInfo, setShowE2EInfo] = useState(false);
@@ -461,7 +462,7 @@ export default function ChatWindowPanel() {
         const otherUserId = chat.participant_one === user.id ? chat.participant_two : chat.participant_one;
         const { data: otherUser } = await supabase
           .from('user_profiles')
-          .select('full_name, is_online, last_seen, public_key')
+          .select('full_name, is_online, last_seen, public_key, avatar_url, profile_photo_visibility')
           .eq('id', otherUserId)
           .single();
 
@@ -479,9 +480,21 @@ export default function ChatWindowPanel() {
             .eq('contact_id', otherUserId)
             .maybeSingle();
 
+          // Honor profile photo privacy: only show avatar if 'all' OR ('contacts' AND we're in their contacts)
+          let showAvatar = false;
+          const vis = (otherUser as any).profile_photo_visibility || 'all';
+          if (vis === 'all') showAvatar = true;
+          else if (vis === 'contacts') {
+            const { data: theyHaveUs } = await supabase
+              .from('contacts').select('id')
+              .eq('user_id', otherUserId).eq('contact_id', user.id).maybeSingle();
+            showAvatar = !!theyHaveUs;
+          }
+
           setContact({
             name: displayName,
             avatar: displayName[0]?.toUpperCase() || 'U',
+            avatarUrl: showAvatar ? (otherUser as any).avatar_url || null : null,
             online: otherUser.is_online || false,
             lastSeen: otherUser.is_online ? 'Online' : 'Last seen recently',
             publicKey: otherUser.public_key || undefined,
@@ -534,7 +547,7 @@ export default function ChatWindowPanel() {
     } catch {
       setContact({ name: 'Alex Rivera', avatar: 'A', online: true, lastSeen: 'Online' });
       setMessages([
-        { id: 'demo-1', senderId: 'other', text: 'Hey! Welcome to VibeTribe 🎉', time: '10:30 AM', status: 'read', reactions: [] },
+        { id: 'demo-1', senderId: 'other', text: 'Hey! Welcome to VibTribe 🎉', time: '10:30 AM', status: 'read', reactions: [] },
         { id: 'demo-2', senderId: user?.id || 'me', text: 'Thanks! This platform is amazing 🚀', time: '10:31 AM', status: 'read', reactions: ['❤️'] },
       ]);
     } finally {
@@ -750,22 +763,32 @@ export default function ChatWindowPanel() {
     }
   };
 
-  const handleVoiceCallClick = () => {
-    setPendingCall('voice');
-    if (permissions.microphone === 'granted') {
-      // Permissions already granted — skip the prompt and start immediately
-      setTimeout(() => handleCallPermAllow(), 0);
-    } else {
-      setShowCallPermPrompt(true);
+  // Calls now start immediately — the browser's native permission prompt handles mic/camera.
+  const handleVoiceCallClick = async () => {
+    if (!contact?.userId) return;
+    const callRow = await startCall({ calleeId: contact.userId, chatId: selectedChatId, type: 'voice', calleeName: contact.name, calleeAvatar: contact.avatar });
+    if (callRow?.id) {
+      const callerName = profile?.full_name || 'Someone';
+      sendPushNotification(supabase, {
+        user_id: contact.userId, chat_id: selectedChatId,
+        title: `📞 Incoming Voice Call`, body: `${callerName} is calling you on VibTribe`,
+        tag: `call-${contact.userId}`, url: '/', type: 'voice_call',
+        callerId: user?.id, callId: callRow.id,
+      }).catch(() => {});
     }
   };
 
-  const handleVideoCallClick = () => {
-    setPendingCall('video');
-    if (permissions.microphone === 'granted' && permissions.camera === 'granted') {
-      setTimeout(() => handleCallPermAllow(), 0);
-    } else {
-      setShowCallPermPrompt(true);
+  const handleVideoCallClick = async () => {
+    if (!contact?.userId) return;
+    const callRow = await startCall({ calleeId: contact.userId, chatId: selectedChatId, type: 'video', calleeName: contact.name, calleeAvatar: contact.avatar });
+    if (callRow?.id) {
+      const callerName = profile?.full_name || 'Someone';
+      sendPushNotification(supabase, {
+        user_id: contact.userId, chat_id: selectedChatId,
+        title: `📹 Incoming Video Call`, body: `${callerName} is calling you on VibTribe`,
+        tag: `call-${contact.userId}`, url: '/', type: 'video_call',
+        callerId: user?.id, callId: callRow.id,
+      }).catch(() => {});
     }
   };
 
@@ -785,7 +808,7 @@ export default function ChatWindowPanel() {
           user_id: contact.userId,
           chat_id: selectedChatId,
           title: `📹 Incoming Video Call`,
-          body: `${callerName} is calling you on VibeTribe`,
+          body: `${callerName} is calling you on VibTribe`,
           tag: `call-${contact.userId}`,
           url: '/',
           type: 'video_call',
@@ -805,7 +828,7 @@ export default function ChatWindowPanel() {
           user_id: contact.userId,
           chat_id: selectedChatId,
           title: `📞 Incoming Voice Call`,
-          body: `${callerName} is calling you on VibeTribe`,
+          body: `${callerName} is calling you on VibTribe`,
           tag: `call-${contact.userId}`,
           url: '/',
           type: 'voice_call',
@@ -862,7 +885,7 @@ export default function ChatWindowPanel() {
       {showCallPermPrompt && (
         <PermissionPrompt
           title={pendingCall === 'video' ? 'Video Call Permissions' : 'Voice Call Permissions'}
-          subtitle={pendingCall === 'video' ?'VibeTribe needs access to your camera and microphone for video calls.' :'VibeTribe needs access to your microphone for voice calls.'}
+          subtitle={pendingCall === 'video' ?'VibTribe needs access to your camera and microphone for video calls.' :'VibTribe needs access to your microphone for voice calls.'}
           permissions={pendingCall === 'video' ? [
             {
               icon: <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>,
@@ -895,7 +918,7 @@ export default function ChatWindowPanel() {
       {showMediaPermPrompt && (
         <PermissionPrompt
           title="Media Access"
-          subtitle="VibeTribe needs storage access to attach and share files."
+          subtitle="VibTribe needs storage access to attach and share files."
           permissions={[
             {
               icon: <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>,
@@ -924,14 +947,24 @@ export default function ChatWindowPanel() {
           <ArrowLeft size={22} strokeWidth={2.5} />
         </button>
 
-        <div className="relative flex-shrink-0">
-          <div className="w-10 h-10 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-sm">
-            {contact?.avatar || '?'}
-          </div>
+        <button
+          type="button"
+          onClick={() => contact?.avatarUrl && setEnlargeAvatar(true)}
+          className="relative flex-shrink-0 focus:outline-none"
+          aria-label="View profile picture"
+        >
+          {contact?.avatarUrl ? (
+            <img src={contact.avatarUrl} alt={contact.name}
+                 className="w-10 h-10 rounded-full object-cover border border-border" />
+          ) : (
+            <div className="w-10 h-10 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-sm">
+              {contact?.avatar || '?'}
+            </div>
+          )}
           {contact?.online && (
             <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-vt-green rounded-full border-2 border-background" />
           )}
-        </div>
+        </button>
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 min-w-0">
@@ -1121,6 +1154,21 @@ export default function ChatWindowPanel() {
       )}
 
       {/* E2E Banner */}
+      {/* Add-to-contacts banner — separate from phone contact import */}
+      {chatType !== 'group' && contact?.userId && !contact.isContact && (
+        <div className="flex items-center gap-2 px-3 py-2 bg-primary/5 border-b border-primary/15">
+          <UserPlus size={14} className="text-primary flex-shrink-0" />
+          <span className="text-[11px] text-foreground/80 flex-1 truncate">
+            {contact.name} is not in your VibTribe contacts
+          </span>
+          <button
+            onClick={handleAddToContacts}
+            className="text-[11px] font-semibold text-primary hover:underline flex-shrink-0"
+          >
+            Add
+          </button>
+        </div>
+      )}
       {e2eEnabled && (
         <button
           type="button"
@@ -1461,17 +1509,39 @@ export default function ChatWindowPanel() {
               <p>
                 Messages and calls in this chat are secured with <strong>end-to-end encryption</strong>.
                 Only you and <strong>{contact?.name || 'the other person'}</strong> can read what is sent —
-                <strong> no one else, not even VibeTribe</strong>, can access them.
+                <strong> no one else, not even VibTribe</strong>, can access them.
               </p>
               <div className="rounded-lg bg-vt-green/5 border border-vt-green/15 p-3 space-y-1.5">
                 <p className="flex items-start gap-2"><ShieldCheck size={13} className="text-vt-green mt-0.5"/> Your message is locked before it leaves your phone.</p>
                 <p className="flex items-start gap-2"><Lock size={13} className="text-vt-green mt-0.5"/> Only you and {contact?.name || 'the other person'} can open and read it.</p>
-                <p className="flex items-start gap-2"><ShieldOff size={13} className="text-vt-green mt-0.5"/> VibeTribe cannot see your private chat content.</p>
+                <p className="flex items-start gap-2"><ShieldOff size={13} className="text-vt-green mt-0.5"/> VibTribe cannot see your private chat content.</p>
               </div>
             </div>
             <button onClick={() => setShowE2EInfo(false)}
                     className="mt-4 w-full py-2.5 rounded-lg gradient-primary text-white text-sm font-semibold">Got it</button>
           </div>
+        </div>
+      )}
+
+      {/* Enlarged profile picture viewer */}
+      {enlargeAvatar && contact?.avatarUrl && (
+        <div
+          className="fixed inset-0 z-[1100] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4"
+          onClick={() => setEnlargeAvatar(false)}
+        >
+          <button
+            onClick={(e) => { e.stopPropagation(); setEnlargeAvatar(false); }}
+            className="absolute top-4 right-4 p-3 rounded-full bg-white/10 text-white hover:bg-white/20"
+            aria-label="Close"
+          >
+            <X size={22} />
+          </button>
+          <img
+            src={contact.avatarUrl}
+            alt={contact.name}
+            className="max-w-full max-h-[80vh] rounded-2xl object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
         </div>
       )}
     </div>

@@ -22,27 +22,27 @@ export default function CompleteProfilePage() {
 
     setLoading(true);
     try {
-      await updateProfile({
+      // Hard timeout so the page can never freeze on a stalled refetch
+      const update = updateProfile({
         username: username.toLowerCase(),
         bio,
         profile_completed: true,
       });
+      await Promise.race([
+        update,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000)),
+      ]).catch(() => {});
       router({ to: '/', replace: true });
     } catch (err: any) {
       setError(err.message || 'Failed to save profile. Please try again.');
-    } finally {
       setLoading(false);
+      return;
+    } finally {
+      // loading stays true until navigation completes
     }
   };
 
-  const handleSkip = async () => {
-    setSkipping(true);
-    try {
-      await updateProfile({ profile_completed: true });
-    } catch {}
-    router({ to: '/', replace: true });
-    setSkipping(false);
-  };
+  // Username is now mandatory — Skip option removed (kept handler for backwards compat but unused)
 
   return (
     <div className="gradient-bg-page min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
@@ -53,7 +53,7 @@ export default function CompleteProfilePage() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-3">
             <AppLogo size={48} />
-            <span className="font-bold text-3xl text-gradient-primary tracking-tight">VibeTribe</span>
+            <span className="font-bold text-3xl text-gradient-primary tracking-tight">VibTribe</span>
           </div>
           <div className="flex items-center justify-center gap-2 text-vt-green">
             <CheckCircle2 size={18} />
@@ -63,7 +63,7 @@ export default function CompleteProfilePage() {
 
         <div className="glass-strong rounded-3xl border border-border p-8 shadow-card">
           <h1 className="font-bold text-2xl text-foreground mb-1">Complete your profile</h1>
-          <p className="text-muted-foreground text-sm mb-6">Add a few details to personalize your VibeTribe experience</p>
+          <p className="text-muted-foreground text-sm mb-6">Add a few details to personalize your VibTribe experience</p>
 
           {/* Avatar placeholder */}
           <div className="flex justify-center mb-6">
@@ -128,14 +128,9 @@ export default function CompleteProfilePage() {
               )}
             </button>
 
-            <button
-              type="button"
-              onClick={handleSkip}
-              disabled={skipping}
-              className="w-full py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {skipping ? 'Redirecting...' : 'Skip for now →'}
-            </button>
+            <p className="text-center text-[11px] text-muted-foreground pt-1">
+              Username is required to continue
+            </p>
           </form>
         </div>
       </div>

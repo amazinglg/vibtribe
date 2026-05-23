@@ -9,7 +9,7 @@ import StatusViewer from './StatusViewer';
 type VisibilityOption = 'all' | 'contacts' | 'selected';
 
 const VISIBILITY_OPTIONS: { value: VisibilityOption; label: string; desc: string; icon: React.ElementType }[] = [
-  { value: 'all', label: 'All Users', desc: 'Everyone on VibeTribe', icon: Globe },
+  { value: 'all', label: 'All Users', desc: 'Everyone on VibTribe', icon: Globe },
   { value: 'contacts', label: 'My Contacts', desc: 'Only people in your contacts', icon: Users },
   { value: 'selected', label: 'Specific Contacts', desc: 'Choose specific people', icon: UserCheck },
 ];

@@ -46,7 +46,7 @@ export default function ForgotPasswordPage() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-3">
             <AppLogo size={48} />
-            <span className="font-bold text-3xl text-gradient-primary tracking-tight">VibeTribe</span>
+            <span className="font-bold text-3xl text-gradient-primary tracking-tight">VibTribe</span>
           </div>
         </div>
 

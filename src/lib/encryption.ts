@@ -1,5 +1,5 @@
 /**
- * VibeTribe E2E Encryption using Web Crypto API
+ * VibTribe E2E Encryption using Web Crypto API
  * Uses ECDH for key exchange + AES-GCM for message encryption
  */
 

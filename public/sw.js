@@ -38,7 +38,7 @@ self.addEventListener('fetch', (event) => {
 });
 
 function parsePush(event) {
-  const fallback = { title: 'VibeTribe', body: 'You have a new notification', type: 'message', url: '/' };
+  const fallback = { title: 'VibTribe', body: 'You have a new notification', type: 'message', url: '/' };
   if (!event.data) return fallback;
   try { return { ...fallback, ...event.data.json() }; }
   catch {
@@ -50,7 +50,7 @@ function parsePush(event) {
 self.addEventListener('push', (event) => {
   const data = parsePush(event);
   const isCall = data.type === 'voice_call' || data.type === 'video_call';
-  const title = data.title || (isCall ? 'Incoming call' : 'VibeTribe');
+  const title = data.title || (isCall ? 'Incoming call' : 'VibTribe');
   const targetUrl = new URL(data.url || '/', self.location.origin);
   if (data.chatId && !targetUrl.searchParams.get('chat')) targetUrl.searchParams.set('chat', data.chatId);
   if (isCall && data.callId && !targetUrl.searchParams.get('call')) targetUrl.searchParams.set('call', data.callId);
@@ -58,7 +58,7 @@ self.addEventListener('push', (event) => {
   const tag = data.tag || (isCall ? `call-${data.callId || data.callerId || Date.now()}` : `message-${data.chatId || 'chat'}-${data.timestamp || Date.now()}`);
 
   const options = {
-    body: data.body || (isCall ? 'Incoming VibeTribe call' : 'You have a new message'),
+    body: data.body || (isCall ? 'Incoming VibTribe call' : 'You have a new message'),
     icon: '/icons/icon-192x192.png',
     badge: '/favicon.ico',
     tag,

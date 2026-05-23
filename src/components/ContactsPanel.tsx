@@ -20,7 +20,7 @@ interface ContactsPanelProps {
 const getPlatformUrl = () =>
   typeof window !== 'undefined' ? window.location.origin : 'https://vibtribe.in';
 const getInviteMsg = () =>
-  `Hey! I'm using VibeTribe — a secure messaging app. Join me here: ${getPlatformUrl()}/sign-up 🚀`;
+  `Hey! I'm using VibTribe — a secure messaging app. Join me here: ${getPlatformUrl()}/sign-up 🚀`;
 
 export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelProps) {
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -243,7 +243,7 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
             </div>
             <div>
               <h2 className="font-bold text-base text-foreground">Contacts</h2>
-              <p className="text-xs text-muted-foreground">Find friends on VibeTribe</p>
+              <p className="text-xs text-muted-foreground">Find friends on VibTribe</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-all">
@@ -260,7 +260,7 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
               </div>
               <h3 className="font-bold text-lg text-foreground mb-2">Find Your Contacts</h3>
               <p className="text-sm text-muted-foreground mb-3">
-                VibeTribe needs access to your contacts to find your friends on the platform and let you invite the rest.
+                VibTribe needs access to your contacts to find your friends on the platform and let you invite the rest.
               </p>
               <p className="text-[11px] text-muted-foreground/80 mb-6 leading-relaxed">
                 Note: Web apps can only read contacts you tap to select in the picker — your browser will not allow a one-tap "all contacts" import. To pick everyone, tap the contact list header in the picker (Android Chrome supports this). For a true single-tap import we'd need a native app build.
@@ -297,7 +297,7 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
                 <X size={22} className="text-red-400" />
               </div>
               <h3 className="font-semibold text-foreground mb-1">Access Denied</h3>
-              <p className="text-sm text-muted-foreground mb-4">Contact access was denied. To find friends on VibeTribe, allow contact access from your browser/app settings, or use the global search to add people by username or phone.</p>
+              <p className="text-sm text-muted-foreground mb-4">Contact access was denied. To find friends on VibTribe, allow contact access from your browser/app settings, or use the global search to add people by username or phone.</p>
               <button
                 onClick={onClose}
                 className="gradient-primary text-white px-6 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-all"
@@ -338,7 +338,7 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
                   {platformContacts.length > 0 && (
                     <div className="mb-4">
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2">
-                        On VibeTribe ({platformContacts.length})
+                        On VibTribe ({platformContacts.length})
                       </p>
                       <div className="space-y-2">
                         {platformContacts.map((c, i) => (
@@ -350,7 +350,7 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
                               <p className="text-sm font-semibold text-foreground truncate">{c.name}</p>
                               <div className="flex items-center gap-1 mt-0.5">
                                 <Check size={10} className="text-vt-green" />
-                                <span className="text-[11px] text-vt-green font-medium">On VibeTribe</span>
+                                <span className="text-[11px] text-vt-green font-medium">On VibTribe</span>
                               </div>
                             </div>
                             <button
@@ -370,7 +370,7 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
                   {nonPlatformContacts.length > 0 && (
                     <div>
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2">
-                        Invite to VibeTribe ({nonPlatformContacts.length})
+                        Invite to VibTribe ({nonPlatformContacts.length})
                       </p>
                       <div className="space-y-2">
                         {nonPlatformContacts.map((c, i) => (
@@ -380,7 +380,7 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-semibold text-foreground truncate">{c.name}</p>
-                              <p className="text-[11px] text-muted-foreground">Not on VibeTribe yet</p>
+                              <p className="text-[11px] text-muted-foreground">Not on VibTribe yet</p>
                             </div>
                             <button
                               onClick={() => setInviteTarget(c)}

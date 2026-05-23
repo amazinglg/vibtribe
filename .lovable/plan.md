@@ -1,70 +1,65 @@
-## What I pulled from `amazinglg/vibetribe`
+This is a large, multi-area request. Here's how I'll tackle it in one coordinated pass. Please confirm before I start — especially the rename, since it touches the database and stored values.
 
-Cloned the repo (`main` branch). It contains:
+## 1. Rebrand: VibeTribe → VibTribe (everywhere)
+- Replace every code/content occurrence: page titles, meta tags, manifest, OG tags, toasts, modals, push payloads, email subject, service worker, README-ish strings.
+- Update the brand wordmark/logo text component.
+- Update DB string values that contain "VibeTribe" (e.g. default notification titles, support email body templates if any) via migration. **Note:** the email domain `vibetribe.in` in `VAPID_SUBJECT` will be left as-is (it's a mailto identifier, changing it requires DNS); I'll flag this for you.
+- I will NOT rename Supabase project ref / storage bucket names (would break uploads). Buckets stay `status-media`, `profile-photos`.
 
-- **32 source files** (~5,100 lines): Next.js App Router pages, components, contexts, store, encryption lib, middleware
-- **2 Supabase migrations** (`vibetribe_full_schema`, `add_e2e_and_visibility`)
-- **5 public assets**: favicon, manifest, sw.js, app_logo.png, no_image.png
-- **Stack**: Next.js 15 + React 19, Supabase SSR auth, Tailwind 3, framer-motion, recharts, sonner, zustand, @heroicons/react, @supabase/ssr, custom Web Crypto E2E encryption, PWA service worker
+## 2. Status viewer
+- **Hold-to-pause**: pointerdown pauses, pointerup resumes — independent of the play/pause button state.
+- **Heart button** → posts a "❤️ Liked your status" reaction (chat message tagged as status-reaction) instead of opening reply composer. Reply stays via the bottom input bar.
+- **Eye button** → directly opens the viewers list panel (remove the intermediate prompt).
+- **Close (×) button**: fix tap target — currently swallowed by portal/backdrop. Wire `onPointerUp` with `stopPropagation` and ensure z-index above progress bar.
 
-## Why this needs porting (not just copying)
+## 3. Admin panel
+- **Online now**: add `last_seen_at` heartbeat (ping every 30s from AuthContext while tab visible). Admin query counts users with `last_seen_at > now() - 2 min`.
+- **Username column**: show `username` in the users table.
+- **Mandatory username at signup**: add required field on `SignUpPage` + `CompleteProfilePage`; uniqueness check.
+- **Backfill**: one-time migration assigns `<full_name_slug><random4>` to existing users with NULL/empty username.
 
-This Lovable template is **TanStack Start v1**, not Next.js. The following Next-only APIs do not exist here and must be mirrored:
+## 4. Chat window
+- Show user's avatar (not initial) in the chat header; clicking opens a full-screen image viewer (reuse the status enlarge component).
+- **Add-to-contacts banner**: if the other participant isn't in `contacts`, show a small inline banner above the message list with "Add to VibTribe contacts" button. Separate from phone-contact import (which stays in Contacts tab).
 
-| Next.js API used | Replacement in this template |
-|---|---|
-| `src/app/*/page.tsx` (App Router) | `src/routes/*.tsx` (file-based, dot-separated) |
-| `next/link`, `next/navigation` (`useRouter`, `redirect`) | `@tanstack/react-router` (`Link`, `useNavigate`, `useRouter`) |
-| `next/image` | plain `<img>` wrapper (keeps the `AppImage` API and fallback logic identical) |
-| `next/font/google` (Plus Jakarta Sans) | Google Fonts `<link>` in `__root.tsx` head |
-| `export const metadata` per page | `head()` per route file |
-| `src/middleware.ts` (server auth gate) | `_authenticated` layout route + client redirect (same protected paths) |
-| `@supabase/ssr` `createServerClient` / `createBrowserClient` | Lovable Cloud's bundled `@supabase/supabase-js` browser client |
-| Tailwind v3 `tailwind.config.js` + custom CSS vars | Tailwind v4 `@theme` block in `src/styles.css`, mirroring all your custom tokens |
-| `next.config.mjs` image hosts, `public/sw.js` | `public/sw.js` kept as-is, registered the same way |
+## 5. Calls
+- **Remove permission modal**: call `getUserMedia` directly on click; browser's native prompt handles permission. Delete `PermissionPrompt` usage for call buttons.
+- **Video-call falling back to audio**: fix `getUserMedia({ video: true, audio: true })` — currently re-uses an audio-only stream if mic was granted first. Always request fresh stream per call type.
+- **Video freeze**: add ICE restart on connection-state `disconnected`, and ensure `addTrack` happens before `createOffer` (race fix).
 
-Everything else (auth flows, chat panels, status screen, profile, admin, vault, encryption, PWA banner, zustand store, sonner toasts, framer-motion, recharts, heroicons) is supported and will be copied with the smallest possible diff.
+## 6. Push notifications
+- Service worker: ensure `showNotification` is called inside `event.waitUntil`.
+- Trigger push from a server fn on every new message insert (currently only fires for some paths). Add a DB trigger → server fn webhook call.
+- Subscribe on login (not just first visit) and re-subscribe if `pushManager.getSubscription()` is null.
 
-## Plan
+## 7. Complete-profile stuck page (image 3)
+- The "Saving… Redirecting…" hangs because the redirect waits on a profile refetch that never resolves when RLS rejects the just-updated row. Fix: navigate immediately after `update().select().single()` succeeds; don't await secondary fetches.
 
-1. **Backend**: Enable Lovable Cloud, then apply both Supabase migrations verbatim as new timestamped migrations.
-2. **Dependencies**: `bun add` framer-motion, sonner, zustand, recharts, @heroicons/react, @supabase/supabase-js. Remove the placeholder `src/routes/index.tsx`.
-3. **Design system**: Port your Tailwind tokens (gradients, glow shadows, custom colors like `onBackground`, `gradient-bg-page`, `gradient-primary`) into `src/styles.css` `@theme` so existing classnames keep working without touching component JSX.
-4. **Shared lib**:
-   - `src/lib/supabase/client.ts` → returns `@supabase/supabase-js` browser client using `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` (Cloud-injected). Same `createClient()` export, no caller changes.
-   - `src/lib/encryption.ts` → copied 1:1 (Web Crypto + IndexedDB, framework-agnostic).
-   - `src/contexts/AuthContext.tsx` → copied 1:1 (already client-only).
-   - `src/store/chatStore.ts` → copied 1:1.
-5. **Routes** (`src/routes/`):
-   - `__root.tsx` — wraps `AuthProvider`, mounts `<Toaster>`, registers SW, loads Plus Jakarta Sans, sets viewport/manifest/icons; preserves your `<script>` tags? → **dropped** (rocket.new tagger is a Next-only build helper, not needed here).
-   - `index.tsx` — chats home (`ChatListPanel` + `ChatWindowPanel`).
-   - `sign-in.tsx`, `sign-up.tsx`, `forgot-password.tsx`, `complete-profile.tsx`, `status-screen.tsx`, `profile-screen.tsx`, `admin.tsx` — one route per Next page, body copied with only `next/*` imports swapped.
-   - Auth gating handled inline in each protected route via `useAuth()` + `useNavigate({ to: '/sign-in' })`, mirroring your middleware's protected/auth-page lists exactly.
-6. **Components**: `AppLayout`, `ChatListPanel`, `ChatWindowPanel`, `ContactsPanel`, `MarkSecureModal`, `SecureVaultModal`, `PWAInstallBanner`, `ServiceWorkerRegistration`, `ui/AppIcon`, `ui/AppImage` (rewritten as plain `<img>` keeping props/fallback API), `ui/AppLogo`, plus `profile-screen/components/*` and `status-screen/components/*` — all copied with `'use client'` removed and `next/*` imports swapped.
-7. **Public assets**: copy `app_logo.png`, `no_image.png`, `favicon.ico`, `manifest.json`, `sw.js` to `public/`.
+## 8. Session persistence (no auto-logout)
+- Already `persistSession: true`. Add explicit refresh on visibility change and SW message. Increase JWT expiry isn't needed — the refresh-token flow handles it; just make sure `onAuthStateChange` doesn't sign out on transient `TOKEN_REFRESHED` errors (currently it does in one path).
 
-## Things I will be altering (full list)
+## 9. Login speed
+- Parallelize: kick off `signInWithPassword` and prefetch `user_profiles` row concurrently.
+- Remove blocking `await` on `mark_messages_read` and push-subscribe (fire-and-forget).
+- Lazy-load heavy chat bundle after navigation, not before.
 
-- **Removed entirely**:
-  - `next`, `next/font`, `@netlify/plugin-nextjs`, `eslint-config-next`, `@dhiwise/component-tagger`, `next.config.mjs`, `tailwind.config.js`, `postcss.config.js`, `src/middleware.ts`, `next-env.d.ts`, `image-hosts.config.mjs`
-  - The two `<script>` tags pointing to `static.rocket.new` (Next-host-specific telemetry)
-  - `@supabase/ssr` (replaced by browser-only client; no SSR auth cookies in this template)
-  - Server-side metadata exports (replaced by route `head()`)
-- **Rewritten (same API, different impl)**:
-  - `AppImage` — drops `next/image` optimization for `<img>` with the same fallback/loading/onClick props
-  - `client.tsx` → `client.ts` using `@supabase/supabase-js`
-  - Page files moved from `src/app/.../page.tsx` to `src/routes/*.tsx`
-- **Auth gate**: middleware logic re-implemented client-side per protected route (same path lists). Same UX, but redirect happens on mount instead of edge.
+## 10. PWA / cross-platform sync
+- Add proper iOS safe-area-inset handling globally.
+- Ensure manifest `display: standalone`, theme color, masked icons.
+- Service worker: NetworkFirst for HTML, runtime cache for images.
+- Add `Add to Home Screen` banner on Android (already exists for iOS-style? verify).
 
-## Things pending / open questions
+---
 
-1. **Env vars**: Lovable Cloud auto-provides `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`. Your repo references `NEXT_PUBLIC_SUPABASE_URL/ANON_KEY`. I'll wire the Cloud vars — **the existing data in your Supabase project will not move with the code**; this will spin up a fresh Lovable Cloud Supabase project. If you want the existing data, share your current Supabase URL/keys and I'll point to that instead.
-2. **`x-sb-token` header injection** in your middleware (used for cross-domain token handoff) has no equivalent here — dropping it. Confirm if any external system depends on this.
-3. **PWA service worker** (`public/sw.js`) will be served, but TanStack Start uses Vite — if `sw.js` references Next's `_next/` cache paths, it may need a small URL rewrite. I'll review on copy.
-4. **`recharts`** isn't actually imported anywhere I've scanned yet — I'll add it only if `admin/page.tsx` or another file uses it.
+## What I will NOT change without your explicit OK
+- Storage bucket names, Supabase project ref, env var names.
+- The `vibetribe.in` mailto in VAPID_SUBJECT (needs your DNS change).
+- The deployed domain `vibtribe.in` (already correct).
+- User access/permissions/roles — only fixes, no privilege changes.
 
-## Things that won't get pulled
+## Approval checkpoints I need from you
+1. **Confirm rename scope**: replace "VibeTribe" → "VibTribe" in code + user-visible DB strings only (keeping bucket names, project ref, mailto domain). ✅/❌
+2. **Username backfill format**: `firstname + 4 random digits` (e.g. `richa3829`). OK?
+3. **Online-now threshold**: 2 minutes since last heartbeat = "online". OK?
 
-- `next.config.mjs`, `tailwind.config.js`, `postcss.config.js`, `next-env.d.ts`, `src/middleware.ts`, `image-hosts.config.mjs`, the rocket.new script tags. All are Next/Netlify-specific build glue with no behavior to preserve.
-
-Approve this and I'll execute the full port in one pass, then list any file that didn't translate cleanly.
+Reply "go" with answers to the 3 questions (or "go, defaults" to accept) and I'll execute everything in one batched implementation.

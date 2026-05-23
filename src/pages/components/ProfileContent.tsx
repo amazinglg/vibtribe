@@ -534,7 +534,7 @@ export default function ProfileContent() {
       toast.dismiss(waitId);
     }
     if (result === 'accepted') {
-      toast.success('VibeTribe is being installed on your device');
+      toast.success('VibTribe is being installed on your device');
       setInstallState('installed');
     } else if (result === 'dismissed') {
       toast.info('Install cancelled');
@@ -1202,7 +1202,7 @@ export default function ProfileContent() {
                 <Palette size={16} className="text-primary" />
                 App Themes
               </h3>
-              <p className="text-xs text-muted-foreground mb-5">Choose a theme for your VibeTribe experience. Your selection is saved and applied across all pages.</p>
+              <p className="text-xs text-muted-foreground mb-5">Choose a theme for your VibTribe experience. Your selection is saved and applied across all pages.</p>
               <div className="grid grid-cols-1 gap-3">
                 {APP_THEMES.map((theme) => {
                   const isActive = currentTheme.id === theme.id;
@@ -1269,7 +1269,7 @@ export default function ProfileContent() {
                     onClick={handleInstallApp}
                     disabled={installState === 'installed' || installState === 'installing'}
                     className="flex items-center gap-2 px-4 py-2.5 glass border border-primary/40 text-primary text-sm font-semibold rounded-xl hover:bg-primary/10 transition-all disabled:opacity-60"
-                    title={installState === 'installed' ? 'Already installed' : 'Install VibeTribe on this device'}
+                    title={installState === 'installed' ? 'Already installed' : 'Install VibTribe on this device'}
                   >
                     {isIOSDevice ? <Share size={14} /> : <Download size={14} />}
                     {installState === 'installed'
@@ -1366,7 +1366,7 @@ export default function ProfileContent() {
                   <Download size={18} className="text-white" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-base text-foreground">Install VibeTribe</h3>
+                  <h3 className="font-bold text-base text-foreground">Install VibTribe</h3>
                   <p className="text-[11px] text-muted-foreground">Add to home screen for the full app experience</p>
                 </div>
               </div>
@@ -1396,7 +1396,7 @@ export default function ProfileContent() {
               <div className="space-y-3">
                 <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl">
                   <p className="text-xs text-amber-300 font-semibold mb-1">⚠️ In-app browser detected</p>
-                  <p className="text-[11px] text-amber-200/80">This browser doesn't support installing apps. Please open VibeTribe in <strong>Chrome</strong> to install it.</p>
+                  <p className="text-[11px] text-amber-200/80">This browser doesn't support installing apps. Please open VibTribe in <strong>Chrome</strong> to install it.</p>
                 </div>
                 <div className="flex items-start gap-3 p-3 bg-primary/10 rounded-xl">
                   <span className="w-6 h-6 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center flex-shrink-0">1</span>
@@ -1433,13 +1433,13 @@ export default function ProfileContent() {
                 </div>
                 <div className="flex items-start gap-3 p-3 bg-primary/10 rounded-xl">
                   <span className="w-6 h-6 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center flex-shrink-0">3</span>
-                  <p className="text-xs text-foreground">Confirm <strong>Install</strong>. VibeTribe will appear on your home screen.</p>
+                  <p className="text-xs text-foreground">Confirm <strong>Install</strong>. VibTribe will appear on your home screen.</p>
                 </div>
                 <button
                   onClick={async () => {
                     const result = await triggerPwaInstall();
                     if (result === 'accepted') {
-                      toast.success('Installing VibeTribe…');
+                      toast.success('Installing VibTribe…');
                       setShowInstallHelp(false);
                       setInstallState('installed');
                     } else if (result === 'unavailable') {

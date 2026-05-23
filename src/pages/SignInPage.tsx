@@ -113,7 +113,7 @@ export default function SignInPage() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-3">
             <AppLogo size={48} />
-            <span className="font-bold text-3xl text-gradient-primary tracking-tight">VibeTribe</span>
+            <span className="font-bold text-3xl text-gradient-primary tracking-tight">VibTribe</span>
           </div>
           <p className="text-muted-foreground text-sm">Where your vibe finds its tribe ✨</p>
         </div>
@@ -222,7 +222,7 @@ export default function SignInPage() {
 
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
-              New to VibeTribe?{' '}
+              New to VibTribe?{' '}
               <Link to="/sign-up" className="text-primary font-semibold hover:text-primary/80 transition-colors">
                 Create account
               </Link>
