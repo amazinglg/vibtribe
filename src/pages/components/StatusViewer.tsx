@@ -307,6 +307,7 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
         />
 
         {/* Bottom Actions */}
+        {(!isOwner || !showViewers) && (
         <div className="absolute bottom-0 left-0 right-0 z-40 p-4">
           {isOwner ? (
             <div className="text-center text-xs text-white/80 bg-black/40 rounded-full px-3 py-2 backdrop-blur-sm">
@@ -363,10 +364,13 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
             </div>
           )}
         </div>
+        )}
 
         {/* Owner viewers panel */}
         {isOwner && showViewers && (
-          <div className="absolute inset-x-0 bottom-0 z-20 max-h-[55%] overflow-y-auto bg-black/85 backdrop-blur-md border-t border-white/15 rounded-t-2xl p-4"
+          <div className="absolute inset-x-0 bottom-0 z-50 max-h-[55%] overflow-y-auto bg-black/90 backdrop-blur-md border-t border-white/15 rounded-t-2xl p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]"
+               onPointerDown={(e) => e.stopPropagation()}
+               onPointerUp={(e) => e.stopPropagation()}
                onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-3">
               <p className="text-sm font-semibold text-white flex items-center gap-2"><Eye size={14}/> Viewed by {viewers.length}</p>
