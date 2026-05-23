@@ -145,11 +145,11 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-xl">
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-background/95 backdrop-blur-xl">
       {/* Close */}
       <button
         onClick={onClose}
-        className="absolute top-4 right-4 z-10 p-2 glass rounded-full text-foreground hover:bg-muted transition-all"
+        className="absolute top-4 right-4 z-50 p-2 glass rounded-full text-foreground hover:bg-muted transition-all"
       >
         <X size={20} />
       </button>
@@ -157,7 +157,7 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
       {/* Story Card */}
       <div className="relative w-full max-w-sm mx-4 h-[80vh] max-h-[700px] rounded-3xl overflow-hidden shadow-card">
         {/* Progress Bars */}
-        <div className="absolute top-0 left-0 right-0 z-10 flex gap-1 px-3 pt-3">
+        <div className="absolute top-0 left-0 right-0 z-30 flex gap-1 px-3 pt-3 pointer-events-none">
           {contact.stories.map((s, i) => (
             <div key={s.id} className="flex-1 h-1 bg-white/30 rounded-full overflow-hidden">
               <div
@@ -171,7 +171,7 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
         </div>
 
         {/* Header */}
-        <div className="absolute top-0 left-0 right-0 z-10 pt-7 px-4 pb-3 flex items-center gap-3">
+        <div className="absolute top-0 left-0 right-0 z-40 pt-7 px-4 pb-3 flex items-center gap-3">
           {contact.avatarUrl ? (
             <img src={contact.avatarUrl} alt={contact.name}
                  className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
@@ -187,16 +187,16 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
           <div className="ml-auto flex items-center gap-2">
             {isOwner && (
               <button
-                onClick={() => { setShowViewers(v => !v); setPaused(true); }}
-                className="flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-black/40 text-white border border-white/20"
+                onClick={(e) => { e.stopPropagation(); setShowViewers(v => !v); setPaused(true); }}
+                className="relative z-50 flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-black/40 text-white border border-white/20"
               >
                 <Eye size={13} />
                 <span>{viewers.length}</span>
               </button>
             )}
             <button
-              onClick={() => setPaused(p => !p)}
-              className="p-1.5 text-white/80 hover:text-white transition-colors"
+              onClick={(e) => { e.stopPropagation(); setPaused(p => !p); }}
+              className="relative z-50 p-1.5 text-white/80 hover:text-white transition-colors"
               aria-label={paused ? 'Resume' : 'Pause'}
             >
               {paused ? <Play size={18} /> : <Pause size={18} />}
@@ -233,16 +233,16 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
 
         {/* Navigation Zones */}
         <button
-          className="absolute left-0 top-0 bottom-0 w-1/3 z-10"
+          className="absolute left-0 top-16 bottom-20 w-1/3 z-10"
           onClick={() => { if (currentIdx > 0) setCurrentIdx(i => i - 1); else onClose(); }}
         />
         <button
-          className="absolute right-0 top-0 bottom-0 w-1/3 z-10"
+          className="absolute right-0 top-16 bottom-20 w-1/3 z-10"
           onClick={() => { if (currentIdx < contact.stories.length - 1) setCurrentIdx(i => i + 1); else onClose(); }}
         />
 
         {/* Bottom Actions */}
-        <div className="absolute bottom-0 left-0 right-0 z-10 p-4">
+        <div className="absolute bottom-0 left-0 right-0 z-40 p-4">
           {isOwner ? (
             <div className="text-center text-xs text-white/80 bg-black/40 rounded-full px-3 py-2 backdrop-blur-sm">
               {viewers.length === 0 ? 'No views yet' : `${viewers.length} view${viewers.length === 1 ? '' : 's'} — tap eye to see who`}
