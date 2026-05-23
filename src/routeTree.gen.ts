@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as StatusScreenRouteImport } from './routes/status-screen'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as ProfileScreenRouteImport } from './routes/profile-screen'
@@ -23,6 +24,11 @@ import { Route as AdminUserUserIdRouteImport } from './routes/admin.user.$userId
 const StatusScreenRoute = StatusScreenRouteImport.update({
   id: '/status-screen',
   path: '/status-screen',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignUpRoute = SignUpRouteImport.update({
@@ -79,6 +85,7 @@ export interface FileRoutesByFullPath {
   '/profile-screen': typeof ProfileScreenRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/status-screen': typeof StatusScreenRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
@@ -90,6 +97,7 @@ export interface FileRoutesByTo {
   '/profile-screen': typeof ProfileScreenRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/status-screen': typeof StatusScreenRoute
   '/admin': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
@@ -103,6 +111,7 @@ export interface FileRoutesById {
   '/profile-screen': typeof ProfileScreenRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/status-screen': typeof StatusScreenRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
@@ -117,6 +126,7 @@ export interface FileRouteTypes {
     | '/profile-screen'
     | '/sign-in'
     | '/sign-up'
+    | '/sitemap.xml'
     | '/status-screen'
     | '/admin/'
     | '/admin/user/$userId'
@@ -128,6 +138,7 @@ export interface FileRouteTypes {
     | '/profile-screen'
     | '/sign-in'
     | '/sign-up'
+    | '/sitemap.xml'
     | '/status-screen'
     | '/admin'
     | '/admin/user/$userId'
@@ -140,6 +151,7 @@ export interface FileRouteTypes {
     | '/profile-screen'
     | '/sign-in'
     | '/sign-up'
+    | '/sitemap.xml'
     | '/status-screen'
     | '/admin/'
     | '/admin/user/$userId'
@@ -153,6 +165,7 @@ export interface RootRouteChildren {
   ProfileScreenRoute: typeof ProfileScreenRoute
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StatusScreenRoute: typeof StatusScreenRoute
 }
 
@@ -163,6 +176,13 @@ declare module '@tanstack/react-router' {
       path: '/status-screen'
       fullPath: '/status-screen'
       preLoaderRoute: typeof StatusScreenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sign-up': {
@@ -251,8 +271,19 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileScreenRoute: ProfileScreenRoute,
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   StatusScreenRoute: StatusScreenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
