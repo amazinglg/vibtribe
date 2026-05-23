@@ -1,65 +1,52 @@
-This is a large, multi-area request. Here's how I'll tackle it in one coordinated pass. Please confirm before I start — especially the rename, since it touches the database and stored values.
+# E2E Encryption (PIN-Backed) + Edit/Delete Messages
 
-## 1. Rebrand: VibeTribe → VibTribe (everywhere)
-- Replace every code/content occurrence: page titles, meta tags, manifest, OG tags, toasts, modals, push payloads, email subject, service worker, README-ish strings.
-- Update the brand wordmark/logo text component.
-- Update DB string values that contain "VibeTribe" (e.g. default notification titles, support email body templates if any) via migration. **Note:** the email domain `vibetribe.in` in `VAPID_SUBJECT` will be left as-is (it's a mailto identifier, changing it requires DNS); I'll flag this for you.
-- I will NOT rename Supabase project ref / storage bucket names (would break uploads). Buckets stay `status-media`, `profile-photos`.
+## Part 1: True E2E Encryption with 6-digit PIN
 
-## 2. Status viewer
-- **Hold-to-pause**: pointerdown pauses, pointerup resumes — independent of the play/pause button state.
-- **Heart button** → posts a "❤️ Liked your status" reaction (chat message tagged as status-reaction) instead of opening reply composer. Reply stays via the bottom input bar.
-- **Eye button** → directly opens the viewers list panel (remove the intermediate prompt).
-- **Close (×) button**: fix tap target — currently swallowed by portal/backdrop. Wire `onPointerUp` with `stopPropagation` and ensure z-index above progress bar.
+### How it works
+1. **First time setup** — When a signed-in user opens the app and has no encryption key yet, a modal asks them to **set a 6-digit Encryption PIN**.
+2. We generate an ECDH keypair, then derive an AES key from their PIN using PBKDF2 (100k iterations + random salt).
+3. The private key is encrypted with that AES key and uploaded to the database. The public key is also stored.
+4. **New device / cleared cache** — App detects local IndexedDB is empty but DB has an encrypted blob → asks for PIN → decrypts → caches locally.
+5. **Sending a message** — Real ECDH key exchange + AES-GCM encryption. Server only sees ciphertext.
+6. **Existing users** — Auto-migration: on next login, they're prompted to set their PIN. No backend batch needed; their unread/future messages are encrypted from that point. Old plaintext messages stay readable.
 
-## 3. Admin panel
-- **Online now**: add `last_seen_at` heartbeat (ping every 30s from AuthContext while tab visible). Admin query counts users with `last_seen_at > now() - 2 min`.
-- **Username column**: show `username` in the users table.
-- **Mandatory username at signup**: add required field on `SignUpPage` + `CompleteProfilePage`; uniqueness check.
-- **Backfill**: one-time migration assigns `<full_name_slug><random4>` to existing users with NULL/empty username.
+### Database changes
+- `user_profiles`: add `encrypted_private_key` (text), `key_salt` (text), `key_iv` (text), `key_setup_completed` (bool)
+- Public key column already exists.
 
-## 4. Chat window
-- Show user's avatar (not initial) in the chat header; clicking opens a full-screen image viewer (reuse the status enlarge component).
-- **Add-to-contacts banner**: if the other participant isn't in `contacts`, show a small inline banner above the message list with "Add to VibTribe contacts" button. Separate from phone-contact import (which stays in Contacts tab).
+### Files
+- Rewrite `src/lib/encryption.ts` (PIN-derived key wrap, real ECDH/AES-GCM)
+- New `src/components/EncryptionPinModal.tsx` (set / unlock PIN)
+- Wire into `AuthContext` to surface modal on login when needed
 
-## 5. Calls
-- **Remove permission modal**: call `getUserMedia` directly on click; browser's native prompt handles permission. Delete `PermissionPrompt` usage for call buttons.
-- **Video-call falling back to audio**: fix `getUserMedia({ video: true, audio: true })` — currently re-uses an audio-only stream if mic was granted first. Always request fresh stream per call type.
-- **Video freeze**: add ICE restart on connection-state `disconnected`, and ensure `addTrack` happens before `createOffer` (race fix).
+## Part 2: Message Edit / Delete for Sender
 
-## 6. Push notifications
-- Service worker: ensure `showNotification` is called inside `event.waitUntil`.
-- Trigger push from a server fn on every new message insert (currently only fires for some paths). Add a DB trigger → server fn webhook call.
-- Subscribe on login (not just first visit) and re-subscribe if `pushManager.getSubscription()` is null.
+### Long-press menu (own messages only)
+- **Edit** — inline edit; saves new ciphertext, marks `edited_at`
+- **Delete for me** — adds my user_id to `deleted_for[]`, message hidden only for me
+- **Delete for both** — only if message is < 1 hour old; sets `deleted_for_everyone=true`; renders as "🚫 This message was deleted" for everyone
 
-## 7. Complete-profile stuck page (image 3)
-- The "Saving… Redirecting…" hangs because the redirect waits on a profile refetch that never resolves when RLS rejects the just-updated row. Fix: navigate immediately after `update().select().single()` succeeds; don't await secondary fetches.
+### Database changes
+- `messages`: add `edited_at` (timestamptz), `deleted_for_everyone` (bool), `deleted_for` (uuid[] default '{}')
+- New SECURITY DEFINER RPC `delete_message_for_me(_msg_id uuid)` so users can update their own row in `deleted_for` even when they aren't the sender
+- Update messages RLS UPDATE to allow sender to set `deleted_for_everyone` within 1 hour and to update `content`/`edited_at`
 
-## 8. Session persistence (no auto-logout)
-- Already `persistSession: true`. Add explicit refresh on visibility change and SW message. Increase JWT expiry isn't needed — the refresh-token flow handles it; just make sure `onAuthStateChange` doesn't sign out on transient `TOKEN_REFRESHED` errors (currently it does in one path).
+### UI changes (ChatWindowPanel)
+- Long-press (touchstart hold 500ms) + right-click handlers on own message bubbles
+- Context menu component with Edit / Delete-for-me / Delete-for-both
+- Inline edit input
+- Render "This message was deleted" for `deleted_for_everyone`
+- Filter out messages where current user is in `deleted_for`
+- Handle realtime UPDATE for edits and tombstones
 
-## 9. Login speed
-- Parallelize: kick off `signInWithPassword` and prefetch `user_profiles` row concurrently.
-- Remove blocking `await` on `mark_messages_read` and push-subscribe (fire-and-forget).
-- Lazy-load heavy chat bundle after navigation, not before.
+## Verification
+1. Apply migration
+2. Sign in as test user → PIN setup modal appears → set PIN → keys generated
+3. Send message → verify DB row content starts with `e2e:` (ciphertext)
+4. Long-press own message → edit, delete-for-me, delete-for-both — verify each behaves correctly
+5. Reload app → PIN unlock prompt → message decrypts back to plaintext in UI
 
-## 10. PWA / cross-platform sync
-- Add proper iOS safe-area-inset handling globally.
-- Ensure manifest `display: standalone`, theme color, masked icons.
-- Service worker: NetworkFirst for HTML, runtime cache for images.
-- Add `Add to Home Screen` banner on Android (already exists for iOS-style? verify).
-
----
-
-## What I will NOT change without your explicit OK
-- Storage bucket names, Supabase project ref, env var names.
-- The `vibetribe.in` mailto in VAPID_SUBJECT (needs your DNS change).
-- The deployed domain `vibtribe.in` (already correct).
-- User access/permissions/roles — only fixes, no privilege changes.
-
-## Approval checkpoints I need from you
-1. **Confirm rename scope**: replace "VibeTribe" → "VibTribe" in code + user-visible DB strings only (keeping bucket names, project ref, mailto domain). ✅/❌
-2. **Username backfill format**: `firstname + 4 random digits` (e.g. `richa3829`). OK?
-3. **Online-now threshold**: 2 minutes since last heartbeat = "online". OK?
-
-Reply "go" with answers to the 3 questions (or "go, defaults" to accept) and I'll execute everything in one batched implementation.
+## Honest caveats
+- Lost PIN = lost message history (same tradeoff as Signal/Telegram). Modal will warn.
+- Group chats remain unencrypted (no multi-party key exchange in this iteration).
+- Encrypted media is still not supported — text only in E2E chats.

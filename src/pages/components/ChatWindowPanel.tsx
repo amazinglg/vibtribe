@@ -24,6 +24,9 @@ interface Message {
   encrypted?: boolean;
   mediaUrl?: string;
   mediaType?: 'image' | 'file' | 'audio';
+  editedAt?: string | null;
+  deletedForEveryone?: boolean;
+  createdAt?: string;
 }
 
 // Expanded emoji list organized by category
@@ -262,6 +265,10 @@ export default function ChatWindowPanel() {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const contactPubKeyRef = useRef<string | null>(null);
   const previousChatIdRef = useRef<string | null>(null);
+  const [actionMsg, setActionMsg] = useState<Message | null>(null);
+  const [editingMsg, setEditingMsg] = useState<Message | null>(null);
+  const [editText, setEditText] = useState('');
+  const longPressTimerRef = useRef<any>(null);
   const [blockLoading, setBlockLoading] = useState(false);
   const [callActive, setCallActive] = useState(false);
   const [videoCallActive, setVideoCallActive] = useState(false);
@@ -313,6 +320,7 @@ export default function ChatWindowPanel() {
                 status: 'delivered',
                 reactions: [],
                 encrypted,
+                createdAt: newMsg.created_at,
               }]);
               // Mark as read (recipient — uses RPC to bypass RLS sender restriction)
               await supabase.rpc('mark_messages_read', { _chat_id: selectedChatId });
@@ -349,10 +357,36 @@ export default function ChatWindowPanel() {
           }
         )
         .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages', filter: `chat_id=eq.${selectedChatId}` },
-          (payload) => {
+          async (payload) => {
             const upd = payload.new as any;
+            // Deleted for me — remove from view
+            if (Array.isArray(upd.deleted_for) && upd.deleted_for.includes(user.id)) {
+              setMessages(prev => prev.filter(m => m.id !== upd.id));
+              return;
+            }
+            // Deleted for everyone — show tombstone
+            if (upd.deleted_for_everyone) {
+              setMessages(prev => prev.map(m => m.id === upd.id
+                ? { ...m, text: '🚫 This message was deleted', deletedForEveryone: true, encrypted: false }
+                : m
+              ));
+              return;
+            }
+            // Content edited — re-decrypt if needed
+            let newText: string | null = null;
+            if (typeof upd.content === 'string') {
+              const enc = isEncrypted(upd.content);
+              const pk = contactPubKeyRef.current;
+              if (enc && pk) newText = await decryptMessage(upd.content, pk);
+              else if (!enc) newText = upd.content;
+            }
             setMessages(prev => prev.map(m => m.id === upd.id
-              ? { ...m, status: upd.message_status || m.status }
+              ? {
+                  ...m,
+                  status: upd.message_status || m.status,
+                  text: newText !== null ? newText : m.text,
+                  editedAt: upd.edited_at || m.editedAt,
+                }
               : m
             ));
           }
@@ -400,11 +434,7 @@ export default function ChatWindowPanel() {
     if (!selectedChatId || !user) return;
     setLoading(true);
     try {
-      const { publicKey: myPublicKey } = await getOrCreateKeyPair();
-      await supabase
-        .from('user_profiles')
-        .update({ public_key: myPublicKey })
-        .eq('id', user.id);
+      // Note: my public_key is managed by the PIN setup flow — do not overwrite here.
 
       const { data: chat } = await supabase
         .from('chats')
@@ -521,9 +551,14 @@ export default function ChatWindowPanel() {
       const otherKey = contactPubKeyRef.current;
       const decryptedMsgs: Message[] = [];
       for (const m of (msgs || [])) {
+        // Skip messages this user has deleted-for-me
+        if (Array.isArray((m as any).deleted_for) && (m as any).deleted_for.includes(user.id)) continue;
         let text = m.content;
+        const tombstone = !!(m as any).deleted_for_everyone;
         const encrypted = isEncrypted(text);
-        if (encrypted && otherKey) {
+        if (tombstone) {
+          text = '🚫 This message was deleted';
+        } else if (encrypted && otherKey) {
           text = await decryptMessage(text, otherKey);
         } else if (encrypted) {
           // Never show raw `e2e:` ciphertext to users.
@@ -537,6 +572,9 @@ export default function ChatWindowPanel() {
           status: m.message_status || 'sent',
           reactions: m.reactions || [],
           encrypted,
+          editedAt: (m as any).edited_at || null,
+          deletedForEveryone: tombstone,
+          createdAt: m.created_at,
         });
       }
       setMessages(decryptedMsgs);
@@ -584,6 +622,7 @@ export default function ChatWindowPanel() {
       status: 'sent',
       reactions: [],
       encrypted: e2eEnabled,
+      createdAt: new Date().toISOString(),
     };
     setMessages(prev => [...prev, tempMsg]);
     setInputText('');
@@ -601,7 +640,7 @@ export default function ChatWindowPanel() {
         .select()
         .single();
       if (data) {
-        setMessages(prev => prev.map(m => m.id === tempId ? { ...m, id: data.id, status: 'delivered' } : m));
+        setMessages(prev => prev.map(m => m.id === tempId ? { ...m, id: data.id, status: 'delivered', createdAt: data.created_at } : m));
         await supabase.from('chats').update({ updated_at: new Date().toISOString() }).eq('id', selectedChatId);
         if (contact?.userId) {
           const senderName = profile?.full_name || 'Someone';
@@ -695,6 +734,67 @@ export default function ChatWindowPanel() {
     try {
       await supabase.from('messages').delete().eq('id', msgId);
     } catch {}
+  };
+
+  const deleteForMe = async (msgId: string) => {
+    setMessages(prev => prev.filter(m => m.id !== msgId));
+    setActionMsg(null);
+    try {
+      const { error } = await supabase.rpc('delete_message_for_me', { _msg_id: msgId });
+      if (error) throw error;
+    } catch (e: any) {
+      toast.error(e?.message || 'Could not delete');
+    }
+  };
+
+  const deleteForEveryone = async (msgId: string) => {
+    setActionMsg(null);
+    try {
+      const { error } = await supabase.rpc('delete_message_for_everyone', { _msg_id: msgId });
+      if (error) throw error;
+      setMessages(prev => prev.map(m => m.id === msgId
+        ? { ...m, text: '🚫 This message was deleted', deletedForEveryone: true, encrypted: false }
+        : m
+      ));
+    } catch (e: any) {
+      toast.error(e?.message || 'Could not delete for everyone');
+    }
+  };
+
+  const submitEdit = async () => {
+    if (!editingMsg) return;
+    const newText = editText.trim();
+    if (!newText) { toast.error('Message cannot be empty'); return; }
+    const msgId = editingMsg.id;
+    setEditingMsg(null);
+    try {
+      let stored = newText;
+      if (e2eEnabled && contact?.publicKey) {
+        stored = await encryptMessage(newText, contact.publicKey);
+      }
+      const { error } = await supabase.rpc('edit_my_message', { _msg_id: msgId, _new_content: stored });
+      if (error) throw error;
+      setMessages(prev => prev.map(m => m.id === msgId
+        ? { ...m, text: newText, editedAt: new Date().toISOString() }
+        : m
+      ));
+    } catch (e: any) {
+      toast.error(e?.message || 'Could not edit message');
+    }
+  };
+
+  const isWithinHour = (iso?: string) => {
+    if (!iso) return false;
+    return (Date.now() - new Date(iso).getTime()) < 60 * 60 * 1000;
+  };
+
+  const handleLongPressStart = (msg: Message) => {
+    if (msg.senderId !== user?.id || msg.deletedForEveryone) return;
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+    longPressTimerRef.current = setTimeout(() => setActionMsg(msg), 500);
+  };
+  const handleLongPressEnd = () => {
+    if (longPressTimerRef.current) { clearTimeout(longPressTimerRef.current); longPressTimerRef.current = null; }
   };
 
   const updateDisappearMode = async (mode: 'never' | '24h' | 'after_seen') => {
@@ -1277,10 +1377,19 @@ export default function ChatWindowPanel() {
                 onMouseEnter={() => setHoveredMsg(msg.id)}
                 onMouseLeave={() => setHoveredMsg(null)}
               >
-                <div className={`relative max-w-[75%] ${isMe ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
+                <div
+                  className={`relative max-w-[75%] ${isMe ? 'items-end' : 'items-start'} flex flex-col gap-1`}
+                  onTouchStart={() => handleLongPressStart(msg)}
+                  onTouchEnd={handleLongPressEnd}
+                  onTouchMove={handleLongPressEnd}
+                  onTouchCancel={handleLongPressEnd}
+                  onContextMenu={(e) => { if (isMe && !msg.deletedForEveryone) { e.preventDefault(); setActionMsg(msg); } }}
+                >
                   <div
                     className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                      isMe
+                      msg.deletedForEveryone
+                        ? 'glass border border-dashed border-border text-muted-foreground italic'
+                      : isMe
                         ? 'gradient-primary text-white rounded-br-sm' : 'glass border border-border text-foreground rounded-bl-sm'
                     }`}
                   >
@@ -1289,6 +1398,9 @@ export default function ChatWindowPanel() {
                     ) : (
                       <>
                         {displayText}
+                        {msg.editedAt && !msg.deletedForEveryone && (
+                          <span className={`ml-1 text-[10px] italic ${isMe ? 'text-white/60' : 'text-muted-foreground'}`}>(edited)</span>
+                        )}
                         {msg.encrypted && (
                           <ShieldCheck size={9} className={`inline ml-1 ${isMe ? 'text-white/60' : 'text-vt-green/60'}`} />
                         )}
@@ -1488,6 +1600,92 @@ export default function ChatWindowPanel() {
           chatId={selectedChatId}
           chatName={contact?.name || 'Chat'}
         />
+      )}
+
+      {/* Long-press action sheet for own messages */}
+      {actionMsg && (
+        <div
+          className="fixed inset-0 z-[1500] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
+          onClick={() => setActionMsg(null)}
+        >
+          <div
+            className="bg-card border border-border rounded-2xl w-full max-w-sm overflow-hidden shadow-card float-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-4 py-3 border-b border-border">
+              <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Message options</p>
+              <p className="text-sm text-foreground truncate mt-0.5">{actionMsg.text}</p>
+            </div>
+            <button
+              onClick={() => {
+                setEditingMsg(actionMsg);
+                setEditText(actionMsg.text);
+                setActionMsg(null);
+              }}
+              disabled={!isWithinHour(actionMsg.createdAt)}
+              className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground disabled:opacity-40"
+            >
+              ✏️ Edit message
+              {!isWithinHour(actionMsg.createdAt) && <span className="ml-auto text-[10px] text-muted-foreground">expired</span>}
+            </button>
+            <button
+              onClick={() => deleteForMe(actionMsg.id)}
+              className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground border-t border-border"
+            >
+              🗑️ Delete for me
+            </button>
+            <button
+              onClick={() => deleteForEveryone(actionMsg.id)}
+              disabled={!isWithinHour(actionMsg.createdAt)}
+              className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-red-400 border-t border-border disabled:opacity-40"
+            >
+              🗑️ Delete for everyone
+              {!isWithinHour(actionMsg.createdAt) && <span className="ml-auto text-[10px] text-muted-foreground">past 1 hour</span>}
+            </button>
+            <button
+              onClick={() => setActionMsg(null)}
+              className="w-full text-center px-4 py-3 text-sm hover:bg-muted transition-colors text-muted-foreground border-t border-border"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Edit message modal */}
+      {editingMsg && (
+        <div
+          className="fixed inset-0 z-[1600] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setEditingMsg(null)}
+        >
+          <div
+            className="bg-card border border-border rounded-2xl w-full max-w-sm p-5 shadow-card float-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="font-semibold text-sm text-foreground mb-3">Edit message</h3>
+            <textarea
+              value={editText}
+              onChange={(e) => setEditText(e.target.value)}
+              rows={3}
+              autoFocus
+              className="w-full bg-input border border-border rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+            />
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={() => setEditingMsg(null)}
+                className="flex-1 py-2.5 rounded-xl glass text-sm text-foreground hover:bg-muted"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitEdit}
+                className="flex-1 py-2.5 rounded-xl gradient-primary text-white text-sm font-semibold"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {showE2EInfo && (

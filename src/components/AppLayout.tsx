@@ -15,6 +15,8 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { useChatStore } from '@/store/chatStore';
 import CallProvider from '@/components/CallProvider';
 import { createClient } from '@/lib/supabase/client';
+import EncryptionPinModal from '@/components/EncryptionPinModal';
+import { hasLocalPrivateKey, hasServerKey } from '@/lib/encryption';
 
 
 
@@ -66,6 +68,23 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [notifications, setNotifications] = useState<any[]>([]);
   const supabase = createClient();
+  const [pinModal, setPinModal] = useState<null | 'setup' | 'unlock'>(null);
+
+  // After login: check if user needs to set up or unlock E2E encryption.
+  useEffect(() => {
+    if (!user) { setPinModal(null); return; }
+    let cancelled = false;
+    (async () => {
+      try {
+        const local = await hasLocalPrivateKey();
+        if (local) return; // already unlocked on this device
+        const server = await hasServerKey(user.id);
+        if (cancelled) return;
+        setPinModal(server ? 'unlock' : 'setup');
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, [user]);
 
   // Load notifications for the current user (admins receive ticket alerts)
   useEffect(() => {
@@ -375,6 +394,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </div>
 
       <SecureVaultModal isOpen={secureVaultOpen} onClose={() => setSecureVaultOpen(false)} />
+      {pinModal && user && (
+        <EncryptionPinModal
+          userId={user.id}
+          mode={pinModal}
+          onComplete={() => setPinModal(null)}
+          onSkip={pinModal === 'unlock' ? () => setPinModal(null) : undefined}
+        />
+      )}
     </div>
     </CallProvider>
   );
