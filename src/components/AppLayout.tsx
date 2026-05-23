@@ -237,6 +237,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <Link
                 key={`nav-${item.label.toLowerCase()}`}
                 to={item.href}
+                preload="render"
                 className={`relative flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group ${
                   isActive ? 'gradient-primary text-white glow-primary' : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                 }`}
@@ -353,6 +354,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <Link
                   key={`mobile-nav-${item.label.toLowerCase()}`}
                   to={item.href}
+                  preload="render"
                   className={`relative flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all duration-200 ${
                     isActive ? 'text-primary' : 'text-muted-foreground'
                   }`}
