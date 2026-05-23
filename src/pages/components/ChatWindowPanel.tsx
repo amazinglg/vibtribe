@@ -1464,13 +1464,10 @@ export default function ChatWindowPanel() {
                 <strong> no one else, not even VibeTribe</strong>, can access them.
               </p>
               <div className="rounded-lg bg-vt-green/5 border border-vt-green/15 p-3 space-y-1.5">
-                <p className="flex items-start gap-2"><ShieldCheck size={13} className="text-vt-green mt-0.5"/> Messages are encrypted on your device before being sent.</p>
-                <p className="flex items-start gap-2"><Lock size={13} className="text-vt-green mt-0.5"/> Only the recipient's device holds the key to decrypt them.</p>
-                <p className="flex items-start gap-2"><ShieldOff size={13} className="text-vt-green mt-0.5"/> Our servers store only ciphertext we cannot read.</p>
+                <p className="flex items-start gap-2"><ShieldCheck size={13} className="text-vt-green mt-0.5"/> Your message is locked before it leaves your phone.</p>
+                <p className="flex items-start gap-2"><Lock size={13} className="text-vt-green mt-0.5"/> Only you and {contact?.name || 'the other person'} can open and read it.</p>
+                <p className="flex items-start gap-2"><ShieldOff size={13} className="text-vt-green mt-0.5"/> VibeTribe cannot see your private chat content.</p>
               </div>
-              <p className="text-[11px] text-muted-foreground">
-                Encryption uses ECDH (P-256) for key exchange and AES-GCM (256-bit) for message confidentiality.
-              </p>
             </div>
             <button onClick={() => setShowE2EInfo(false)}
                     className="mt-4 w-full py-2.5 rounded-lg gradient-primary text-white text-sm font-semibold">Got it</button>

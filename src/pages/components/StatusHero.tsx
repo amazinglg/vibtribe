@@ -1,5 +1,6 @@
 // @ts-nocheck
 import React, { useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Camera, Type, Sparkles, Globe, Users, UserCheck, ChevronDown, X, Send, Trash2, Pencil, Check, Search } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -199,6 +200,40 @@ export default function StatusHero() {
   const currentVisibility = VISIBILITY_OPTIONS.find(o => o.value === visibility)!;
   const VisibilityIcon = currentVisibility.icon;
 
+  const mediaComposer = mediaFile && mediaPreviewUrl ? createPortal(
+    <div className="fixed inset-0 z-[1000] bg-black/95 flex flex-col" onClick={closeMediaModal}>
+      <div className="flex items-center justify-between px-4 py-3 text-white flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+        <button onClick={closeMediaModal} className="p-2"><X size={20} /></button>
+        <span className="text-sm font-medium">New status</span>
+        <span className="w-9" />
+      </div>
+      <div className="flex-1 min-h-0 flex items-center justify-center px-4 overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        {mediaFile.type.startsWith('video') ? (
+          <video src={mediaPreviewUrl} controls className="max-h-full max-w-full object-contain" />
+        ) : (
+          <img src={mediaPreviewUrl} alt="" className="max-h-full max-w-full object-contain" />
+        )}
+      </div>
+      <div
+        className="flex-shrink-0 p-3 flex items-center gap-2 bg-black/80 border-t border-white/10"
+        style={{ paddingBottom: 'max(1rem, calc(env(safe-area-inset-bottom) + 5.75rem))' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <input
+          type="text" value={mediaCaption} maxLength={200}
+          onChange={(e) => setMediaCaption(e.target.value)}
+          placeholder="Add a caption…"
+          className="flex-1 px-4 py-2.5 rounded-full bg-white/10 text-white placeholder-white/60 border border-white/20 text-sm focus:outline-none"
+        />
+        <button onClick={handleMediaPost} disabled={uploading}
+          className="relative z-10 p-3 rounded-full gradient-primary text-white disabled:opacity-50 shadow-lg">
+          <Send size={18} />
+        </button>
+      </div>
+    </div>,
+    document.body
+  ) : null;
+
   return (
     <div className="relative px-4 lg:px-8 pt-6 pb-4">
       {/* Subheading */}
@@ -392,35 +427,7 @@ export default function StatusHero() {
         </div>
       )}
 
-      {mediaFile && mediaPreviewUrl && (
-        <div className="fixed inset-0 z-[300] bg-black/95 flex flex-col" onClick={closeMediaModal}
-             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-          <div className="flex items-center justify-between px-4 py-3 text-white" onClick={(e) => e.stopPropagation()}>
-            <button onClick={closeMediaModal} className="p-2"><X size={20} /></button>
-            <span className="text-sm font-medium">New status</span>
-            <span className="w-9" />
-          </div>
-          <div className="flex-1 min-h-0 flex items-center justify-center px-4 overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            {mediaFile.type.startsWith('video') ? (
-              <video src={mediaPreviewUrl} controls className="max-h-full max-w-full object-contain" />
-            ) : (
-              <img src={mediaPreviewUrl} alt="" className="max-h-full max-w-full object-contain" />
-            )}
-          </div>
-          <div className="p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex items-center gap-2 bg-black/80" onClick={(e) => e.stopPropagation()}>
-            <input
-              type="text" value={mediaCaption} maxLength={200}
-              onChange={(e) => setMediaCaption(e.target.value)}
-              placeholder="Add a caption…"
-              className="flex-1 px-4 py-2.5 rounded-full bg-white/10 text-white placeholder-white/60 border border-white/20 text-sm focus:outline-none"
-            />
-            <button onClick={handleMediaPost} disabled={uploading}
-              className="p-3 rounded-full gradient-primary text-white disabled:opacity-50">
-              <Send size={18} />
-            </button>
-          </div>
-        </div>
-      )}
+      {mediaComposer}
 
       {viewerPickerOpen && (
         <div className="fixed inset-0 z-[300] bg-black/80 flex items-end sm:items-center justify-center" onClick={() => setViewerPickerOpen(false)}>
