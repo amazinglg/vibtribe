@@ -1,8 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, lazy, Suspense } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import AppLayout from '@/components/AppLayout';
 import ChatListPanel from './components/ChatListPanel';
-import ChatWindowPanel from './components/ChatWindowPanel';
+const ChatWindowPanel = lazy(() => import('./components/ChatWindowPanel'));
 import { useAuth } from '@/contexts/AuthContext';
 import { useChatStore } from '@/store/chatStore';
 
@@ -51,7 +51,9 @@ export default function ChatsPage() {
           <ChatListPanel />
         </div>
         <div className={`${selectedChatId ? 'flex' : 'hidden lg:flex'} flex-1 min-w-0`}>
-          <ChatWindowPanel />
+          <Suspense fallback={<div className="flex-1 flex items-center justify-center gradient-bg-page"><div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>}>
+            <ChatWindowPanel />
+          </Suspense>
         </div>
       </div>
     </AppLayout>
