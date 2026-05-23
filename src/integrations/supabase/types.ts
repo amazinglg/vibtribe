@@ -256,6 +256,9 @@ export type Database = {
           chat_id: string | null
           content: string
           created_at: string | null
+          deleted_for: string[]
+          deleted_for_everyone: boolean
+          edited_at: string | null
           expires_at: string | null
           id: string
           message_status: Database["public"]["Enums"]["message_status"] | null
@@ -266,6 +269,9 @@ export type Database = {
           chat_id?: string | null
           content: string
           created_at?: string | null
+          deleted_for?: string[]
+          deleted_for_everyone?: boolean
+          edited_at?: string | null
           expires_at?: string | null
           id?: string
           message_status?: Database["public"]["Enums"]["message_status"] | null
@@ -276,6 +282,9 @@ export type Database = {
           chat_id?: string | null
           content?: string
           created_at?: string | null
+          deleted_for?: string[]
+          deleted_for_everyone?: boolean
+          edited_at?: string | null
           expires_at?: string | null
           id?: string
           message_status?: Database["public"]["Enums"]["message_status"] | null
@@ -533,11 +542,15 @@ export type Database = {
           country_code: string | null
           created_at: string | null
           email: string
+          encrypted_private_key: string | null
           full_name: string
           id: string
           is_master_admin: boolean
           is_online: boolean | null
           is_suspended: boolean | null
+          key_iv: string | null
+          key_salt: string | null
+          key_setup_completed: boolean
           last_seen: string | null
           login_attempts: number | null
           mobile_number: string | null
@@ -558,11 +571,15 @@ export type Database = {
           country_code?: string | null
           created_at?: string | null
           email: string
+          encrypted_private_key?: string | null
           full_name?: string
           id: string
           is_master_admin?: boolean
           is_online?: boolean | null
           is_suspended?: boolean | null
+          key_iv?: string | null
+          key_salt?: string | null
+          key_setup_completed?: boolean
           last_seen?: string | null
           login_attempts?: number | null
           mobile_number?: string | null
@@ -583,11 +600,15 @@ export type Database = {
           country_code?: string | null
           created_at?: string | null
           email?: string
+          encrypted_private_key?: string | null
           full_name?: string
           id?: string
           is_master_admin?: boolean
           is_online?: boolean | null
           is_suspended?: boolean | null
+          key_iv?: string | null
+          key_salt?: string | null
+          key_setup_completed?: boolean
           last_seen?: string | null
           login_attempts?: number | null
           mobile_number?: string | null
@@ -613,7 +634,16 @@ export type Database = {
       }
       cleanup_expired_statuses: { Args: never; Returns: undefined }
       cleanup_expired_statuses_for_user: { Args: never; Returns: number }
+      delete_message_for_everyone: {
+        Args: { _msg_id: string }
+        Returns: undefined
+      }
+      delete_message_for_me: { Args: { _msg_id: string }; Returns: undefined }
       delete_my_account: { Args: never; Returns: undefined }
+      edit_my_message: {
+        Args: { _msg_id: string; _new_content: string }
+        Returns: undefined
+      }
       expire_seen_messages: { Args: { p_chat_id: string }; Returns: undefined }
       is_admin: { Args: never; Returns: boolean }
       is_admin_user: { Args: never; Returns: boolean }
