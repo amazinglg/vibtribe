@@ -33,6 +33,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         fetchProfile(session.user.id);
         // Start polling for force-logout signal
         startForceLogoutPolling(session.user.id);
+        startPresenceHeartbeat(session.user.id);
       }
       setLoading(false);
     }).catch(() => {
@@ -47,8 +48,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchProfile(session.user.id);
+        startPresenceHeartbeat(session.user.id);
       } else {
         setProfile(null);
+        stopPresenceHeartbeat();
       }
       setLoading(false);
     });
@@ -56,8 +59,43 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       clearTimeout(safety);
       subscription.unsubscribe();
+      stopPresenceHeartbeat();
     };
   }, []);
+
+  // Presence heartbeat: ping last_seen + is_online every 30s while tab is visible.
+  const startPresenceHeartbeat = (userId: string) => {
+    if (typeof window === 'undefined') return;
+    stopPresenceHeartbeat();
+    const ping = async (online: boolean) => {
+      try {
+        await supabase.from('user_profiles')
+          .update({ is_online: online, last_seen: new Date().toISOString() })
+          .eq('id', userId);
+      } catch {}
+    };
+    ping(true);
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') ping(true);
+    }, 30000);
+    const visHandler = () => { ping(document.visibilityState === 'visible'); };
+    const unloadHandler = () => { ping(false); };
+    document.addEventListener('visibilitychange', visHandler);
+    window.addEventListener('beforeunload', unloadHandler);
+    window.addEventListener('pagehide', unloadHandler);
+    (window as any).__vtPresence = { interval, visHandler, unloadHandler };
+  };
+
+  const stopPresenceHeartbeat = () => {
+    if (typeof window === 'undefined') return;
+    const p = (window as any).__vtPresence;
+    if (!p) return;
+    clearInterval(p.interval);
+    document.removeEventListener('visibilitychange', p.visHandler);
+    window.removeEventListener('beforeunload', p.unloadHandler);
+    window.removeEventListener('pagehide', p.unloadHandler);
+    (window as any).__vtPresence = null;
+  };
 
   // Poll for force-logout tokens every 30 seconds
   const startForceLogoutPolling = (userId: string) => {
@@ -122,16 +160,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           mobile_number: mobileNumber,
           country_code: metadata?.countryCode || '+91',
           avatar_url: metadata?.avatarUrl || '',
+          username: metadata?.username || '',
           role: 'user',
         },
         emailRedirectTo: undefined,
       }
     });
     if (error) throw error;
-    // Best-effort: persist country_code in profile (in case trigger doesn't pick it up)
+    // Best-effort: persist country_code + username in profile
     try {
-      if (data?.user?.id && metadata?.countryCode) {
-        await supabase.from('user_profiles').update({ country_code: metadata.countryCode }).eq('id', data.user.id);
+      if (data?.user?.id) {
+        const updates: any = {};
+        if (metadata?.countryCode) updates.country_code = metadata.countryCode;
+        if (metadata?.username) updates.username = metadata.username;
+        if (Object.keys(updates).length) {
+          await supabase.from('user_profiles').update(updates).eq('id', data.user.id);
+        }
       }
     } catch {}
     return data;

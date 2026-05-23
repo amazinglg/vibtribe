@@ -32,6 +32,7 @@ export default function SignUpPage() {
   const router = useNavigate();
   const { signUp } = useAuth();
   const [fullName, setFullName] = useState('');
+  const [username, setUsername] = useState('');
   const [countryCode, setCountryCode] = useState('+91');
   const [mobile, setMobile] = useState('');
   const [password, setPassword] = useState('');
@@ -47,6 +48,9 @@ export default function SignUpPage() {
     e.preventDefault();
     setError('');
     if (!fullName.trim()) { setError('Please enter your full name'); return; }
+    if (!username.trim()) { setError('Please choose a username'); return; }
+    if (username.length < 3) { setError('Username must be at least 3 characters'); return; }
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) { setError('Username can only contain letters, numbers, and underscores'); return; }
     if (!mobile.trim()) { setError('Please enter your mobile number'); return; }
     if (mobile.replace(/\D/g, '').length < 7) { setError('Please enter a valid mobile number'); return; }
     if (!password) { setError('Please enter a password'); return; }
@@ -59,7 +63,7 @@ export default function SignUpPage() {
     const fullMobile = `${countryCode}${local}`;
     setLoading(true);
     try {
-      await signUp(fullMobile, password, { fullName, countryCode });
+      await signUp(fullMobile, password, { fullName, countryCode, username: username.toLowerCase() });
       router({ to: '/complete-profile', replace: true });
     } catch (err: any) {
       setError(err.message || 'Sign up failed. Please try again.');
@@ -101,6 +105,24 @@ export default function SignUpPage() {
                   autoComplete="name"
                 />
               </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1.5">
+                Username <span className="text-red-400">*</span>
+              </label>
+              <div className="relative">
+                <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  type="text"
+                  value={username}
+                  onChange={e => { setUsername(e.target.value.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase()); setError(''); }}
+                  placeholder="your_username"
+                  className="w-full pl-9 pr-4 py-3 bg-input border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all text-sm"
+                  autoComplete="username"
+                />
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-1">Letters, numbers, underscores. Min 3 characters.</p>
             </div>
 
             <div>
