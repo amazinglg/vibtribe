@@ -393,9 +393,8 @@ export default function StatusHero() {
       )}
 
       {mediaFile && mediaPreviewUrl && (
-        <div className="fixed inset-0 z-[300] bg-black/95 flex flex-col" onClick={closeMediaModal}
-             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-          <div className="flex items-center justify-between px-4 py-3 text-white" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[1000] bg-black/95 flex flex-col" onClick={closeMediaModal}>
+          <div className="flex items-center justify-between px-4 py-3 text-white flex-shrink-0" onClick={(e) => e.stopPropagation()}>
             <button onClick={closeMediaModal} className="p-2"><X size={20} /></button>
             <span className="text-sm font-medium">New status</span>
             <span className="w-9" />
@@ -407,7 +406,11 @@ export default function StatusHero() {
               <img src={mediaPreviewUrl} alt="" className="max-h-full max-w-full object-contain" />
             )}
           </div>
-          <div className="p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex items-center gap-2 bg-black/80" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="flex-shrink-0 p-3 flex items-center gap-2 bg-black/80 border-t border-white/10"
+            style={{ paddingBottom: 'max(1rem, calc(env(safe-area-inset-bottom) + 5.75rem))' }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <input
               type="text" value={mediaCaption} maxLength={200}
               onChange={(e) => setMediaCaption(e.target.value)}
@@ -415,7 +418,7 @@ export default function StatusHero() {
               className="flex-1 px-4 py-2.5 rounded-full bg-white/10 text-white placeholder-white/60 border border-white/20 text-sm focus:outline-none"
             />
             <button onClick={handleMediaPost} disabled={uploading}
-              className="p-3 rounded-full gradient-primary text-white disabled:opacity-50">
+              className="relative z-10 p-3 rounded-full gradient-primary text-white disabled:opacity-50 shadow-lg">
               <Send size={18} />
             </button>
           </div>
