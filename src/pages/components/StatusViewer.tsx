@@ -1,5 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Heart, Send, Pause, Play, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
@@ -144,7 +145,7 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
     setShowReactions(false);
   };
 
-  return (
+  const viewer = (
     <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-background/95 backdrop-blur-xl">
       {/* Close */}
       <button
@@ -321,4 +322,6 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(viewer, document.body) : viewer;
 }
