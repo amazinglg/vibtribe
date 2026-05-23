@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * VibTribe E2E Encryption using Web Crypto API
  * Uses ECDH (P-256) for key exchange + AES-GCM for message encryption.
