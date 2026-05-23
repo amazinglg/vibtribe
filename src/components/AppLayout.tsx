@@ -394,6 +394,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </div>
 
       <SecureVaultModal isOpen={secureVaultOpen} onClose={() => setSecureVaultOpen(false)} />
+      {pinModal && user && (
+        <EncryptionPinModal
+          userId={user.id}
+          mode={pinModal}
+          onComplete={() => setPinModal(null)}
+          onSkip={pinModal === 'unlock' ? () => setPinModal(null) : undefined}
+        />
+      )}
     </div>
     </CallProvider>
   );
