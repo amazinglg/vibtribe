@@ -55,6 +55,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
+  const sendersRef = useRef<{ audio: RTCRtpSender | null; video: RTCRtpSender | null }>({ audio: null, video: null });
   const remoteStreamRef = useRef<MediaStream | null>(null);
   const channelRef = useRef<any>(null);
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -67,6 +68,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   const cleanup = useCallback(() => {
     try { pcRef.current?.close(); } catch {}
     pcRef.current = null;
+    sendersRef.current = { audio: null, video: null };
     localStreamRef.current?.getTracks().forEach(t => t.stop());
     localStreamRef.current = null;
     remoteStreamRef.current = null;
