@@ -265,6 +265,10 @@ export default function ChatWindowPanel() {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const contactPubKeyRef = useRef<string | null>(null);
   const previousChatIdRef = useRef<string | null>(null);
+  const [actionMsg, setActionMsg] = useState<Message | null>(null);
+  const [editingMsg, setEditingMsg] = useState<Message | null>(null);
+  const [editText, setEditText] = useState('');
+  const longPressTimerRef = useRef<any>(null);
   const [blockLoading, setBlockLoading] = useState(false);
   const [callActive, setCallActive] = useState(false);
   const [videoCallActive, setVideoCallActive] = useState(false);
