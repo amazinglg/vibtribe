@@ -407,11 +407,7 @@ export default function ChatWindowPanel() {
     if (!selectedChatId || !user) return;
     setLoading(true);
     try {
-      const { publicKey: myPublicKey } = await getOrCreateKeyPair();
-      await supabase
-        .from('user_profiles')
-        .update({ public_key: myPublicKey })
-        .eq('id', user.id);
+      // Note: my public_key is managed by the PIN setup flow — do not overwrite here.
 
       const { data: chat } = await supabase
         .from('chats')
