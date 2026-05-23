@@ -250,7 +250,8 @@ export default function ChatWindowPanel() {
   const [showAttachMenu, setShowAttachMenu] = useState(false);
   const [secureModalOpen, setSecureModalOpen] = useState(false);
   const [hoveredMsg, setHoveredMsg] = useState<string | null>(null);
-  const [contact, setContact] = useState<{ name: string; avatar: string; online: boolean; lastSeen: string; publicKey?: string; userId?: string; isContact?: boolean } | null>(null);
+  const [contact, setContact] = useState<{ name: string; avatar: string; avatarUrl?: string | null; online: boolean; lastSeen: string; publicKey?: string; userId?: string; isContact?: boolean } | null>(null);
+  const [enlargeAvatar, setEnlargeAvatar] = useState(false);
   const [loading, setLoading] = useState(false);
   const [e2eEnabled, setE2eEnabled] = useState(false);
   const [showE2EInfo, setShowE2EInfo] = useState(false);
@@ -461,7 +462,7 @@ export default function ChatWindowPanel() {
         const otherUserId = chat.participant_one === user.id ? chat.participant_two : chat.participant_one;
         const { data: otherUser } = await supabase
           .from('user_profiles')
-          .select('full_name, is_online, last_seen, public_key')
+          .select('full_name, is_online, last_seen, public_key, avatar_url, profile_photo_visibility')
           .eq('id', otherUserId)
           .single();
 
@@ -479,9 +480,21 @@ export default function ChatWindowPanel() {
             .eq('contact_id', otherUserId)
             .maybeSingle();
 
+          // Honor profile photo privacy: only show avatar if 'all' OR ('contacts' AND we're in their contacts)
+          let showAvatar = false;
+          const vis = (otherUser as any).profile_photo_visibility || 'all';
+          if (vis === 'all') showAvatar = true;
+          else if (vis === 'contacts') {
+            const { data: theyHaveUs } = await supabase
+              .from('contacts').select('id')
+              .eq('user_id', otherUserId).eq('contact_id', user.id).maybeSingle();
+            showAvatar = !!theyHaveUs;
+          }
+
           setContact({
             name: displayName,
             avatar: displayName[0]?.toUpperCase() || 'U',
+            avatarUrl: showAvatar ? (otherUser as any).avatar_url || null : null,
             online: otherUser.is_online || false,
             lastSeen: otherUser.is_online ? 'Online' : 'Last seen recently',
             publicKey: otherUser.public_key || undefined,
@@ -934,14 +947,24 @@ export default function ChatWindowPanel() {
           <ArrowLeft size={22} strokeWidth={2.5} />
         </button>
 
-        <div className="relative flex-shrink-0">
-          <div className="w-10 h-10 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-sm">
-            {contact?.avatar || '?'}
-          </div>
+        <button
+          type="button"
+          onClick={() => contact?.avatarUrl && setEnlargeAvatar(true)}
+          className="relative flex-shrink-0 focus:outline-none"
+          aria-label="View profile picture"
+        >
+          {contact?.avatarUrl ? (
+            <img src={contact.avatarUrl} alt={contact.name}
+                 className="w-10 h-10 rounded-full object-cover border border-border" />
+          ) : (
+            <div className="w-10 h-10 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-sm">
+              {contact?.avatar || '?'}
+            </div>
+          )}
           {contact?.online && (
             <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-vt-green rounded-full border-2 border-background" />
           )}
-        </div>
+        </button>
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 min-w-0">
@@ -1131,6 +1154,21 @@ export default function ChatWindowPanel() {
       )}
 
       {/* E2E Banner */}
+      {/* Add-to-contacts banner — separate from phone contact import */}
+      {chatType !== 'group' && contact?.userId && !contact.isContact && (
+        <div className="flex items-center gap-2 px-3 py-2 bg-primary/5 border-b border-primary/15">
+          <UserPlus size={14} className="text-primary flex-shrink-0" />
+          <span className="text-[11px] text-foreground/80 flex-1 truncate">
+            {contact.name} is not in your VibTribe contacts
+          </span>
+          <button
+            onClick={handleAddToContacts}
+            className="text-[11px] font-semibold text-primary hover:underline flex-shrink-0"
+          >
+            Add
+          </button>
+        </div>
+      )}
       {e2eEnabled && (
         <button
           type="button"
