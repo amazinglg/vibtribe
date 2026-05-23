@@ -1522,6 +1522,28 @@ export default function ChatWindowPanel() {
           </div>
         </div>
       )}
+
+      {/* Enlarged profile picture viewer */}
+      {enlargeAvatar && contact?.avatarUrl && (
+        <div
+          className="fixed inset-0 z-[1100] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4"
+          onClick={() => setEnlargeAvatar(false)}
+        >
+          <button
+            onClick={(e) => { e.stopPropagation(); setEnlargeAvatar(false); }}
+            className="absolute top-4 right-4 p-3 rounded-full bg-white/10 text-white hover:bg-white/20"
+            aria-label="Close"
+          >
+            <X size={22} />
+          </button>
+          <img
+            src={contact.avatarUrl}
+            alt={contact.name}
+            className="max-w-full max-h-[80vh] rounded-2xl object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 }
