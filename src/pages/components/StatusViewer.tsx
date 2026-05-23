@@ -91,14 +91,26 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
   useEffect(() => {
     if (!isOwner || !story?.id) return;
     (async () => {
-      const { data } = await supabase
+      const { data: viewRows, error: viewsError } = await supabase
         .from('status_views')
-        .select('viewer_id, viewed_at, user_profiles!status_views_viewer_id_fkey(full_name)')
+        .select('viewer_id, viewed_at')
         .eq('status_id', story.id)
         .order('viewed_at', { ascending: false });
-      setViewers((data || []).map((v: any) => ({
+
+      if (viewsError) {
+        setViewers([]);
+        return;
+      }
+
+      const viewerIds = Array.from(new Set((viewRows || []).map((v: any) => v.viewer_id).filter(Boolean)));
+      const { data: profiles } = viewerIds.length > 0
+        ? await supabase.from('user_profiles').select('id, full_name, username').in('id', viewerIds)
+        : { data: [] };
+      const profileById = new Map((profiles || []).map((p: any) => [p.id, p]));
+
+      setViewers((viewRows || []).map((v: any) => ({
         id: v.viewer_id,
-        name: v.user_profiles?.full_name || 'Someone',
+        name: profileById.get(v.viewer_id)?.full_name || profileById.get(v.viewer_id)?.username || 'Someone',
         viewed_at: v.viewed_at,
       })));
     })();
