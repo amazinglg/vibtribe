@@ -12,6 +12,8 @@
     "background_color": "#0a0a0f",
     "theme_color": "#0a0a0f",
     "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "related_applications": [],
     "icons": [
         {
             "src": "/favicon.ico",
