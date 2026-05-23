@@ -24,6 +24,9 @@ interface Message {
   encrypted?: boolean;
   mediaUrl?: string;
   mediaType?: 'image' | 'file' | 'audio';
+  editedAt?: string | null;
+  deletedForEveryone?: boolean;
+  createdAt?: string;
 }
 
 // Expanded emoji list organized by category
