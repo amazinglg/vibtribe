@@ -1600,6 +1600,92 @@ export default function ChatWindowPanel() {
         />
       )}
 
+      {/* Long-press action sheet for own messages */}
+      {actionMsg && (
+        <div
+          className="fixed inset-0 z-[1500] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
+          onClick={() => setActionMsg(null)}
+        >
+          <div
+            className="bg-card border border-border rounded-2xl w-full max-w-sm overflow-hidden shadow-card float-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-4 py-3 border-b border-border">
+              <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Message options</p>
+              <p className="text-sm text-foreground truncate mt-0.5">{actionMsg.text}</p>
+            </div>
+            <button
+              onClick={() => {
+                setEditingMsg(actionMsg);
+                setEditText(actionMsg.text);
+                setActionMsg(null);
+              }}
+              disabled={!isWithinHour(actionMsg.createdAt)}
+              className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground disabled:opacity-40"
+            >
+              ✏️ Edit message
+              {!isWithinHour(actionMsg.createdAt) && <span className="ml-auto text-[10px] text-muted-foreground">expired</span>}
+            </button>
+            <button
+              onClick={() => deleteForMe(actionMsg.id)}
+              className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground border-t border-border"
+            >
+              🗑️ Delete for me
+            </button>
+            <button
+              onClick={() => deleteForEveryone(actionMsg.id)}
+              disabled={!isWithinHour(actionMsg.createdAt)}
+              className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-red-400 border-t border-border disabled:opacity-40"
+            >
+              🗑️ Delete for everyone
+              {!isWithinHour(actionMsg.createdAt) && <span className="ml-auto text-[10px] text-muted-foreground">past 1 hour</span>}
+            </button>
+            <button
+              onClick={() => setActionMsg(null)}
+              className="w-full text-center px-4 py-3 text-sm hover:bg-muted transition-colors text-muted-foreground border-t border-border"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Edit message modal */}
+      {editingMsg && (
+        <div
+          className="fixed inset-0 z-[1600] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setEditingMsg(null)}
+        >
+          <div
+            className="bg-card border border-border rounded-2xl w-full max-w-sm p-5 shadow-card float-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="font-semibold text-sm text-foreground mb-3">Edit message</h3>
+            <textarea
+              value={editText}
+              onChange={(e) => setEditText(e.target.value)}
+              rows={3}
+              autoFocus
+              className="w-full bg-input border border-border rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+            />
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={() => setEditingMsg(null)}
+                className="flex-1 py-2.5 rounded-xl glass text-sm text-foreground hover:bg-muted"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitEdit}
+                className="flex-1 py-2.5 rounded-xl gradient-primary text-white text-sm font-semibold"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showE2EInfo && (
         <div className="fixed inset-0 z-[200] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowE2EInfo(false)}>
           <div className="bg-card border border-border rounded-2xl max-w-md w-full p-5 shadow-card" onClick={(e) => e.stopPropagation()}>
