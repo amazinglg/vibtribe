@@ -1375,10 +1375,19 @@ export default function ChatWindowPanel() {
                 onMouseEnter={() => setHoveredMsg(msg.id)}
                 onMouseLeave={() => setHoveredMsg(null)}
               >
-                <div className={`relative max-w-[75%] ${isMe ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
+                <div
+                  className={`relative max-w-[75%] ${isMe ? 'items-end' : 'items-start'} flex flex-col gap-1`}
+                  onTouchStart={() => handleLongPressStart(msg)}
+                  onTouchEnd={handleLongPressEnd}
+                  onTouchMove={handleLongPressEnd}
+                  onTouchCancel={handleLongPressEnd}
+                  onContextMenu={(e) => { if (isMe && !msg.deletedForEveryone) { e.preventDefault(); setActionMsg(msg); } }}
+                >
                   <div
                     className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                      isMe
+                      msg.deletedForEveryone
+                        ? 'glass border border-dashed border-border text-muted-foreground italic'
+                      : isMe
                         ? 'gradient-primary text-white rounded-br-sm' : 'glass border border-border text-foreground rounded-bl-sm'
                     }`}
                   >
@@ -1387,6 +1396,9 @@ export default function ChatWindowPanel() {
                     ) : (
                       <>
                         {displayText}
+                        {msg.editedAt && !msg.deletedForEveryone && (
+                          <span className={`ml-1 text-[10px] italic ${isMe ? 'text-white/60' : 'text-muted-foreground'}`}>(edited)</span>
+                        )}
                         {msg.encrypted && (
                           <ShieldCheck size={9} className={`inline ml-1 ${isMe ? 'text-white/60' : 'text-vt-green/60'}`} />
                         )}
