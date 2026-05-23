@@ -622,6 +622,7 @@ export default function ChatWindowPanel() {
       status: 'sent',
       reactions: [],
       encrypted: e2eEnabled,
+      createdAt: new Date().toISOString(),
     };
     setMessages(prev => [...prev, tempMsg]);
     setInputText('');
@@ -639,7 +640,7 @@ export default function ChatWindowPanel() {
         .select()
         .single();
       if (data) {
-        setMessages(prev => prev.map(m => m.id === tempId ? { ...m, id: data.id, status: 'delivered' } : m));
+        setMessages(prev => prev.map(m => m.id === tempId ? { ...m, id: data.id, status: 'delivered', createdAt: data.created_at } : m));
         await supabase.from('chats').update({ updated_at: new Date().toISOString() }).eq('id', selectedChatId);
         if (contact?.userId) {
           const senderName = profile?.full_name || 'Someone';
