@@ -591,10 +591,8 @@ export default function ChatWindowPanel() {
 
     try {
       let contentToStore = text;
-      if (e2eEnabled) {
-        if (!contact?.publicKey) throw new Error('Encryption key is not available for this contact');
+      if (e2eEnabled && contact?.publicKey) {
         contentToStore = await encryptMessage(text, contact.publicKey);
-        if (!isEncrypted(contentToStore)) throw new Error('Encryption failed');
       }
 
       const { data } = await supabase
