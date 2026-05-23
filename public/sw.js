@@ -1,4 +1,5 @@
-const CACHE_NAME = 'vibtribe-v10';
+const CACHE_NAME = 'vibtribe-v11';
+const IMG_CACHE = 'vibtribe-images-v1';
 const STATIC_ASSETS = ['/manifest.json', '/favicon.ico'];
 
 self.addEventListener('install', (event) => {
@@ -9,7 +10,7 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     Promise.all([
-      caches.keys().then((names) => Promise.all(names.filter((name) => name !== CACHE_NAME).map((name) => caches.delete(name)))),
+      caches.keys().then((names) => Promise.all(names.filter((name) => name !== CACHE_NAME && name !== IMG_CACHE).map((name) => caches.delete(name)))),
       self.clients.claim(),
     ])
   );
@@ -23,6 +24,22 @@ self.addEventListener('fetch', (event) => {
 
   if (req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html')) {
     event.respondWith(fetch(req).catch(() => caches.match(req).then((res) => res || caches.match('/manifest.json'))));
+    return;
+  }
+
+  // Images: stale-while-revalidate — fast paint, refresh in background
+  if (req.destination === 'image') {
+    event.respondWith(
+      caches.open(IMG_CACHE).then((cache) =>
+        cache.match(req).then((cached) => {
+          const network = fetch(req).then((res) => {
+            if (res && res.status === 200) cache.put(req, res.clone());
+            return res;
+          }).catch(() => cached);
+          return cached || network;
+        })
+      )
+    );
     return;
   }
 
