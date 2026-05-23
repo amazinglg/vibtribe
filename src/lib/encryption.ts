@@ -94,29 +94,11 @@ async function deriveSharedKey(privateKey: CryptoKey, theirPublicKeyBase64: stri
 
 // Encrypt a message
 export async function encryptMessage(plaintext: string, theirPublicKeyBase64: string): Promise<string> {
-  try {
-    const { privateKey } = await getOrCreateKeyPair();
-    const sharedKey = await deriveSharedKey(privateKey, theirPublicKeyBase64);
-
-    const iv = crypto.getRandomValues(new Uint8Array(12));
-    const encoded = new TextEncoder().encode(plaintext);
-
-    const ciphertext = await crypto.subtle.encrypt(
-      { name: 'AES-GCM', iv },
-      sharedKey,
-      encoded
-    );
-
-    // Combine iv + ciphertext and base64 encode
-    const combined = new Uint8Array(iv.length + ciphertext.byteLength);
-    combined.set(iv, 0);
-    combined.set(new Uint8Array(ciphertext), iv.length);
-
-    return 'e2e:' + btoa(String.fromCharCode(...combined));
-  } catch {
-    // Fallback: return plaintext if encryption fails
-    return plaintext;
-  }
+  // NOTE: Device-local ECDH key storage made messages permanently
+  // undecryptable after cache clear / device change. Until we ship a
+  // server-assisted key backup, send plaintext (transport is still TLS
+  // and rows are protected by Supabase RLS).
+  return plaintext;
 }
 
 // Decrypt a message
@@ -139,7 +121,8 @@ export async function decryptMessage(ciphertext: string, theirPublicKeyBase64: s
 
     return new TextDecoder().decode(decrypted);
   } catch {
-    return '[Encrypted message]';
+    // Legacy ciphertext we can no longer decrypt (key lost on this device).
+    return '🔒 Older message — please resend';
   }
 }
 
