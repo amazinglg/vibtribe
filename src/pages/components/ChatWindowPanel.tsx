@@ -734,6 +734,67 @@ export default function ChatWindowPanel() {
     } catch {}
   };
 
+  const deleteForMe = async (msgId: string) => {
+    setMessages(prev => prev.filter(m => m.id !== msgId));
+    setActionMsg(null);
+    try {
+      const { error } = await supabase.rpc('delete_message_for_me', { _msg_id: msgId });
+      if (error) throw error;
+    } catch (e: any) {
+      toast.error(e?.message || 'Could not delete');
+    }
+  };
+
+  const deleteForEveryone = async (msgId: string) => {
+    setActionMsg(null);
+    try {
+      const { error } = await supabase.rpc('delete_message_for_everyone', { _msg_id: msgId });
+      if (error) throw error;
+      setMessages(prev => prev.map(m => m.id === msgId
+        ? { ...m, text: '🚫 This message was deleted', deletedForEveryone: true, encrypted: false }
+        : m
+      ));
+    } catch (e: any) {
+      toast.error(e?.message || 'Could not delete for everyone');
+    }
+  };
+
+  const submitEdit = async () => {
+    if (!editingMsg) return;
+    const newText = editText.trim();
+    if (!newText) { toast.error('Message cannot be empty'); return; }
+    const msgId = editingMsg.id;
+    setEditingMsg(null);
+    try {
+      let stored = newText;
+      if (e2eEnabled && contact?.publicKey) {
+        stored = await encryptMessage(newText, contact.publicKey);
+      }
+      const { error } = await supabase.rpc('edit_my_message', { _msg_id: msgId, _new_content: stored });
+      if (error) throw error;
+      setMessages(prev => prev.map(m => m.id === msgId
+        ? { ...m, text: newText, editedAt: new Date().toISOString() }
+        : m
+      ));
+    } catch (e: any) {
+      toast.error(e?.message || 'Could not edit message');
+    }
+  };
+
+  const isWithinHour = (iso?: string) => {
+    if (!iso) return false;
+    return (Date.now() - new Date(iso).getTime()) < 60 * 60 * 1000;
+  };
+
+  const handleLongPressStart = (msg: Message) => {
+    if (msg.senderId !== user?.id || msg.deletedForEveryone) return;
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+    longPressTimerRef.current = setTimeout(() => setActionMsg(msg), 500);
+  };
+  const handleLongPressEnd = () => {
+    if (longPressTimerRef.current) { clearTimeout(longPressTimerRef.current); longPressTimerRef.current = null; }
+  };
+
   const updateDisappearMode = async (mode: 'never' | '24h' | 'after_seen') => {
     if (!selectedChatId) return;
     setDisappearMode(mode);
