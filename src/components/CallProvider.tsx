@@ -55,6 +55,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
+  const sendersRef = useRef<{ audio: RTCRtpSender | null; video: RTCRtpSender | null }>({ audio: null, video: null });
   const remoteStreamRef = useRef<MediaStream | null>(null);
   const channelRef = useRef<any>(null);
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -67,6 +68,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   const cleanup = useCallback(() => {
     try { pcRef.current?.close(); } catch {}
     pcRef.current = null;
+    sendersRef.current = { audio: null, video: null };
     localStreamRef.current?.getTracks().forEach(t => t.stop());
     localStreamRef.current = null;
     remoteStreamRef.current = null;
@@ -210,6 +212,23 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     return stream;
   };
 
+  // Add tracks to peer, tracking senders so we can replaceTrack later
+  // (avoids duplicate senders / frozen-video bugs when media is re-acquired).
+  const addTracksToPC = (pc: RTCPeerConnection, stream: MediaStream) => {
+    stream.getTracks().forEach((t) => {
+      const existing = t.kind === 'audio' ? sendersRef.current.audio : sendersRef.current.video;
+      if (existing) {
+        try { existing.replaceTrack(t); } catch { try { pc.addTrack(t, stream); } catch {} }
+      } else {
+        try {
+          const sender = pc.addTrack(t, stream);
+          if (t.kind === 'audio') sendersRef.current.audio = sender;
+          else sendersRef.current.video = sender;
+        } catch {}
+      }
+    });
+  };
+
   const startCall: CallContextValue['startCall'] = async (opts) => {
     if (!user) return null;
     if (activeCall) return null;
@@ -261,7 +280,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
             if (ringtoneRef.current) { try { ringtoneRef.current.pause(); } catch {} ringtoneRef.current = null; }
             const pc = setupPeerConnection(callRow, true);
             const stream = localStreamRef.current || await acquireMedia(opts.type);
-            stream.getTracks().forEach(t => pc.addTrack(t, stream));
+            addTracksToPC(pc, stream);
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
             channel.send({ type: 'broadcast', event: 'offer', payload: { sdp: offer, from: user.id } });
@@ -353,7 +372,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     channelRef.current = channel;
     const pc = setupPeerConnection(activeCall, false);
     const stream = await acquireMedia(activeCall.call_type).catch(() => null);
-    if (stream) stream.getTracks().forEach(t => pc.addTrack(t, stream));
+    if (stream) addTracksToPC(pc, stream);
 
     channel.on('broadcast', { event: 'offer' }, async ({ payload }) => {
       try {
