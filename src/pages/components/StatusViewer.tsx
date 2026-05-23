@@ -91,14 +91,26 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
   useEffect(() => {
     if (!isOwner || !story?.id) return;
     (async () => {
-      const { data } = await supabase
+      const { data: viewRows, error: viewsError } = await supabase
         .from('status_views')
-        .select('viewer_id, viewed_at, user_profiles!status_views_viewer_id_fkey(full_name)')
+        .select('viewer_id, viewed_at')
         .eq('status_id', story.id)
         .order('viewed_at', { ascending: false });
-      setViewers((data || []).map((v: any) => ({
+
+      if (viewsError) {
+        setViewers([]);
+        return;
+      }
+
+      const viewerIds = Array.from(new Set((viewRows || []).map((v: any) => v.viewer_id).filter(Boolean)));
+      const { data: profiles } = viewerIds.length > 0
+        ? await supabase.from('user_profiles').select('id, full_name, username').in('id', viewerIds)
+        : { data: [] };
+      const profileById = new Map((profiles || []).map((p: any) => [p.id, p]));
+
+      setViewers((viewRows || []).map((v: any) => ({
         id: v.viewer_id,
-        name: v.user_profiles?.full_name || 'Someone',
+        name: profileById.get(v.viewer_id)?.full_name || profileById.get(v.viewer_id)?.username || 'Someone',
         viewed_at: v.viewed_at,
       })));
     })();
@@ -295,6 +307,7 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
         />
 
         {/* Bottom Actions */}
+        {(!isOwner || !showViewers) && (
         <div className="absolute bottom-0 left-0 right-0 z-40 p-4">
           {isOwner ? (
             <div className="text-center text-xs text-white/80 bg-black/40 rounded-full px-3 py-2 backdrop-blur-sm">
@@ -351,10 +364,13 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
             </div>
           )}
         </div>
+        )}
 
         {/* Owner viewers panel */}
         {isOwner && showViewers && (
-          <div className="absolute inset-x-0 bottom-0 z-20 max-h-[55%] overflow-y-auto bg-black/85 backdrop-blur-md border-t border-white/15 rounded-t-2xl p-4"
+          <div className="absolute inset-x-0 bottom-0 z-50 max-h-[55%] overflow-y-auto bg-black/90 backdrop-blur-md border-t border-white/15 rounded-t-2xl p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]"
+               onPointerDown={(e) => e.stopPropagation()}
+               onPointerUp={(e) => e.stopPropagation()}
                onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-3">
               <p className="text-sm font-semibold text-white flex items-center gap-2"><Eye size={14}/> Viewed by {viewers.length}</p>
