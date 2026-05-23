@@ -92,7 +92,7 @@ export default function EncryptionPinModal({ userId, mode, onComplete, onSkip }:
           <div className="mb-4 p-3 rounded-lg bg-vt-amber/10 border border-vt-amber/20 flex items-start gap-2">
             <AlertTriangle size={14} className="text-vt-amber mt-0.5 flex-shrink-0" />
             <p className="text-[11px] text-vt-amber/90 leading-relaxed">
-              <strong>Remember this PIN.</strong> If you forget it, your encrypted message history cannot be recovered — not even by us. This is what makes it truly end-to-end encrypted.
+              <strong>Important:</strong> This PIN can be set <strong>only once</strong>. If you lose it, your entire encrypted chat history is lost forever — not even we can recover it. This is what makes it truly end-to-end encrypted.
             </p>
           </div>
         )}
