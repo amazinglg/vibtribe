@@ -356,10 +356,36 @@ export default function ChatWindowPanel() {
           }
         )
         .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages', filter: `chat_id=eq.${selectedChatId}` },
-          (payload) => {
+          async (payload) => {
             const upd = payload.new as any;
+            // Deleted for me — remove from view
+            if (Array.isArray(upd.deleted_for) && upd.deleted_for.includes(user.id)) {
+              setMessages(prev => prev.filter(m => m.id !== upd.id));
+              return;
+            }
+            // Deleted for everyone — show tombstone
+            if (upd.deleted_for_everyone) {
+              setMessages(prev => prev.map(m => m.id === upd.id
+                ? { ...m, text: '🚫 This message was deleted', deletedForEveryone: true, encrypted: false }
+                : m
+              ));
+              return;
+            }
+            // Content edited — re-decrypt if needed
+            let newText: string | null = null;
+            if (typeof upd.content === 'string') {
+              const enc = isEncrypted(upd.content);
+              const pk = contactPubKeyRef.current;
+              if (enc && pk) newText = await decryptMessage(upd.content, pk);
+              else if (!enc) newText = upd.content;
+            }
             setMessages(prev => prev.map(m => m.id === upd.id
-              ? { ...m, status: upd.message_status || m.status }
+              ? {
+                  ...m,
+                  status: upd.message_status || m.status,
+                  text: newText !== null ? newText : m.text,
+                  editedAt: upd.edited_at || m.editedAt,
+                }
               : m
             ));
           }
