@@ -1,7 +1,7 @@
 {
     "name": "VibTribe",
     "short_name": "VibTribe",
-    "description": "Where your vibe finds its tribe \u2014 secure social messaging platform",
+    "description": "VibTribe — secure social messaging with real-time chat, HD voice & video calls, 24-hour status updates, and an encrypted private vault. Connect with your tribe, your way.",
     "id": "/",
     "scope": "/",
     "start_url": "/",
@@ -53,9 +53,19 @@
     ],
     "categories": [
         "social",
-        "communication"
+        "communication",
+        "lifestyle"
     ],
-    "screenshots": [],
+    "iarc_rating_id": "",
+    "screenshots": [
+        {
+            "src": "/icons/icon-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "form_factor": "narrow",
+            "label": "VibTribe — chat, call and share status"
+        }
+    ],
     "shortcuts": [
         {
             "name": "Open Chats",
