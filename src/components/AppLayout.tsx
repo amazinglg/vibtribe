@@ -70,21 +70,50 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = createClient();
   const [pinModal, setPinModal] = useState<null | 'setup' | 'unlock'>(null);
 
-  // After login: check if user needs to set up or unlock E2E encryption.
+  // After login: check if user needs to set up, unlock, or re-verify E2E encryption.
+  // Policy:
+  //  - No server key       → 'setup'  (mandatory)
+  //  - Server key, no local→ 'unlock' (mandatory)
+  //  - Server + local key  → still 'unlock' if:
+  //      (a) PIN not verified yet in THIS browser session (fresh launch), or
+  //      (b) last verification > 7 days ago (weekly security check)
   useEffect(() => {
     if (!user) { setPinModal(null); return; }
     let cancelled = false;
     (async () => {
       try {
-        const local = await hasLocalPrivateKey();
-        if (local) return; // already unlocked on this device
         const server = await hasServerKey(user.id);
         if (cancelled) return;
-        setPinModal(server ? 'unlock' : 'setup');
+        if (!server) { setPinModal('setup'); return; }
+
+        const local = await hasLocalPrivateKey();
+        if (!local) { setPinModal('unlock'); return; }
+
+        // Local key exists — check session + weekly cadence
+        const sessionKey = `vt_pin_session_${user.id}`;
+        const lastKey = `vt_pin_last_verified_${user.id}`;
+        const verifiedThisSession = sessionStorage.getItem(sessionKey) === '1';
+        const lastVerified = parseInt(localStorage.getItem(lastKey) || '0', 10);
+        const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+        const stale = !lastVerified || (Date.now() - lastVerified) > WEEK_MS;
+
+        if (!verifiedThisSession || stale) {
+          setPinModal('unlock');
+        }
       } catch {}
     })();
     return () => { cancelled = true; };
   }, [user]);
+
+  const handlePinComplete = () => {
+    if (user) {
+      try {
+        sessionStorage.setItem(`vt_pin_session_${user.id}`, '1');
+        localStorage.setItem(`vt_pin_last_verified_${user.id}`, String(Date.now()));
+      } catch {}
+    }
+    setPinModal(null);
+  };
 
   // Load notifications for the current user (admins receive ticket alerts)
   useEffect(() => {
@@ -398,8 +427,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <EncryptionPinModal
           userId={user.id}
           mode={pinModal}
-          onComplete={() => setPinModal(null)}
-          onSkip={pinModal === 'unlock' ? () => setPinModal(null) : undefined}
+          onComplete={handlePinComplete}
+          /* No skip — PIN entry is mandatory on every launch and every 7 days */
         />
       )}
     </div>
