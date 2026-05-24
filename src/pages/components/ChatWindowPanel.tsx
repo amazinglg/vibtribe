@@ -234,6 +234,9 @@ export default function ChatWindowPanel() {
   const [isBlocked, setIsBlocked] = useState(false);
   const [disappearMode, setDisappearMode] = useState<'never' | '24h' | 'after_seen'>('24h');
   const [chatType, setChatType] = useState<'normal' | 'secure' | 'group'>('normal');
+  // True iff the CURRENT user has marked this chat as secure on their side.
+  // The other participant is independent — they may or may not have secured it.
+  const [myChatSecured, setMyChatSecured] = useState(false);
   const [showDisappearMenu, setShowDisappearMenu] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const contactPubKeyRef = useRef<string | null>(null);
