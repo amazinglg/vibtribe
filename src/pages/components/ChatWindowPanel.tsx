@@ -1431,28 +1431,37 @@ export default function ChatWindowPanel() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Emoji Picker */}
+      {/* Sticker Picker */}
       {showEmoji && (
         <div className="border-t border-border glass" onClick={e => e.stopPropagation()}>
-          <div className="flex gap-1 px-3 pt-2 overflow-x-auto">
+          <div className="flex gap-2 px-3 pt-2 overflow-x-auto">
             {EMOJI_CATEGORIES.map((cat, idx) => (
               <button
-                key={idx}
+                key={cat.id}
                 onClick={() => setEmojiCategory(idx)}
-                className={`flex-shrink-0 px-2 py-1 rounded-lg text-xs transition-all ${emojiCategory === idx ? 'gradient-primary text-white' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
+                className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${emojiCategory === idx ? 'gradient-primary text-white shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
               >
-                {cat.label.split(' ')[0]}
+                <span className="text-base leading-none">{cat.icon}</span>
+                <span>{cat.label}</span>
               </button>
             ))}
           </div>
-          <div className="flex flex-wrap gap-1 px-3 py-2 max-h-36 overflow-y-auto">
-            {EMOJI_CATEGORIES[emojiCategory].emojis.map(emoji => (
+          <div className="grid grid-cols-6 gap-2 px-3 py-3 max-h-56 overflow-y-auto">
+            {EMOJI_CATEGORIES[emojiCategory].items.map((path) => (
               <button
-                key={emoji}
-                onClick={() => setInputText(prev => prev + emoji)}
-                className="text-xl hover:scale-125 transition-transform p-0.5"
+                key={path}
+                onClick={() => sendMessage(stickerToken(path))}
+                className="aspect-square rounded-xl hover:bg-muted/60 active:scale-90 transition-all p-1 flex items-center justify-center"
+                aria-label="Send sticker"
               >
-                {emoji}
+                <img
+                  src={`/emojis/${path}`}
+                  alt=""
+                  loading="lazy"
+                  width={56}
+                  height={56}
+                  className="w-full h-full object-contain drop-shadow-sm"
+                />
               </button>
             ))}
           </div>
