@@ -128,12 +128,9 @@ export async function setupEncryptionWithPIN(userId: string, pin: string): Promi
 // ---------------- Unlock on new device ----------------
 export async function unlockEncryptionWithPIN(userId: string, pin: string): Promise<void> {
   if (!/^\d{6}$/.test(pin)) throw new Error('PIN must be exactly 6 digits');
-  const { data, error } = await supabase
-    .from('user_profiles')
-    .select('public_key, encrypted_private_key, key_salt, key_iv')
-    .eq('id', userId)
-    .single();
+  const { data: rows, error } = await supabase.rpc('get_my_encryption_material');
   if (error) throw error;
+  const data = Array.isArray(rows) ? rows[0] : rows;
   if (!data?.encrypted_private_key || !data.key_salt || !data.key_iv || !data.public_key) {
     throw new Error('No encryption key found on server. Please set up encryption first.');
   }
@@ -159,12 +156,9 @@ export async function unlockEncryptionWithPIN(userId: string, pin: string): Prom
 export async function changeEncryptionPIN(userId: string, oldPin: string, newPin: string): Promise<void> {
   if (!/^\d{6}$/.test(newPin)) throw new Error('New PIN must be exactly 6 digits');
 
-  const { data, error } = await supabase
-    .from('user_profiles')
-    .select('encrypted_private_key, key_salt, key_iv')
-    .eq('id', userId)
-    .single();
+  const { data: rows, error } = await supabase.rpc('get_my_encryption_material');
   if (error) throw error;
+  const data = Array.isArray(rows) ? rows[0] : rows;
   if (!data?.encrypted_private_key || !data.key_salt || !data.key_iv) {
     throw new Error('No encryption key found. Please set up encryption first.');
   }
