@@ -9,12 +9,13 @@ interface Props {
   name?: string;
   kind: 'image' | 'file' | 'audio';
   theirPublicKey: string;
+  onImageClick?: (blobUrl: string) => void;
 }
 
 // Tiny in-memory cache so a re-render doesn't re-fetch & re-decrypt.
 const blobCache = new Map<string, string>();
 
-export default function EncryptedMedia({ url, mime, name, kind, theirPublicKey }: Props) {
+export default function EncryptedMedia({ url, mime, name, kind, theirPublicKey, onImageClick }: Props) {
   const [blobUrl, setBlobUrl] = useState<string | null>(blobCache.get(url) || null);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(!blobCache.has(url));
@@ -64,7 +65,14 @@ export default function EncryptedMedia({ url, mime, name, kind, theirPublicKey }
   }
 
   if (kind === 'image') {
-    return <img src={blobUrl} alt={name || 'Shared image'} className="max-w-[200px] rounded-xl" />;
+    return (
+      <img
+        src={blobUrl}
+        alt={name || 'Shared image'}
+        className="max-w-[200px] rounded-xl cursor-zoom-in"
+        onClick={() => onImageClick?.(blobUrl)}
+      />
+    );
   }
   if (kind === 'audio') {
     return <audio controls src={blobUrl} className="max-w-[220px]" />;
