@@ -264,6 +264,7 @@ export type Database = {
           message_status: Database["public"]["Enums"]["message_status"] | null
           reactions: Json | null
           sender_id: string | null
+          sent_secure: boolean
         }
         Insert: {
           chat_id?: string | null
@@ -277,6 +278,7 @@ export type Database = {
           message_status?: Database["public"]["Enums"]["message_status"] | null
           reactions?: Json | null
           sender_id?: string | null
+          sent_secure?: boolean
         }
         Update: {
           chat_id?: string | null
@@ -290,6 +292,7 @@ export type Database = {
           message_status?: Database["public"]["Enums"]["message_status"] | null
           reactions?: Json | null
           sender_id?: string | null
+          sent_secure?: boolean
         }
         Relationships: [
           {
@@ -626,6 +629,27 @@ export type Database = {
           terms_accepted_at?: string | null
           updated_at?: string | null
           username?: string | null
+        }
+        Relationships: []
+      }
+      user_secure_chats: {
+        Row: {
+          chat_id: string
+          code: string
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          chat_id: string
+          code: string
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          chat_id?: string
+          code?: string
+          created_at?: string
+          user_id?: string
         }
         Relationships: []
       }
