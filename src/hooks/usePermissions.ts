@@ -7,6 +7,8 @@ export interface PermissionsState {
   camera: PermissionStatus;
   notifications: PermissionStatus;
   storage: PermissionStatus;
+  contacts: PermissionStatus;
+  photos: PermissionStatus;
 }
 
 export interface PermissionRequestResult {
@@ -30,6 +32,8 @@ export function usePermissions() {
     camera: 'idle',
     notifications: 'idle',
     storage: 'idle',
+    contacts: 'idle',
+    photos: 'idle',
   });
 
   const requestMicrophone = useCallback(async (): Promise<PermissionRequestResult> => {
@@ -123,6 +127,56 @@ export function usePermissions() {
     }
   }, []);
 
+  const requestContacts = useCallback(async (): Promise<PermissionRequestResult> => {
+    // Web Contact Picker API — only available on Android Chrome over HTTPS.
+    // There is no persistent grant; each call opens the native picker.
+    const ContactsManager = (navigator as unknown as { contacts?: { select: (props: string[], opts?: { multiple?: boolean }) => Promise<unknown[]> } }).contacts;
+    if (!ContactsManager || typeof ContactsManager.select !== 'function') {
+      setPermissions(p => ({ ...p, contacts: 'unsupported' }));
+      return { granted: false, status: 'unsupported' };
+    }
+    try {
+      await ContactsManager.select(['name'], { multiple: false });
+      setPermissions(p => ({ ...p, contacts: 'granted' }));
+      return { granted: true, status: 'granted' };
+    } catch {
+      setPermissions(p => ({ ...p, contacts: 'denied' }));
+      return { granted: false, status: 'denied' };
+    }
+  }, []);
+
+  const requestPhotos = useCallback(async (): Promise<PermissionRequestResult> => {
+    // Web has no persistent "photos" permission. We trigger a one-time
+    // <input type="file" accept="image/*"> picker; the user choosing a file
+    // counts as granting access for that selection.
+    return new Promise<PermissionRequestResult>((resolve) => {
+      try {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*,video/*';
+        input.style.display = 'none';
+        let settled = false;
+        const settle = (granted: boolean) => {
+          if (settled) return;
+          settled = true;
+          const status: PermissionStatus = granted ? 'granted' : 'denied';
+          setPermissions(p => ({ ...p, photos: status }));
+          try { document.body.removeChild(input); } catch { /* ignore */ }
+          resolve({ granted, status });
+        };
+        input.onchange = () => settle(!!input.files && input.files.length > 0);
+        input.oncancel = () => settle(false);
+        document.body.appendChild(input);
+        input.click();
+        // Fallback if neither event fires within 60s
+        setTimeout(() => settle(false), 60000);
+      } catch {
+        setPermissions(p => ({ ...p, photos: 'denied' }));
+        resolve({ granted: false, status: 'denied' });
+      }
+    });
+  }, []);
+
   const checkAllPermissions = useCallback(async () => {
     const [mic, cam, notif] = await Promise.all([
       queryPermission('microphone' as PermissionName),
@@ -132,12 +186,16 @@ export function usePermissions() {
     const storagePersisted = navigator?.storage?.persisted
       ? await navigator.storage.persisted().catch(() => false)
       : false;
-    setPermissions({
+    const ContactsManager = (navigator as unknown as { contacts?: { select?: unknown } }).contacts;
+    const contactsSupported = !!(ContactsManager && typeof ContactsManager.select === 'function');
+    setPermissions(prev => ({
       microphone: mic,
       camera: cam,
       notifications: notif,
       storage: storagePersisted ? 'granted' : 'prompt',
-    });
+      contacts: contactsSupported ? (prev.contacts === 'granted' ? 'granted' : 'prompt') : 'unsupported',
+      photos: prev.photos === 'granted' ? 'granted' : 'prompt',
+    }));
   }, []);
 
   return {
@@ -147,6 +205,8 @@ export function usePermissions() {
     requestMicAndCamera,
     requestNotifications,
     requestStorage,
+    requestContacts,
+    requestPhotos,
     checkAllPermissions,
   };
 }
