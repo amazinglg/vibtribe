@@ -1053,37 +1053,71 @@ export default function ProfileContent() {
                   <Shield size={16} className="text-primary" />
                   Permissions
                 </h3>
-                <p className="text-xs text-muted-foreground mb-4">Manage app permissions for notifications, microphone, camera and storage.</p>
-                <div className="space-y-3">
-                  {[
-                    { label: 'Notifications', status: appPerms.notifications, request: requestNotifications },
-                    { label: 'Microphone & Camera', status: appPerms.microphone === 'granted' && appPerms.camera === 'granted' ? 'granted' : appPerms.microphone, request: requestMicAndCamera },
-                    { label: 'Storage', status: appPerms.storage, request: requestStorage },
-                  ].map((p) => {
+                <p className="text-xs text-muted-foreground mb-4">Review and manage every device permission VibTribe uses. To revoke a granted permission, open your browser or Android app settings &rarr; VibTribe &rarr; Permissions.</p>
+                <div className="space-y-2">
+                  {([
+                    { key: 'camera', label: 'Camera', desc: 'Take photos and make video calls', icon: <Camera size={16} className="text-primary" />, status: appPerms.camera, request: requestCamera },
+                    { key: 'microphone', label: 'Microphone', desc: 'Voice notes and voice/video calls', icon: <Mic size={16} className="text-primary" />, status: appPerms.microphone, request: requestMicrophone },
+                    { key: 'contacts', label: 'Contacts', desc: 'Pick contacts from your phone to add as friends', icon: <ContactIcon size={16} className="text-primary" />, status: appPerms.contacts, request: requestContacts },
+                    { key: 'notifications', label: 'Notifications', desc: 'Alerts for new messages and calls', icon: <Bell size={16} className="text-primary" />, status: appPerms.notifications, request: requestNotifications },
+                    { key: 'photos', label: 'Photos & Gallery', desc: 'Attach images and videos to chats', icon: <ImageIcon size={16} className="text-primary" />, status: appPerms.photos, request: requestPhotos },
+                    { key: 'storage', label: 'Storage', desc: 'Cache chats and media for offline use', icon: <HardDrive size={16} className="text-primary" />, status: appPerms.storage, request: requestStorage },
+                  ] as const).map((p) => {
                     const granted = p.status === 'granted';
+                    const denied = p.status === 'denied';
+                    const unsupported = p.status === 'unsupported';
+                    const badge = unsupported
+                      ? { text: 'Unsupported', cls: 'bg-muted text-muted-foreground' }
+                      : granted
+                        ? { text: 'Allowed', cls: 'bg-green-500/20 text-green-400' }
+                        : denied
+                          ? { text: 'Denied', cls: 'bg-red-500/20 text-red-400' }
+                          : { text: 'Not set', cls: 'bg-amber-500/20 text-amber-400' };
                     return (
-                      <div key={p.label} className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
-                        <div>
-                          <p className="text-sm font-medium text-foreground">{p.label}</p>
-                          <p className="text-xs text-muted-foreground capitalize">{p.status}</p>
+                      <div key={p.key} className="flex items-center gap-3 p-3 rounded-xl bg-muted/30">
+                        <div className="w-9 h-9 rounded-lg bg-primary/15 flex items-center justify-center flex-shrink-0">
+                          {p.icon}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-sm font-medium text-foreground">{p.label}</p>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${badge.cls}`}>{badge.text}</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground truncate">{p.desc}</p>
                         </div>
                         <button
+                          disabled={unsupported}
                           onClick={async () => {
+                            if (unsupported) return;
                             if (granted) {
-                              toast.info('To revoke, change site permissions in your browser settings.');
-                            } else {
-                              await p.request();
-                              await checkAllPermissions();
+                              toast.info('To revoke, open your browser or app settings → Site/App permissions → VibTribe.');
+                              return;
                             }
+                            const res = await p.request();
+                            if (res.granted) toast.success(`${p.label} permission granted`);
+                            else if (res.status === 'denied') toast.error(`${p.label} permission denied`);
+                            await checkAllPermissions();
                           }}
-                          className={`w-10 h-6 rounded-full relative transition-all ${granted ? 'gradient-primary' : 'bg-muted'}`}
+                          className={`text-xs px-3 py-1.5 rounded-lg font-medium flex-shrink-0 transition-all ${
+                            unsupported
+                              ? 'bg-muted text-muted-foreground opacity-50 cursor-not-allowed'
+                              : granted
+                                ? 'bg-muted text-foreground hover:bg-muted/70'
+                                : 'gradient-primary text-white hover:opacity-90'
+                          }`}
                         >
-                          <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${granted ? 'right-1' : 'left-1'}`} />
+                          {unsupported ? 'N/A' : granted ? 'Manage' : 'Allow'}
                         </button>
                       </div>
                     );
                   })}
                 </div>
+                <button
+                  onClick={async () => { await checkAllPermissions(); toast.success('Permissions refreshed'); }}
+                  className="mt-4 w-full text-xs py-2 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex items-center justify-center gap-2"
+                >
+                  <RefreshCw size={12} /> Refresh status
+                </button>
               </div>
 
               {/* Legal — Terms & Privacy Policy */}
