@@ -110,7 +110,7 @@ export function TermsContent() {
       </ul>
 
       <h3 className="text-base font-semibold mt-4">F. Permissions</h3>
-      <p>VibTribe asks for the following device permissions. Each one is requested only when you first use the related feature, and you can review or revoke them anytime from <strong>Profile &rarr; Privacy &rarr; Permissions</strong>, or from your browser/Android app settings.</p>
+      <p>VibTribe asks for the following device permissions. Each one is requested only when you first use the related feature. In the installed Android app you can review and re-request them from <strong>Profile &rarr; Privacy &rarr; Permissions</strong>. In the browser/PWA version, permissions are managed from your browser's site-settings page (or Android <em>Settings &rarr; Apps &rarr; VibTribe &rarr; Permissions</em>).</p>
       <ul className="list-disc pl-5 space-y-1">
         <li><strong>Camera</strong> — to capture photos and to send video during video calls.</li>
         <li><strong>Microphone</strong> — to record voice notes and to transmit audio during voice and video calls.</li>
