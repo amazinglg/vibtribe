@@ -652,6 +652,19 @@ export default function ProfileContent() {
                     className="w-full px-3 py-2 bg-input border border-border rounded-xl text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
                   />
                 </div>
+                <div>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">
+                    Date of Birth <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={dob}
+                    max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
+                    onChange={e => setDob(e.target.value)}
+                    className="w-full px-3 py-2 bg-input border border-border rounded-xl text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1">Must be 18+ to use VibTribe.</p>
+                </div>
                 <div className="flex gap-2">
                   <button
                     onClick={handleSaveProfile}
