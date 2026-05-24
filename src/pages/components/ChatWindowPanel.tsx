@@ -1519,30 +1519,29 @@ export default function ChatWindowPanel() {
           className="absolute bottom-20 left-2 right-2 sm:left-4 sm:right-auto sm:w-[360px] z-30 glass-strong rounded-2xl border border-border shadow-card p-3 float-up"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex gap-1 mb-3 p-1 bg-muted/50 rounded-xl">
-            <button
-              onClick={() => setEmojiTab('boys')}
-              className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${emojiTab === 'boys' ? 'bg-blue-500 text-white shadow' : 'text-muted-foreground hover:text-foreground'}`}
-            >
-              💙 Boys Emojis
-            </button>
-            <button
-              onClick={() => setEmojiTab('girls')}
-              className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${emojiTab === 'girls' ? 'bg-pink-500 text-white shadow' : 'text-muted-foreground hover:text-foreground'}`}
-            >
-              🎀 Girls Emojis
-            </button>
-          </div>
-          <div className="grid grid-cols-5 sm:grid-cols-6 gap-1.5 max-h-72 overflow-y-auto">
-            {(emojiTab === 'boys' ? BOYS_STICKERS : GIRLS_STICKERS).map((src) => (
+          <div className="flex gap-1 mb-3 p-1 bg-muted/50 rounded-xl overflow-x-auto no-scrollbar">
+            {EMOJI_CATEGORIES.map(cat => (
               <button
-                key={src}
-                onClick={() => sendSticker(src)}
-                className="aspect-square p-1 rounded-xl hover:bg-muted active:scale-95 transition-all"
+                key={cat.key}
+                onClick={() => setEmojiTab(cat.key)}
+                className={`flex-shrink-0 px-2.5 py-1.5 rounded-lg text-base transition-all ${emojiTab === cat.key ? 'bg-primary/15 text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                aria-label={cat.label}
+                title={cat.label}
                 type="button"
-                aria-label="Send sticker"
               >
-                <img src={src} alt="" className="w-full h-full object-contain" loading="lazy" />
+                {cat.icon}
+              </button>
+            ))}
+          </div>
+          <div className="grid grid-cols-8 gap-1 max-h-72 overflow-y-auto">
+            {(EMOJI_CATEGORIES.find(c => c.key === emojiTab)?.emojis || []).map((emoji, i) => (
+              <button
+                key={`${emoji}-${i}`}
+                onClick={() => insertEmoji(emoji)}
+                className="aspect-square flex items-center justify-center text-2xl rounded-lg hover:bg-muted active:scale-90 transition-all"
+                type="button"
+              >
+                {emoji}
               </button>
             ))}
           </div>
