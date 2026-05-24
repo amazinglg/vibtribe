@@ -712,6 +712,49 @@ export default function ChatWindowPanel() {
     ));
   };
 
+  const sendSticker = async (url: string) => {
+    if (!selectedChatId || !user) return;
+    const absUrl = url.startsWith('http') ? url : `${window.location.origin}${url}`;
+    const tempId = `temp-${Date.now()}`;
+    setMessages(prev => [...prev, {
+      id: tempId,
+      senderId: user.id,
+      text: `[IMAGE:${absUrl}]`,
+      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+      status: 'sent',
+      reactions: [],
+      mediaUrl: absUrl,
+      mediaType: 'image',
+      createdAt: new Date().toISOString(),
+    }]);
+    setShowEmoji(false);
+    try {
+      const { data } = await supabase
+        .from('messages')
+        .insert({ chat_id: selectedChatId, sender_id: user.id, content: `[IMAGE:${absUrl}]`, message_status: 'sent' })
+        .select()
+        .single();
+      if (data) {
+        setMessages(prev => prev.map(m => m.id === tempId ? { ...m, id: data.id, status: 'delivered' } : m));
+        await supabase.from('chats').update({ updated_at: new Date().toISOString() }).eq('id', selectedChatId);
+        if (contact?.userId) {
+          await sendPushNotification(supabase, {
+            recipient_user_id: contact.userId,
+            chat_id: selectedChatId,
+            title: profile?.full_name || 'Someone',
+            body: '💝 Sticker',
+            tag: `chat-${selectedChatId}`,
+            url: '/',
+            type: 'message',
+          });
+        }
+      }
+    } catch (err: any) {
+      setMessages(prev => prev.filter(m => m.id !== tempId));
+      toast.error(err?.message || 'Sticker could not be sent');
+    }
+  };
+
   const deleteMessage = async (msgId: string) => {
     setMessages(prev => prev.filter(m => m.id !== msgId));
     try {
