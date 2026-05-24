@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useNavigate } from '@tanstack/react-router';
-import { Phone, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle, User, ChevronDown, Check } from 'lucide-react';
+import { Phone, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle, User, ChevronDown, Check, Calendar } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLogo from '@/components/ui/AppLogo';
 import { supabase } from '@/integrations/supabase/client';
@@ -34,6 +34,7 @@ export default function SignUpPage() {
   const { signUp } = useAuth();
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
+  const [dob, setDob] = useState('');
   const [countryCode, setCountryCode] = useState('+91');
   const [mobile, setMobile] = useState('');
   const [password, setPassword] = useState('');
@@ -46,6 +47,24 @@ export default function SignUpPage() {
 
   const selectedCountry = COUNTRY_CODES.find(c => c.code === countryCode) || COUNTRY_CODES[0];
 
+  // Max DOB = today minus 18 years (used as `max` attribute on the date input)
+  const maxDobStr = (() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() - 18);
+    return d.toISOString().split('T')[0];
+  })();
+
+  const isAtLeast18 = (isoDate: string) => {
+    if (!isoDate) return false;
+    const dobD = new Date(isoDate);
+    if (isNaN(dobD.getTime())) return false;
+    const today = new Date();
+    let age = today.getFullYear() - dobD.getFullYear();
+    const m = today.getMonth() - dobD.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dobD.getDate())) age--;
+    return age >= 18;
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -53,6 +72,8 @@ export default function SignUpPage() {
     if (!username.trim()) { setError('Please choose a username'); return; }
     if (username.length < 3) { setError('Username must be at least 3 characters'); return; }
     if (!/^[a-zA-Z0-9_]+$/.test(username)) { setError('Username can only contain letters, numbers, and underscores'); return; }
+    if (!dob) { setError('Please enter your date of birth'); return; }
+    if (!isAtLeast18(dob)) { setError('You must be at least 18 years old to sign up on VibTribe'); return; }
     if (!mobile.trim()) { setError('Please enter your mobile number'); return; }
     if (mobile.replace(/\D/g, '').length < 7) { setError('Please enter a valid mobile number'); return; }
     if (!password) { setError('Please enter a password'); return; }
@@ -66,7 +87,7 @@ export default function SignUpPage() {
     const fullMobile = `${countryCode}${local}`;
     setLoading(true);
     try {
-      await signUp(fullMobile, password, { fullName, countryCode, username: username.toLowerCase() });
+      await signUp(fullMobile, password, { fullName, countryCode, username: username.toLowerCase(), dob });
       // Record terms acceptance immediately so the in-app gate doesn't re-prompt.
       try { await supabase.rpc('accept_terms' as any); } catch (e) { console.warn('[VT-SIGNUP] accept_terms failed', e); }
       router({ to: '/complete-profile', replace: true });
@@ -128,6 +149,23 @@ export default function SignUpPage() {
                 />
               </div>
               <p className="text-[11px] text-muted-foreground mt-1">Letters, numbers, underscores. Min 3 characters.</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1.5">
+                Date of Birth <span className="text-red-400">*</span>
+              </label>
+              <div className="relative">
+                <Calendar size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                <input
+                  type="date"
+                  value={dob}
+                  max={maxDobStr}
+                  onChange={e => { setDob(e.target.value); setError(''); }}
+                  className="w-full pl-9 pr-4 py-3 bg-input border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all text-sm"
+                />
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-1">You must be 18+ to use VibTribe.</p>
             </div>
 
             <div>

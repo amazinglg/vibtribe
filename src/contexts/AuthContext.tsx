@@ -184,6 +184,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           country_code: metadata?.countryCode || '+91',
           avatar_url: metadata?.avatarUrl || '',
           username: metadata?.username || '',
+          dob: metadata?.dob || '',
           role: 'user',
         },
         emailRedirectTo: undefined,
@@ -196,6 +197,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const updates: any = {};
         if (metadata?.countryCode) updates.country_code = metadata.countryCode;
         if (metadata?.username) updates.username = metadata.username;
+        if (metadata?.dob) updates.dob = metadata.dob;
         if (Object.keys(updates).length) {
           await supabase.from('user_profiles').update(updates).eq('id', data.user.id);
         }

@@ -80,6 +80,7 @@ export default function ProfileContent() {
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
   const [username, setUsername] = useState('');
+  const [dob, setDob] = useState('');
   const [savingProfile, setSavingProfile] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
@@ -157,6 +158,7 @@ export default function ProfileContent() {
       setDisplayName(profile.full_name || '');
       setBio(profile.bio || '');
       setUsername(profile.username || '');
+      setDob((profile as any).dob || '');
       setEditEmail(
         profile.real_email
           || (profile.email && !profile.email.endsWith('@vibetribe.app') ? profile.email : '')
@@ -339,7 +341,16 @@ export default function ProfileContent() {
           .maybeSingle();
         if (existing) throw new Error('This username is already taken');
       }
-      await updateProfile({ full_name: displayName, bio, username: normalizedUsername || null });
+      // DOB validation: must be 18+ if provided
+      if (dob) {
+        const dobD = new Date(dob);
+        const today = new Date();
+        let age = today.getFullYear() - dobD.getFullYear();
+        const m = today.getMonth() - dobD.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < dobD.getDate())) age--;
+        if (age < 18) throw new Error('You must be at least 18 years old');
+      }
+      await updateProfile({ full_name: displayName, bio, username: normalizedUsername || null, dob: dob || null } as any);
       setEditMode(false);
       toast.success('Profile updated successfully ✓');
     } catch (err: any) {
@@ -640,6 +651,19 @@ export default function ProfileContent() {
                     maxLength={150}
                     className="w-full px-3 py-2 bg-input border border-border rounded-xl text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
                   />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">
+                    Date of Birth <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={dob}
+                    max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
+                    onChange={e => setDob(e.target.value)}
+                    className="w-full px-3 py-2 bg-input border border-border rounded-xl text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1">Must be 18+ to use VibTribe.</p>
                 </div>
                 <div className="flex gap-2">
                   <button
