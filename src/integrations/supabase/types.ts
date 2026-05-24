@@ -628,6 +628,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_delete_user: { Args: { _user_id: string }; Returns: undefined }
       admin_get_user_profile: {
         Args: { _user_id: string }
         Returns: {
