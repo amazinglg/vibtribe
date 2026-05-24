@@ -245,6 +245,8 @@ export default function ChatWindowPanel() {
   const [pendingCall, setPendingCall] = useState<'voice' | 'video' | null>(null);
   const [showCallPermPrompt, setShowCallPermPrompt] = useState(false);
   const [showMediaPermPrompt, setShowMediaPermPrompt] = useState(false);
+  const [showEmoji, setShowEmoji] = useState(false);
+  const [emojiTab, setEmojiTab] = useState<'boys' | 'girls'>('boys');
   const { permissions, requestMicrophone, requestCamera, requestMicAndCamera, requestStorage } = usePermissions();
   const [profile, setProfile] = React.useState<{ full_name?: string } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
