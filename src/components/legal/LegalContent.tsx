@@ -73,6 +73,7 @@ export function TermsContent() {
       <h3 className="text-base font-semibold mt-4">A. Data We Collect</h3>
       <ul className="list-disc pl-5 space-y-1">
         <li><strong>Account data:</strong> mobile number, country code, username, display name, optional avatar, optional email.</li>
+        <li><strong>Date of birth:</strong> collected to verify you are 18 or older. Your date of birth is kept <strong>strictly confidential</strong> — it is visible only to you and to our authorised support / admin team, and is never shown to other users of the App.</li>
         <li><strong>Encryption material:</strong> your ECDH public key, and your private key wrapped (encrypted) with a key derived from your 6-digit PIN. We never store your PIN or the unwrapped private key.</li>
         <li><strong>Messages &amp; media (1:1):</strong> end-to-end encrypted on your device; stored on our servers only in encrypted form.</li>
         <li><strong>Contacts:</strong> contact name entries you create inside the app. We do not upload your phone address book.</li>
@@ -84,6 +85,7 @@ export function TermsContent() {
       <h3 className="text-base font-semibold mt-4">B. What We Do <em>Not</em> Collect</h3>
       <ul className="list-disc pl-5 space-y-1">
         <li>We do not read or sell the contents of your end-to-end encrypted 1:1 messages or media.</li>
+        <li>We do not expose your date of birth, real email, or mobile number to other users of the App.</li>
         <li>We do not upload your phone contact list.</li>
         <li>We do not track your precise location.</li>
         <li>We do not run third-party advertising trackers.</li>
