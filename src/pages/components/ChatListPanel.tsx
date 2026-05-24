@@ -226,7 +226,7 @@ export default function ChatListPanel() {
           }
           if (preview?.startsWith('[IMAGE:')) preview = '📷 Photo';
           else if (preview?.startsWith('[FILE:')) preview = '📎 File';
-          else if (preview?.startsWith('[STICKER:')) preview = '💟 Sticker';
+          else if (preview?.startsWith('[STICKER:')) preview = 'Sticker removed';
           else if (preview?.startsWith('__call_log__:')) {
             const parts = preview.split(':');
             preview = parts[1] === 'video' ? '📹 Video call' : '📞 Voice call';
@@ -633,12 +633,19 @@ function ContactsTabContent({
     }
     const { data: platformUsers } = await supabase
       .from('user_profiles')
-      .select('id, full_name, mobile_number')
+        .select('id, full_name, mobile_number, avatar_url, profile_photo_visibility')
       .in('mobile_number', normalized.map(c => c.phone));
     const map = new Map((platformUsers || []).map((u: any) => [u.mobile_number?.replace(/\D/g, ''), u]));
     setContacts(normalized.map(c => {
       const m: any = map.get(c.phone);
-      return { name: c.name, phone: c.phone, onPlatform: !!m, userId: m?.id, avatar: m?.full_name?.[0]?.toUpperCase() };
+      return {
+        name: c.name,
+        phone: c.phone,
+        onPlatform: !!m,
+        userId: m?.id,
+        avatar: m?.full_name?.[0]?.toUpperCase(),
+        avatarUrl: m && (m.profile_photo_visibility ?? 'all') === 'all' ? (m.avatar_url || null) : null,
+      };
     }));
     setLoading(false);
   };
@@ -647,7 +654,7 @@ function ContactsTabContent({
     setLoading(true);
     const { data: users } = await supabase
       .from('user_profiles')
-      .select('id, full_name, mobile_number')
+      .select('id, full_name, mobile_number, avatar_url, profile_photo_visibility')
       .neq('id', user?.id || '')
       .limit(50);
     const result = (users || []).map((u: any) => ({
@@ -656,6 +663,7 @@ function ContactsTabContent({
       onPlatform: true,
       userId: u.id,
       avatar: u.full_name?.[0]?.toUpperCase(),
+      avatarUrl: (u.profile_photo_visibility ?? 'all') === 'all' ? (u.avatar_url || null) : null,
     }));
     setContacts(result);
     setLoading(false);
