@@ -347,9 +347,18 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
                       <div className="space-y-2">
                         {platformContacts.map((c, i) => (
                           <div key={`platform-${i}`} className="flex items-center gap-3 p-3 glass rounded-xl border border-border hover:border-primary/30 transition-all">
-                            <div className="w-10 h-10 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                              {c.avatar || c.name[0]?.toUpperCase()}
-                            </div>
+                            {c.avatarUrl ? (
+                              <img
+                                src={c.avatarUrl}
+                                alt={c.name}
+                                className="w-10 h-10 rounded-full object-cover flex-shrink-0 border border-border"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                                {c.avatar || c.name[0]?.toUpperCase()}
+                              </div>
+                            )}
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-semibold text-foreground truncate">{c.name}</p>
                               <div className="flex items-center gap-1 mt-0.5">
