@@ -115,7 +115,7 @@ export function TermsContent() {
       </ul>
 
       <h3 className="text-base font-semibold mt-4">G. Children</h3>
-      <p>The App is not intended for children below the minimum digital-consent age in their jurisdiction. We do not knowingly collect data from such children.</p>
+      <p>The App is strictly for users aged 18 and above. We do not knowingly collect data from anyone under 18. If we learn that we have collected data from a user under 18, we will delete that account and associated data promptly.</p>
 
       <h3 className="text-base font-semibold mt-4">H. Your Rights</h3>
       <p>Subject to applicable law (including India's Digital Personal Data Protection Act, 2023) you may request access, correction, or deletion of your personal data, and may withdraw consent. Contact the Grievance Officer at <strong>Labhansh.garg@outlook.com</strong>.</p>
