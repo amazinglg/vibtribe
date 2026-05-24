@@ -1,6 +1,6 @@
-const CACHE_NAME = 'vibtribe-v11';
+const CACHE_NAME = 'vibtribe-v12';
 const IMG_CACHE = 'vibtribe-images-v1';
-const STATIC_ASSETS = ['/manifest.json', '/favicon.ico'];
+const STATIC_ASSETS = ['/', '/manifest.json', '/favicon.ico'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS)));
@@ -23,7 +23,19 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin || url.pathname.startsWith('/api/')) return;
 
   if (req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html')) {
-    event.respondWith(fetch(req).catch(() => caches.match(req).then((res) => res || caches.match('/manifest.json'))));
+    // Network-first for HTML navigations; fall back to cached page, then the app shell ('/').
+    // NEVER fall back to /manifest.json — it would render raw JSON in the browser.
+    event.respondWith(
+      fetch(req)
+        .then((res) => {
+          if (res && res.status === 200 && res.type === 'basic') {
+            const copy = res.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put('/', copy)).catch(() => {});
+          }
+          return res;
+        })
+        .catch(() => caches.match(req).then((res) => res || caches.match('/')))
+    );
     return;
   }
 
