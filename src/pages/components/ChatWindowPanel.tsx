@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useRef, useEffect } from 'react';
-import { Phone, Video, Paperclip, Mic, MicOff, Send, Lock, CheckCheck, Check, ArrowLeft, Info, Trash2, ShieldCheck, Ban, ShieldOff, X, Image, FileText, Camera, Music, VideoOff, PhoneOff, Volume2, VolumeX, Timer, MoreVertical, UserPlus } from 'lucide-react';
+import { Phone, Video, Paperclip, Mic, MicOff, Send, Lock, CheckCheck, Check, ArrowLeft, Info, Trash2, ShieldCheck, Ban, ShieldOff, X, Image, FileText, Camera, Music, VideoOff, PhoneOff, Volume2, VolumeX, Timer, MoreVertical, UserPlus, Smile } from 'lucide-react';
 import { useChatStore } from '@/store/chatStore';
 import MarkSecureModal from '@/components/MarkSecureModal';
 import { useAuth } from '@/contexts/AuthContext';
@@ -245,6 +245,8 @@ export default function ChatWindowPanel() {
   const [pendingCall, setPendingCall] = useState<'voice' | 'video' | null>(null);
   const [showCallPermPrompt, setShowCallPermPrompt] = useState(false);
   const [showMediaPermPrompt, setShowMediaPermPrompt] = useState(false);
+  const [showEmoji, setShowEmoji] = useState(false);
+  const [emojiTab, setEmojiTab] = useState<'boys' | 'girls'>('boys');
   const { permissions, requestMicrophone, requestCamera, requestMicAndCamera, requestStorage } = usePermissions();
   const [profile, setProfile] = React.useState<{ full_name?: string } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -1505,6 +1507,44 @@ export default function ChatWindowPanel() {
         }}
       />
 
+      {/* Emoji Picker */}
+      {showEmoji && (
+        <div
+          className="absolute bottom-20 left-2 right-2 sm:left-4 sm:right-auto sm:w-[360px] z-30 glass-strong rounded-2xl border border-border shadow-card p-3 float-up"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex gap-1 mb-3 p-1 bg-muted/50 rounded-xl">
+            <button
+              onClick={() => setEmojiTab('boys')}
+              className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${emojiTab === 'boys' ? 'bg-blue-500 text-white shadow' : 'text-muted-foreground hover:text-foreground'}`}
+            >
+              💙 Boys Emojis
+            </button>
+            <button
+              onClick={() => setEmojiTab('girls')}
+              className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${emojiTab === 'girls' ? 'bg-pink-500 text-white shadow' : 'text-muted-foreground hover:text-foreground'}`}
+            >
+              🎀 Girls Emojis
+            </button>
+          </div>
+          <div className="grid grid-cols-8 gap-1 max-h-64 overflow-y-auto">
+            {(emojiTab === 'boys'
+              ? ['😎','😏','🤔','😄','😁','🧢','💪','🎧','⚽','🏀','😜','🤩','🤠','😠','🥷','😴','😤','🏋️','😝','🤑','🤫','🎉','🔥','🎮','🤘','😶','💡','🎩','😭','☺️','😆','😬','🙄','🙂','🤬','🥶','🥵','😪','🤤','😓','😵‍💫','🤯','🤓','🤙','✌️','👊','👍','⚡','🪖','🛹','🥳','🧋','📸','😌','🤐','🙌','💯','😋','🤭','💻','🍔','🥤']
+              : ['🎀','🥰','😘','🥺','👑','👸','🌸','😇','😍','✌️','🙈','😉','😭','🤳','😼','😻','🌷','🧋','🤭','😴','🧖‍♀️','🥳','🧸','🌺','🎧','🥹','🤗','💗','💖','💝','💕','🌼','🤩','🥲','💅','💄','🪞','💋','💐','☕','🌈','🦋','🫶','🧁','🛍️','🍭','🥂','🤍','🍒','🆗','🍯']
+            ).map((emo, i) => (
+              <button
+                key={`${emo}-${i}`}
+                onClick={() => { setInputText(prev => prev + emo); }}
+                className="text-2xl p-1.5 rounded-lg hover:bg-muted transition-all"
+                type="button"
+              >
+                {emo}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Input Area */}
       <div className="glass border-t border-border px-2 pt-2 pb-3 mb-2 lg:mb-0 flex items-center gap-1 flex-shrink-0 w-full max-w-full overflow-hidden" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
         <button
@@ -1513,6 +1553,13 @@ export default function ChatWindowPanel() {
           aria-label="Attach"
         >
           <Paperclip size={20} />
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); setShowEmoji(v => !v); }}
+          className={`p-2 rounded-xl transition-all flex-shrink-0 ${showEmoji ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
+          aria-label="Emoji"
+        >
+          <Smile size={20} />
         </button>
         <input
           ref={inputRef}
