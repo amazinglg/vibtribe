@@ -1,5 +1,6 @@
-import React, { useEffect, lazy, Suspense, useRef } from 'react';
-import { useNavigate } from '@tanstack/react-router';
+import React, { useEffect, lazy, Suspense, useRef, useState } from 'react';
+import { Link, useNavigate } from '@tanstack/react-router';
+import { AlertCircle, X } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
 import ChatListPanel from './components/ChatListPanel';
 const ChatWindowPanel = lazy(() => import('./components/ChatWindowPanel'));
@@ -8,9 +9,11 @@ import { useChatStore } from '@/store/chatStore';
 import TermsAcceptanceGate from '@/components/TermsAcceptanceGate';
 
 export default function ChatsPage() {
-  const { user, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
   const router = useNavigate();
   const { selectedChatId, setSelectedChatId } = useChatStore();
+  const [dobBannerDismissed, setDobBannerDismissed] = useState(false);
+  const needsDob = !!user && !!profile && !(profile as any).dob;
 
   // Open a chat directly when launched from a notification; otherwise start on the list.
   useEffect(() => {
@@ -77,6 +80,21 @@ export default function ChatsPage() {
   return (
     <AppLayout>
       <TermsAcceptanceGate />
+      {needsDob && !dobBannerDismissed && !selectedChatId && (
+        <div className="px-3 pt-2">
+          <div className="flex items-center gap-2 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl">
+            <AlertCircle size={16} className="text-amber-400 flex-shrink-0" />
+            <p className="text-xs text-amber-200 flex-1 leading-snug">
+              Please add your <strong>Date of Birth</strong> in{' '}
+              <Link to="/profile-screen" className="underline font-semibold">My Profile</Link>{' '}
+              to continue using VibTribe (18+ only).
+            </p>
+            <button onClick={() => setDobBannerDismissed(true)} className="p-1 text-amber-300 hover:text-amber-100">
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+      )}
       <div
         className="gradient-bg-page flex overflow-hidden w-full max-w-full pb-[calc(64px+env(safe-area-inset-bottom))] lg:pb-0"
         style={{ height: 'calc(100dvh - 64px - env(safe-area-inset-top))' }}
