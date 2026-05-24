@@ -1433,7 +1433,12 @@ export default function ChatWindowPanel() {
                   >
                     {encMedia && contactPubKeyRef.current ? (
                       isMe && msg.mediaUrl && msg.mediaUrl.startsWith('blob:') && encMedia.type === 'image' ? (
-                        <img src={msg.mediaUrl} alt={encMedia.name || 'Shared image'} className="max-w-[200px] rounded-xl" />
+                        <img
+                          src={msg.mediaUrl}
+                          alt={encMedia.name || 'Shared image'}
+                          className="max-w-[200px] rounded-xl cursor-zoom-in"
+                          onClick={() => setLightboxUrl(msg.mediaUrl!)}
+                        />
                       ) : (
                         <EncryptedMedia
                           url={encMedia.url}
@@ -1441,10 +1446,16 @@ export default function ChatWindowPanel() {
                           name={encMedia.name}
                           kind={encMedia.type}
                           theirPublicKey={contactPubKeyRef.current}
+                          onImageClick={(u) => setLightboxUrl(u)}
                         />
                       )
                     ) : imageUrl ? (
-                      <img src={imageUrl} alt="Shared image" className="max-w-[200px] rounded-xl" />
+                      <img
+                        src={imageUrl}
+                        alt="Shared image"
+                        className="max-w-[200px] rounded-xl cursor-zoom-in"
+                        onClick={() => setLightboxUrl(imageUrl)}
+                      />
                     ) : (
                       <>
                         {displayText}
