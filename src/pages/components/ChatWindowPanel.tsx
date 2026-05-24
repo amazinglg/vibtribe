@@ -684,6 +684,7 @@ export default function ChatWindowPanel() {
       mediaUrl: previewUrl,
       mediaType: type,
       encrypted: e2eEnabled,
+      sentSecure: myChatSecured,
     };
     setMessages(prev => [...prev, tempMsg]);
 
