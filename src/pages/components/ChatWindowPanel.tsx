@@ -1434,43 +1434,6 @@ export default function ChatWindowPanel() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Sticker Picker */}
-      {showEmoji && (
-        <div className="border-t border-border glass" onClick={e => e.stopPropagation()}>
-          <div className="flex gap-2 px-3 pt-2 overflow-x-auto">
-            {EMOJI_CATEGORIES.map((cat, idx) => (
-              <button
-                key={cat.id}
-                onClick={() => setEmojiCategory(idx)}
-                className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${emojiCategory === idx ? 'gradient-primary text-white shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
-              >
-                <span className="text-base leading-none">{cat.icon}</span>
-                <span>{cat.label}</span>
-              </button>
-            ))}
-          </div>
-          <div className="grid grid-cols-6 gap-2 px-3 py-3 max-h-56 overflow-y-auto">
-            {EMOJI_CATEGORIES[emojiCategory].items.map((path) => (
-              <button
-                key={path}
-                onClick={() => sendMessage(stickerToken(path))}
-                className="aspect-square rounded-xl hover:bg-muted/60 active:scale-90 transition-all p-1 flex items-center justify-center"
-                aria-label="Send sticker"
-              >
-                <img
-                  src={`/emojis/${path}`}
-                  alt=""
-                  loading="lazy"
-                  width={56}
-                  height={56}
-                  className="w-full h-full object-contain drop-shadow-sm"
-                />
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Attach Menu */}
       {showAttachMenu && (
         <div className="absolute bottom-20 left-16 z-20 glass-strong rounded-2xl border border-border shadow-card p-3 float-up" onClick={e => e.stopPropagation()}>
@@ -1542,14 +1505,7 @@ export default function ChatWindowPanel() {
       {/* Input Area */}
       <div className="glass border-t border-border px-2 pt-2 pb-3 mb-2 lg:mb-0 flex items-center gap-1 flex-shrink-0 w-full max-w-full overflow-hidden" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
         <button
-          onClick={(e) => { e.stopPropagation(); setShowEmoji(!showEmoji); setShowAttachMenu(false); }}
-          className={`p-2 rounded-xl transition-all flex-shrink-0 ${showEmoji ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
-          aria-label="Emoji"
-        >
-          <Smile size={20} />
-        </button>
-        <button
-          onClick={(e) => { e.stopPropagation(); setShowAttachMenu(!showAttachMenu); setShowEmoji(false); }}
+          onClick={(e) => { e.stopPropagation(); setShowAttachMenu(!showAttachMenu); }}
           className={`p-2 rounded-xl transition-all flex-shrink-0 ${showAttachMenu ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
           aria-label="Attach"
         >
