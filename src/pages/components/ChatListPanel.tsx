@@ -226,7 +226,7 @@ export default function ChatListPanel() {
           }
           if (preview?.startsWith('[IMAGE:')) preview = '📷 Photo';
           else if (preview?.startsWith('[FILE:')) preview = '📎 File';
-          else if (preview?.startsWith('[STICKER:')) preview = '💟 Sticker';
+          else if (preview?.startsWith('[STICKER:')) preview = 'Sticker removed';
           else if (preview?.startsWith('__call_log__:')) {
             const parts = preview.split(':');
             preview = parts[1] === 'video' ? '📹 Video call' : '📞 Voice call';
@@ -633,12 +633,19 @@ function ContactsTabContent({
     }
     const { data: platformUsers } = await supabase
       .from('user_profiles')
-      .select('id, full_name, mobile_number')
+        .select('id, full_name, mobile_number, avatar_url, profile_photo_visibility')
       .in('mobile_number', normalized.map(c => c.phone));
     const map = new Map((platformUsers || []).map((u: any) => [u.mobile_number?.replace(/\D/g, ''), u]));
     setContacts(normalized.map(c => {
       const m: any = map.get(c.phone);
-      return { name: c.name, phone: c.phone, onPlatform: !!m, userId: m?.id, avatar: m?.full_name?.[0]?.toUpperCase() };
+      return {
+        name: c.name,
+        phone: c.phone,
+        onPlatform: !!m,
+        userId: m?.id,
+        avatar: m?.full_name?.[0]?.toUpperCase(),
+        avatarUrl: m && (m.profile_photo_visibility ?? 'all') === 'all' ? (m.avatar_url || null) : null,
+      };
     }));
     setLoading(false);
   };
@@ -647,7 +654,7 @@ function ContactsTabContent({
     setLoading(true);
     const { data: users } = await supabase
       .from('user_profiles')
-      .select('id, full_name, mobile_number')
+      .select('id, full_name, mobile_number, avatar_url, profile_photo_visibility')
       .neq('id', user?.id || '')
       .limit(50);
     const result = (users || []).map((u: any) => ({
@@ -656,6 +663,7 @@ function ContactsTabContent({
       onPlatform: true,
       userId: u.id,
       avatar: u.full_name?.[0]?.toUpperCase(),
+      avatarUrl: (u.profile_photo_visibility ?? 'all') === 'all' ? (u.avatar_url || null) : null,
     }));
     setContacts(result);
     setLoading(false);
@@ -783,9 +791,18 @@ function ContactsTabContent({
               <div className="space-y-2">
                 {onPlatform.map((c: any, i: number) => (
                   <div key={`p-${i}`} className="flex items-center gap-3 p-2.5 glass rounded-xl border border-border">
-                    <div className="w-10 h-10 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                      {c.avatar || c.name[0]?.toUpperCase()}
-                    </div>
+                    {c.avatarUrl ? (
+                      <img
+                        src={c.avatarUrl}
+                        alt={c.name}
+                        className="w-10 h-10 rounded-full object-cover flex-shrink-0 border border-border"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                        {c.avatar || c.name[0]?.toUpperCase()}
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-foreground truncate">{c.name}</p>
                       <div className="flex items-center gap-1 mt-0.5">

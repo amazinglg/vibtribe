@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useRef, useEffect } from 'react';
-import { Phone, Video, Smile, Paperclip, Mic, MicOff, Send, Lock, CheckCheck, Check, ArrowLeft, Info, Trash2, ShieldCheck, Ban, ShieldOff, X, Image, FileText, Camera, Music, VideoOff, PhoneOff, Volume2, VolumeX, Timer, MoreVertical, UserPlus } from 'lucide-react';
+import { Phone, Video, Paperclip, Mic, MicOff, Send, Lock, CheckCheck, Check, ArrowLeft, Info, Trash2, ShieldCheck, Ban, ShieldOff, X, Image, FileText, Camera, Music, VideoOff, PhoneOff, Volume2, VolumeX, Timer, MoreVertical, UserPlus } from 'lucide-react';
 import { useChatStore } from '@/store/chatStore';
 import MarkSecureModal from '@/components/MarkSecureModal';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,7 +13,6 @@ import { sendPushNotification } from '@/lib/pushNotifications';
 import AppImage from "@/components/ui/AppImage";
 import { useCall } from '@/components/CallProvider';
 import { toast } from 'sonner';
-import { STICKER_SECTIONS, parseStickerPath, stickerToken } from '@/lib/stickers';
 
 interface Message {
   id: string;
@@ -29,9 +28,6 @@ interface Message {
   deletedForEveryone?: boolean;
   createdAt?: string;
 }
-
-// Sticker categories — Boys / Girls / Hearts / Others
-const EMOJI_CATEGORIES = STICKER_SECTIONS;
 
 // Call Modal Component
 function CallModal({
@@ -223,8 +219,6 @@ export default function ChatWindowPanel() {
   const supabase = createClient();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
-  const [showEmoji, setShowEmoji] = useState(false);
-  const [emojiCategory, setEmojiCategory] = useState(0);
   const [showInfo, setShowInfo] = useState(false);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
   const [secureModalOpen, setSecureModalOpen] = useState(false);
@@ -1299,7 +1293,6 @@ export default function ChatWindowPanel() {
             const isMe = msg.senderId === user?.id;
             const isImageMsg = msg.text?.startsWith('[IMAGE:') || msg.mediaType === 'image';
             const isFileMsg = msg.text?.startsWith('[FILE:') || msg.mediaType === 'file';
-            const stickerUrl = parseStickerPath(msg.text);
             const missedMatch = typeof msg.text === 'string' && msg.text.startsWith('__missed_call__:')
               ? msg.text.split(':') : null;
             const isMissedCall = !!missedMatch;
@@ -1348,10 +1341,13 @@ export default function ChatWindowPanel() {
             }
             // Defensive: never render raw `e2e:` ciphertext
             const safeText = isEncrypted(msg.text) ? '[Encrypted message]' : msg.text;
+            const isRemovedStickerMsg = typeof safeText === 'string' && safeText.startsWith('[STICKER:');
             const displayText = isImageMsg
               ? '📷 Image'
               : isFileMsg
               ? `📎 ${safeText?.replace(/\[FILE:(.*?):(.*?)\]/, '$1') || 'File'}`
+              : isRemovedStickerMsg
+              ? 'Message removed'
               : safeText;
             const imageUrl = isImageMsg
               ? (msg.mediaUrl || msg.text?.replace('[IMAGE:', '').replace(']', ''))
@@ -1376,21 +1372,11 @@ export default function ChatWindowPanel() {
                     className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
                       msg.deletedForEveryone
                         ? 'glass border border-dashed border-border text-muted-foreground italic'
-                      : stickerUrl
-                        ? 'bg-transparent p-0'
                       : isMe
                         ? 'gradient-primary text-white rounded-br-sm' : 'glass border border-border text-foreground rounded-bl-sm'
                     }`}
                   >
-                    {stickerUrl ? (
-                      <img
-                        src={stickerUrl}
-                        alt="Sticker"
-                        loading="lazy"
-                        className="w-32 h-32 object-contain drop-shadow-md select-none"
-                        draggable={false}
-                      />
-                    ) : imageUrl ? (
+                    {imageUrl ? (
                       <img src={imageUrl} alt="Shared image" className="max-w-[200px] rounded-xl" />
                     ) : (
                       <>
@@ -1450,43 +1436,6 @@ export default function ChatWindowPanel() {
         )}
         <div ref={messagesEndRef} />
       </div>
-
-      {/* Sticker Picker */}
-      {showEmoji && (
-        <div className="border-t border-border glass" onClick={e => e.stopPropagation()}>
-          <div className="flex gap-2 px-3 pt-2 overflow-x-auto">
-            {EMOJI_CATEGORIES.map((cat, idx) => (
-              <button
-                key={cat.id}
-                onClick={() => setEmojiCategory(idx)}
-                className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${emojiCategory === idx ? 'gradient-primary text-white shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
-              >
-                <span className="text-base leading-none">{cat.icon}</span>
-                <span>{cat.label}</span>
-              </button>
-            ))}
-          </div>
-          <div className="grid grid-cols-6 gap-2 px-3 py-3 max-h-56 overflow-y-auto">
-            {EMOJI_CATEGORIES[emojiCategory].items.map((path) => (
-              <button
-                key={path}
-                onClick={() => sendMessage(stickerToken(path))}
-                className="aspect-square rounded-xl hover:bg-muted/60 active:scale-90 transition-all p-1 flex items-center justify-center"
-                aria-label="Send sticker"
-              >
-                <img
-                  src={`/emojis/${path}`}
-                  alt=""
-                  loading="lazy"
-                  width={56}
-                  height={56}
-                  className="w-full h-full object-contain drop-shadow-sm"
-                />
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Attach Menu */}
       {showAttachMenu && (
@@ -1559,14 +1508,7 @@ export default function ChatWindowPanel() {
       {/* Input Area */}
       <div className="glass border-t border-border px-2 pt-2 pb-3 mb-2 lg:mb-0 flex items-center gap-1 flex-shrink-0 w-full max-w-full overflow-hidden" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
         <button
-          onClick={(e) => { e.stopPropagation(); setShowEmoji(!showEmoji); setShowAttachMenu(false); }}
-          className={`p-2 rounded-xl transition-all flex-shrink-0 ${showEmoji ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
-          aria-label="Emoji"
-        >
-          <Smile size={20} />
-        </button>
-        <button
-          onClick={(e) => { e.stopPropagation(); setShowAttachMenu(!showAttachMenu); setShowEmoji(false); }}
+          onClick={(e) => { e.stopPropagation(); setShowAttachMenu(!showAttachMenu); }}
           className={`p-2 rounded-xl transition-all flex-shrink-0 ${showAttachMenu ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
           aria-label="Attach"
         >
