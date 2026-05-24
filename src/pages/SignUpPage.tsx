@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useNavigate } from '@tanstack/react-router';
-import { Phone, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle, User, ChevronDown } from 'lucide-react';
+import { Phone, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle, User, ChevronDown, Check } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLogo from '@/components/ui/AppLogo';
 
@@ -41,6 +41,7 @@ export default function SignUpPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const selectedCountry = COUNTRY_CODES.find(c => c.code === countryCode) || COUNTRY_CODES[0];
 
@@ -56,6 +57,7 @@ export default function SignUpPage() {
     if (!password) { setError('Please enter a password'); return; }
     if (password.length < 6) { setError('Password must be at least 6 characters'); return; }
     if (password !== confirmPassword) { setError('Passwords do not match'); return; }
+    if (!acceptedTerms) { setError('Please accept the Terms & Conditions and Privacy Policy to continue'); return; }
 
     // Store full mobile (with code) in profile metadata, but the auth email
     // will be derived from the local 10-digit number only (handled in AuthContext).
@@ -216,9 +218,26 @@ export default function SignUpPage() {
               </div>
             )}
 
+            <label className="flex items-start gap-2.5 cursor-pointer select-none pt-1">
+              <button
+                type="button"
+                onClick={() => { setAcceptedTerms(v => !v); setError(''); }}
+                aria-pressed={acceptedTerms}
+                className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-md border flex items-center justify-center transition-all ${acceptedTerms ? 'bg-primary border-primary' : 'bg-input border-border hover:border-primary'}`}
+              >
+                {acceptedTerms && <Check size={13} className="text-white" />}
+              </button>
+              <span className="text-xs text-muted-foreground leading-relaxed">
+                I agree to VibTribe&apos;s{' '}
+                <Link to="/terms" className="text-primary hover:underline" target="_blank">Terms &amp; Conditions</Link>
+                {' '}and{' '}
+                <Link to="/privacy" className="text-primary hover:underline" target="_blank">Privacy Policy</Link>.
+              </span>
+            </label>
+
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !acceptedTerms}
               className="w-full gradient-primary text-white font-semibold py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed glow-primary mt-2"
             >
               {loading ? (
