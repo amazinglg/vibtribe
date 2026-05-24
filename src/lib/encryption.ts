@@ -286,3 +286,32 @@ export async function decryptMessage(ciphertext: string, theirPublicKeyBase64: s
 export function isEncrypted(content: string): boolean {
   return content?.startsWith('e2e:') || false;
 }
+
+// ---------------- Binary (media) encryption ----------------
+// Encrypt a raw byte buffer with the shared ECDH key. Returns iv||ciphertext.
+export async function encryptBytes(
+  bytes: ArrayBuffer,
+  theirPublicKeyBase64: string,
+): Promise<ArrayBuffer> {
+  const { privateKey } = await getOrCreateKeyPair();
+  const sharedKey = await deriveSharedKey(privateKey, theirPublicKeyBase64);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, sharedKey, bytes);
+  const out = new Uint8Array(iv.length + (ct as ArrayBuffer).byteLength);
+  out.set(iv, 0);
+  out.set(new Uint8Array(ct as ArrayBuffer), iv.length);
+  return out.buffer;
+}
+
+// Decrypt a buffer produced by encryptBytes.
+export async function decryptBytes(
+  cipherBuf: ArrayBuffer,
+  theirPublicKeyBase64: string,
+): Promise<ArrayBuffer> {
+  const { privateKey } = await getOrCreateKeyPair();
+  const sharedKey = await deriveSharedKey(privateKey, theirPublicKeyBase64);
+  const all = new Uint8Array(cipherBuf);
+  const iv = all.slice(0, 12);
+  const data = all.slice(12);
+  return crypto.subtle.decrypt({ name: 'AES-GCM', iv }, sharedKey, data);
+}
