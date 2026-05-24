@@ -96,6 +96,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:locale", content: "en_US" },
       { name: "application-name", content: "VibTribe" },
       { name: "robots", content: "index, follow, max-image-preview:large, max-snippet:-1" },
+      { name: "google-site-verification", content: "_7pZ-_k7opEpd_fm0t_TuqMAaszj-iXzJiGrjKNymq0" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
