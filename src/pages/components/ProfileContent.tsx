@@ -892,9 +892,6 @@ export default function ProfileContent() {
 
               {/* Danger Zone */}
               <div className="glass rounded-2xl border border-red-500/20 p-5">
-
-              </div>
-              {/* placeholder removed */}
                 <h3 className="font-semibold text-base text-red-400 mb-4 flex items-center gap-2">
                   <AlertTriangle size={16} />
                   Danger Zone
