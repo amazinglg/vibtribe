@@ -87,7 +87,7 @@ export default function GlobalSearchBar() {
 
       const { data } = await supabase
         .from('user_profiles')
-        .select('id, full_name, username, mobile_number, email, is_online')
+        .select('id, full_name, username, mobile_number, is_online')
         .neq('id', user.id)
         .or(filter)
         .limit(10);
