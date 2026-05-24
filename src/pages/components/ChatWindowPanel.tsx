@@ -29,6 +29,7 @@ interface Message {
   editedAt?: string | null;
   deletedForEveryone?: boolean;
   createdAt?: string;
+  sentSecure?: boolean;
 }
 
 // Call Modal Component
@@ -233,6 +234,9 @@ export default function ChatWindowPanel() {
   const [isBlocked, setIsBlocked] = useState(false);
   const [disappearMode, setDisappearMode] = useState<'never' | '24h' | 'after_seen'>('24h');
   const [chatType, setChatType] = useState<'normal' | 'secure' | 'group'>('normal');
+  // True iff the CURRENT user has marked this chat as secure on their side.
+  // The other participant is independent — they may or may not have secured it.
+  const [myChatSecured, setMyChatSecured] = useState(false);
   const [showDisappearMenu, setShowDisappearMenu] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const contactPubKeyRef = useRef<string | null>(null);
@@ -305,19 +309,15 @@ export default function ChatWindowPanel() {
                 reactions: [],
                 encrypted,
                 createdAt: newMsg.created_at,
+                sentSecure: !!newMsg.sent_secure,
               }]);
               // Mark as read (recipient — uses RPC to bypass RLS sender restriction)
               await supabase.rpc('mark_messages_read', { _chat_id: selectedChatId });
 
-              // Check if this is a secure chat and whether user wants notifications for it
+              // If THIS user has marked the chat as secure, route the notification
+              // through their secure-notification preference instead of the normal path.
               try {
-                const { data: chatInfo } = await supabase
-                  .from('chats')
-                  .select('chat_type')
-                  .eq('id', selectedChatId)
-                  .single();
-
-                if (chatInfo?.chat_type === 'secure') {
+                if (useChatStore.getState().isSecureSession) {
                   // Only show browser notification if user has enabled secured chat notifications
                   const notifPrefsRaw = localStorage.getItem(`vt_notif_prefs_${user.id}`);
                   const notifPrefs = notifPrefsRaw ? JSON.parse(notifPrefsRaw) : {};
@@ -429,6 +429,17 @@ export default function ChatWindowPanel() {
       if (chat) {
         setDisappearMode((chat as any).disappear_mode || '24h');
         setChatType(((chat as any).is_group ? 'group' : (chat as any).chat_type) || 'normal');
+
+        // Per-user secure mark — is THIS user treating this chat as secure?
+        try {
+          const { data: myMark } = await supabase
+            .from('user_secure_chats')
+            .select('chat_id')
+            .eq('user_id', user.id)
+            .eq('chat_id', selectedChatId)
+            .maybeSingle();
+          setMyChatSecured(!!myMark);
+        } catch { setMyChatSecured(false); }
 
         // Group chat path
         if ((chat as any).is_group) {
@@ -559,6 +570,7 @@ export default function ChatWindowPanel() {
           editedAt: (m as any).edited_at || null,
           deletedForEveryone: tombstone,
           createdAt: m.created_at,
+          sentSecure: !!(m as any).sent_secure,
         });
       }
       setMessages(decryptedMsgs);
@@ -617,6 +629,7 @@ export default function ChatWindowPanel() {
       reactions: [],
       encrypted: e2eEnabled,
       createdAt: new Date().toISOString(),
+      sentSecure: myChatSecured,
     };
     setMessages(prev => [...prev, tempMsg]);
     if (!overrideText) setInputText('');
@@ -630,11 +643,11 @@ export default function ChatWindowPanel() {
 
       const { data } = await supabase
         .from('messages')
-        .insert({ chat_id: selectedChatId, sender_id: user.id, content: contentToStore, message_status: 'sent' })
+        .insert({ chat_id: selectedChatId, sender_id: user.id, content: contentToStore, message_status: 'sent', sent_secure: myChatSecured })
         .select()
         .single();
       if (data) {
-        setMessages(prev => prev.map(m => m.id === tempId ? { ...m, id: data.id, status: 'delivered', createdAt: data.created_at } : m));
+        setMessages(prev => prev.map(m => m.id === tempId ? { ...m, id: data.id, status: 'delivered', createdAt: data.created_at, sentSecure: myChatSecured } : m));
         await supabase.from('chats').update({ updated_at: new Date().toISOString() }).eq('id', selectedChatId);
         if (contact?.userId) {
           const senderName = profile?.full_name || 'Someone';
@@ -642,7 +655,7 @@ export default function ChatWindowPanel() {
             recipient_user_id: contact.userId,
             chat_id: selectedChatId,
             title: senderName,
-            body: chatType === 'secure' ? '🔒 New secure message' : text,
+            body: myChatSecured ? '🔒 New private message' : text,
             tag: `chat-${selectedChatId}`,
             url: '/',
             type: 'message',
@@ -671,6 +684,7 @@ export default function ChatWindowPanel() {
       mediaUrl: previewUrl,
       mediaType: type,
       encrypted: e2eEnabled,
+      sentSecure: myChatSecured,
     };
     setMessages(prev => [...prev, tempMsg]);
 
@@ -704,11 +718,11 @@ export default function ChatWindowPanel() {
       }
       const { data } = await supabase
         .from('messages')
-        .insert({ chat_id: selectedChatId, sender_id: user.id, content, message_status: 'sent' })
+        .insert({ chat_id: selectedChatId, sender_id: user.id, content, message_status: 'sent', sent_secure: myChatSecured })
         .select()
         .single();
       if (data) {
-        setMessages(prev => prev.map(m => m.id === tempId ? { ...m, id: data.id, status: 'delivered', mediaUrl: previewUrl || publicUrl } : m));
+        setMessages(prev => prev.map(m => m.id === tempId ? { ...m, id: data.id, status: 'delivered', mediaUrl: previewUrl || publicUrl, sentSecure: myChatSecured } : m));
         await supabase.from('chats').update({ updated_at: new Date().toISOString() }).eq('id', selectedChatId);
         if (contact?.userId) {
           const senderName = profile?.full_name || 'Someone';
@@ -1136,15 +1150,16 @@ export default function ChatWindowPanel() {
                   <button
                     onClick={async () => {
                       setShowMoreMenu(false);
-                      if (chatType === 'secure') {
-                        if (!window.confirm('Move this chat back to your normal chat list? It will no longer require a PIN/pattern to access.')) return;
+                      if (myChatSecured) {
+                        if (!window.confirm('Move this chat back to your normal chat list? It will no longer require a PIN/pattern to access from your account. The other person is unaffected.')) return;
                         try {
                           const { error: upErr } = await supabase
-                            .from('chats')
-                            .update({ chat_type: 'normal', secure_code: null })
-                            .eq('id', selectedChatId);
+                            .from('user_secure_chats')
+                            .delete()
+                            .eq('user_id', user!.id)
+                            .eq('chat_id', selectedChatId);
                           if (upErr) throw upErr;
-                          setChatType('normal');
+                          setMyChatSecured(false);
                           toast.success('Chat moved back to your normal chats');
                           // Exit the secure session view
                           useChatStore.getState().closeSecureChat();
@@ -1158,8 +1173,8 @@ export default function ChatWindowPanel() {
                     }}
                     className="w-full text-left px-3 py-2.5 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground"
                   >
-                    {chatType === 'secure' ? <ShieldOff size={16} className="text-vt-amber" /> : <Lock size={16} className="text-primary" />}
-                    {chatType === 'secure' ? 'Mark as Unsecured' : 'Mark as secure'}
+                    {myChatSecured ? <ShieldOff size={16} className="text-vt-amber" /> : <Lock size={16} className="text-primary" />}
+                    {myChatSecured ? 'Mark as Unsecured (for me)' : 'Mark as secure (only for me)'}
                   </button>
                 )}
                 <button
@@ -1452,6 +1467,24 @@ export default function ChatWindowPanel() {
 
                   <div className={`flex items-center gap-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
                     <span className="text-[10px] text-muted-foreground">{msg.time}</span>
+                    {msg.sentSecure && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toast.info('This message was sent via a private (secured) chat.', {
+                            description: isMe
+                              ? 'You have this chat marked as secure on your side.'
+                              : 'The sender has this chat marked as secure on their side.',
+                          });
+                        }}
+                        className={`p-0.5 rounded-full ${isMe ? 'text-white/70 hover:text-white' : 'text-primary hover:text-primary/80'}`}
+                        title="Sent via private chat"
+                        aria-label="Sent via private chat"
+                      >
+                        <Lock size={11} />
+                      </button>
+                    )}
                     {isMe && (
                       msg.status === 'read' ? <CheckCheck size={12} className="text-primary" /> :
                       msg.status === 'delivered' ? <CheckCheck size={12} className="text-muted-foreground" /> :

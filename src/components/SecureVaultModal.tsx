@@ -90,15 +90,20 @@ export default function SecureVaultModal({ isOpen, onClose }: SecureVaultModalPr
     if (!user || !code.trim()) return;
     setLoading(true);
     try {
-      const { data: chats } = await supabase
-        .from('chats')
-        .select('id, participant_one, participant_two, secure_code')
-        .or(`participant_one.eq.${user.id},participant_two.eq.${user.id}`)
-        .eq('chat_type', 'secure')
-        .eq('secure_code', code.trim());
+      const { data: marks } = await supabase
+        .from('user_secure_chats')
+        .select('chat_id')
+        .eq('user_id', user.id)
+        .eq('code', code.trim());
 
-      if (chats && chats.length > 0) {
-        const chat = chats[0];
+      if (marks && marks.length > 0) {
+        const chatId = marks[0].chat_id as string;
+        const { data: chat } = await supabase
+          .from('chats')
+          .select('id, participant_one, participant_two')
+          .eq('id', chatId)
+          .single();
+        if (!chat) throw new Error('Chat not found');
         const otherUserId = chat.participant_one === user.id ? chat.participant_two : chat.participant_one;
         const { data: otherUser } = await supabase
           .from('user_profiles')
@@ -142,15 +147,20 @@ export default function SecureVaultModal({ isOpen, onClose }: SecureVaultModalPr
       const patternCode = newPattern.join('-');
       if (!user) return;
       try {
-        const { data: chats } = await supabase
-          .from('chats')
-          .select('id, participant_one, participant_two, secure_code')
-          .or(`participant_one.eq.${user.id},participant_two.eq.${user.id}`)
-          .eq('chat_type', 'secure')
-          .eq('secure_code', patternCode);
+        const { data: marks } = await supabase
+          .from('user_secure_chats')
+          .select('chat_id')
+          .eq('user_id', user.id)
+          .eq('code', patternCode);
 
-        if (chats && chats.length > 0) {
-          const chat = chats[0];
+        if (marks && marks.length > 0) {
+          const chatId = marks[0].chat_id as string;
+          const { data: chat } = await supabase
+            .from('chats')
+            .select('id, participant_one, participant_two')
+            .eq('id', chatId)
+            .single();
+          if (!chat) throw new Error('Chat not found');
           const otherUserId = chat.participant_one === user.id ? chat.participant_two : chat.participant_one;
           const { data: otherUser } = await supabase
             .from('user_profiles')
@@ -415,14 +425,19 @@ export default function SecureVaultModal({ isOpen, onClose }: SecureVaultModalPr
                   if (final.length < 4 || !user) return;
                   const patternCode = final.join('-');
                   try {
-                    const { data: chats } = await supabase
-                      .from('chats')
-                      .select('id, participant_one, participant_two, secure_code')
-                      .or(`participant_one.eq.${user.id},participant_two.eq.${user.id}`)
-                      .eq('chat_type', 'secure')
-                      .eq('secure_code', patternCode);
-                    if (chats && chats.length > 0) {
-                      const chat = chats[0];
+                    const { data: marks } = await supabase
+                      .from('user_secure_chats')
+                      .select('chat_id')
+                      .eq('user_id', user.id)
+                      .eq('code', patternCode);
+                    if (marks && marks.length > 0) {
+                      const chatId = marks[0].chat_id as string;
+                      const { data: chat } = await supabase
+                        .from('chats')
+                        .select('id, participant_one, participant_two')
+                        .eq('id', chatId)
+                        .single();
+                      if (!chat) throw new Error('Chat not found');
                       const otherUserId = chat.participant_one === user.id ? chat.participant_two : chat.participant_one;
                       const { data: otherUser } = await supabase
                         .from('user_profiles').select('full_name').eq('id', otherUserId).single();

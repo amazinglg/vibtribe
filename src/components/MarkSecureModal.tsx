@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState } from 'react';
-import { Lock, X, Split, MoveRight, Eye, EyeOff, AlertTriangle, Hash, Grid3X3 } from 'lucide-react';
+import { Lock, X, Eye, EyeOff, AlertTriangle, Hash, Grid3X3 } from 'lucide-react';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,14 +14,12 @@ interface MarkSecureModalProps {
   onSecured?: (chatId: string) => void;
 }
 
-type SecureMode = 'move' | 'split';
 type CodeType = 'pin' | 'pattern';
 
 export default function MarkSecureModal({ isOpen, onClose, chatName, chatId, onSecured }: MarkSecureModalProps) {
   const { user } = useAuth();
   const supabase = createClient();
-  const [step, setStep] = useState<'choose-mode' | 'choose-code-type' | 'set-pin' | 'set-pattern'>('choose-mode');
-  const [mode, setMode] = useState<SecureMode>('move');
+  const [step, setStep] = useState<'choose-code-type' | 'set-pin' | 'set-pattern'>('choose-code-type');
   const [codeType, setCodeType] = useState<CodeType>('pin');
   const [pin, setPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
@@ -33,8 +31,7 @@ export default function MarkSecureModal({ isOpen, onClose, chatName, chatId, onS
   const [loading, setLoading] = useState(false);
 
   const resetAll = () => {
-    setStep('choose-mode');
-    setMode('move');
+    setStep('choose-code-type');
     setCodeType('pin');
     setPin('');
     setConfirmPin('');
@@ -92,51 +89,21 @@ export default function MarkSecureModal({ isOpen, onClose, chatName, chatId, onS
     try {
       const secureCode = codeType === 'pin' ? pin : patternSelected.join('-');
 
-      if (mode === 'move') {
-        // Update chat type to 'secure' and store the code hash
-        const { error: updateError } = await supabase
-          .from('chats')
-          .update({ chat_type: 'secure', secure_code: secureCode })
-          .eq('id', chatId);
+      // Per-user secure mark: ONLY this user's view of the chat is locked.
+      // The other participant is not affected and won't even know.
+      const { error: upsertError } = await supabase
+        .from('user_secure_chats')
+        .upsert(
+          { user_id: user.id, chat_id: chatId, code: secureCode },
+          { onConflict: 'user_id,chat_id' },
+        );
+      if (upsertError) throw upsertError;
+      onSecured?.(chatId);
 
-        if (updateError) throw updateError;
-        onSecured?.(chatId);
-      } else {
-        // Create a new secure channel alongside the normal chat
-        const { data: chatData } = await supabase
-          .from('chats')
-          .select('participant_one, participant_two')
-          .eq('id', chatId)
-          .single();
-
-        if (chatData) {
-          const { error: insertError } = await supabase
-            .from('chats')
-            .insert({
-              chat_type: 'secure',
-              participant_one: chatData.participant_one,
-              participant_two: chatData.participant_two,
-              secure_code: secureCode,
-            });
-          if (insertError) throw insertError;
-          onSecured?.(chatId);
-        }
-      }
-
-      toast.success(
-        mode === 'move'
-          ? `Chat with ${chatName} moved to Secure Vault`
-          : `Secure channel with ${chatName} created`
-      );
+      toast.success(`Chat with ${chatName} moved to your Secure Vault`);
       handleClose();
     } catch (err: any) {
-      // Fallback: show success even if DB column doesn't exist yet
-      toast.success(
-        mode === 'move'
-          ? `Chat with ${chatName} moved to Secure Vault`
-          : `Secure channel with ${chatName} created`
-      );
-      handleClose();
+      toast.error(err?.message || 'Could not secure this chat');
     }
     setLoading(false);
   };
@@ -163,66 +130,19 @@ export default function MarkSecureModal({ isOpen, onClose, chatName, chatId, onS
 
         <div className="px-6 py-6 overflow-y-auto flex-1">
 
-          {/* Step 1: Choose Mode */}
-          {step === 'choose-mode' && (
-            <div>
-              <p className="text-sm text-muted-foreground mb-5">
-                Choose how you want to secure this chat with <span className="text-foreground font-semibold">{chatName}</span>:
-              </p>
-              <div className="flex flex-col gap-3 mb-6">
-                <button
-                  onClick={() => setMode('move')}
-                  className={`flex items-start gap-4 p-4 rounded-2xl border-2 transition-all text-left ${mode === 'move' ? 'border-primary bg-primary/10' : 'border-border hover:border-border/80 hover:bg-muted/50'}`}
-                >
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${mode === 'move' ? 'gradient-primary' : 'bg-muted'}`}>
-                    <MoveRight size={18} className={mode === 'move' ? 'text-white' : 'text-muted-foreground'} />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-sm text-foreground">Move Entire Chat</p>
-                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                      The entire chat history and all future messages move to your Secure Vault. This chat disappears from your normal chat list.
-                    </p>
-                  </div>
-                </button>
-                <button
-                  onClick={() => setMode('split')}
-                  className={`flex items-start gap-4 p-4 rounded-2xl border-2 transition-all text-left ${mode === 'split' ? 'border-pink bg-pink/10' : 'border-border hover:border-border/80 hover:bg-muted/50'}`}
-                >
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${mode === 'split' ? 'gradient-pink' : 'bg-muted'}`}>
-                    <Split size={18} className={mode === 'split' ? 'text-white' : 'text-muted-foreground'} />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-sm text-foreground">Create Dual Channel</p>
-                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                      Keep the normal chat AND create a separate secure channel. Messages in each channel stay isolated.
-                    </p>
-                  </div>
-                </button>
-              </div>
-              <div className="flex items-start gap-2 p-3 bg-vt-amber/10 border border-vt-amber/20 rounded-xl mb-5">
-                <AlertTriangle size={14} className="text-vt-amber flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-vt-amber/80 leading-relaxed">
-                  Once secured, if you forget your code, there is no recovery.
-                </p>
-              </div>
-              <button
-                onClick={() => setStep('choose-code-type')}
-                className="w-full gradient-primary text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-all glow-primary"
-              >
-                Continue — Choose Lock Type
-              </button>
-            </div>
-          )}
-
           {/* Step 2: Choose Code Type (PIN or Pattern) */}
           {step === 'choose-code-type' && (
             <div>
-              <button onClick={() => setStep('choose-mode')} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mb-5 transition-colors">
-                ← Back
-              </button>
-              <p className="text-sm text-muted-foreground mb-5">
-                How would you like to lock this chat?
+              <p className="text-sm text-muted-foreground mb-3">
+                Lock your view of the chat with <span className="text-foreground font-semibold">{chatName}</span>. Only YOU will need this code — the other person is not affected and won't be notified.
               </p>
+              <div className="flex items-start gap-2 p-3 bg-vt-amber/10 border border-vt-amber/20 rounded-xl mb-5">
+                <AlertTriangle size={14} className="text-vt-amber flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-vt-amber/80 leading-relaxed">
+                  If you forget your code, there is no recovery. The chat stays hidden until the correct code is entered.
+                </p>
+              </div>
+              <p className="text-sm text-muted-foreground mb-3">How would you like to lock it?</p>
               <div className="flex flex-col gap-3 mb-6">
                 <button
                   onClick={() => setCodeType('pin')}
