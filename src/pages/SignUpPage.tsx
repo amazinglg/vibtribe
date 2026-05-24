@@ -166,6 +166,11 @@ export default function SignUpPage() {
                 />
               </div>
               <p className="text-[11px] text-muted-foreground mt-1">You must be 18+ to use VibTribe.</p>
+              <div className="mt-2 flex items-start gap-2 px-3 py-2 rounded-lg bg-primary/10 border border-primary/20">
+                <span className="text-[11px] leading-snug text-foreground/80">
+                  🔒 Your date of birth stays confidential. Only you and our support team can see it — it is never shown to other users.
+                </span>
+              </div>
             </div>
 
             <div>
