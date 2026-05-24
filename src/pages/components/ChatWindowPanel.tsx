@@ -228,6 +228,7 @@ export default function ChatWindowPanel() {
   const [hoveredMsg, setHoveredMsg] = useState<string | null>(null);
   const [contact, setContact] = useState<{ name: string; avatar: string; avatarUrl?: string | null; online: boolean; lastSeen: string; publicKey?: string; userId?: string; isContact?: boolean } | null>(null);
   const [enlargeAvatar, setEnlargeAvatar] = useState(false);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [e2eEnabled, setE2eEnabled] = useState(false);
   const [showE2EInfo, setShowE2EInfo] = useState(false);
