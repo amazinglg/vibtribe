@@ -430,6 +430,17 @@ export default function ChatWindowPanel() {
         setDisappearMode((chat as any).disappear_mode || '24h');
         setChatType(((chat as any).is_group ? 'group' : (chat as any).chat_type) || 'normal');
 
+        // Per-user secure mark — is THIS user treating this chat as secure?
+        try {
+          const { data: myMark } = await supabase
+            .from('user_secure_chats')
+            .select('chat_id')
+            .eq('user_id', user.id)
+            .eq('chat_id', selectedChatId)
+            .maybeSingle();
+          setMyChatSecured(!!myMark);
+        } catch { setMyChatSecured(false); }
+
         // Group chat path
         if ((chat as any).is_group) {
           const groupName = (chat as any).name || 'Group';
