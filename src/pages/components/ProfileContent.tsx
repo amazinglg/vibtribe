@@ -936,6 +936,22 @@ export default function ProfileContent() {
           {activeTab === 'privacy' && (
             <div className="space-y-4">
               <div className="glass rounded-2xl border border-border p-5">
+                <h3 className="font-semibold text-base text-foreground mb-2 flex items-center gap-2">
+                  <Lock size={16} className="text-primary" />
+                  End-to-End Encryption PIN
+                </h3>
+                <p className="text-xs text-muted-foreground mb-4">
+                  Change your 6-digit encryption passcode for private chats. Your chat history stays intact.
+                </p>
+                <button
+                  onClick={() => setChangePinOpen(true)}
+                  className="px-4 py-2.5 gradient-primary text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-all"
+                >
+                  Change Encryption PIN
+                </button>
+              </div>
+
+              <div className="glass rounded-2xl border border-border p-5">
                 <h3 className="font-semibold text-base text-foreground mb-4">Privacy Settings</h3>
                 <div className="space-y-4">
                   {/* Last Seen / Read Receipts kept as toggles */}

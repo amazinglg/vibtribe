@@ -55,6 +55,13 @@ export default function ChatListPanel() {
   }, [user]);
 
   useEffect(() => {
+    if (!user) return;
+    const handleUnlocked = () => loadChats();
+    window.addEventListener('vt-encryption-unlocked', handleUnlocked);
+    return () => window.removeEventListener('vt-encryption-unlocked', handleUnlocked);
+  }, [user?.id]);
+
+  useEffect(() => {
     const refreshContacts = () => loadSavedContacts();
     window.addEventListener('vt-contacts-changed', refreshContacts);
     return () => window.removeEventListener('vt-contacts-changed', refreshContacts);

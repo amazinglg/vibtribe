@@ -569,6 +569,15 @@ export default function ChatWindowPanel() {
     }
   };
 
+  // When PIN / biometric unlock completes, reload the active chat so any
+  // locked placeholders are decrypted immediately without changing screens.
+  useEffect(() => {
+    if (!selectedChatId || !user) return;
+    const handleUnlocked = () => loadChatData();
+    window.addEventListener('vt-encryption-unlocked', handleUnlocked);
+    return () => window.removeEventListener('vt-encryption-unlocked', handleUnlocked);
+  }, [selectedChatId, user?.id]);
+
   useEffect(() => {
     if (user) {
       supabase
