@@ -629,6 +629,7 @@ export default function ChatWindowPanel() {
       reactions: [],
       encrypted: e2eEnabled,
       createdAt: new Date().toISOString(),
+      sentSecure: myChatSecured,
     };
     setMessages(prev => [...prev, tempMsg]);
     if (!overrideText) setInputText('');
