@@ -560,6 +560,7 @@ export type Database = {
           real_email: string | null
           role: string
           status_visibility: string
+          terms_accepted_at: string | null
           updated_at: string | null
           username: string | null
         }
@@ -589,6 +590,7 @@ export type Database = {
           real_email?: string | null
           role?: string
           status_visibility?: string
+          terms_accepted_at?: string | null
           updated_at?: string | null
           username?: string | null
         }
@@ -618,6 +620,7 @@ export type Database = {
           real_email?: string | null
           role?: string
           status_visibility?: string
+          terms_accepted_at?: string | null
           updated_at?: string | null
           username?: string | null
         }
@@ -628,6 +631,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_terms: { Args: never; Returns: undefined }
       admin_delete_user: { Args: { _user_id: string }; Returns: undefined }
       admin_get_user_profile: {
         Args: { _user_id: string }
@@ -657,6 +661,7 @@ export type Database = {
           real_email: string | null
           role: string
           status_visibility: string
+          terms_accepted_at: string | null
           updated_at: string | null
           username: string | null
         }
@@ -695,6 +700,7 @@ export type Database = {
           real_email: string | null
           role: string
           status_visibility: string
+          terms_accepted_at: string | null
           updated_at: string | null
           username: string | null
         }[]
@@ -760,6 +766,7 @@ export type Database = {
           real_email: string | null
           role: string
           status_visibility: string
+          terms_accepted_at: string | null
           updated_at: string | null
           username: string | null
         }

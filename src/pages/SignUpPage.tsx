@@ -4,6 +4,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { Phone, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle, User, ChevronDown, Check } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLogo from '@/components/ui/AppLogo';
+import { supabase } from '@/integrations/supabase/client';
 
 const COUNTRY_CODES = [
   { name: 'India', code: '+91', flag: '🇮🇳' },
@@ -66,6 +67,8 @@ export default function SignUpPage() {
     setLoading(true);
     try {
       await signUp(fullMobile, password, { fullName, countryCode, username: username.toLowerCase() });
+      // Record terms acceptance immediately so the in-app gate doesn't re-prompt.
+      try { await supabase.rpc('accept_terms' as any); } catch (e) { console.warn('[VT-SIGNUP] accept_terms failed', e); }
       router({ to: '/complete-profile', replace: true });
     } catch (err: any) {
       setError(err.message || 'Sign up failed. Please try again.');

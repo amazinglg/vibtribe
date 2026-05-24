@@ -5,6 +5,7 @@ import ChatListPanel from './components/ChatListPanel';
 const ChatWindowPanel = lazy(() => import('./components/ChatWindowPanel'));
 import { useAuth } from '@/contexts/AuthContext';
 import { useChatStore } from '@/store/chatStore';
+import TermsAcceptanceGate from '@/components/TermsAcceptanceGate';
 
 export default function ChatsPage() {
   const { user, loading } = useAuth();
@@ -75,6 +76,7 @@ export default function ChatsPage() {
 
   return (
     <AppLayout>
+      <TermsAcceptanceGate />
       <div
         className="gradient-bg-page flex overflow-hidden w-full max-w-full pb-[calc(64px+env(safe-area-inset-bottom))] lg:pb-0"
         style={{ height: 'calc(100dvh - 64px - env(safe-area-inset-top))' }}
