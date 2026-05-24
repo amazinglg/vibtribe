@@ -110,16 +110,11 @@ export function TermsContent() {
       </ul>
 
       <h3 className="text-base font-semibold mt-4">F. Permissions</h3>
-      <p>VibTribe asks for the following device permissions. Each one is requested only when you first use the related feature. In the installed Android app you can review and re-request them from <strong>Profile &rarr; Privacy &rarr; Permissions</strong>. In the browser/PWA version, permissions are managed from your browser's site-settings page (or Android <em>Settings &rarr; Apps &rarr; VibTribe &rarr; Permissions</em>).</p>
       <ul className="list-disc pl-5 space-y-1">
-        <li><strong>Camera</strong> — to capture photos and to send video during video calls.</li>
-        <li><strong>Microphone</strong> — to record voice notes and to transmit audio during voice and video calls.</li>
-        <li><strong>Contacts</strong> — opens a system contact picker so you can choose a single contact's name/number to add as a friend. We do not read or upload your full address book.</li>
-        <li><strong>Notifications</strong> — to alert you of new messages, incoming calls, and status interactions.</li>
-        <li><strong>Photos &amp; Gallery</strong> — to let you attach images and videos from your device to chats and status updates. Files are only accessed when you explicitly pick them.</li>
-        <li><strong>Storage</strong> — to cache your chat list, encrypted message history, and recently viewed media on-device so the app works offline and loads quickly.</li>
+        <li>Camera &amp; microphone — for sending photos, voice notes, and voice/video calls.</li>
+        <li>Notifications — to alert you of new messages and calls.</li>
+        <li>Storage / file access — to attach files you choose.</li>
       </ul>
-      <p className="text-xs text-muted-foreground">Denying a permission disables only the related feature; the rest of the app continues to work. We never request location, SMS, phone-call, or background-microphone permissions.</p>
 
       <h3 className="text-base font-semibold mt-4">G. Children</h3>
       <p>The App is strictly for users aged 18 and above. We do not knowingly collect data from anyone under 18. If we learn that we have collected data from a user under 18, we will delete that account and associated data promptly.</p>
