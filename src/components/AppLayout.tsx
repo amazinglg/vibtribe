@@ -106,6 +106,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       try {
         sessionStorage.setItem(`vt_pin_session_${user.id}`, '1');
         localStorage.setItem(`vt_pin_last_verified_${user.id}`, String(Date.now()));
+        window.dispatchEvent(new CustomEvent('vt-encryption-unlocked'));
       } catch {}
     }
     setPinModal(null);
@@ -424,7 +425,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           userId={user.id}
           mode={pinModal}
           onComplete={handlePinComplete}
-          /* No skip — PIN entry is mandatory on every launch and every 7 days */
+          /* No skip — PIN entry is mandatory for setup, new devices, and weekly re-checks */
         />
       )}
     </div>
