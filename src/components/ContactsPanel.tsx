@@ -10,6 +10,7 @@ interface Contact {
   onPlatform: boolean;
   userId?: string;
   avatar?: string;
+  avatarUrl?: string | null;
 }
 
 interface ContactsPanelProps {
@@ -83,6 +84,7 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
           onPlatform: true,
           userId: s.contact_id,
           avatar: (s.contact_name || profileMap.get(s.contact_id)?.full_name || '?')[0]?.toUpperCase(),
+          avatarUrl: (profileMap.get(s.contact_id)?.profile_photo_visibility ?? 'all') === 'all' ? (profileMap.get(s.contact_id)?.avatar_url || null) : null,
         }));
         if (savedContacts.length > 0) {
           setPermissionState('granted');
@@ -121,7 +123,7 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
     const allPhones = normalized.map(c => c.phone);
     const { data: platformUsers } = await supabase
       .from('user_profiles')
-      .select('id, full_name, mobile_number')
+      .select('id, full_name, mobile_number, avatar_url, profile_photo_visibility')
       .or(allPhones.length ? allPhones.map(p => `mobile_number.ilike.%${p.slice(-10)}%`).join(',') : 'id.eq.00000000-0000-0000-0000-000000000000');
 
     const platformByLast10 = new Map<string, any>();
@@ -145,6 +147,7 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
           onPlatform: true,
           userId: match.id,
           avatar: match.full_name?.[0]?.toUpperCase(),
+          avatarUrl: (match.profile_photo_visibility ?? 'all') === 'all' ? (match.avatar_url || null) : null,
         });
       } else {
         if (phoneSeen.has(c.phone)) continue;
@@ -162,7 +165,7 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
     // Load actual platform users as "contacts"
     const { data: users } = await supabase
       .from('user_profiles')
-      .select('id, full_name, mobile_number')
+      .select('id, full_name, mobile_number, avatar_url, profile_photo_visibility')
       .neq('id', user?.id || '')
       .limit(20);
 
@@ -172,6 +175,7 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
       onPlatform: true,
       userId: u.id,
       avatar: u.full_name?.[0]?.toUpperCase(),
+      avatarUrl: (u.profile_photo_visibility ?? 'all') === 'all' ? (u.avatar_url || null) : null,
     }));
 
     // Add some demo non-platform contacts
