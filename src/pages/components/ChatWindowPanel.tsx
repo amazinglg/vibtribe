@@ -1516,6 +1516,13 @@ export default function ChatWindowPanel() {
         >
           <Paperclip size={20} />
         </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); setShowEmoji(v => !v); }}
+          className={`p-2 rounded-xl transition-all flex-shrink-0 ${showEmoji ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
+          aria-label="Emoji"
+        >
+          <Smile size={20} />
+        </button>
         <input
           ref={inputRef}
           type="text"
