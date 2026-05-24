@@ -5,10 +5,8 @@ const make = (section: string) =>
   Array.from({ length: N }, (_, i) => `${section}/${String(i + 1).padStart(2, '0')}.png`);
 
 export const STICKER_SECTIONS = [
-  { id: 'boys',   label: 'Boys',   icon: '👦', items: make('boys')   },
-  { id: 'girls',  label: 'Girls',  icon: '👧', items: make('girls')  },
-  { id: 'hearts', label: 'Hearts', icon: '💖', items: make('hearts') },
-  { id: 'others', label: 'Others', icon: '✨', items: make('others') },
+  { id: 'boys',  label: 'Boys',  icon: '👦', items: make('boys')  },
+  { id: 'girls', label: 'Girls', icon: '👧', items: make('girls') },
 ] as const;
 
 export const STICKER_PREFIX = '[STICKER:';
@@ -23,6 +21,6 @@ export function parseStickerPath(text: string | undefined | null): string | null
   if (!text.startsWith(STICKER_PREFIX) || !text.endsWith(STICKER_SUFFIX)) return null;
   const inner = text.slice(STICKER_PREFIX.length, -STICKER_SUFFIX.length);
   // basic guard: only allow known sections + filename
-  if (!/^(boys|girls|hearts|others)\/[0-9]{2}\.png$/.test(inner)) return null;
+  if (!/^(boys|girls)\/[0-9]{2}\.png$/.test(inner)) return null;
   return `/emojis/${inner}`;
 }
