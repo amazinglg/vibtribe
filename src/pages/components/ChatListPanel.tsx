@@ -226,6 +226,14 @@ export default function ChatListPanel() {
           if (preview?.startsWith('[IMAGE:')) preview = '📷 Photo';
           else if (preview?.startsWith('[FILE:')) preview = '📎 File';
           else if (preview?.startsWith('[STICKER:')) preview = 'Sticker removed';
+          else if (preview?.startsWith('__media__:')) {
+            try {
+              const m = JSON.parse(preview.slice('__media__:'.length));
+              preview = m.type === 'image' ? '📷 Photo'
+                : m.type === 'audio' ? '🎵 Audio'
+                : `📎 ${m.name || 'File'}`;
+            } catch { preview = '📎 Media'; }
+          }
           else if (preview?.startsWith('__call_log__:')) {
             const parts = preview.split(':');
             preview = parts[1] === 'video' ? '📹 Video call' : '📞 Voice call';
