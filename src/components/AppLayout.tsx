@@ -73,10 +73,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   // After login: check if user needs to set up, unlock, or re-verify E2E encryption.
   // Policy:
   //  - No server key       → 'setup'  (mandatory)
-  //  - Server key, no local→ 'unlock' (mandatory)
-  //  - Server + local key  → still 'unlock' if:
-  //      (a) PIN not verified yet in THIS browser session (fresh launch), or
-  //      (b) last verification > 7 days ago (weekly security check)
+  //  - Server key, no local→ 'unlock' (new device / cleared browser storage)
+  //  - Server + local key  → 'unlock' only when last verification is older than 7 days
   useEffect(() => {
     if (!user) { setPinModal(null); return; }
     let cancelled = false;
@@ -89,15 +87,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         const local = await hasLocalPrivateKey();
         if (!local) { setPinModal('unlock'); return; }
 
-        // Local key exists — check session + weekly cadence
-        const sessionKey = `vt_pin_session_${user.id}`;
+        // Local key exists — only re-check on the weekly cadence.
         const lastKey = `vt_pin_last_verified_${user.id}`;
-        const verifiedThisSession = sessionStorage.getItem(sessionKey) === '1';
         const lastVerified = parseInt(localStorage.getItem(lastKey) || '0', 10);
         const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
         const stale = !lastVerified || (Date.now() - lastVerified) > WEEK_MS;
 
-        if (!verifiedThisSession || stale) {
+        if (stale) {
           setPinModal('unlock');
         }
       } catch {}
