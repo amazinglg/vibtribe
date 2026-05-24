@@ -13,6 +13,7 @@ import { sendPushNotification } from '@/lib/pushNotifications';
 import AppImage from "@/components/ui/AppImage";
 import { useCall } from '@/components/CallProvider';
 import { toast } from 'sonner';
+import { BOYS_STICKERS, GIRLS_STICKERS } from '@/lib/stickers';
 
 interface Message {
   id: string;
