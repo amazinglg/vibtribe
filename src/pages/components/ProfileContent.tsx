@@ -98,6 +98,25 @@ export default function ProfileContent() {
   const { permissions: appPerms, requestNotifications, requestMicrophone, requestCamera, requestStorage, requestContacts, requestPhotos, checkAllPermissions } = usePermissions();
   useEffect(() => { checkAllPermissions(); }, [checkAllPermissions]);
 
+  // Only show the Permissions section in a real native/TWA wrapper, not in
+  // browser/PWA mode where most rows would be misleading. The TWA launcher
+  // sets document.referrer to "android-app://<package>" when Chrome opens
+  // the app fullscreen. We also accept an explicit ?native=1 flag for
+  // debugging from inside the native build.
+  const isNativeWrapper = (() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      if (document.referrer?.startsWith('android-app://')) return true;
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('native') === '1') {
+        try { localStorage.setItem('vt_native', '1'); } catch { /* ignore */ }
+        return true;
+      }
+      if (typeof localStorage !== 'undefined' && localStorage.getItem('vt_native') === '1') return true;
+    } catch { /* ignore */ }
+    return false;
+  })();
+
   // Contact edit states
   const [editContact, setEditContact] = useState(false);
   const [editEmail, setEditEmail] = useState('');
@@ -1047,7 +1066,11 @@ export default function ProfileContent() {
                 </div>
               </div>
 
-              {/* Permissions */}
+              {/* Permissions — only shown inside the native/TWA wrapper.
+                  In a regular browser/PWA, web APIs cannot honestly reflect
+                  or control Android-style permissions, so we hide the
+                  section to avoid misleading users. */}
+              {isNativeWrapper && (
               <div className="glass rounded-2xl border border-border p-5">
                 <h3 className="font-semibold text-base text-foreground mb-1 flex items-center gap-2">
                   <Shield size={16} className="text-primary" />
@@ -1119,6 +1142,7 @@ export default function ProfileContent() {
                   <RefreshCw size={12} /> Refresh status
                 </button>
               </div>
+              )}
 
               {/* Legal — Terms & Privacy Policy */}
               <div className="glass rounded-2xl border border-border p-5">
