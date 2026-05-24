@@ -628,6 +628,44 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_get_user_profile: {
+        Args: { _user_id: string }
+        Returns: {
+          account_status: Database["public"]["Enums"]["user_status"] | null
+          app_theme: string | null
+          avatar_url: string | null
+          bio: string | null
+          country_code: string | null
+          created_at: string | null
+          email: string
+          encrypted_private_key: string | null
+          full_name: string
+          id: string
+          is_master_admin: boolean
+          is_online: boolean | null
+          is_suspended: boolean | null
+          key_iv: string | null
+          key_salt: string | null
+          key_setup_completed: boolean
+          last_seen: string | null
+          login_attempts: number | null
+          mobile_number: string | null
+          profile_completed: boolean | null
+          profile_photo_visibility: string
+          public_key: string | null
+          real_email: string | null
+          role: string
+          status_visibility: string
+          updated_at: string | null
+          username: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "user_profiles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       admin_reset_user_password: {
         Args: { new_password: string; target_user_id: string }
         Returns: undefined
@@ -645,6 +683,54 @@ export type Database = {
         Returns: undefined
       }
       expire_seen_messages: { Args: { p_chat_id: string }; Returns: undefined }
+      get_my_encryption_material: {
+        Args: never
+        Returns: {
+          encrypted_private_key: string
+          key_iv: string
+          key_salt: string
+          key_setup_completed: boolean
+          public_key: string
+        }[]
+      }
+      get_my_full_profile: {
+        Args: never
+        Returns: {
+          account_status: Database["public"]["Enums"]["user_status"] | null
+          app_theme: string | null
+          avatar_url: string | null
+          bio: string | null
+          country_code: string | null
+          created_at: string | null
+          email: string
+          encrypted_private_key: string | null
+          full_name: string
+          id: string
+          is_master_admin: boolean
+          is_online: boolean | null
+          is_suspended: boolean | null
+          key_iv: string | null
+          key_salt: string | null
+          key_setup_completed: boolean
+          last_seen: string | null
+          login_attempts: number | null
+          mobile_number: string | null
+          profile_completed: boolean | null
+          profile_photo_visibility: string
+          public_key: string | null
+          real_email: string | null
+          role: string
+          status_visibility: string
+          updated_at: string | null
+          username: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "user_profiles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       is_admin: { Args: never; Returns: boolean }
       is_admin_user: { Args: never; Returns: boolean }
       is_chat_participant: { Args: { chat_uuid: string }; Returns: boolean }
@@ -654,6 +740,18 @@ export type Database = {
       }
       is_master_admin: { Args: never; Returns: boolean }
       mark_messages_read: { Args: { _chat_id: string }; Returns: undefined }
+      pre_login_lookup: {
+        Args: { _identifier: string }
+        Returns: {
+          account_status: Database["public"]["Enums"]["user_status"]
+          email: string
+          id: string
+          is_suspended: boolean
+          login_attempts: number
+        }[]
+      }
+      record_login_failure: { Args: { _user_id: string }; Returns: number }
+      record_login_success: { Args: { _user_id: string }; Returns: undefined }
     }
     Enums: {
       chat_type: "normal" | "secure" | "dual_normal" | "dual_secure"
