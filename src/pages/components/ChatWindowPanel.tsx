@@ -219,8 +219,6 @@ export default function ChatWindowPanel() {
   const supabase = createClient();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
-  const [showEmoji, setShowEmoji] = useState(false);
-  const [emojiCategory, setEmojiCategory] = useState(0);
   const [showInfo, setShowInfo] = useState(false);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
   const [secureModalOpen, setSecureModalOpen] = useState(false);
@@ -1295,7 +1293,6 @@ export default function ChatWindowPanel() {
             const isMe = msg.senderId === user?.id;
             const isImageMsg = msg.text?.startsWith('[IMAGE:') || msg.mediaType === 'image';
             const isFileMsg = msg.text?.startsWith('[FILE:') || msg.mediaType === 'file';
-            const stickerUrl = parseStickerPath(msg.text);
             const missedMatch = typeof msg.text === 'string' && msg.text.startsWith('__missed_call__:')
               ? msg.text.split(':') : null;
             const isMissedCall = !!missedMatch;
@@ -1372,21 +1369,11 @@ export default function ChatWindowPanel() {
                     className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
                       msg.deletedForEveryone
                         ? 'glass border border-dashed border-border text-muted-foreground italic'
-                      : stickerUrl
-                        ? 'bg-transparent p-0'
                       : isMe
                         ? 'gradient-primary text-white rounded-br-sm' : 'glass border border-border text-foreground rounded-bl-sm'
                     }`}
                   >
-                    {stickerUrl ? (
-                      <img
-                        src={stickerUrl}
-                        alt="Sticker"
-                        loading="lazy"
-                        className="w-32 h-32 object-contain drop-shadow-md select-none"
-                        draggable={false}
-                      />
-                    ) : imageUrl ? (
+                    {imageUrl ? (
                       <img src={imageUrl} alt="Shared image" className="max-w-[200px] rounded-xl" />
                     ) : (
                       <>
