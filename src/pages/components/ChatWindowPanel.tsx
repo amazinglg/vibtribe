@@ -1341,10 +1341,13 @@ export default function ChatWindowPanel() {
             }
             // Defensive: never render raw `e2e:` ciphertext
             const safeText = isEncrypted(msg.text) ? '[Encrypted message]' : msg.text;
+            const isRemovedStickerMsg = typeof safeText === 'string' && safeText.startsWith('[STICKER:');
             const displayText = isImageMsg
               ? '📷 Image'
               : isFileMsg
               ? `📎 ${safeText?.replace(/\[FILE:(.*?):(.*?)\]/, '$1') || 'File'}`
+              : isRemovedStickerMsg
+              ? 'Message removed'
               : safeText;
             const imageUrl = isImageMsg
               ? (msg.mediaUrl || msg.text?.replace('[IMAGE:', '').replace(']', ''))
