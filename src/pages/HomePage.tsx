@@ -1,4 +1,4 @@
-import React, { useEffect, lazy, Suspense } from 'react';
+import React, { useEffect, lazy, Suspense, useRef } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import AppLayout from '@/components/AppLayout';
 import ChatListPanel from './components/ChatListPanel';
@@ -16,6 +16,38 @@ export default function ChatsPage() {
     const chatId = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('chat') : null;
     setSelectedChatId(chatId || null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Intercept hardware/browser back button while a chat is open: close it instead of leaving the app.
+  const pushedRef = useRef(false);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (selectedChatId) {
+      if (!pushedRef.current) {
+        window.history.pushState({ vtChatOpen: true }, '');
+        pushedRef.current = true;
+      }
+    } else {
+      // Selection cleared via UI — pop our sentinel state so history stays clean.
+      if (pushedRef.current && window.history.state?.vtChatOpen) {
+        pushedRef.current = false;
+        window.history.back();
+      } else {
+        pushedRef.current = false;
+      }
+    }
+  }, [selectedChatId]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onPop = () => {
+      if (useChatStore.getState().selectedChatId) {
+        pushedRef.current = false;
+        useChatStore.getState().setSelectedChatId(null);
+      }
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
   }, []);
 
   useEffect(() => {
