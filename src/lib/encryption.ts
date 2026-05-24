@@ -46,6 +46,22 @@ async function getKey(key: string): Promise<any> {
   });
 }
 
+async function deleteKey(key: string): Promise<void> {
+  const db = await openKeyDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).delete(key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+/** Wipe locally cached private key (used on too-many-failed-attempts lockout). */
+export async function clearLocalKey(): Promise<void> {
+  try { await deleteKey('myPrivateKey'); } catch {}
+  try { await deleteKey('myPublicKey'); } catch {}
+}
+
 // ---------------- Base64 helpers ----------------
 function bufToB64(buf: ArrayBuffer | Uint8Array): string {
   const bytes = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
@@ -137,6 +153,47 @@ export async function unlockEncryptionWithPIN(userId: string, pin: string): Prom
   );
   await storeKey('myPrivateKey', privateKey);
   await storeKey('myPublicKey', data.public_key);
+}
+
+// ---------------- Change PIN (re-wrap the private key) ----------------
+export async function changeEncryptionPIN(userId: string, oldPin: string, newPin: string): Promise<void> {
+  if (!/^\d{6}$/.test(newPin)) throw new Error('New PIN must be exactly 6 digits');
+
+  const { data, error } = await supabase
+    .from('user_profiles')
+    .select('encrypted_private_key, key_salt, key_iv')
+    .eq('id', userId)
+    .single();
+  if (error) throw error;
+  if (!data?.encrypted_private_key || !data.key_salt || !data.key_iv) {
+    throw new Error('No encryption key found. Please set up encryption first.');
+  }
+
+  // Decrypt with old PIN
+  const oldSalt = b64ToBuf(data.key_salt);
+  const oldIv = b64ToBuf(data.key_iv);
+  const oldWrapKey = await deriveWrapKey(oldPin, oldSalt);
+  let plainBuf: ArrayBuffer;
+  try {
+    plainBuf = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv: oldIv }, oldWrapKey, b64ToBuf(data.encrypted_private_key)
+    );
+  } catch {
+    throw new Error('Current PIN is incorrect');
+  }
+
+  // Re-encrypt with new PIN + fresh salt/iv
+  const newSalt = crypto.getRandomValues(new Uint8Array(16));
+  const newIv = crypto.getRandomValues(new Uint8Array(12));
+  const newWrapKey = await deriveWrapKey(newPin, newSalt);
+  const reEncrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: newIv }, newWrapKey, plainBuf);
+
+  const { error: upErr } = await supabase.from('user_profiles').update({
+    encrypted_private_key: bufToB64(reEncrypted),
+    key_salt: bufToB64(newSalt),
+    key_iv: bufToB64(newIv),
+  }).eq('id', userId);
+  if (upErr) throw upErr;
 }
 
 // ---------------- Status helpers ----------------
