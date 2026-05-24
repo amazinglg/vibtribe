@@ -14,7 +14,7 @@ export function TermsContent() {
       <p>By creating an account or using VibTribe ("the App", "we", "us", "our"), you agree to these Terms &amp; Conditions and our Privacy Policy. If you do not agree, you must not use the App.</p>
 
       <h2 className="text-lg font-semibold mt-6">2. Eligibility</h2>
-      <p>You must be at least 13 years old (or the minimum digital-consent age in your country) to use VibTribe. By signing up you confirm that the information you provide is accurate and that you are legally permitted to use the service.</p>
+      <p>You must be at least <strong>18 years of age</strong> to create an account or use VibTribe. By signing up you confirm that you are 18 years or older, that the information you provide (including your date of birth) is accurate, and that you are legally permitted to use the service. Accounts found to belong to users under 18 will be terminated.</p>
 
       <h2 className="text-lg font-semibold mt-6">3. Your Account</h2>
       <ul className="list-disc pl-5 space-y-1">
