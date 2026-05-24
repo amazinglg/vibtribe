@@ -1148,15 +1148,16 @@ export default function ChatWindowPanel() {
                   <button
                     onClick={async () => {
                       setShowMoreMenu(false);
-                      if (chatType === 'secure') {
-                        if (!window.confirm('Move this chat back to your normal chat list? It will no longer require a PIN/pattern to access.')) return;
+                      if (myChatSecured) {
+                        if (!window.confirm('Move this chat back to your normal chat list? It will no longer require a PIN/pattern to access from your account. The other person is unaffected.')) return;
                         try {
                           const { error: upErr } = await supabase
-                            .from('chats')
-                            .update({ chat_type: 'normal', secure_code: null })
-                            .eq('id', selectedChatId);
+                            .from('user_secure_chats')
+                            .delete()
+                            .eq('user_id', user!.id)
+                            .eq('chat_id', selectedChatId);
                           if (upErr) throw upErr;
-                          setChatType('normal');
+                          setMyChatSecured(false);
                           toast.success('Chat moved back to your normal chats');
                           // Exit the secure session view
                           useChatStore.getState().closeSecureChat();
@@ -1170,8 +1171,8 @@ export default function ChatWindowPanel() {
                     }}
                     className="w-full text-left px-3 py-2.5 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground"
                   >
-                    {chatType === 'secure' ? <ShieldOff size={16} className="text-vt-amber" /> : <Lock size={16} className="text-primary" />}
-                    {chatType === 'secure' ? 'Mark as Unsecured' : 'Mark as secure'}
+                    {myChatSecured ? <ShieldOff size={16} className="text-vt-amber" /> : <Lock size={16} className="text-primary" />}
+                    {myChatSecured ? 'Mark as Unsecured (for me)' : 'Mark as secure (only for me)'}
                   </button>
                 )}
                 <button
