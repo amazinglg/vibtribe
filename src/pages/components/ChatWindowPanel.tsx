@@ -29,6 +29,7 @@ interface Message {
   editedAt?: string | null;
   deletedForEveryone?: boolean;
   createdAt?: string;
+  sentSecure?: boolean;
 }
 
 // Call Modal Component
