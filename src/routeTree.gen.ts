@@ -9,11 +9,13 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as StatusScreenRouteImport } from './routes/status-screen'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as ProfileScreenRouteImport } from './routes/profile-screen'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as CompleteProfileRouteImport } from './routes/complete-profile'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -21,6 +23,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminUserUserIdRouteImport } from './routes/admin.user.$userId'
 
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StatusScreenRoute = StatusScreenRouteImport.update({
   id: '/status-screen',
   path: '/status-screen',
@@ -44,6 +51,11 @@ const SignInRoute = SignInRouteImport.update({
 const ProfileScreenRoute = ProfileScreenRouteImport.update({
   id: '/profile-screen',
   path: '/profile-screen',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -82,11 +94,13 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/complete-profile': typeof CompleteProfileRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/privacy': typeof PrivacyRoute
   '/profile-screen': typeof ProfileScreenRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/status-screen': typeof StatusScreenRoute
+  '/terms': typeof TermsRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
 }
@@ -94,11 +108,13 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/complete-profile': typeof CompleteProfileRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/privacy': typeof PrivacyRoute
   '/profile-screen': typeof ProfileScreenRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/status-screen': typeof StatusScreenRoute
+  '/terms': typeof TermsRoute
   '/admin': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
 }
@@ -108,11 +124,13 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/complete-profile': typeof CompleteProfileRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/privacy': typeof PrivacyRoute
   '/profile-screen': typeof ProfileScreenRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/status-screen': typeof StatusScreenRoute
+  '/terms': typeof TermsRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
 }
@@ -123,11 +141,13 @@ export interface FileRouteTypes {
     | '/admin'
     | '/complete-profile'
     | '/forgot-password'
+    | '/privacy'
     | '/profile-screen'
     | '/sign-in'
     | '/sign-up'
     | '/sitemap.xml'
     | '/status-screen'
+    | '/terms'
     | '/admin/'
     | '/admin/user/$userId'
   fileRoutesByTo: FileRoutesByTo
@@ -135,11 +155,13 @@ export interface FileRouteTypes {
     | '/'
     | '/complete-profile'
     | '/forgot-password'
+    | '/privacy'
     | '/profile-screen'
     | '/sign-in'
     | '/sign-up'
     | '/sitemap.xml'
     | '/status-screen'
+    | '/terms'
     | '/admin'
     | '/admin/user/$userId'
   id:
@@ -148,11 +170,13 @@ export interface FileRouteTypes {
     | '/admin'
     | '/complete-profile'
     | '/forgot-password'
+    | '/privacy'
     | '/profile-screen'
     | '/sign-in'
     | '/sign-up'
     | '/sitemap.xml'
     | '/status-screen'
+    | '/terms'
     | '/admin/'
     | '/admin/user/$userId'
   fileRoutesById: FileRoutesById
@@ -162,15 +186,24 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   CompleteProfileRoute: typeof CompleteProfileRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
+  PrivacyRoute: typeof PrivacyRoute
   ProfileScreenRoute: typeof ProfileScreenRoute
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StatusScreenRoute: typeof StatusScreenRoute
+  TermsRoute: typeof TermsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/status-screen': {
       id: '/status-screen'
       path: '/status-screen'
@@ -204,6 +237,13 @@ declare module '@tanstack/react-router' {
       path: '/profile-screen'
       fullPath: '/profile-screen'
       preLoaderRoute: typeof ProfileScreenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/forgot-password': {
@@ -268,11 +308,13 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   CompleteProfileRoute: CompleteProfileRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
+  PrivacyRoute: PrivacyRoute,
   ProfileScreenRoute: ProfileScreenRoute,
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StatusScreenRoute: StatusScreenRoute,
+  TermsRoute: TermsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
