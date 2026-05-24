@@ -5,6 +5,7 @@ import ChatListPanel from './components/ChatListPanel';
 const ChatWindowPanel = lazy(() => import('./components/ChatWindowPanel'));
 import { useAuth } from '@/contexts/AuthContext';
 import { useChatStore } from '@/store/chatStore';
+import TermsAcceptanceGate from '@/components/TermsAcceptanceGate';
 
 export default function ChatsPage() {
   const { user, loading } = useAuth();
