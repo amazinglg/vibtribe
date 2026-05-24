@@ -13,7 +13,7 @@ import { sendPushNotification } from '@/lib/pushNotifications';
 import AppImage from "@/components/ui/AppImage";
 import { useCall } from '@/components/CallProvider';
 import { toast } from 'sonner';
-import { BOYS_STICKERS, GIRLS_STICKERS } from '@/lib/stickers';
+import { EMOJI_CATEGORIES, type EmojiCategoryKey } from '@/lib/emojis';
 
 interface Message {
   id: string;
@@ -247,7 +247,7 @@ export default function ChatWindowPanel() {
   const [showCallPermPrompt, setShowCallPermPrompt] = useState(false);
   const [showMediaPermPrompt, setShowMediaPermPrompt] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
-  const [emojiTab, setEmojiTab] = useState<'boys' | 'girls'>('boys');
+  const [emojiTab, setEmojiTab] = useState<EmojiCategoryKey>('smileys');
   const { permissions, requestMicrophone, requestCamera, requestMicAndCamera, requestStorage } = usePermissions();
   const [profile, setProfile] = React.useState<{ full_name?: string } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -712,47 +712,9 @@ export default function ChatWindowPanel() {
     ));
   };
 
-  const sendSticker = async (url: string) => {
-    if (!selectedChatId || !user) return;
-    const absUrl = url.startsWith('http') ? url : `${window.location.origin}${url}`;
-    const tempId = `temp-${Date.now()}`;
-    setMessages(prev => [...prev, {
-      id: tempId,
-      senderId: user.id,
-      text: `[IMAGE:${absUrl}]`,
-      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-      status: 'sent',
-      reactions: [],
-      mediaUrl: absUrl,
-      mediaType: 'image',
-      createdAt: new Date().toISOString(),
-    }]);
-    setShowEmoji(false);
-    try {
-      const { data } = await supabase
-        .from('messages')
-        .insert({ chat_id: selectedChatId, sender_id: user.id, content: `[IMAGE:${absUrl}]`, message_status: 'sent' })
-        .select()
-        .single();
-      if (data) {
-        setMessages(prev => prev.map(m => m.id === tempId ? { ...m, id: data.id, status: 'delivered' } : m));
-        await supabase.from('chats').update({ updated_at: new Date().toISOString() }).eq('id', selectedChatId);
-        if (contact?.userId) {
-          await sendPushNotification(supabase, {
-            recipient_user_id: contact.userId,
-            chat_id: selectedChatId,
-            title: profile?.full_name || 'Someone',
-            body: '💝 Sticker',
-            tag: `chat-${selectedChatId}`,
-            url: '/',
-            type: 'message',
-          });
-        }
-      }
-    } catch (err: any) {
-      setMessages(prev => prev.filter(m => m.id !== tempId));
-      toast.error(err?.message || 'Sticker could not be sent');
-    }
+  const insertEmoji = (emoji: string) => {
+    setInputText(prev => prev + emoji);
+    inputRef.current?.focus();
   };
 
   const deleteMessage = async (msgId: string) => {
@@ -1557,30 +1519,29 @@ export default function ChatWindowPanel() {
           className="absolute bottom-20 left-2 right-2 sm:left-4 sm:right-auto sm:w-[360px] z-30 glass-strong rounded-2xl border border-border shadow-card p-3 float-up"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex gap-1 mb-3 p-1 bg-muted/50 rounded-xl">
-            <button
-              onClick={() => setEmojiTab('boys')}
-              className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${emojiTab === 'boys' ? 'bg-blue-500 text-white shadow' : 'text-muted-foreground hover:text-foreground'}`}
-            >
-              💙 Boys Emojis
-            </button>
-            <button
-              onClick={() => setEmojiTab('girls')}
-              className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${emojiTab === 'girls' ? 'bg-pink-500 text-white shadow' : 'text-muted-foreground hover:text-foreground'}`}
-            >
-              🎀 Girls Emojis
-            </button>
-          </div>
-          <div className="grid grid-cols-5 sm:grid-cols-6 gap-1.5 max-h-72 overflow-y-auto">
-            {(emojiTab === 'boys' ? BOYS_STICKERS : GIRLS_STICKERS).map((src) => (
+          <div className="flex gap-1 mb-3 p-1 bg-muted/50 rounded-xl overflow-x-auto no-scrollbar">
+            {EMOJI_CATEGORIES.map(cat => (
               <button
-                key={src}
-                onClick={() => sendSticker(src)}
-                className="aspect-square p-1 rounded-xl hover:bg-muted active:scale-95 transition-all"
+                key={cat.key}
+                onClick={() => setEmojiTab(cat.key)}
+                className={`flex-shrink-0 px-2.5 py-1.5 rounded-lg text-base transition-all ${emojiTab === cat.key ? 'bg-primary/15 text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                aria-label={cat.label}
+                title={cat.label}
                 type="button"
-                aria-label="Send sticker"
               >
-                <img src={src} alt="" className="w-full h-full object-contain" loading="lazy" />
+                {cat.icon}
+              </button>
+            ))}
+          </div>
+          <div className="grid grid-cols-8 gap-1 max-h-72 overflow-y-auto">
+            {(EMOJI_CATEGORIES.find(c => c.key === emojiTab)?.emojis || []).map((emoji, i) => (
+              <button
+                key={`${emoji}-${i}`}
+                onClick={() => insertEmoji(emoji)}
+                className="aspect-square flex items-center justify-center text-2xl rounded-lg hover:bg-muted active:scale-90 transition-all"
+                type="button"
+              >
+                {emoji}
               </button>
             ))}
           </div>
