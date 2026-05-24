@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState } from 'react';
-import { Lock, X, Split, MoveRight, Eye, EyeOff, AlertTriangle, Hash, Grid3X3 } from 'lucide-react';
+import { Lock, X, Eye, EyeOff, AlertTriangle, Hash, Grid3X3 } from 'lucide-react';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,14 +14,12 @@ interface MarkSecureModalProps {
   onSecured?: (chatId: string) => void;
 }
 
-type SecureMode = 'move' | 'split';
 type CodeType = 'pin' | 'pattern';
 
 export default function MarkSecureModal({ isOpen, onClose, chatName, chatId, onSecured }: MarkSecureModalProps) {
   const { user } = useAuth();
   const supabase = createClient();
-  const [step, setStep] = useState<'choose-mode' | 'choose-code-type' | 'set-pin' | 'set-pattern'>('choose-mode');
-  const [mode, setMode] = useState<SecureMode>('move');
+  const [step, setStep] = useState<'choose-code-type' | 'set-pin' | 'set-pattern'>('choose-code-type');
   const [codeType, setCodeType] = useState<CodeType>('pin');
   const [pin, setPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
@@ -33,8 +31,7 @@ export default function MarkSecureModal({ isOpen, onClose, chatName, chatId, onS
   const [loading, setLoading] = useState(false);
 
   const resetAll = () => {
-    setStep('choose-mode');
-    setMode('move');
+    setStep('choose-code-type');
     setCodeType('pin');
     setPin('');
     setConfirmPin('');
@@ -92,51 +89,21 @@ export default function MarkSecureModal({ isOpen, onClose, chatName, chatId, onS
     try {
       const secureCode = codeType === 'pin' ? pin : patternSelected.join('-');
 
-      if (mode === 'move') {
-        // Update chat type to 'secure' and store the code hash
-        const { error: updateError } = await supabase
-          .from('chats')
-          .update({ chat_type: 'secure', secure_code: secureCode })
-          .eq('id', chatId);
+      // Per-user secure mark: ONLY this user's view of the chat is locked.
+      // The other participant is not affected and won't even know.
+      const { error: upsertError } = await supabase
+        .from('user_secure_chats')
+        .upsert(
+          { user_id: user.id, chat_id: chatId, code: secureCode },
+          { onConflict: 'user_id,chat_id' },
+        );
+      if (upsertError) throw upsertError;
+      onSecured?.(chatId);
 
-        if (updateError) throw updateError;
-        onSecured?.(chatId);
-      } else {
-        // Create a new secure channel alongside the normal chat
-        const { data: chatData } = await supabase
-          .from('chats')
-          .select('participant_one, participant_two')
-          .eq('id', chatId)
-          .single();
-
-        if (chatData) {
-          const { error: insertError } = await supabase
-            .from('chats')
-            .insert({
-              chat_type: 'secure',
-              participant_one: chatData.participant_one,
-              participant_two: chatData.participant_two,
-              secure_code: secureCode,
-            });
-          if (insertError) throw insertError;
-          onSecured?.(chatId);
-        }
-      }
-
-      toast.success(
-        mode === 'move'
-          ? `Chat with ${chatName} moved to Secure Vault`
-          : `Secure channel with ${chatName} created`
-      );
+      toast.success(`Chat with ${chatName} moved to your Secure Vault`);
       handleClose();
     } catch (err: any) {
-      // Fallback: show success even if DB column doesn't exist yet
-      toast.success(
-        mode === 'move'
-          ? `Chat with ${chatName} moved to Secure Vault`
-          : `Secure channel with ${chatName} created`
-      );
-      handleClose();
+      toast.error(err?.message || 'Could not secure this chat');
     }
     setLoading(false);
   };
