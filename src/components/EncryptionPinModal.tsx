@@ -246,17 +246,26 @@ export default function EncryptionPinModal({ userId, mode, onComplete, onSkip }:
           <label className="text-xs text-muted-foreground mb-1.5 block">{inputLabel}</label>
           <input
             ref={inputRef}
-            type="password"
+            type="tel"
             inputMode="numeric"
-            pattern="\d{6}"
+            pattern="[0-9]{6}"
             maxLength={6}
+            autoComplete="one-time-code"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
             value={activePin}
             onChange={(e) => setActivePin(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+            onClick={() => inputRef.current?.focus()}
             disabled={isLocked}
-            placeholder="••••••"
-            className="w-full bg-input border border-border rounded-xl px-4 py-3 text-center text-2xl tracking-[0.5em] font-mono text-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+            placeholder="Tap to enter 6 digits"
+            style={{ WebkitTextSecurity: 'disc' } as React.CSSProperties}
+            className="w-full bg-input border border-border rounded-xl px-4 py-3 text-center text-2xl tracking-[0.4em] font-mono text-foreground placeholder:text-muted-foreground/60 placeholder:text-sm placeholder:tracking-normal focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
           />
+          <p className="text-[10px] text-muted-foreground mt-1.5 text-center">
+            {activePin.length}/6 digits entered
+          </p>
         </div>
 
         <button
