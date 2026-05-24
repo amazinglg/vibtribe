@@ -102,7 +102,9 @@ export default function EncryptionPinModal({ userId, mode, onComplete, onSkip }:
   const lastUnlock = (() => {
     try { return parseInt(localStorage.getItem(lastVerifiedKey) || '0', 10); } catch { return 0; }
   })();
-  const bioAvailable = typeof window !== 'undefined' && !!localStorage.getItem(bioKey);
+  const bioAvailable = typeof window !== 'undefined'
+    && !!localStorage.getItem(bioKey)
+    && !!localStorage.getItem(bioPinKey);
 
   useEffect(() => { inputRef.current?.focus(); }, [step]);
 
