@@ -647,10 +647,6 @@ export default function ChatWindowPanel() {
 
   const handleFileAttach = async (file: File, type: 'image' | 'file' | 'audio') => {
     if (!file || !selectedChatId || !user) return;
-    if (e2eEnabled) {
-      toast.error('Encrypted media sharing is not available yet. Send text in secure chats.');
-      return;
-    }
     setShowAttachMenu(false);
     const tempId = `temp-${Date.now()}`;
     const isImage = type === 'image';
@@ -664,28 +660,45 @@ export default function ChatWindowPanel() {
       reactions: [],
       mediaUrl: previewUrl,
       mediaType: type,
+      encrypted: e2eEnabled,
     };
     setMessages(prev => [...prev, tempMsg]);
 
     try {
-      const filePath = `${user.id}/${selectedChatId}/${Date.now()}_${file.name}`;
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const useE2E = e2eEnabled && !!contact?.publicKey;
+      const mime = file.type || 'application/octet-stream';
+      let uploadBody: Blob = file;
+      let ext = file.name.includes('.') ? file.name.split('.').pop() : 'bin';
+      if (useE2E) {
+        const plainBuf = await file.arrayBuffer();
+        const cipherBuf = await encryptBytes(plainBuf, contact!.publicKey!);
+        uploadBody = new Blob([cipherBuf], { type: 'application/octet-stream' });
+        ext = 'enc';
+      }
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const filePath = `${user.id}/${selectedChatId}/${Date.now()}_${Math.random().toString(36).slice(2,8)}_${safeName}.${ext}`;
+      const { error: uploadError } = await supabase.storage
         .from('chat-media')
-        .upload(filePath, file, { upsert: true });
-
+        .upload(filePath, uploadBody, { upsert: true, contentType: useE2E ? 'application/octet-stream' : mime });
       if (uploadError) throw uploadError;
 
       const { data: urlData } = supabase.storage.from('chat-media').getPublicUrl(filePath);
       const publicUrl = urlData?.publicUrl || '';
 
-      const content = isImage ? `[IMAGE:${publicUrl}]` : `[FILE:${file.name}:${publicUrl}]`;
+      let content: string;
+      if (useE2E) {
+        const envelope = `__media__:${JSON.stringify({ type, url: publicUrl, mime, name: file.name })}`;
+        content = await encryptMessage(envelope, contact!.publicKey!);
+      } else {
+        content = isImage ? `[IMAGE:${publicUrl}]` : `[FILE:${file.name}:${publicUrl}]`;
+      }
       const { data } = await supabase
         .from('messages')
         .insert({ chat_id: selectedChatId, sender_id: user.id, content, message_status: 'sent' })
         .select()
         .single();
       if (data) {
-        setMessages(prev => prev.map(m => m.id === tempId ? { ...m, id: data.id, status: 'delivered', mediaUrl: publicUrl } : m));
+        setMessages(prev => prev.map(m => m.id === tempId ? { ...m, id: data.id, status: 'delivered', mediaUrl: previewUrl || publicUrl } : m));
         await supabase.from('chats').update({ updated_at: new Date().toISOString() }).eq('id', selectedChatId);
         if (contact?.userId) {
           const senderName = profile?.full_name || 'Someone';
