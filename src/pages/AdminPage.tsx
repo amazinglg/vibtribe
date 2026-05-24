@@ -126,10 +126,8 @@ export default function AdminPage() {
   const loadData = async () => {
     setLoadingData(true);
     try {
-      const { data: usersData } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
+      // Use admin-only RPC — table SELECT is restricted to safe columns now.
+      const { data: usersData } = await supabase.rpc('admin_list_user_profiles');
 
       const allUsers = usersData || [];
       setUsers(allUsers);
