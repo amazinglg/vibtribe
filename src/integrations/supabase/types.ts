@@ -541,6 +541,7 @@ export type Database = {
           bio: string | null
           country_code: string | null
           created_at: string | null
+          dob: string | null
           email: string
           encrypted_private_key: string | null
           full_name: string
@@ -571,6 +572,7 @@ export type Database = {
           bio?: string | null
           country_code?: string | null
           created_at?: string | null
+          dob?: string | null
           email: string
           encrypted_private_key?: string | null
           full_name?: string
@@ -601,6 +603,7 @@ export type Database = {
           bio?: string | null
           country_code?: string | null
           created_at?: string | null
+          dob?: string | null
           email?: string
           encrypted_private_key?: string | null
           full_name?: string
@@ -642,6 +645,7 @@ export type Database = {
           bio: string | null
           country_code: string | null
           created_at: string | null
+          dob: string | null
           email: string
           encrypted_private_key: string | null
           full_name: string
@@ -681,6 +685,7 @@ export type Database = {
           bio: string | null
           country_code: string | null
           created_at: string | null
+          dob: string | null
           email: string
           encrypted_private_key: string | null
           full_name: string
@@ -747,6 +752,7 @@ export type Database = {
           bio: string | null
           country_code: string | null
           created_at: string | null
+          dob: string | null
           email: string
           encrypted_private_key: string | null
           full_name: string
