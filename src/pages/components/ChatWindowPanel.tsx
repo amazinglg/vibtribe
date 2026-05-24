@@ -13,6 +13,7 @@ import { sendPushNotification } from '@/lib/pushNotifications';
 import AppImage from "@/components/ui/AppImage";
 import { useCall } from '@/components/CallProvider';
 import { toast } from 'sonner';
+import { STICKER_SECTIONS, parseStickerPath, stickerToken } from '@/lib/stickers';
 
 interface Message {
   id: string;
@@ -29,33 +30,8 @@ interface Message {
   createdAt?: string;
 }
 
-// Expanded emoji list organized by category
-const EMOJI_CATEGORIES = [
-  {
-    label: '😊 Smileys',
-    emojis: ['😊','😂','🤣','😍','🥰','😘','😎','🤩','😏','😒','😢','😭','😤','😡','🤬','😱','😨','😰','😓','🤗','🤔','🤭','🤫','🤥','😶','😐','😑','😬','🙄','😴','🤤','😷','🤒','🤕','🤑','🤠','😈','👿','💀','☠️','💩','🤡','👹','👺','👻','👽','👾','🤖']
-  },
-  {
-    label: '❤️ Hearts',
-    emojis: ['❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖','💘','💝','💟','♥️','🔥','✨','⭐','🌟','💫','⚡','🌈','🎉','🎊','🎈','🎁','🏆','🥇','🎯','💯']
-  },
-  {
-    label: '👍 Gestures',
-    emojis: ['👍','👎','👌','🤌','🤏','✌️','🤞','🤟','🤘','🤙','👈','👉','👆','🖕','👇','☝️','👋','🤚','🖐️','✋','🖖','👏','🙌','🤲','🤝','🙏','✍️','💪','🦾','🦿','🦵','🦶','👂','🦻','👃','🫀','🫁','🧠','🦷','🦴','👀','👁️','👅','👄']
-  },
-  {
-    label: '🐶 Animals',
-    emojis: ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🙈','🙉','🙊','🐔','🐧','🐦','🐤','🦆','🦅','🦉','🦇','🐺','🐗','🐴','🦄','🐝','🐛','🦋','🐌','🐞','🐜','🦟','🦗','🕷️','🦂','🐢','🐍','🦎','🦖','🦕','🐙','🦑','🦐','🦞','🦀']
-  },
-  {
-    label: '🍕 Food',
-    emojis: ['🍕','🍔','🍟','🌭','🍿','🧂','🥓','🥚','🍳','🧇','🥞','🧈','🍞','🥐','🥖','🫓','🥨','🥯','🧀','🥗','🥙','🥪','🌮','🌯','🫔','🥫','🍝','🍜','🍲','🍛','🍣','🍱','🥟','🦪','🍤','🍙','🍚','🍘','🍥','🥮','🍢','🧆','🥚','🍡','🍧','🍨','🍦','🥧','🧁','🍰','🎂','🍮','🍭','🍬','🍫','🍿','🍩','🍪','🌰','🥜','🍯']
-  },
-  {
-    label: '⚽ Sports',
-    emojis: ['⚽','🏀','🏈','⚾','🥎','🎾','🏐','🏉','🥏','🎱','🏓','🏸','🏒','🥊','🥋','🎽','🛹','🛼','🛷','⛸️','🥌','🎿','⛷️','🏂','🪂','🏋️','🤼','🤸','⛹️','🤺','🏇','🧘','🏄','🏊','🤽','🚣','🧗','🚵','🚴','🏆','🥇','🥈','🥉','🏅','🎖️','🏵️','🎗️','🎫','🎟️','🎪']
-  },
-];
+// Sticker categories — Boys / Girls / Hearts / Others
+const EMOJI_CATEGORIES = STICKER_SECTIONS;
 
 // Call Modal Component
 function CallModal({
@@ -610,9 +586,10 @@ export default function ChatWindowPanel() {
     return new Date(dateStr).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   };
 
-  const sendMessage = async () => {
-    if (!inputText.trim() || !selectedChatId || !user) return;
-    let text = inputText.trim();
+  const sendMessage = async (overrideText?: string) => {
+    const raw = overrideText ?? inputText;
+    if (!raw.trim() || !selectedChatId || !user) return;
+    let text = raw.trim();
     const tempId = `temp-${Date.now()}`;
     const tempMsg: Message = {
       id: tempId,
@@ -625,7 +602,7 @@ export default function ChatWindowPanel() {
       createdAt: new Date().toISOString(),
     };
     setMessages(prev => [...prev, tempMsg]);
-    setInputText('');
+    if (!overrideText) setInputText('');
     setShowEmoji(false);
 
     try {
@@ -1313,6 +1290,7 @@ export default function ChatWindowPanel() {
             const isMe = msg.senderId === user?.id;
             const isImageMsg = msg.text?.startsWith('[IMAGE:') || msg.mediaType === 'image';
             const isFileMsg = msg.text?.startsWith('[FILE:') || msg.mediaType === 'file';
+            const stickerUrl = parseStickerPath(msg.text);
             const missedMatch = typeof msg.text === 'string' && msg.text.startsWith('__missed_call__:')
               ? msg.text.split(':') : null;
             const isMissedCall = !!missedMatch;
@@ -1389,11 +1367,21 @@ export default function ChatWindowPanel() {
                     className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
                       msg.deletedForEveryone
                         ? 'glass border border-dashed border-border text-muted-foreground italic'
+                      : stickerUrl
+                        ? 'bg-transparent p-0'
                       : isMe
                         ? 'gradient-primary text-white rounded-br-sm' : 'glass border border-border text-foreground rounded-bl-sm'
                     }`}
                   >
-                    {imageUrl ? (
+                    {stickerUrl ? (
+                      <img
+                        src={stickerUrl}
+                        alt="Sticker"
+                        loading="lazy"
+                        className="w-32 h-32 object-contain drop-shadow-md select-none"
+                        draggable={false}
+                      />
+                    ) : imageUrl ? (
                       <img src={imageUrl} alt="Shared image" className="max-w-[200px] rounded-xl" />
                     ) : (
                       <>
@@ -1427,7 +1415,7 @@ export default function ChatWindowPanel() {
 
                   {hoveredMsg === msg.id && (
                     <div className={`absolute -top-9 ${isMe ? 'right-0' : 'left-0'} flex items-center gap-1 glass-strong rounded-xl border border-border px-2 py-1 float-up z-10 shadow-card`}>
-                      {EMOJI_CATEGORIES[0].emojis.slice(0, 5).map(emoji => (
+                      {['❤️','😂','😮','😢','👍'].map(emoji => (
                         <button
                           key={emoji}
                           onClick={() => addReaction(msg.id, emoji)}
@@ -1454,28 +1442,37 @@ export default function ChatWindowPanel() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Emoji Picker */}
+      {/* Sticker Picker */}
       {showEmoji && (
         <div className="border-t border-border glass" onClick={e => e.stopPropagation()}>
-          <div className="flex gap-1 px-3 pt-2 overflow-x-auto">
+          <div className="flex gap-2 px-3 pt-2 overflow-x-auto">
             {EMOJI_CATEGORIES.map((cat, idx) => (
               <button
-                key={idx}
+                key={cat.id}
                 onClick={() => setEmojiCategory(idx)}
-                className={`flex-shrink-0 px-2 py-1 rounded-lg text-xs transition-all ${emojiCategory === idx ? 'gradient-primary text-white' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
+                className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${emojiCategory === idx ? 'gradient-primary text-white shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
               >
-                {cat.label.split(' ')[0]}
+                <span className="text-base leading-none">{cat.icon}</span>
+                <span>{cat.label}</span>
               </button>
             ))}
           </div>
-          <div className="flex flex-wrap gap-1 px-3 py-2 max-h-36 overflow-y-auto">
-            {EMOJI_CATEGORIES[emojiCategory].emojis.map(emoji => (
+          <div className="grid grid-cols-6 gap-2 px-3 py-3 max-h-56 overflow-y-auto">
+            {EMOJI_CATEGORIES[emojiCategory].items.map((path) => (
               <button
-                key={emoji}
-                onClick={() => setInputText(prev => prev + emoji)}
-                className="text-xl hover:scale-125 transition-transform p-0.5"
+                key={path}
+                onClick={() => sendMessage(stickerToken(path))}
+                className="aspect-square rounded-xl hover:bg-muted/60 active:scale-90 transition-all p-1 flex items-center justify-center"
+                aria-label="Send sticker"
               >
-                {emoji}
+                <img
+                  src={`/emojis/${path}`}
+                  alt=""
+                  loading="lazy"
+                  width={56}
+                  height={56}
+                  className="w-full h-full object-contain drop-shadow-sm"
+                />
               </button>
             ))}
           </div>
