@@ -309,19 +309,15 @@ export default function ChatWindowPanel() {
                 reactions: [],
                 encrypted,
                 createdAt: newMsg.created_at,
+                sentSecure: !!newMsg.sent_secure,
               }]);
               // Mark as read (recipient — uses RPC to bypass RLS sender restriction)
               await supabase.rpc('mark_messages_read', { _chat_id: selectedChatId });
 
-              // Check if this is a secure chat and whether user wants notifications for it
+              // If THIS user has marked the chat as secure, route the notification
+              // through their secure-notification preference instead of the normal path.
               try {
-                const { data: chatInfo } = await supabase
-                  .from('chats')
-                  .select('chat_type')
-                  .eq('id', selectedChatId)
-                  .single();
-
-                if (chatInfo?.chat_type === 'secure') {
+                if (useChatStore.getState().isSecureSession) {
                   // Only show browser notification if user has enabled secured chat notifications
                   const notifPrefsRaw = localStorage.getItem(`vt_notif_prefs_${user.id}`);
                   const notifPrefs = notifPrefsRaw ? JSON.parse(notifPrefsRaw) : {};
