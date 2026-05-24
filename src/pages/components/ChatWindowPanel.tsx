@@ -1571,18 +1571,16 @@ export default function ChatWindowPanel() {
               🎀 Girls Emojis
             </button>
           </div>
-          <div className="grid grid-cols-8 gap-1 max-h-64 overflow-y-auto">
-            {(emojiTab === 'boys'
-              ? ['😎','😏','🤔','😄','😁','🧢','💪','🎧','⚽','🏀','😜','🤩','🤠','😠','🥷','😴','😤','🏋️','😝','🤑','🤫','🎉','🔥','🎮','🤘','😶','💡','🎩','😭','☺️','😆','😬','🙄','🙂','🤬','🥶','🥵','😪','🤤','😓','😵‍💫','🤯','🤓','🤙','✌️','👊','👍','⚡','🪖','🛹','🥳','🧋','📸','😌','🤐','🙌','💯','😋','🤭','💻','🍔','🥤']
-              : ['🎀','🥰','😘','🥺','👑','👸','🌸','😇','😍','✌️','🙈','😉','😭','🤳','😼','😻','🌷','🧋','🤭','😴','🧖‍♀️','🥳','🧸','🌺','🎧','🥹','🤗','💗','💖','💝','💕','🌼','🤩','🥲','💅','💄','🪞','💋','💐','☕','🌈','🦋','🫶','🧁','🛍️','🍭','🥂','🤍','🍒','🆗','🍯']
-            ).map((emo, i) => (
+          <div className="grid grid-cols-5 sm:grid-cols-6 gap-1.5 max-h-72 overflow-y-auto">
+            {(emojiTab === 'boys' ? BOYS_STICKERS : GIRLS_STICKERS).map((src) => (
               <button
-                key={`${emo}-${i}`}
-                onClick={() => { setInputText(prev => prev + emo); }}
-                className="text-2xl p-1.5 rounded-lg hover:bg-muted transition-all"
+                key={src}
+                onClick={() => sendSticker(src)}
+                className="aspect-square p-1 rounded-xl hover:bg-muted active:scale-95 transition-all"
                 type="button"
+                aria-label="Send sticker"
               >
-                {emo}
+                <img src={src} alt="" className="w-full h-full object-contain" loading="lazy" />
               </button>
             ))}
           </div>
