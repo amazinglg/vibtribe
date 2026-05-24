@@ -29,26 +29,17 @@ export default function SignInPage() {
     setLoading(true);
     try {
       // Check if account is suspended before attempting login
-      let profileQuery;
+      let identifier: string;
       if (useEmail) {
-        const e = email.trim().toLowerCase();
-        profileQuery = await supabase
-          .from('user_profiles')
-          .select('id, is_suspended, login_attempts, account_status')
-          .or(`email.eq.${e},real_email.eq.${e}`)
-          .maybeSingle();
+        identifier = email.trim().toLowerCase();
       } else {
         const local10 = mobile.replace(/\D/g, '').slice(-10);
         if (local10.length !== 10) { setError('Please enter a valid 10-digit mobile number'); setLoading(false); return; }
-        const emailFromMobile = `${local10}@vibetribe.app`;
-        profileQuery = await supabase
-          .from('user_profiles')
-          .select('id, is_suspended, login_attempts, account_status')
-          .eq('email', emailFromMobile)
-          .maybeSingle();
+        identifier = `${local10}@vibetribe.app`;
       }
 
-      const profileData = profileQuery?.data;
+      const { data: lookup } = await supabase.rpc('pre_login_lookup', { _identifier: identifier });
+      const profileData: any = Array.isArray(lookup) ? lookup[0] : lookup;
 
       if (profileData?.is_suspended || profileData?.account_status === 'suspended') {
         setError('Your account has been suspended due to too many failed login attempts. Please contact support or wait for admin to unsuspend your account.');
@@ -65,10 +56,7 @@ export default function SignInPage() {
 
         // Reset login attempts on successful login
         if (profileData?.id) {
-          await supabase
-            .from('user_profiles')
-            .update({ login_attempts: 0 })
-            .eq('id', profileData.id);
+          await supabase.rpc('record_login_success', { _user_id: profileData.id });
         }
 
         console.log('[VT-LOGIN] sign-in succeeded, navigating to /');
@@ -77,19 +65,14 @@ export default function SignInPage() {
         console.error('[VT-LOGIN] sign-in failed', loginErr);
         // Increment failed login attempts
         if (profileData?.id) {
-          const currentAttempts = (profileData.login_attempts || 0) + 1;
-          const updates: any = { login_attempts: currentAttempts };
-
+          const { data: newCount } = await supabase.rpc('record_login_failure', { _user_id: profileData.id });
+          const currentAttempts = typeof newCount === 'number' ? newCount : (profileData.login_attempts || 0) + 1;
           if (currentAttempts >= 5) {
-            updates.is_suspended = true;
-            updates.account_status = 'suspended';
             setError('Your account has been suspended after 5 failed login attempts. Please contact support.');
           } else {
             const remaining = 5 - currentAttempts;
             setError(`Invalid credentials. ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining before account suspension.`);
           }
-
-          await supabase.from('user_profiles').update(updates).eq('id', profileData.id);
         } else {
           setError(loginErr.message || 'Invalid credentials. Please try again.');
         }

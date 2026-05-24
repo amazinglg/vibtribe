@@ -36,8 +36,11 @@ export default function AdminUserDetailPage() {
 
   const load = async () => {
     setLoadingData(true);
-    const { data } = await supabase.from('user_profiles').select('*').eq('id', userId).single();
-    setTarget(data);
+    // Use admin RPC so we receive owner-only columns (real_email, login_attempts)
+    // that are no longer readable via direct SELECT.
+    const { data } = await supabase.rpc('admin_get_user_profile', { _user_id: userId });
+    const row = Array.isArray(data) ? data[0] : data;
+    setTarget(row);
     setLoadingData(false);
     // Master-admin only: count secure chats created by this user
     if (profile?.is_master_admin) {

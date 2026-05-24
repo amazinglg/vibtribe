@@ -154,12 +154,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const fetchProfile = async (userId: string) => {
     try {
-      const { data } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
-      setProfile(data);
+      // Use SECURITY DEFINER RPC so we still receive owner-only columns
+      // (real_email, login_attempts, encryption material) that are no
+      // longer readable via direct SELECT for security reasons.
+      const { data } = await supabase.rpc('get_my_full_profile');
+      const row = Array.isArray(data) ? data[0] : data;
+      setProfile(row ?? null);
     } catch {}
   };
 
@@ -229,12 +229,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     let { data, error } = await supabase.auth.signInWithPassword({ email: trimmed, password });
     if (error) {
       // Fallback: look up by real_email -> get the synthetic email -> sign in with that
-      const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('email')
-        .ilike('real_email', trimmed)
-        .maybeSingle();
-      if (profile?.email) {
+      const { data: lookup } = await supabase.rpc('pre_login_lookup', { _identifier: trimmed });
+      const profile = Array.isArray(lookup) ? lookup[0] : lookup;
+      if (profile?.email && profile.email !== trimmed) {
         const retry = await supabase.auth.signInWithPassword({ email: profile.email, password });
         if (retry.error) throw retry.error;
         if (retry.data?.session) setSession(retry.data.session);
