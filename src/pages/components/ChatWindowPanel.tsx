@@ -228,6 +228,7 @@ export default function ChatWindowPanel() {
   const [hoveredMsg, setHoveredMsg] = useState<string | null>(null);
   const [contact, setContact] = useState<{ name: string; avatar: string; avatarUrl?: string | null; online: boolean; lastSeen: string; publicKey?: string; userId?: string; isContact?: boolean } | null>(null);
   const [enlargeAvatar, setEnlargeAvatar] = useState(false);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [e2eEnabled, setE2eEnabled] = useState(false);
   const [showE2EInfo, setShowE2EInfo] = useState(false);
@@ -1432,7 +1433,12 @@ export default function ChatWindowPanel() {
                   >
                     {encMedia && contactPubKeyRef.current ? (
                       isMe && msg.mediaUrl && msg.mediaUrl.startsWith('blob:') && encMedia.type === 'image' ? (
-                        <img src={msg.mediaUrl} alt={encMedia.name || 'Shared image'} className="max-w-[200px] rounded-xl" />
+                        <img
+                          src={msg.mediaUrl}
+                          alt={encMedia.name || 'Shared image'}
+                          className="max-w-[200px] rounded-xl cursor-zoom-in"
+                          onClick={() => setLightboxUrl(msg.mediaUrl!)}
+                        />
                       ) : (
                         <EncryptedMedia
                           url={encMedia.url}
@@ -1440,10 +1446,16 @@ export default function ChatWindowPanel() {
                           name={encMedia.name}
                           kind={encMedia.type}
                           theirPublicKey={contactPubKeyRef.current}
+                          onImageClick={(u) => setLightboxUrl(u)}
                         />
                       )
                     ) : imageUrl ? (
-                      <img src={imageUrl} alt="Shared image" className="max-w-[200px] rounded-xl" />
+                      <img
+                        src={imageUrl}
+                        alt="Shared image"
+                        className="max-w-[200px] rounded-xl cursor-zoom-in"
+                        onClick={() => setLightboxUrl(imageUrl)}
+                      />
                     ) : (
                       <>
                         {displayText}
@@ -1810,6 +1822,28 @@ export default function ChatWindowPanel() {
             src={contact.avatarUrl}
             alt={contact.name}
             className="max-w-full max-h-[80vh] rounded-2xl object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+
+      {/* Lightbox for chat media images */}
+      {lightboxUrl && (
+        <div
+          className="fixed inset-0 z-[1200] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4"
+          onClick={() => setLightboxUrl(null)}
+        >
+          <button
+            onClick={(e) => { e.stopPropagation(); setLightboxUrl(null); }}
+            className="absolute top-4 right-4 p-3 rounded-full bg-white/10 text-white hover:bg-white/20"
+            aria-label="Close"
+          >
+            <X size={22} />
+          </button>
+          <img
+            src={lightboxUrl}
+            alt="Media preview"
+            className="max-w-full max-h-[90vh] rounded-2xl object-contain"
             onClick={(e) => e.stopPropagation()}
           />
         </div>
