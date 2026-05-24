@@ -219,6 +219,7 @@ export default function ChatListPanel() {
           }
           if (preview?.startsWith('[IMAGE:')) preview = '📷 Photo';
           else if (preview?.startsWith('[FILE:')) preview = '📎 File';
+          else if (preview?.startsWith('[STICKER:')) preview = '💟 Sticker';
           else if (preview?.startsWith('__call_log__:')) {
             const parts = preview.split(':');
             preview = parts[1] === 'video' ? '📹 Video call' : '📞 Voice call';
