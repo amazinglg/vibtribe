@@ -1507,6 +1507,44 @@ export default function ChatWindowPanel() {
         }}
       />
 
+      {/* Emoji Picker */}
+      {showEmoji && (
+        <div
+          className="absolute bottom-20 left-2 right-2 sm:left-4 sm:right-auto sm:w-[360px] z-30 glass-strong rounded-2xl border border-border shadow-card p-3 float-up"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex gap-1 mb-3 p-1 bg-muted/50 rounded-xl">
+            <button
+              onClick={() => setEmojiTab('boys')}
+              className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${emojiTab === 'boys' ? 'bg-blue-500 text-white shadow' : 'text-muted-foreground hover:text-foreground'}`}
+            >
+              💙 Boys Emojis
+            </button>
+            <button
+              onClick={() => setEmojiTab('girls')}
+              className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${emojiTab === 'girls' ? 'bg-pink-500 text-white shadow' : 'text-muted-foreground hover:text-foreground'}`}
+            >
+              🎀 Girls Emojis
+            </button>
+          </div>
+          <div className="grid grid-cols-8 gap-1 max-h-64 overflow-y-auto">
+            {(emojiTab === 'boys'
+              ? ['😎','😏','🤔','😄','😁','🧢','💪','🎧','⚽','🏀','😜','🤩','🤠','😠','🥷','😴','😤','🏋️','😝','🤑','🤫','🎉','🔥','🎮','🤘','😶','💡','🎩','😭','☺️','😆','😬','🙄','🙂','🤬','🥶','🥵','😪','🤤','😓','😵‍💫','🤯','🤓','🤙','✌️','👊','👍','⚡','🪖','🛹','🥳','🧋','📸','😌','🤐','🙌','💯','😋','🤭','💻','🍔','🥤','🎵','⭐']
+              : ['🎀','🥰','😘','🥺','👑','👸','🌸','😇','😍','✌️','🙈','😉','😭','🤳','😼','😻','🌷','🧋','🤭','😴','🧖‍♀️','🥳','🧸','🌺','🎧','🥹','🤗','💗','💖','💝','💕','🌼','🤩','🥲','💅','💄','🪞','💋','💐','☕','🌈','🦋','🫶','🧁','🛍️','🍭','🥂','🤍','🍒','🆗','🍯','💞','💓','🌷','🌟','✨']
+            ).map((emo, i) => (
+              <button
+                key={`${emo}-${i}`}
+                onClick={() => { setInputText(prev => prev + emo); }}
+                className="text-2xl p-1.5 rounded-lg hover:bg-muted transition-all"
+                type="button"
+              >
+                {emo}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Input Area */}
       <div className="glass border-t border-border px-2 pt-2 pb-3 mb-2 lg:mb-0 flex items-center gap-1 flex-shrink-0 w-full max-w-full overflow-hidden" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
         <button
