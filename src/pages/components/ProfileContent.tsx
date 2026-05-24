@@ -76,6 +76,7 @@ export default function ProfileContent() {
   const supabase = createClient();
   const [activeTab, setActiveTab] = useState<Tab>('account');
   const [editMode, setEditMode] = useState(false);
+  const [changePinOpen, setChangePinOpen] = useState(false);
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
   const [username, setUsername] = useState('');
