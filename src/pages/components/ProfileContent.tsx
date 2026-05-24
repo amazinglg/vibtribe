@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Camera, Edit3, Shield, Bell, Lock, Smartphone, LogOut, Key, AlertTriangle, UserCheck, AtSign, Phone, Mail, ChevronDown, Ban, Monitor, RefreshCw, HelpCircle, Palette, Check, Download, Share, X, Copy, ExternalLink, MoreVertical, Trash2 } from 'lucide-react';
+import { Camera, Edit3, Shield, Bell, Lock, Smartphone, LogOut, Key, AlertTriangle, UserCheck, AtSign, Phone, Mail, ChevronDown, Ban, Monitor, RefreshCw, HelpCircle, Palette, Check, Download, Share, X, Copy, ExternalLink, MoreVertical, Trash2, Mic, Image as ImageIcon, Contact as ContactIcon, HardDrive } from 'lucide-react';
 import { toast } from 'sonner';
 import ImageCropModal from '@/components/ImageCropModal';
 import { useAuth } from '@/contexts/AuthContext';
@@ -95,7 +95,7 @@ export default function ProfileContent() {
   const [statusVisibilitySetting, setStatusVisibilitySetting] = useState<'all' | 'contacts' | 'selected'>('all');
 
   // App-level permissions state for the Permissions section
-  const { permissions: appPerms, requestNotifications, requestMicAndCamera, requestStorage, checkAllPermissions } = usePermissions();
+  const { permissions: appPerms, requestNotifications, requestMicrophone, requestCamera, requestStorage, requestContacts, requestPhotos, checkAllPermissions } = usePermissions();
   useEffect(() => { checkAllPermissions(); }, [checkAllPermissions]);
 
   // Contact edit states
