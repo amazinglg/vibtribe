@@ -80,6 +80,7 @@ export default function ProfileContent() {
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
   const [username, setUsername] = useState('');
+  const [dob, setDob] = useState('');
   const [savingProfile, setSavingProfile] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
@@ -157,6 +158,7 @@ export default function ProfileContent() {
       setDisplayName(profile.full_name || '');
       setBio(profile.bio || '');
       setUsername(profile.username || '');
+      setDob((profile as any).dob || '');
       setEditEmail(
         profile.real_email
           || (profile.email && !profile.email.endsWith('@vibetribe.app') ? profile.email : '')
