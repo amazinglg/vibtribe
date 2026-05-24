@@ -1363,8 +1363,15 @@ export default function ChatWindowPanel() {
             }
             // Defensive: never render raw `e2e:` ciphertext
             const safeText = isEncrypted(msg.text) ? '[Encrypted message]' : msg.text;
+            // Encrypted-media envelope (text after decryption)
+            let encMedia: { type: 'image'|'file'|'audio'; url: string; mime: string; name?: string } | null = null;
+            if (typeof safeText === 'string' && safeText.startsWith('__media__:')) {
+              try { encMedia = JSON.parse(safeText.slice('__media__:'.length)); } catch {}
+            }
             const isRemovedStickerMsg = typeof safeText === 'string' && safeText.startsWith('[STICKER:');
-            const displayText = isImageMsg
+            const displayText = encMedia
+              ? (encMedia.type === 'image' ? '📷 Photo' : encMedia.type === 'audio' ? '🎵 Audio' : `📎 ${encMedia.name || 'File'}`)
+              : isImageMsg
               ? '📷 Image'
               : isFileMsg
               ? `📎 ${safeText?.replace(/\[FILE:(.*?):(.*?)\]/, '$1') || 'File'}`
@@ -1398,7 +1405,19 @@ export default function ChatWindowPanel() {
                         ? 'gradient-primary text-white rounded-br-sm' : 'glass border border-border text-foreground rounded-bl-sm'
                     }`}
                   >
-                    {imageUrl ? (
+                    {encMedia && contactPubKeyRef.current ? (
+                      isMe && msg.mediaUrl && msg.mediaUrl.startsWith('blob:') && encMedia.type === 'image' ? (
+                        <img src={msg.mediaUrl} alt={encMedia.name || 'Shared image'} className="max-w-[200px] rounded-xl" />
+                      ) : (
+                        <EncryptedMedia
+                          url={encMedia.url}
+                          mime={encMedia.mime}
+                          name={encMedia.name}
+                          kind={encMedia.type}
+                          theirPublicKey={contactPubKeyRef.current}
+                        />
+                      )
+                    ) : imageUrl ? (
                       <img src={imageUrl} alt="Shared image" className="max-w-[200px] rounded-xl" />
                     ) : (
                       <>
