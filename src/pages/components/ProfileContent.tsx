@@ -1510,6 +1510,14 @@ export default function ProfileContent() {
           document.body
         )
       )}
+      {changePinOpen && user && (
+        <EncryptionPinModal
+          userId={user.id}
+          mode="change"
+          onComplete={() => setChangePinOpen(false)}
+          onSkip={() => setChangePinOpen(false)}
+        />
+      )}
     </div>
   );
 }
