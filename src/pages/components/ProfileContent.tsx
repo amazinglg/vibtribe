@@ -664,6 +664,11 @@ export default function ProfileContent() {
                     className="w-full px-3 py-2 bg-input border border-border rounded-xl text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                   <p className="text-[10px] text-muted-foreground mt-1">Must be 18+ to use VibTribe.</p>
+                  <div className="mt-2 flex items-start gap-2 px-2.5 py-1.5 rounded-lg bg-primary/10 border border-primary/20">
+                    <span className="text-[10px] leading-snug text-foreground/80">
+                      🔒 Your date of birth is confidential. Only you and our support team can see it — it is never visible to other users.
+                    </span>
+                  </div>
                 </div>
                 <div className="flex gap-2">
                   <button
