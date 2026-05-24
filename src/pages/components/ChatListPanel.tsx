@@ -174,18 +174,8 @@ export default function ChatListPanel() {
 
       const data = [...(oneToOne || []), ...groups];
 
-      // Per-user secure marks — hide chats the CURRENT user has marked as secure
-      // (these live behind the Secure Vault PIN/pattern). The other participant
-      // is unaffected.
-      const { data: mySecure } = await supabase
-        .from('user_secure_chats')
-        .select('chat_id')
-        .eq('user_id', user.id);
-      const securedIds = new Set((mySecure || []).map((r: any) => r.chat_id));
-
       const chatList: Chat[] = [];
       for (const chat of data) {
-        if (securedIds.has(chat.id)) continue;
         const isGroup = !!(chat as any).is_group;
         const msgs = (chat as any).messages || [];
         const sortedMsgs = msgs.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
