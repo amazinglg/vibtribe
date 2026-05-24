@@ -1085,6 +1085,49 @@ export default function ProfileContent() {
                   })}
                 </div>
               </div>
+
+              {/* Legal — Terms & Privacy Policy */}
+              <div className="glass rounded-2xl border border-border p-5">
+                <h3 className="font-semibold text-base text-foreground mb-2 flex items-center gap-2">
+                  <Shield size={16} className="text-primary" />
+                  Legal
+                </h3>
+                <p className="text-xs text-muted-foreground mb-4">
+                  Review how VibTribe protects your data and the rules that apply to using the app.
+                </p>
+                <div className="space-y-2">
+                  <Link
+                    to="/terms"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between p-3 bg-muted/50 hover:bg-muted rounded-xl transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Shield size={16} className="text-primary" />
+                      <div>
+                        <p className="text-sm font-medium text-foreground">Terms &amp; Conditions</p>
+                        <p className="text-xs text-muted-foreground">Rules for using VibTribe</p>
+                      </div>
+                    </div>
+                    <ExternalLink size={14} className="text-muted-foreground" />
+                  </Link>
+                  <Link
+                    to="/privacy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between p-3 bg-muted/50 hover:bg-muted rounded-xl transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Lock size={16} className="text-primary" />
+                      <div>
+                        <p className="text-sm font-medium text-foreground">Privacy Policy</p>
+                        <p className="text-xs text-muted-foreground">How we handle your data &amp; grievances</p>
+                      </div>
+                    </div>
+                    <ExternalLink size={14} className="text-muted-foreground" />
+                  </Link>
+                </div>
+              </div>
             </div>
           )}
 
