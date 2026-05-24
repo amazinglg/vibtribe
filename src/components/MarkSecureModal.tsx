@@ -130,66 +130,19 @@ export default function MarkSecureModal({ isOpen, onClose, chatName, chatId, onS
 
         <div className="px-6 py-6 overflow-y-auto flex-1">
 
-          {/* Step 1: Choose Mode */}
-          {step === 'choose-mode' && (
-            <div>
-              <p className="text-sm text-muted-foreground mb-5">
-                Choose how you want to secure this chat with <span className="text-foreground font-semibold">{chatName}</span>:
-              </p>
-              <div className="flex flex-col gap-3 mb-6">
-                <button
-                  onClick={() => setMode('move')}
-                  className={`flex items-start gap-4 p-4 rounded-2xl border-2 transition-all text-left ${mode === 'move' ? 'border-primary bg-primary/10' : 'border-border hover:border-border/80 hover:bg-muted/50'}`}
-                >
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${mode === 'move' ? 'gradient-primary' : 'bg-muted'}`}>
-                    <MoveRight size={18} className={mode === 'move' ? 'text-white' : 'text-muted-foreground'} />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-sm text-foreground">Move Entire Chat</p>
-                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                      The entire chat history and all future messages move to your Secure Vault. This chat disappears from your normal chat list.
-                    </p>
-                  </div>
-                </button>
-                <button
-                  onClick={() => setMode('split')}
-                  className={`flex items-start gap-4 p-4 rounded-2xl border-2 transition-all text-left ${mode === 'split' ? 'border-pink bg-pink/10' : 'border-border hover:border-border/80 hover:bg-muted/50'}`}
-                >
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${mode === 'split' ? 'gradient-pink' : 'bg-muted'}`}>
-                    <Split size={18} className={mode === 'split' ? 'text-white' : 'text-muted-foreground'} />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-sm text-foreground">Create Dual Channel</p>
-                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                      Keep the normal chat AND create a separate secure channel. Messages in each channel stay isolated.
-                    </p>
-                  </div>
-                </button>
-              </div>
-              <div className="flex items-start gap-2 p-3 bg-vt-amber/10 border border-vt-amber/20 rounded-xl mb-5">
-                <AlertTriangle size={14} className="text-vt-amber flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-vt-amber/80 leading-relaxed">
-                  Once secured, if you forget your code, there is no recovery.
-                </p>
-              </div>
-              <button
-                onClick={() => setStep('choose-code-type')}
-                className="w-full gradient-primary text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-all glow-primary"
-              >
-                Continue — Choose Lock Type
-              </button>
-            </div>
-          )}
-
           {/* Step 2: Choose Code Type (PIN or Pattern) */}
           {step === 'choose-code-type' && (
             <div>
-              <button onClick={() => setStep('choose-mode')} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mb-5 transition-colors">
-                ← Back
-              </button>
-              <p className="text-sm text-muted-foreground mb-5">
-                How would you like to lock this chat?
+              <p className="text-sm text-muted-foreground mb-3">
+                Lock your view of the chat with <span className="text-foreground font-semibold">{chatName}</span>. Only YOU will need this code — the other person is not affected and won't be notified.
               </p>
+              <div className="flex items-start gap-2 p-3 bg-vt-amber/10 border border-vt-amber/20 rounded-xl mb-5">
+                <AlertTriangle size={14} className="text-vt-amber flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-vt-amber/80 leading-relaxed">
+                  If you forget your code, there is no recovery. The chat stays hidden until the correct code is entered.
+                </p>
+              </div>
+              <p className="text-sm text-muted-foreground mb-3">How would you like to lock it?</p>
               <div className="flex flex-col gap-3 mb-6">
                 <button
                   onClick={() => setCodeType('pin')}
