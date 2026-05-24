@@ -570,6 +570,7 @@ export default function ChatWindowPanel() {
           editedAt: (m as any).edited_at || null,
           deletedForEveryone: tombstone,
           createdAt: m.created_at,
+          sentSecure: !!(m as any).sent_secure,
         });
       }
       setMessages(decryptedMsgs);
