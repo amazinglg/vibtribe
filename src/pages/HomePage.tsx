@@ -76,6 +76,7 @@ export default function ChatsPage() {
 
   return (
     <AppLayout>
+      <TermsAcceptanceGate />
       <div
         className="gradient-bg-page flex overflow-hidden w-full max-w-full pb-[calc(64px+env(safe-area-inset-bottom))] lg:pb-0"
         style={{ height: 'calc(100dvh - 64px - env(safe-area-inset-top))' }}
