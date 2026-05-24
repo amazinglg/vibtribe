@@ -1415,7 +1415,7 @@ export default function ChatWindowPanel() {
 
                   {hoveredMsg === msg.id && (
                     <div className={`absolute -top-9 ${isMe ? 'right-0' : 'left-0'} flex items-center gap-1 glass-strong rounded-xl border border-border px-2 py-1 float-up z-10 shadow-card`}>
-                      {EMOJI_CATEGORIES[0].emojis.slice(0, 5).map(emoji => (
+                      {['❤️','😂','😮','😢','👍'].map(emoji => (
                         <button
                           key={emoji}
                           onClick={() => addReaction(msg.id, emoji)}
