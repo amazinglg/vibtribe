@@ -341,7 +341,16 @@ export default function ProfileContent() {
           .maybeSingle();
         if (existing) throw new Error('This username is already taken');
       }
-      await updateProfile({ full_name: displayName, bio, username: normalizedUsername || null });
+      // DOB validation: must be 18+ if provided
+      if (dob) {
+        const dobD = new Date(dob);
+        const today = new Date();
+        let age = today.getFullYear() - dobD.getFullYear();
+        const m = today.getMonth() - dobD.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < dobD.getDate())) age--;
+        if (age < 18) throw new Error('You must be at least 18 years old');
+      }
+      await updateProfile({ full_name: displayName, bio, username: normalizedUsername || null, dob: dob || null } as any);
       setEditMode(false);
       toast.success('Profile updated successfully ✓');
     } catch (err: any) {
