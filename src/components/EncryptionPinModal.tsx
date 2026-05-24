@@ -31,10 +31,11 @@ function fmtRelative(ts: number) {
   return `${d} day${d > 1 ? 's' : ''} ago`;
 }
 
-async function tryBiometricUnlock(userId: string): Promise<boolean> {
+async function tryBiometricUnlock(userId: string): Promise<string | null> {
   try {
     const credIdB64 = localStorage.getItem(`vt_bio_cred_${userId}`);
-    if (!credIdB64 || !('credentials' in navigator)) return false;
+    const storedPin = localStorage.getItem(`vt_bio_pin_${userId}`);
+    if (!credIdB64 || !storedPin || !('credentials' in navigator)) return null;
     const raw = Uint8Array.from(atob(credIdB64), (c) => c.charCodeAt(0));
     await navigator.credentials.get({
       publicKey: {
@@ -44,13 +45,13 @@ async function tryBiometricUnlock(userId: string): Promise<boolean> {
         timeout: 60000,
       },
     });
-    return true;
+    return storedPin;
   } catch {
-    return false;
+    return null;
   }
 }
 
-async function registerBiometric(userId: string): Promise<void> {
+async function registerBiometric(userId: string, pin: string): Promise<void> {
   if (!('credentials' in navigator)) throw new Error('Biometric not supported on this device');
   const cred = (await navigator.credentials.create({
     publicKey: {
@@ -72,6 +73,8 @@ async function registerBiometric(userId: string): Promise<void> {
   let s = '';
   for (let i = 0; i < rawId.length; i++) s += String.fromCharCode(rawId[i]);
   localStorage.setItem(`vt_bio_cred_${userId}`, btoa(s));
+  // Store the PIN locally so biometric can actually unlock the encryption key.
+  localStorage.setItem(`vt_bio_pin_${userId}`, pin);
 }
 
 export default function EncryptionPinModal({ userId, mode, onComplete, onSkip }: Props) {
@@ -91,6 +94,7 @@ export default function EncryptionPinModal({ userId, mode, onComplete, onSkip }:
   const failsKey = `vt_pin_fails_${userId}`;
   const lastVerifiedKey = `vt_pin_last_verified_${userId}`;
   const bioKey = `vt_bio_cred_${userId}`;
+  const bioPinKey = `vt_bio_pin_${userId}`;
   const [lockedUntil, setLockedUntil] = useState<number>(() => {
     try { return parseInt(localStorage.getItem(lockoutKey) || '0', 10); } catch { return 0; }
   });
@@ -114,11 +118,16 @@ export default function EncryptionPinModal({ userId, mode, onComplete, onSkip }:
     if (mode !== 'unlock' || !bioAvailable || lockedUntil > Date.now()) return;
     let cancelled = false;
     (async () => {
-      const ok = await tryBiometricUnlock(userId);
-      if (!cancelled && ok) {
-        toast.success('Unlocked with biometric 🔓');
+      const savedPin = await tryBiometricUnlock(userId);
+      if (cancelled || !savedPin) return;
+      try {
+        await unlockEncryptionWithPIN(userId, savedPin);
         localStorage.setItem(lastVerifiedKey, String(Date.now()));
+        toast.success('Unlocked with biometric 🔓');
         onComplete();
+      } catch {
+        localStorage.removeItem(bioKey);
+        localStorage.removeItem(bioPinKey);
       }
     })();
     return () => { cancelled = true; };
@@ -131,25 +140,34 @@ export default function EncryptionPinModal({ userId, mode, onComplete, onSkip }:
   const handleBiometric = async () => {
     if (isLocked) return;
     setBusy(true);
-    const ok = await tryBiometricUnlock(userId);
-    setBusy(false);
-    if (ok) {
-      toast.success('Unlocked with biometric 🔓');
-      localStorage.setItem(lastVerifiedKey, String(Date.now()));
-      onComplete();
-    } else {
+    const savedPin = await tryBiometricUnlock(userId);
+    if (!savedPin) {
+      setBusy(false);
       toast.error('Biometric failed — use your PIN');
+      return;
+    }
+    try {
+      await unlockEncryptionWithPIN(userId, savedPin);
+      localStorage.setItem(lastVerifiedKey, String(Date.now()));
+      toast.success('Unlocked with biometric 🔓');
+      onComplete();
+    } catch {
+      localStorage.removeItem(bioKey);
+      localStorage.removeItem(bioPinKey);
+      toast.error('Biometric is out of date — enter your PIN');
+    } finally {
+      setBusy(false);
     }
   };
 
-  const offerBiometricSetup = async () => {
+  const offerBiometricSetup = async (pinToSave: string) => {
     if (bioAvailable) return;
     if (!('PublicKeyCredential' in window)) return;
     try {
       const supported = await (PublicKeyCredential as any).isUserVerifyingPlatformAuthenticatorAvailable?.();
       if (!supported) return;
       if (!confirm('Enable Face ID / fingerprint unlock next time?')) return;
-      await registerBiometric(userId);
+      await registerBiometric(userId, pinToSave);
       toast.success('Biometric unlock enabled 👆');
     } catch (e: any) {
       toast.error(e?.message || 'Could not enable biometric');
@@ -182,6 +200,7 @@ export default function EncryptionPinModal({ userId, mode, onComplete, onSkip }:
         toast.success('PIN changed successfully 🔒');
         // Invalidate biometric (it gated old PIN context) — user must re-enable
         localStorage.removeItem(bioKey);
+        localStorage.removeItem(bioPinKey);
         onComplete();
       } catch (e: any) {
         toast.error(e?.message || 'Failed to change PIN');
@@ -211,7 +230,7 @@ export default function EncryptionPinModal({ userId, mode, onComplete, onSkip }:
         toast.success('Encryption set up successfully 🔒');
         localStorage.setItem(lastVerifiedKey, String(Date.now()));
         try { sessionStorage.setItem(`vt_pin_session_${userId}`, '1'); } catch {}
-        await offerBiometricSetup();
+        await offerBiometricSetup(pin);
         onComplete();
       } catch (e: any) {
         toast.error(e?.message || 'Failed to set up encryption');
@@ -228,7 +247,7 @@ export default function EncryptionPinModal({ userId, mode, onComplete, onSkip }:
         localStorage.removeItem(lockoutKey);
         localStorage.setItem(lastVerifiedKey, String(Date.now()));
         toast.success('Encryption unlocked 🔓');
-        await offerBiometricSetup();
+        await offerBiometricSetup(pin);
         onComplete();
       } catch (e: any) {
         // Throttle on failure

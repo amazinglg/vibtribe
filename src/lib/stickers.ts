@@ -1,6 +1,6 @@
 // Sticker catalog. Stickers are sent as a message with the body
 // `[STICKER:<section>/<file>]` and rendered as an <img>.
-const N = 16;
+const N = 50;
 const make = (section: string) =>
   Array.from({ length: N }, (_, i) => `${section}/${String(i + 1).padStart(2, '0')}.png`);
 

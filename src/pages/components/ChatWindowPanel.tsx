@@ -1602,7 +1602,7 @@ export default function ChatWindowPanel() {
       {/* Long-press action sheet for own messages */}
       {actionMsg && (
         <div
-          className="fixed inset-0 z-[1500] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
+          className="fixed inset-0 z-[1500] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 pb-24 sm:pb-4"
           onClick={() => setActionMsg(null)}
         >
           <div
