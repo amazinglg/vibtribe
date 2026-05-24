@@ -586,9 +586,10 @@ export default function ChatWindowPanel() {
     return new Date(dateStr).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   };
 
-  const sendMessage = async () => {
-    if (!inputText.trim() || !selectedChatId || !user) return;
-    let text = inputText.trim();
+  const sendMessage = async (overrideText?: string) => {
+    const raw = overrideText ?? inputText;
+    if (!raw.trim() || !selectedChatId || !user) return;
+    let text = raw.trim();
     const tempId = `temp-${Date.now()}`;
     const tempMsg: Message = {
       id: tempId,
@@ -601,7 +602,7 @@ export default function ChatWindowPanel() {
       createdAt: new Date().toISOString(),
     };
     setMessages(prev => [...prev, tempMsg]);
-    setInputText('');
+    if (!overrideText) setInputText('');
     setShowEmoji(false);
 
     try {
