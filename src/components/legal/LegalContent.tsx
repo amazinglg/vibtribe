@@ -59,11 +59,13 @@ export function TermsContent() {
       <p>These Terms are governed by the laws of India. Disputes are subject to the exclusive jurisdiction of the competent courts in India.</p>
 
       <h2 className="text-lg font-semibold mt-6">13. Grievance Officer / Contact</h2>
+      <p>In accordance with the Information Technology Act, 2000 and the Information Technology (Intermediary Guidelines and Digital Media Ethics Code) Rules, 2021, the Grievance Officer for VibTribe is:</p>
       <ul className="list-disc pl-5 space-y-1">
-        <li>Support: support@vibtribe.in</li>
-        <li>Privacy: privacy@vibtribe.in</li>
-        <li>Legal / Grievance: legal@vibtribe.in</li>
+        <li><strong>Name:</strong> Labhansh Garg</li>
+        <li><strong>Email:</strong> Labhansh.garg@outlook.com</li>
+        <li><strong>Postal address for grievances:</strong> Labhansh Garg, c/o VibTribe Grievance Office — please request the current postal address by emailing Labhansh.garg@outlook.com.</li>
       </ul>
+      <p className="text-xs text-muted-foreground">All grievances will be acknowledged within 24 hours and resolved within 15 days of receipt, as required by law.</p>
 
       <h2 className="text-xl font-bold mt-10 border-t border-border pt-6">Privacy Policy</h2>
       <p>VibTribe is a privacy-first messaging app. This section explains what data we collect, how we use it, and the choices you have.</p>
@@ -96,7 +98,7 @@ export function TermsContent() {
       </ul>
 
       <h3 className="text-base font-semibold mt-4">D. Account Deletion</h3>
-      <p>You can delete your account any time from Profile &rarr; Danger Zone &rarr; Delete My Account. This removes your profile, contacts, encrypted keys, chats, messages, statuses, push tokens, support tickets, and your authentication record. Some operational logs and backups may persist for a short period for security and legal reasons. You may also email <strong>privacy@vibtribe.in</strong>.</p>
+      <p>You can delete your account any time from Profile &rarr; Danger Zone &rarr; Delete My Account. This removes your profile, contacts, encrypted keys, chats, messages, statuses, push tokens, support tickets, and your authentication record. Some operational logs and backups may persist for a short period for security and legal reasons. For any data-protection request, contact the Grievance Officer at <strong>Labhansh.garg@outlook.com</strong>.</p>
 
       <h3 className="text-base font-semibold mt-4">E. Third-Party Processors</h3>
       <ul className="list-disc pl-5 space-y-1">
@@ -116,7 +118,7 @@ export function TermsContent() {
       <p>The App is not intended for children below the minimum digital-consent age in their jurisdiction. We do not knowingly collect data from such children.</p>
 
       <h3 className="text-base font-semibold mt-4">H. Your Rights</h3>
-      <p>Subject to applicable law (including India's Digital Personal Data Protection Act, 2023) you may request access, correction, or deletion of your personal data, and may withdraw consent. Contact <strong>privacy@vibtribe.in</strong>.</p>
+      <p>Subject to applicable law (including India's Digital Personal Data Protection Act, 2023) you may request access, correction, or deletion of your personal data, and may withdraw consent. Contact the Grievance Officer at <strong>Labhansh.garg@outlook.com</strong>.</p>
     </div>
   );
 }
