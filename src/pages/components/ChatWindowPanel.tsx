@@ -13,6 +13,7 @@ import { sendPushNotification } from '@/lib/pushNotifications';
 import AppImage from "@/components/ui/AppImage";
 import { useCall } from '@/components/CallProvider';
 import { toast } from 'sonner';
+import { BOYS_STICKERS, GIRLS_STICKERS } from '@/lib/stickers';
 
 interface Message {
   id: string;
@@ -709,6 +710,49 @@ export default function ChatWindowPanel() {
         ? { ...m, reactions: m.reactions.includes(emoji) ? m.reactions.filter(r => r !== emoji) : [...m.reactions, emoji] }
         : m
     ));
+  };
+
+  const sendSticker = async (url: string) => {
+    if (!selectedChatId || !user) return;
+    const absUrl = url.startsWith('http') ? url : `${window.location.origin}${url}`;
+    const tempId = `temp-${Date.now()}`;
+    setMessages(prev => [...prev, {
+      id: tempId,
+      senderId: user.id,
+      text: `[IMAGE:${absUrl}]`,
+      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+      status: 'sent',
+      reactions: [],
+      mediaUrl: absUrl,
+      mediaType: 'image',
+      createdAt: new Date().toISOString(),
+    }]);
+    setShowEmoji(false);
+    try {
+      const { data } = await supabase
+        .from('messages')
+        .insert({ chat_id: selectedChatId, sender_id: user.id, content: `[IMAGE:${absUrl}]`, message_status: 'sent' })
+        .select()
+        .single();
+      if (data) {
+        setMessages(prev => prev.map(m => m.id === tempId ? { ...m, id: data.id, status: 'delivered' } : m));
+        await supabase.from('chats').update({ updated_at: new Date().toISOString() }).eq('id', selectedChatId);
+        if (contact?.userId) {
+          await sendPushNotification(supabase, {
+            recipient_user_id: contact.userId,
+            chat_id: selectedChatId,
+            title: profile?.full_name || 'Someone',
+            body: '💝 Sticker',
+            tag: `chat-${selectedChatId}`,
+            url: '/',
+            type: 'message',
+          });
+        }
+      }
+    } catch (err: any) {
+      setMessages(prev => prev.filter(m => m.id !== tempId));
+      toast.error(err?.message || 'Sticker could not be sent');
+    }
   };
 
   const deleteMessage = async (msgId: string) => {
@@ -1527,18 +1571,16 @@ export default function ChatWindowPanel() {
               🎀 Girls Emojis
             </button>
           </div>
-          <div className="grid grid-cols-8 gap-1 max-h-64 overflow-y-auto">
-            {(emojiTab === 'boys'
-              ? ['😎','😏','🤔','😄','😁','🧢','💪','🎧','⚽','🏀','😜','🤩','🤠','😠','🥷','😴','😤','🏋️','😝','🤑','🤫','🎉','🔥','🎮','🤘','😶','💡','🎩','😭','☺️','😆','😬','🙄','🙂','🤬','🥶','🥵','😪','🤤','😓','😵‍💫','🤯','🤓','🤙','✌️','👊','👍','⚡','🪖','🛹','🥳','🧋','📸','😌','🤐','🙌','💯','😋','🤭','💻','🍔','🥤']
-              : ['🎀','🥰','😘','🥺','👑','👸','🌸','😇','😍','✌️','🙈','😉','😭','🤳','😼','😻','🌷','🧋','🤭','😴','🧖‍♀️','🥳','🧸','🌺','🎧','🥹','🤗','💗','💖','💝','💕','🌼','🤩','🥲','💅','💄','🪞','💋','💐','☕','🌈','🦋','🫶','🧁','🛍️','🍭','🥂','🤍','🍒','🆗','🍯']
-            ).map((emo, i) => (
+          <div className="grid grid-cols-5 sm:grid-cols-6 gap-1.5 max-h-72 overflow-y-auto">
+            {(emojiTab === 'boys' ? BOYS_STICKERS : GIRLS_STICKERS).map((src) => (
               <button
-                key={`${emo}-${i}`}
-                onClick={() => { setInputText(prev => prev + emo); }}
-                className="text-2xl p-1.5 rounded-lg hover:bg-muted transition-all"
+                key={src}
+                onClick={() => sendSticker(src)}
+                className="aspect-square p-1 rounded-xl hover:bg-muted active:scale-95 transition-all"
                 type="button"
+                aria-label="Send sticker"
               >
-                {emo}
+                <img src={src} alt="" className="w-full h-full object-contain" loading="lazy" />
               </button>
             ))}
           </div>
