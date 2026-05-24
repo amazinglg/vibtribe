@@ -15,7 +15,6 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as ProfileScreenRouteImport } from './routes/profile-screen'
-import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as CompleteProfileRouteImport } from './routes/complete-profile'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -51,11 +50,6 @@ const SignInRoute = SignInRouteImport.update({
 const ProfileScreenRoute = ProfileScreenRouteImport.update({
   id: '/profile-screen',
   path: '/profile-screen',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivacyRoute = PrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -94,7 +88,6 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/complete-profile': typeof CompleteProfileRoute
   '/forgot-password': typeof ForgotPasswordRoute
-  '/privacy': typeof PrivacyRoute
   '/profile-screen': typeof ProfileScreenRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
@@ -108,7 +101,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/complete-profile': typeof CompleteProfileRoute
   '/forgot-password': typeof ForgotPasswordRoute
-  '/privacy': typeof PrivacyRoute
   '/profile-screen': typeof ProfileScreenRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
@@ -124,7 +116,6 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/complete-profile': typeof CompleteProfileRoute
   '/forgot-password': typeof ForgotPasswordRoute
-  '/privacy': typeof PrivacyRoute
   '/profile-screen': typeof ProfileScreenRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
@@ -141,7 +132,6 @@ export interface FileRouteTypes {
     | '/admin'
     | '/complete-profile'
     | '/forgot-password'
-    | '/privacy'
     | '/profile-screen'
     | '/sign-in'
     | '/sign-up'
@@ -155,7 +145,6 @@ export interface FileRouteTypes {
     | '/'
     | '/complete-profile'
     | '/forgot-password'
-    | '/privacy'
     | '/profile-screen'
     | '/sign-in'
     | '/sign-up'
@@ -170,7 +159,6 @@ export interface FileRouteTypes {
     | '/admin'
     | '/complete-profile'
     | '/forgot-password'
-    | '/privacy'
     | '/profile-screen'
     | '/sign-in'
     | '/sign-up'
@@ -186,7 +174,6 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   CompleteProfileRoute: typeof CompleteProfileRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
-  PrivacyRoute: typeof PrivacyRoute
   ProfileScreenRoute: typeof ProfileScreenRoute
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
@@ -237,13 +224,6 @@ declare module '@tanstack/react-router' {
       path: '/profile-screen'
       fullPath: '/profile-screen'
       preLoaderRoute: typeof ProfileScreenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacy': {
-      id: '/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/forgot-password': {
@@ -308,7 +288,6 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   CompleteProfileRoute: CompleteProfileRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
-  PrivacyRoute: PrivacyRoute,
   ProfileScreenRoute: ProfileScreenRoute,
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
@@ -319,3 +298,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
