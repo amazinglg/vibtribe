@@ -46,6 +46,22 @@ async function getKey(key: string): Promise<any> {
   });
 }
 
+async function deleteKey(key: string): Promise<void> {
+  const db = await openKeyDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).delete(key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+/** Wipe locally cached private key (used on too-many-failed-attempts lockout). */
+export async function clearLocalKey(): Promise<void> {
+  try { await deleteKey('myPrivateKey'); } catch {}
+  try { await deleteKey('myPublicKey'); } catch {}
+}
+
 // ---------------- Base64 helpers ----------------
 function bufToB64(buf: ArrayBuffer | Uint8Array): string {
   const bytes = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
