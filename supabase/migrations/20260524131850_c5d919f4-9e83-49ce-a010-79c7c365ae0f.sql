@@ -1,0 +1,1 @@
+UPDATE public.user_profiles SET terms_accepted_at = NULL WHERE terms_accepted_at IS NOT NULL;
