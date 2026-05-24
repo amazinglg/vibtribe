@@ -257,8 +257,18 @@ export default function ChatWindowPanel() {
   const imageInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    // Jump straight to the latest message. We use instant scroll (not smooth)
+    // so opening a chat lands on the newest message immediately instead of
+    // animating from the top — and we re-run on the next tick to account for
+    // late-loading media changing the scroll height.
+    const el = messagesEndRef.current;
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'auto', block: 'end' });
+    const t = setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
+    }, 50);
+    return () => clearTimeout(t);
+  }, [messages, selectedChatId]);
 
   useEffect(() => {
     // When the active chat changes, expire seen messages in the previous one if it was 'after_seen'.
