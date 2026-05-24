@@ -1608,7 +1608,7 @@ export default function ChatWindowPanel() {
         />
         {inputText.trim() ? (
           <button
-            onClick={sendMessage}
+            onClick={() => sendMessage()}
             className="p-2.5 gradient-primary rounded-xl text-white hover:opacity-90 transition-all glow-primary flex-shrink-0"
             aria-label="Send"
           >
