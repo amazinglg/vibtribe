@@ -267,13 +267,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // Update profile
   const updateProfile = async (updates: any) => {
     if (!user) throw new Error('Not authenticated');
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('user_profiles')
       .update({ ...updates, updated_at: new Date().toISOString() })
-      .eq('id', user.id)
-      .select()
-      .single();
+      .eq('id', user.id);
     if (error) throw error;
+    // Re-read the full row (incl. sensitive own-only fields) via secure RPC.
+    const { data } = await supabase.rpc('get_my_full_profile');
     setProfile(data);
     return data;
   };
@@ -302,11 +302,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // Get User Profile from Database
   const getUserProfile = async () => {
     if (!user) return null;
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single();
+    const { data, error } = await supabase.rpc('get_my_full_profile');
     if (error) throw error;
     return data;
   };

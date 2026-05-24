@@ -667,6 +667,44 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      admin_list_user_profiles: {
+        Args: never
+        Returns: {
+          account_status: Database["public"]["Enums"]["user_status"] | null
+          app_theme: string | null
+          avatar_url: string | null
+          bio: string | null
+          country_code: string | null
+          created_at: string | null
+          email: string
+          encrypted_private_key: string | null
+          full_name: string
+          id: string
+          is_master_admin: boolean
+          is_online: boolean | null
+          is_suspended: boolean | null
+          key_iv: string | null
+          key_salt: string | null
+          key_setup_completed: boolean
+          last_seen: string | null
+          login_attempts: number | null
+          mobile_number: string | null
+          profile_completed: boolean | null
+          profile_photo_visibility: string
+          public_key: string | null
+          real_email: string | null
+          role: string
+          status_visibility: string
+          updated_at: string | null
+          username: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "user_profiles"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       admin_reset_user_password: {
         Args: { new_password: string; target_user_id: string }
         Returns: undefined
