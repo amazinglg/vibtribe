@@ -669,7 +669,6 @@ export default function ChatWindowPanel() {
       mediaUrl: previewUrl,
       mediaType: type,
       encrypted: e2eEnabled,
-      sentSecure: isSecureSession,
     };
     setMessages(prev => [...prev, tempMsg]);
 
@@ -703,11 +702,11 @@ export default function ChatWindowPanel() {
       }
       const { data } = await supabase
         .from('messages')
-        .insert({ chat_id: selectedChatId, sender_id: user.id, content, message_status: 'sent', sent_secure: isSecureSession })
+        .insert({ chat_id: selectedChatId, sender_id: user.id, content, message_status: 'sent' })
         .select()
         .single();
       if (data) {
-        setMessages(prev => prev.map(m => m.id === tempId ? { ...m, id: data.id, status: 'delivered', mediaUrl: previewUrl || publicUrl, sentSecure: isSecureSession } : m));
+        setMessages(prev => prev.map(m => m.id === tempId ? { ...m, id: data.id, status: 'delivered', mediaUrl: previewUrl || publicUrl } : m));
         await supabase.from('chats').update({ updated_at: new Date().toISOString() }).eq('id', selectedChatId);
         if (contact?.userId) {
           const senderName = profile?.full_name || 'Someone';
