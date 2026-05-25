@@ -1433,8 +1433,9 @@ export default function ChatWindowPanel() {
               : null;
 
             return (
+              <React.Fragment key={msg.id}>
+              {__sep}
               <div
-                key={msg.id}
                 className={`flex ${isMe ? 'justify-end' : 'justify-start'} group`}
                 onMouseEnter={() => setHoveredMsg(msg.id)}
                 onMouseLeave={() => setHoveredMsg(null)}
