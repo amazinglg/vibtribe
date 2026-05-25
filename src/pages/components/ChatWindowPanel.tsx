@@ -1073,7 +1073,7 @@ export default function ChatWindowPanel() {
           className="lg:hidden -ml-1 p-2 rounded-xl text-foreground hover:bg-primary/10 active:bg-primary/20 transition-all flex-shrink-0"
           onClick={() => setSelectedChatId(null)}
           aria-label="Back to chats"
-          title="Back to chats"
+            title={t('chat.back')}
         >
           <ArrowLeft size={22} strokeWidth={2.5} />
         </button>
@@ -1117,7 +1117,7 @@ export default function ChatWindowPanel() {
           <button
             onClick={handleVoiceCallClick}
             className="p-2 rounded-xl transition-all flex-shrink-0 text-muted-foreground hover:text-vt-green hover:bg-vt-green/10"
-            title="Voice Call"
+            title={t('chat.voiceCall')}
             aria-label="Voice call"
           >
             <Phone size={18} />
@@ -1126,7 +1126,7 @@ export default function ChatWindowPanel() {
           <button
             onClick={handleVideoCallClick}
             className="p-2 rounded-xl transition-all flex-shrink-0 text-muted-foreground hover:text-vt-green hover:bg-vt-green/10"
-            title="Video Call"
+            title={t('chat.videoCall')}
             aria-label="Video call"
           >
             <Video size={18} />
@@ -1136,7 +1136,7 @@ export default function ChatWindowPanel() {
             <button
               onClick={(e) => { e.stopPropagation(); setShowMoreMenu(v => !v); setShowDisappearMenu(false); }}
               className={`p-2 rounded-xl transition-all flex-shrink-0 ${showMoreMenu ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
-              title="More options"
+              title={t('chat.more')}
               aria-label="More options"
             >
               <MoreVertical size={18} />
