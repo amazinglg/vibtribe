@@ -919,23 +919,6 @@ export default function ProfileContent() {
                 </div>
               </div>
 
-              {/* Encryption PIN */}
-              <div className="glass rounded-2xl border border-border p-5">
-                <h3 className="font-semibold text-base text-foreground mb-2 flex items-center gap-2">
-                  <Lock size={16} className="text-primary" />
-                  End-to-End Encryption PIN
-                </h3>
-                <p className="text-xs text-muted-foreground mb-4">
-                  Change your 6-digit PIN that protects your private encryption key. Your chat history stays intact.
-                </p>
-                <button
-                  onClick={() => setChangePinOpen(true)}
-                  className="px-4 py-2.5 gradient-primary text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-all"
-                >
-                  Change Encryption PIN
-                </button>
-              </div>
-
               {/* Danger Zone */}
               <div className="glass rounded-2xl border border-red-500/20 p-5">
                 <h3 className="font-semibold text-base text-red-400 mb-4 flex items-center gap-2">
