@@ -317,7 +317,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </div>
             )}
             {sidebarExpanded && (
-              <button onClick={handleSignOut} className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 transition-colors" title="Sign Out">
+              <button onClick={handleSignOut} className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 transition-colors" title={t('top.signOut')}>
                 <LogOut size={16} />
               </button>
             )}
