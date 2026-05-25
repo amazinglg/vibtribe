@@ -206,7 +206,7 @@ export default function StatusHero() {
     <div className="fixed inset-0 z-[1000] bg-black/95 flex flex-col" onClick={closeMediaModal}>
       <div className="flex items-center justify-between px-4 py-3 text-white flex-shrink-0" onClick={(e) => e.stopPropagation()}>
         <button onClick={closeMediaModal} className="p-2"><X size={20} /></button>
-        <span className="text-sm font-medium">New status</span>
+        <span className="text-sm font-medium">{t('status.new')}</span>
         <span className="w-9" />
       </div>
       <div className="flex-1 min-h-0 flex items-center justify-center px-4 overflow-hidden" onClick={(e) => e.stopPropagation()}>
@@ -224,7 +224,7 @@ export default function StatusHero() {
         <input
           type="text" value={mediaCaption} maxLength={200}
           onChange={(e) => setMediaCaption(e.target.value)}
-          placeholder="Add a caption…"
+          placeholder={t('status.caption')}
           className="flex-1 px-4 py-2.5 rounded-full bg-white/10 text-white placeholder-white/60 border border-white/20 text-sm focus:outline-none"
         />
         <button onClick={handleMediaPost} disabled={uploading}
@@ -243,7 +243,7 @@ export default function StatusHero() {
         <p className="text-xs text-muted-foreground">Stories disappear after 24 hours</p>
         <div className="px-2.5 py-1 glass rounded-full flex items-center gap-1.5 text-[11px] text-muted-foreground">
           <Sparkles size={11} className="text-primary" />
-          <span>Active</span>
+          <span>{t('status.active')}</span>
         </div>
       </div>
 
@@ -271,7 +271,7 @@ export default function StatusHero() {
           </button>
 
           <button onClick={openMyStatuses} className="flex-1 min-w-0 text-left">
-            <h3 className="font-bold text-sm sm:text-base text-foreground truncate">My Status</h3>
+            <h3 className="font-bold text-sm sm:text-base text-foreground truncate">{t('status.my')}</h3>
             <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">Tap to view · Add a new story</p>
           </button>
 
@@ -414,9 +414,9 @@ export default function StatusHero() {
       {textPrompt !== null && (
         <div className="fixed inset-0 z-[120] bg-black/70 flex items-center justify-center p-4" onClick={() => setTextPrompt(null)}>
           <div className="bg-card border border-border rounded-2xl p-5 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-semibold text-foreground mb-3">Text Status</h3>
+            <h3 className="font-semibold text-foreground mb-3">{t('status.text')}</h3>
             <textarea autoFocus value={textValue} onChange={(e) => setTextValue(e.target.value)} maxLength={280}
-              placeholder="What's on your mind?"
+              placeholder={t('status.placeholder')}
               className="w-full h-28 px-3 py-2 rounded-lg bg-muted text-foreground border border-border focus:outline-none focus:border-primary text-sm" />
             <div className="flex justify-end gap-2 mt-3">
               <button onClick={() => { setTextPrompt(null); setTextValue(''); }} className="px-3 py-1.5 text-sm text-muted-foreground">Cancel</button>
