@@ -145,7 +145,7 @@ export default function ChatListPanel() {
         .from('chats')
         .select(`
           id, chat_type, participant_one, participant_two, is_group, name, updated_at,
-          messages(id, content, created_at, sender_id, message_status)
+          messages(id, content, created_at, sender_id, message_status, sent_secure)
         `)
         .or(`participant_one.eq.${user.id},participant_two.eq.${user.id}`)
         .eq('is_group', false)
@@ -164,7 +164,7 @@ export default function ChatListPanel() {
           .from('chats')
           .select(`
             id, chat_type, is_group, name, updated_at,
-            messages(id, content, created_at, sender_id, message_status)
+            messages(id, content, created_at, sender_id, message_status, sent_secure)
           `)
           .in('id', groupIds)
           .eq('is_group', true)
@@ -177,7 +177,10 @@ export default function ChatListPanel() {
       const chatList: Chat[] = [];
       for (const chat of data) {
         const isGroup = !!(chat as any).is_group;
-        const msgs = (chat as any).messages || [];
+        const allMsgs = (chat as any).messages || [];
+        // Hide my own secure-chat-sent messages from the normal chat list preview.
+        // Received secure messages still show (they appear in the receiver's normal chat).
+        const msgs = allMsgs.filter((m: any) => !(m.sent_secure && m.sender_id === user.id));
         const sortedMsgs = msgs.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
         const lastMsg = sortedMsgs[0];
         const unreadCount = msgs.filter((m: any) => m.sender_id !== user.id && m.message_status !== 'read').length;
