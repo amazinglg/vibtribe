@@ -631,7 +631,7 @@ export default function ChatWindowPanel() {
       reactions: [],
       encrypted: e2eEnabled,
       createdAt: new Date().toISOString(),
-      sentSecure: myChatSecured,
+      sentSecure: isSecureSession,
     };
     setMessages(prev => [...prev, tempMsg]);
     if (!overrideText) setInputText('');
@@ -645,11 +645,11 @@ export default function ChatWindowPanel() {
 
       const { data } = await supabase
         .from('messages')
-        .insert({ chat_id: selectedChatId, sender_id: user.id, content: contentToStore, message_status: 'sent', sent_secure: myChatSecured })
+        .insert({ chat_id: selectedChatId, sender_id: user.id, content: contentToStore, message_status: 'sent', sent_secure: isSecureSession })
         .select()
         .single();
       if (data) {
-        setMessages(prev => prev.map(m => m.id === tempId ? { ...m, id: data.id, status: 'delivered', createdAt: data.created_at, sentSecure: myChatSecured } : m));
+        setMessages(prev => prev.map(m => m.id === tempId ? { ...m, id: data.id, status: 'delivered', createdAt: data.created_at, sentSecure: isSecureSession } : m));
         await supabase.from('chats').update({ updated_at: new Date().toISOString() }).eq('id', selectedChatId);
         if (contact?.userId) {
           const senderName = profile?.full_name || 'Someone';
@@ -657,7 +657,7 @@ export default function ChatWindowPanel() {
             recipient_user_id: contact.userId,
             chat_id: selectedChatId,
             title: senderName,
-            body: myChatSecured ? '🔒 New private message' : text,
+            body: isSecureSession ? '🔒 New private message' : text,
             tag: `chat-${selectedChatId}`,
             url: '/',
             type: 'message',
