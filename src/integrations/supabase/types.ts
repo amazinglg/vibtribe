@@ -50,6 +50,80 @@ export type Database = {
           },
         ]
       }
+      broadcast_messages: {
+        Row: {
+          attachment_type: string | null
+          attachment_url: string | null
+          content: string
+          created_at: string
+          id: string
+          sender_id: string
+        }
+        Insert: {
+          attachment_type?: string | null
+          attachment_url?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          sender_id: string
+        }
+        Update: {
+          attachment_type?: string | null
+          attachment_url?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broadcast_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      broadcast_reactions: {
+        Row: {
+          created_at: string
+          emoji: string
+          id: string
+          message_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji: string
+          id?: string
+          message_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          message_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broadcast_reactions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "broadcast_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "broadcast_reactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calls: {
         Row: {
           accepted_at: string | null
