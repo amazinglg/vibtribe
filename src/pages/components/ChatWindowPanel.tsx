@@ -217,6 +217,7 @@ function CallModal({
 
 export default function ChatWindowPanel() {
   const { selectedChatId, setSelectedChatId } = useChatStore();
+  const isSecureSession = useChatStore((s) => s.isSecureSession);
   const { user } = useAuth();
   const { startCall } = useCall();
   const supabase = createClient();
