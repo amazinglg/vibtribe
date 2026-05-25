@@ -270,6 +270,39 @@ export type Database = {
         }
         Relationships: []
       }
+      email_otp_codes: {
+        Row: {
+          attempts: number
+          code_hash: string
+          consumed_at: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          purpose: string
+        }
+        Insert: {
+          attempts?: number
+          code_hash: string
+          consumed_at?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          purpose: string
+        }
+        Update: {
+          attempts?: number
+          code_hash?: string
+          consumed_at?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          purpose?: string
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
@@ -821,6 +854,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _hash_otp: { Args: { _code: string }; Returns: string }
       accept_terms: { Args: never; Returns: undefined }
       admin_delete_user: { Args: { _user_id: string }; Returns: undefined }
       admin_get_user_profile: {
@@ -909,6 +943,10 @@ export type Database = {
       }
       cleanup_expired_statuses: { Args: never; Returns: undefined }
       cleanup_expired_statuses_for_user: { Args: never; Returns: number }
+      consume_email_otp: {
+        Args: { _code: string; _email: string; _purpose: string }
+        Returns: boolean
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -986,6 +1024,11 @@ export type Database = {
         Returns: boolean
       }
       is_master_admin: { Args: never; Returns: boolean }
+      is_real_email_available: { Args: { _email: string }; Returns: boolean }
+      issue_email_otp: {
+        Args: { _code: string; _email: string; _purpose: string }
+        Returns: undefined
+      }
       mark_messages_read: { Args: { _chat_id: string }; Returns: undefined }
       move_to_dlq: {
         Args: {
@@ -1016,6 +1059,10 @@ export type Database = {
       }
       record_login_failure: { Args: { _user_id: string }; Returns: number }
       record_login_success: { Args: { _user_id: string }; Returns: undefined }
+      reset_password_with_otp: {
+        Args: { _code: string; _identifier: string; _new_password: string }
+        Returns: undefined
+      }
     }
     Enums: {
       chat_type: "normal" | "secure" | "dual_normal" | "dual_secure"

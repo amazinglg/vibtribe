@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as StatusScreenRouteImport } from './routes/status-screen'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
@@ -23,6 +24,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
+import { Route as ApiPublicAuthOtpRouteImport } from './routes/api/public/auth-otp'
 import { Route as AdminUserUserIdRouteImport } from './routes/admin.user.$userId'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
@@ -30,6 +32,11 @@ import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/e
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 
+const UnsubscribeRoute = UnsubscribeRouteImport.update({
+  id: '/unsubscribe',
+  path: '/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
@@ -100,6 +107,11 @@ const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   path: '/lovable/email/suppression',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAuthOtpRoute = ApiPublicAuthOtpRouteImport.update({
+  id: '/api/public/auth-otp',
+  path: '/api/public/auth-otp',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminUserUserIdRoute = AdminUserUserIdRouteImport.update({
   id: '/user/$userId',
   path: '/user/$userId',
@@ -146,9 +158,11 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/status-screen': typeof StatusScreenRoute
   '/terms': typeof TermsRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
+  '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -167,9 +181,11 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/status-screen': typeof StatusScreenRoute
   '/terms': typeof TermsRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/admin': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
+  '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -190,9 +206,11 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/status-screen': typeof StatusScreenRoute
   '/terms': typeof TermsRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
+  '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -214,9 +232,11 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/status-screen'
     | '/terms'
+    | '/unsubscribe'
     | '/email/unsubscribe'
     | '/admin/'
     | '/admin/user/$userId'
+    | '/api/public/auth-otp'
     | '/lovable/email/suppression'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -235,9 +255,11 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/status-screen'
     | '/terms'
+    | '/unsubscribe'
     | '/email/unsubscribe'
     | '/admin'
     | '/admin/user/$userId'
+    | '/api/public/auth-otp'
     | '/lovable/email/suppression'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -257,9 +279,11 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/status-screen'
     | '/terms'
+    | '/unsubscribe'
     | '/email/unsubscribe'
     | '/admin/'
     | '/admin/user/$userId'
+    | '/api/public/auth-otp'
     | '/lovable/email/suppression'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -280,7 +304,9 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StatusScreenRoute: typeof StatusScreenRoute
   TermsRoute: typeof TermsRoute
+  UnsubscribeRoute: typeof UnsubscribeRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
+  ApiPublicAuthOtpRoute: typeof ApiPublicAuthOtpRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -291,6 +317,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/unsubscribe': {
+      id: '/unsubscribe'
+      path: '/unsubscribe'
+      fullPath: '/unsubscribe'
+      preLoaderRoute: typeof UnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/terms': {
       id: '/terms'
       path: '/terms'
@@ -389,6 +422,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailSuppressionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/auth-otp': {
+      id: '/api/public/auth-otp'
+      path: '/api/public/auth-otp'
+      fullPath: '/api/public/auth-otp'
+      preLoaderRoute: typeof ApiPublicAuthOtpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/user/$userId': {
       id: '/admin/user/$userId'
       path: '/user/$userId'
@@ -458,7 +498,9 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StatusScreenRoute: StatusScreenRoute,
   TermsRoute: TermsRoute,
+  UnsubscribeRoute: UnsubscribeRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
+  ApiPublicAuthOtpRoute: ApiPublicAuthOtpRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
