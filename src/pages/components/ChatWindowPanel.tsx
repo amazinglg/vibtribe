@@ -1335,7 +1335,16 @@ export default function ChatWindowPanel() {
             ))}
           </div>
         ) : (
-          messages.map((msg, __idx) => {
+          (myChatSecured
+            ? messages.filter((m) => {
+                // Only filter MY own messages by where they were sent from.
+                // Received messages are shown in both views since the other
+                // user has no concept of my secure/normal split.
+                if (m.senderId !== user?.id) return true;
+                return isSecureSession ? !!m.sentSecure : !m.sentSecure;
+              })
+            : messages
+          ).map((msg, __idx, messages) => {
             // Day-separator: render "Today" / "Yesterday" / formatted date
             // when this message falls on a different day than the previous one.
             const __sep = (() => {
