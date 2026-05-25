@@ -186,6 +186,7 @@ export default function ChatListPanel() {
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chats' }, debouncedReload)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'chats' }, debouncedReload)
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'chats' }, debouncedReload)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'user_secure_chats', filter: `user_id=eq.${user.id}` }, debouncedReload)
       .subscribe();
     return () => {
       if (timer) clearTimeout(timer);
