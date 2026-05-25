@@ -1692,6 +1692,72 @@ export default function ProfileContent() {
           onSkip={() => setChangePinOpen(false)}
         />
       )}
+      <AlertDialog
+        open={updateDialog.open}
+        onOpenChange={(o) => { if (!o && updateDialog.open && updateDialog.state !== 'applying') setUpdateDialog({ open: false }); }}
+      >
+        <AlertDialogContent>
+          {updateDialog.open && updateDialog.state === 'checking' && (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Checking for updates…</AlertDialogTitle>
+                <AlertDialogDescription>Looking for a newer version of VibTribe.</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+              </AlertDialogFooter>
+            </>
+          )}
+          {updateDialog.open && updateDialog.state === 'uptodate' && (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>You're up to date</AlertDialogTitle>
+                <AlertDialogDescription>VibTribe is already running the latest version.</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogAction onClick={() => setUpdateDialog({ open: false })}>OK</AlertDialogAction>
+              </AlertDialogFooter>
+            </>
+          )}
+          {updateDialog.open && updateDialog.state === 'available' && (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Update available</AlertDialogTitle>
+                <AlertDialogDescription>
+                  A newer version of VibTribe is ready. Tap <strong>Update now</strong> and we'll
+                  clear cached data and reload to the latest version. You'll stay signed in and
+                  your end-to-end encryption PIN will be preserved.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Later</AlertDialogCancel>
+                <AlertDialogAction onClick={applyUpdate}>Update now</AlertDialogAction>
+              </AlertDialogFooter>
+            </>
+          )}
+          {updateDialog.open && updateDialog.state === 'applying' && (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Updating VibTribe…</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Clearing cache and loading the new version. The app will reload in a moment.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+            </>
+          )}
+          {updateDialog.open && updateDialog.state === 'error' && (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Update failed</AlertDialogTitle>
+                <AlertDialogDescription>{updateDialog.message || 'Something went wrong. Please try again.'}</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogAction onClick={() => setUpdateDialog({ open: false })}>Close</AlertDialogAction>
+              </AlertDialogFooter>
+            </>
+          )}
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
