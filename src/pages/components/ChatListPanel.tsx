@@ -39,8 +39,18 @@ export default function ChatListPanel() {
   const [secureModalOpen, setSecureModalOpen] = useState(false);
   const [secureTarget, setSecureTarget] = useState<{ id: string; name: string } | null>(null);
   const [contextMenu, setContextMenu] = useState<{ chatId: string; x: number; y: number } | null>(null);
-  const [chats, setChats] = useState<Chat[]>([]);
-  const [loading, setLoading] = useState(true);
+  const CHATS_CACHE_KEY = 'vt_chats_cache_v1';
+  const [chats, setChats] = useState<Chat[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const raw = sessionStorage.getItem(CHATS_CACHE_KEY);
+      return raw ? (JSON.parse(raw) as Chat[]) : [];
+    } catch { return []; }
+  });
+  const [loading, setLoading] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    try { return !sessionStorage.getItem(CHATS_CACHE_KEY); } catch { return true; }
+  });
   const [contactsOpen, setContactsOpen] = useState(false);
   const [createGroupOpen, setCreateGroupOpen] = useState(false);
   // ===== Contacts tab state =====
@@ -185,7 +195,9 @@ export default function ChatListPanel() {
 
   const loadChats = async () => {
     if (!user) return;
-    setLoading(true);
+    // Only show the skeleton on the very first load. Background refreshes
+    // (realtime updates, tab returns) should refresh data silently.
+    if (chats.length === 0) setLoading(true);
     try {
       // 1:1 chats where I'm a participant
       const { data: oneToOne, error: oneErr } = await supabase
@@ -221,6 +233,22 @@ export default function ChatListPanel() {
 
       const data = [...(oneToOne || []), ...groups];
 
+      // Batch-fetch all other participants in a single query to avoid the
+      // previous N+1 waterfall (one round-trip per 1:1 chat).
+      const otherIds = Array.from(new Set(
+        (oneToOne || [])
+          .map((c: any) => c.participant_one === user.id ? c.participant_two : c.participant_one)
+          .filter(Boolean)
+      ));
+      const otherProfilesMap = new Map<string, any>();
+      if (otherIds.length) {
+        const { data: profs } = await supabase
+          .from('user_profiles')
+          .select('id, full_name, is_online, last_seen, public_key, avatar_url, profile_photo_visibility')
+          .in('id', otherIds);
+        for (const p of (profs || [])) otherProfilesMap.set(p.id, p);
+      }
+
       const chatList: Chat[] = [];
       for (const chat of data) {
         const isGroup = !!(chat as any).is_group;
@@ -254,11 +282,7 @@ export default function ChatListPanel() {
         }
 
         const otherUserId = chat.participant_one === user.id ? chat.participant_two : chat.participant_one;
-        const { data: otherUser } = await supabase
-          .from('user_profiles')
-          .select('id, full_name, is_online, last_seen, public_key, avatar_url, profile_photo_visibility')
-          .eq('id', otherUserId)
-          .single();
+        const otherUser = otherProfilesMap.get(otherUserId);
 
         if (otherUser) {
           // Decrypt the last message preview so sender/receiver see plaintext.
@@ -313,6 +337,7 @@ export default function ChatListPanel() {
         }
       }
       setChats(chatList);
+      try { sessionStorage.setItem(CHATS_CACHE_KEY, JSON.stringify(chatList)); } catch {}
       // Only auto-open the first chat on desktop side-by-side layout.
       // On mobile/tablet the user should land on the chat list, not a chat.
       if (
