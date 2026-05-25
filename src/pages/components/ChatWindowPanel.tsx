@@ -669,16 +669,19 @@ export default function ChatWindowPanel() {
     }
   };
 
-  const handleFileAttach = async (file: File, type: 'image' | 'file' | 'audio') => {
+  const handleFileAttach = async (file: File, type: 'image' | 'file' | 'audio' | 'video') => {
     if (!file || !selectedChatId || !user) return;
     setShowAttachMenu(false);
     const tempId = `temp-${Date.now()}`;
+    // Auto-detect video files coming through the image picker
+    if (type === 'image' && file.type?.startsWith('video/')) type = 'video';
     const isImage = type === 'image';
-    const previewUrl = isImage ? URL.createObjectURL(file) : undefined;
+    const isVideo = type === 'video';
+    const previewUrl = (isImage || isVideo) ? URL.createObjectURL(file) : undefined;
     const tempMsg: Message = {
       id: tempId,
       senderId: user.id,
-      text: isImage ? `📷 ${file.name}` : `📎 ${file.name}`,
+      text: isImage ? `📷 ${file.name}` : isVideo ? `🎥 ${file.name}` : `📎 ${file.name}`,
       time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
       status: 'sent',
       reactions: [],
