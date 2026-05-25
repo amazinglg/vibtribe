@@ -8,6 +8,8 @@ import { useChatStore } from '@/store/chatStore';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { decryptMessage, isEncrypted } from '@/lib/encryption';
+import { BROADCAST_CHAT_ID } from './BroadcastChatPanel';
+const BROADCAST_LOGO = '/assets/images/app_logo.png';
 
 interface Chat {
   id: string;
@@ -46,6 +48,47 @@ export default function ChatListPanel() {
   const { selectedChatId, setSelectedChatId } = useChatStore();
   const { user, profile } = useAuth();
   const supabase = createClient();
+  const [broadcastPreview, setBroadcastPreview] = useState<{ content: string; created_at: string } | null>(null);
+  const [broadcastUnread, setBroadcastUnread] = useState(0);
+
+  const loadBroadcastPreview = async () => {
+    if (!user) return;
+    const { data: latest } = await supabase
+      .from('broadcast_messages')
+      .select('content, created_at')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    setBroadcastPreview(latest || null);
+    try {
+      const lastRead = typeof window !== 'undefined' ? localStorage.getItem('vt_broadcast_last_read') : null;
+      if (latest && (!lastRead || new Date(latest.created_at) > new Date(lastRead))) {
+        const { count } = await supabase
+          .from('broadcast_messages')
+          .select('id', { count: 'exact', head: true })
+          .gt('created_at', lastRead || '1970-01-01');
+        setBroadcastUnread(count || 0);
+      } else {
+        setBroadcastUnread(0);
+      }
+    } catch { setBroadcastUnread(0); }
+  };
+
+  useEffect(() => {
+    if (!user) return;
+    loadBroadcastPreview();
+    const onRead = () => loadBroadcastPreview();
+    window.addEventListener('vt-broadcast-read', onRead);
+    const ch = supabase
+      .channel('chatlist-broadcast')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'broadcast_messages' }, () => loadBroadcastPreview())
+      .subscribe();
+    return () => {
+      window.removeEventListener('vt-broadcast-read', onRead);
+      supabase.removeChannel(ch);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   useEffect(() => {
     if (user) {
@@ -347,6 +390,13 @@ export default function ChatListPanel() {
     return matchesSearch && matchesTab;
   });
 
+  const showBroadcastPinned =
+    activeTab !== 'contacts' &&
+    activeTab !== 'groups' &&
+    'vibtribe'.includes(search.toLowerCase());
+  const broadcastTime = broadcastPreview ? formatTime(broadcastPreview.created_at) : '';
+  const broadcastLast = broadcastPreview?.content || 'Official VibTribe announcements';
+
   return (
     <>
       <div
@@ -444,7 +494,40 @@ export default function ChatListPanel() {
               </button>
             </div>
           ) : (
-            filtered.map((chat) => (
+            <>
+            {showBroadcastPinned && (
+              <div
+                onClick={() => setSelectedChatId(BROADCAST_CHAT_ID)}
+                className={`relative flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-200 hover:bg-muted/50 ${
+                  selectedChatId === BROADCAST_CHAT_ID ? 'bg-primary/10 border-r-2 border-primary' : 'bg-primary/5'
+                }`}
+              >
+                <div className="relative flex-shrink-0">
+                  <img src={BROADCAST_LOGO} alt="VibTribe" className="w-12 h-12 rounded-full object-cover border border-primary/40" />
+                  <span className="absolute -bottom-0.5 -right-0.5 bg-primary text-white text-[8px] font-bold px-1 py-0.5 rounded-full">📌</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1 min-w-0">
+                      <p className="text-sm font-bold text-foreground truncate">VibTribe</p>
+                      <span className="text-primary text-xs">✓</span>
+                    </div>
+                    <span className="text-[11px] text-muted-foreground flex-shrink-0">{broadcastTime}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 mt-0.5">
+                    <p className="text-xs truncate text-muted-foreground italic">
+                      Official VibTribe Account · {broadcastLast}
+                    </p>
+                    {broadcastUnread > 0 && (
+                      <span className="flex-shrink-0 min-w-[20px] h-5 gradient-primary rounded-full text-[10px] font-bold text-white flex items-center justify-center px-1">
+                        {broadcastUnread > 99 ? '99+' : broadcastUnread}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+            {filtered.map((chat) => (
               <ChatListItem
                 key={chat.id}
                 chat={chat}
@@ -457,7 +540,8 @@ export default function ChatListPanel() {
                 onDelete={() => handleDeleteChat(chat.id)}
                 onMarkSecure={() => handleMarkSecure(chat)}
               />
-            ))
+            ))}
+            </>
           )}
         </div>
       </div>
