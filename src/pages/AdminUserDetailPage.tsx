@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import {
   ArrowLeft, Shield, Pencil, X, Save, KeyRound, Ban, Trash2,
-  UserX, UserCheck, LogOut, AlertTriangle, ShieldCheck, ShieldOff,
+  UserX, UserCheck, LogOut, AlertTriangle, ShieldCheck, ShieldOff, RotateCcw,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLayout from '@/components/AppLayout';
@@ -105,6 +105,19 @@ export default function AdminUserDetailPage() {
       const { error } = await supabase.from('force_logout_tokens').insert({ user_id: userId, issued_by: user?.id });
       if (error) throw error;
       toast.success('Force logout issued');
+    } catch (e: any) { toast.error(e.message || 'Failed'); }
+    finally { setActionLoading(false); }
+  };
+
+  const handleResetOtpAttempts = async () => {
+    if (!isMaster) { toast.error('Master admin only'); return; }
+    if (!target.real_email) { toast.error('No verified email on file'); return; }
+    if (!confirm(`Reset OTP resend attempts for ${target.full_name || 'this user'}? They will have 5 fresh attempts and the 24h timer starts now.`)) return;
+    setActionLoading(true);
+    try {
+      const { error } = await supabase.rpc('admin_reset_otp_attempts' as any, { _user_id: userId });
+      if (error) throw error;
+      toast.success('OTP attempts reset — 5/5 available');
     } catch (e: any) { toast.error(e.message || 'Failed'); }
     finally { setActionLoading(false); }
   };
@@ -270,6 +283,9 @@ export default function AdminUserDetailPage() {
               )}
               <ActionBtn icon={Ban} label={target.account_status === 'blocked' ? 'Unblock User' : 'Block User'} onClick={handleBlock} className={target.account_status === 'blocked' ? 'bg-vt-green/10 text-vt-green hover:bg-vt-green/20' : 'bg-vt-amber/10 text-vt-amber hover:bg-vt-amber/20'} />
               <ActionBtn icon={KeyRound} label="Reset Password" onClick={handleResetPassword} className="bg-blue-500/10 text-blue-400 hover:bg-blue-500/20" />
+              {isMaster && (
+                <ActionBtn icon={RotateCcw} label="Reset OTP Attempts" onClick={handleResetOtpAttempts} className="bg-vt-amber/10 text-vt-amber hover:bg-vt-amber/20" />
+              )}
               <ActionBtn icon={LogOut} label="Force Logout" onClick={handleForceLogout} className="bg-orange-500/10 text-orange-400 hover:bg-orange-500/20" />
               <ActionBtn icon={Trash2} label="Delete User" onClick={handleDelete} className="bg-red-500/10 text-red-400 hover:bg-red-500/20" />
             </div>
