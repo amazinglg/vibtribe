@@ -488,7 +488,9 @@ export default function AdminPage() {
                       <div className="w-10 h-10 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-sm">
                         {u.full_name?.[0]?.toUpperCase() || '?'}
                       </div>
-                      {u.is_online && <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-vt-green rounded-full border-2 border-background" />}
+                      {u.is_online && u.last_seen && (Date.now() - new Date(u.last_seen).getTime()) < 2 * 60 * 1000 && (
+                        <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-vt-green rounded-full border-2 border-background" />
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
