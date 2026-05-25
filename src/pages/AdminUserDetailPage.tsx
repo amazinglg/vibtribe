@@ -4,6 +4,7 @@ import { useNavigate, useParams } from '@tanstack/react-router';
 import {
   ArrowLeft, Shield, Pencil, X, Save, KeyRound, Ban, Trash2,
   UserX, UserCheck, LogOut, AlertTriangle, ShieldCheck, ShieldOff, RotateCcw,
+  Mail, Phone, Clock, Calendar, Activity, Lock,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLayout from '@/components/AppLayout';
@@ -165,8 +166,9 @@ export default function AdminUserDetailPage() {
 
   return (
     <AppLayout>
-      <div className="max-w-3xl mx-auto px-4 lg:px-8 py-6 pb-28 lg:pb-6">
-        <div className="flex items-center gap-3 mb-6">
+      <div className="max-w-3xl mx-auto px-4 lg:px-8 py-6 pb-28 lg:pb-6 space-y-4">
+        {/* Top bar */}
+        <div className="flex items-center gap-3">
           <button
             onClick={() => navigate({ to: '/admin' })}
             className="p-2 glass rounded-xl text-foreground hover:bg-muted transition-all"
@@ -174,42 +176,65 @@ export default function AdminUserDetailPage() {
           >
             <ArrowLeft size={18} />
           </button>
-          <h1 className="font-bold text-lg text-foreground">User Details</h1>
+          <div className="flex-1 min-w-0">
+            <h1 className="font-bold text-lg text-foreground">User details</h1>
+            <p className="text-xs text-muted-foreground">Manage account, security and access</p>
+          </div>
+          {!locked && !isSelf && (
+            <button
+              onClick={() => { setEditForm({ full_name: target.full_name || '', email: target.email || '', mobile_number: target.mobile_number || '' }); setEditOpen(true); }}
+              className="px-3 py-2 rounded-xl glass border border-border text-foreground hover:border-primary/40 transition-all flex items-center gap-1.5 text-xs font-semibold"
+            >
+              <Pencil size={13} /> Edit
+            </button>
+          )}
         </div>
 
-        {/* Profile card */}
-        <div className="glass rounded-2xl border border-border p-5 mb-4">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-2xl flex-shrink-0">
-              {target.full_name?.[0]?.toUpperCase() || '?'}
+        {/* Profile hero */}
+        <div className="glass rounded-3xl border border-border p-5 sm:p-6 relative overflow-hidden">
+          <div className="absolute -top-16 -right-16 w-48 h-48 gradient-primary rounded-full blur-3xl opacity-15" />
+          <div className="relative flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="relative flex-shrink-0">
+              <div className="w-20 h-20 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-3xl glow-primary">
+                {target.full_name?.[0]?.toUpperCase() || '?'}
+              </div>
+              {target.is_online && target.last_seen && (Date.now() - new Date(target.last_seen).getTime()) < 2 * 60 * 1000 && (
+                <span className="absolute bottom-1 right-1 w-4 h-4 bg-vt-green rounded-full border-2 border-background" />
+              )}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="font-bold text-foreground truncate">{target.full_name || 'Unknown'}</h2>
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                <h2 className="font-bold text-foreground text-xl truncate">{target.full_name || 'Unknown'}</h2>
                 {targetIsMaster && (
-                  <span className="text-[10px] bg-vt-amber/20 text-vt-amber px-2 py-0.5 rounded-full font-bold">
-                    MASTER ADMIN
-                  </span>
+                  <span className="text-[10px] bg-vt-amber/20 text-vt-amber px-2 py-0.5 rounded-full font-bold uppercase tracking-wide">Master Admin</span>
                 )}
                 {!targetIsMaster && target.role === 'admin' && (
-                  <span className="text-[10px] bg-primary/20 text-primary px-2 py-0.5 rounded-full font-medium">Admin</span>
+                  <span className="text-[10px] bg-primary/20 text-primary px-2 py-0.5 rounded-full font-semibold uppercase tracking-wide">Admin</span>
                 )}
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wide ${
+                  target.is_suspended ? 'bg-orange-500/20 text-orange-400' :
+                  target.account_status === 'active' ? 'bg-vt-green/20 text-vt-green' :
+                  target.account_status === 'blocked' ? 'bg-red-500/20 text-red-400' :
+                  'bg-muted text-muted-foreground'
+                }`}>
+                  {target.is_suspended ? 'Suspended' : target.account_status}
+                </span>
               </div>
-              <p className="text-xs text-muted-foreground truncate">{target.email || target.mobile_number}</p>
+              {target.username && <p className="text-xs text-primary truncate mb-1">@{target.username}</p>}
+              <div className="space-y-0.5 text-xs text-muted-foreground">
+                {target.real_email && <p className="flex items-center gap-1.5 truncate"><Mail size={11} /> {target.real_email}</p>}
+                {target.mobile_number && <p className="flex items-center gap-1.5"><Phone size={11} /> {target.mobile_number}</p>}
+              </div>
             </div>
           </div>
+        </div>
 
-          <div className="grid grid-cols-2 gap-3 mt-5 text-sm">
-            <Info label="Mobile" value={target.mobile_number || '—'} />
-            <Info label="Status" value={target.account_status} colorClass={
-              target.account_status === 'active' ? 'text-vt-green' :
-              target.account_status === 'blocked' ? 'text-red-400' : 'text-orange-400'
-            } />
-            <Info label="Online" value={target.is_online && target.last_seen && (Date.now() - new Date(target.last_seen).getTime()) < 2 * 60 * 1000 ? 'Yes' : 'No'} />
-            <Info label="Login Attempts" value={`${target.login_attempts || 0} / 5`} />
-            <Info label="Suspended" value={target.is_suspended ? 'Yes' : 'No'} />
-            <Info label="Joined" value={new Date(target.created_at).toLocaleDateString()} />
-          </div>
+        {/* Quick stats */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <StatTile icon={Activity} label="Online" value={target.is_online && target.last_seen && (Date.now() - new Date(target.last_seen).getTime()) < 2 * 60 * 1000 ? 'Yes' : 'No'} />
+          <StatTile icon={Clock} label="Last seen" value={target.last_seen ? new Date(target.last_seen).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : '—'} />
+          <StatTile icon={Lock} label="Login attempts" value={`${target.login_attempts || 0} / 5`} warn={(target.login_attempts || 0) >= 3} />
+          <StatTile icon={Calendar} label="Joined" value={new Date(target.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' })} />
         </div>
 
         {/* Master-admin only: Secure chats by this user */}
@@ -234,7 +259,7 @@ export default function AdminUserDetailPage() {
 
         {/* Role management */}
         {!isSelf && !locked && isMaster && (
-          <div className="glass rounded-2xl border border-border p-5 mb-4">
+          <div className="glass rounded-2xl border border-border p-5">
             <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
               <Shield size={16} className="text-primary" />
               Role Management
@@ -260,37 +285,85 @@ export default function AdminUserDetailPage() {
           </div>
         )}
 
-        {/* Actions */}
-        <div className="glass rounded-2xl border border-border p-5">
-          <h3 className="font-semibold text-foreground mb-3">Actions</h3>
-          {locked ? (
-            <div className="flex items-center gap-2 p-3 bg-vt-amber/10 border border-vt-amber/20 rounded-xl">
-              <AlertTriangle size={14} className="text-vt-amber flex-shrink-0" />
-              <p className="text-xs text-vt-amber">Master Admin cannot be modified by other users.</p>
+        {/* Action sections */}
+        {locked ? (
+          <div className="glass rounded-2xl border border-vt-amber/30 p-5 flex items-center gap-3">
+            <AlertTriangle size={16} className="text-vt-amber flex-shrink-0" />
+            <p className="text-xs text-vt-amber">Master Admin accounts are protected from modification by other admins.</p>
+          </div>
+        ) : isSelf ? (
+          <div className="glass rounded-2xl border border-primary/30 p-5 flex items-center gap-3">
+            <AlertTriangle size={16} className="text-primary flex-shrink-0" />
+            <p className="text-xs text-primary">This is your own account. Use the Profile page to manage your own settings.</p>
+          </div>
+        ) : (
+          <>
+            {/* Account Controls */}
+            <SectionCard
+              title="Account controls"
+              subtitle="Restrict sign-in or change how this user accesses the platform."
+              icon={UserX}
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {target.is_suspended || target.account_status === 'suspended' ? (
+                  <ActionBtn icon={UserCheck} label="Unsuspend account" hint="Restores sign-in and clears attempts" onClick={() => handleSuspend(false)} className="bg-vt-green/10 text-vt-green hover:bg-vt-green/20 border-vt-green/20" />
+                ) : (
+                  <ActionBtn icon={UserX} label="Suspend account" hint="Temporarily blocks all sign-ins" onClick={() => handleSuspend(true)} className="bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 border-orange-500/20" />
+                )}
+                <ActionBtn
+                  icon={Ban}
+                  label={target.account_status === 'blocked' ? 'Unblock user' : 'Block user'}
+                  hint={target.account_status === 'blocked' ? 'Restore full access' : 'Permanent restriction'}
+                  onClick={handleBlock}
+                  className={target.account_status === 'blocked'
+                    ? 'bg-vt-green/10 text-vt-green hover:bg-vt-green/20 border-vt-green/20'
+                    : 'bg-vt-amber/10 text-vt-amber hover:bg-vt-amber/20 border-vt-amber/20'}
+                />
+              </div>
+            </SectionCard>
+
+            {/* Security & Recovery */}
+            <SectionCard
+              title="Security & recovery"
+              subtitle="Reset credentials, OTP throttles, and active sessions."
+              icon={ShieldCheck}
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <ActionBtn icon={KeyRound} label="Reset password" hint="Sets password to user's mobile number" onClick={handleResetPassword} className="bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border-blue-500/20" />
+                <ActionBtn icon={LogOut} label="Force logout" hint="Signs them out of all devices" onClick={handleForceLogout} className="bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 border-orange-500/20" />
+                {isMaster && (
+                  <ActionBtn
+                    icon={RotateCcw}
+                    label="Reset OTP attempts"
+                    hint="Grants 5 fresh OTPs (master only)"
+                    onClick={handleResetOtpAttempts}
+                    className="bg-vt-amber/10 text-vt-amber hover:bg-vt-amber/20 border-vt-amber/20"
+                  />
+                )}
+              </div>
+            </SectionCard>
+
+            {/* Danger Zone */}
+            <div className="rounded-2xl border-2 border-red-500/30 bg-red-500/5 p-5">
+              <div className="flex items-start gap-3 mb-3">
+                <div className="w-9 h-9 rounded-xl bg-red-500/15 text-red-400 flex items-center justify-center flex-shrink-0">
+                  <AlertTriangle size={16} />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-red-400">Danger zone</h3>
+                  <p className="text-xs text-muted-foreground">Irreversible actions. Proceed carefully.</p>
+                </div>
+              </div>
+              <ActionBtn
+                icon={Trash2}
+                label="Delete user permanently"
+                hint="Removes account, chats, statuses, and uploads"
+                onClick={handleDelete}
+                className="bg-red-500/10 text-red-400 hover:bg-red-500/20 border-red-500/30 w-full"
+              />
             </div>
-          ) : isSelf ? (
-            <div className="flex items-center gap-2 p-3 bg-primary/10 border border-primary/20 rounded-xl">
-              <AlertTriangle size={14} className="text-primary flex-shrink-0" />
-              <p className="text-xs text-primary">This is your own account.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <ActionBtn icon={Pencil} label="Edit User Info" onClick={() => { setEditForm({ full_name: target.full_name || '', email: target.email || '', mobile_number: target.mobile_number || '' }); setEditOpen(true); }} className="bg-primary/10 text-primary hover:bg-primary/20" />
-              {target.is_suspended || target.account_status === 'suspended' ? (
-                <ActionBtn icon={UserCheck} label="Unsuspend" onClick={() => handleSuspend(false)} className="bg-vt-green/10 text-vt-green hover:bg-vt-green/20" />
-              ) : (
-                <ActionBtn icon={UserX} label="Suspend Account" onClick={() => handleSuspend(true)} className="bg-orange-500/10 text-orange-400 hover:bg-orange-500/20" />
-              )}
-              <ActionBtn icon={Ban} label={target.account_status === 'blocked' ? 'Unblock User' : 'Block User'} onClick={handleBlock} className={target.account_status === 'blocked' ? 'bg-vt-green/10 text-vt-green hover:bg-vt-green/20' : 'bg-vt-amber/10 text-vt-amber hover:bg-vt-amber/20'} />
-              <ActionBtn icon={KeyRound} label="Reset Password" onClick={handleResetPassword} className="bg-blue-500/10 text-blue-400 hover:bg-blue-500/20" />
-              {isMaster && (
-                <ActionBtn icon={RotateCcw} label="Reset OTP Attempts" onClick={handleResetOtpAttempts} className="bg-vt-amber/10 text-vt-amber hover:bg-vt-amber/20" />
-              )}
-              <ActionBtn icon={LogOut} label="Force Logout" onClick={handleForceLogout} className="bg-orange-500/10 text-orange-400 hover:bg-orange-500/20" />
-              <ActionBtn icon={Trash2} label="Delete User" onClick={handleDelete} className="bg-red-500/10 text-red-400 hover:bg-red-500/20" />
-            </div>
-          )}
-        </div>
+          </>
+        )}
       </div>
 
       {/* Edit Modal */}
@@ -336,10 +409,46 @@ function Info({ label, value, colorClass = 'text-foreground' }: any) {
   );
 }
 
-function ActionBtn({ icon: Icon, label, onClick, className }: any) {
+function StatTile({ icon: Icon, label, value, warn = false }: any) {
   return (
-    <button onClick={onClick} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${className}`}>
-      <Icon size={14} /> {label}
+    <div className={`glass rounded-2xl border p-3 ${warn ? 'border-orange-500/30' : 'border-border'}`}>
+      <div className="flex items-center gap-1.5 mb-1">
+        <Icon size={11} className={warn ? 'text-orange-400' : 'text-muted-foreground'} />
+        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{label}</p>
+      </div>
+      <p className={`text-sm font-bold ${warn ? 'text-orange-400' : 'text-foreground'}`}>{value}</p>
+    </div>
+  );
+}
+
+function SectionCard({ title, subtitle, icon: Icon, children }: any) {
+  return (
+    <div className="glass rounded-2xl border border-border p-5">
+      <div className="flex items-start gap-3 mb-3">
+        <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+          <Icon size={16} />
+        </div>
+        <div>
+          <h3 className="font-semibold text-foreground">{title}</h3>
+          {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+        </div>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function ActionBtn({ icon: Icon, label, hint, onClick, className }: any) {
+  return (
+    <button
+      onClick={onClick}
+      className={`text-left flex items-start gap-3 px-3.5 py-3 rounded-xl border text-sm font-semibold transition-all ${className}`}
+    >
+      <Icon size={16} className="mt-0.5 flex-shrink-0" />
+      <span className="flex-1 min-w-0">
+        <span className="block">{label}</span>
+        {hint && <span className="block text-[10px] font-normal opacity-70 mt-0.5">{hint}</span>}
+      </span>
     </button>
   );
 }
