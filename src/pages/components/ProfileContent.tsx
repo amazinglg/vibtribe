@@ -333,13 +333,13 @@ export default function ProfileContent() {
   };
 
   const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
-    { key: 'account', label: 'Account', icon: <Edit3 size={16} /> },
-    { key: 'privacy', label: 'Privacy', icon: <Lock size={16} /> },
-    { key: 'notifications', label: 'Notifications', icon: <Bell size={16} /> },
-    { key: 'devices', label: 'Devices', icon: <Smartphone size={16} /> },
-    { key: 'themes', label: 'Themes', icon: <Palette size={16} /> },
-    { key: 'blocked', label: 'Blocked Users', icon: <Ban size={16} /> },
-    { key: 'more', label: 'More', icon: <HelpCircle size={16} /> },
+    { key: 'account', label: t('profile.tab.account'), icon: <Edit3 size={16} /> },
+    { key: 'privacy', label: t('profile.tab.privacy'), icon: <Lock size={16} /> },
+    { key: 'notifications', label: t('profile.tab.notifications'), icon: <Bell size={16} /> },
+    { key: 'devices', label: t('profile.tab.devices'), icon: <Smartphone size={16} /> },
+    { key: 'themes', label: t('profile.tab.themes'), icon: <Palette size={16} /> },
+    { key: 'blocked', label: t('profile.tab.blocked'), icon: <Ban size={16} /> },
+    { key: 'more', label: t('profile.tab.more'), icon: <HelpCircle size={16} /> },
   ];
 
   const handleSaveProfile = async () => {
