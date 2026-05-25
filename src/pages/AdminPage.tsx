@@ -432,7 +432,7 @@ export default function AdminPage() {
                         <p className="text-sm font-semibold text-foreground truncate">{u.full_name || 'Unknown'}</p>
                         {(u as any).is_master_admin && <span className="text-[9px] bg-vt-amber/20 text-vt-amber px-1.5 py-0.5 rounded-full font-bold">MASTER</span>}
                       </div>
-                      <p className="text-xs text-muted-foreground truncate">{u.email || u.mobile_number}</p>
+                      <p className="text-xs text-muted-foreground truncate">{(u as any).real_email || u.email || u.mobile_number}</p>
                     </div>
                     <div className="text-right">
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
@@ -501,7 +501,7 @@ export default function AdminPage() {
                           : u.role === 'admin' && <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full font-medium">Admin</span>}
                         {u.is_suspended && <span className="text-[10px] bg-orange-500/20 text-orange-400 px-1.5 py-0.5 rounded-full font-medium">Suspended</span>}
                       </div>
-                      <p className="text-xs text-muted-foreground truncate">{u.email || u.mobile_number}</p>
+                      <p className="text-xs text-muted-foreground truncate">{(u as any).real_email || u.email || u.mobile_number}</p>
                     </div>
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${
                       u.account_status === 'active' ? 'bg-vt-green/20 text-vt-green' :
