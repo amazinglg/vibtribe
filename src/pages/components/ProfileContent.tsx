@@ -1452,7 +1452,7 @@ export default function ProfileContent() {
                 <p className="text-xs text-muted-foreground mb-4">Clear cached data and update to the latest version without logging out.</p>
                 <div className="flex flex-wrap gap-2">
                   <button
-                    onClick={handleUpdateApp}
+                    onClick={handleCheckForUpdate}
                     className="flex items-center gap-2 px-4 py-2.5 gradient-primary text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-all glow-primary"
                   >
                     <RefreshCw size={14} />
