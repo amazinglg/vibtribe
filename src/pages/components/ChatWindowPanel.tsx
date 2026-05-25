@@ -1003,8 +1003,8 @@ export default function ChatWindowPanel() {
           <div className="w-24 h-24 gradient-tri rounded-full flex items-center justify-center mx-auto mb-4 glow-primary">
             <span className="text-4xl">💬</span>
           </div>
-          <h3 className="font-bold text-xl text-foreground mb-2">Select a conversation</h3>
-          <p className="text-sm text-muted-foreground">Choose a chat from the list to start messaging</p>
+          <h3 className="font-bold text-xl text-foreground mb-2">{t('chat.selectConversation')}</h3>
+          <p className="text-sm text-muted-foreground">{t('chat.selectConversation.sub')}</p>
         </div>
       </div>
     );
@@ -1308,7 +1308,7 @@ export default function ChatWindowPanel() {
           className="w-full flex items-center justify-center gap-1.5 py-1.5 bg-vt-green/5 border-b border-vt-green/10 hover:bg-vt-green/10 transition-colors"
         >
           <ShieldCheck size={11} className="text-vt-green" />
-          <span className="text-[11px] text-vt-green underline-offset-2 hover:underline">Messages are end-to-end encrypted · Tap to learn more</span>
+          <span className="text-[11px] text-vt-green underline-offset-2 hover:underline">{t('chat.e2eBanner')}</span>
         </button>
       )}
       {e2eEnabled && contact && !contact.publicKey && (
@@ -1703,7 +1703,7 @@ export default function ChatWindowPanel() {
           value={inputText}
           onChange={e => setInputText(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-          placeholder={e2eEnabled ? '🔒 Encrypted message...' : 'Type a message...'}
+          placeholder={e2eEnabled ? t('chat.typeEncrypted') : t('chat.type')}
           className="flex-1 min-w-0 bg-input border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all"
         />
         {inputText.trim() ? (
