@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Users, Phone, UserPlus, MessageSquare, X, Share2, Check } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useT } from '@/contexts/LanguageContext';
 
 interface Contact {
   name: string;
@@ -24,6 +25,7 @@ const getInviteMsg = () =>
   `Hey! I'm using VibTribe — a secure messaging app. Join me here: ${getPlatformUrl()}/sign-up 🚀`;
 
 export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelProps) {
+  const { t } = useT();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [permissionState, setPermissionState] = useState<'idle' | 'requesting' | 'granted' | 'denied'>('idle');
   const [loading, setLoading] = useState(false);
@@ -246,8 +248,8 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
               <Users size={18} className="text-white" />
             </div>
             <div>
-              <h2 className="font-bold text-base text-foreground">Contacts</h2>
-              <p className="text-xs text-muted-foreground">Find friends on VibTribe</p>
+              <h2 className="font-bold text-base text-foreground">{t('contacts.title')}</h2>
+              <p className="text-xs text-muted-foreground">{t('contacts.subtitle')}</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-all">
@@ -262,7 +264,7 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
               <div className="w-16 h-16 gradient-primary rounded-full flex items-center justify-center mx-auto mb-4 glow-primary">
                 <Phone size={28} className="text-white" />
               </div>
-              <h3 className="font-bold text-lg text-foreground mb-2">Find Your Contacts</h3>
+              <h3 className="font-bold text-lg text-foreground mb-2">{t('contacts.find')}</h3>
               <p className="text-sm text-muted-foreground mb-3">
                 VibTribe needs access to your contacts to find your friends on the platform and let you invite the rest.
               </p>
@@ -300,7 +302,7 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
               <div className="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
                 <X size={22} className="text-red-400" />
               </div>
-              <h3 className="font-semibold text-foreground mb-1">Access Denied</h3>
+              <h3 className="font-semibold text-foreground mb-1">{t('contacts.denied')}</h3>
               <p className="text-sm text-muted-foreground mb-4">Contact access was denied. To find friends on VibTribe, allow contact access from your browser/app settings, or use the global search to add people by username or phone.</p>
               <button
                 onClick={onClose}
@@ -317,7 +319,7 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
               <div className="relative mb-4">
                 <input
                   type="text"
-                  placeholder="Search contacts..."
+                  placeholder={t('contacts.search')}
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   className="w-full pl-4 pr-4 py-2.5 bg-input border border-border rounded-xl text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all"
@@ -363,7 +365,7 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
                               <p className="text-sm font-semibold text-foreground truncate">{c.name}</p>
                               <div className="flex items-center gap-1 mt-0.5">
                                 <Check size={10} className="text-vt-green" />
-                                <span className="text-[11px] text-vt-green font-medium">On VibTribe</span>
+                                <span className="text-[11px] text-vt-green font-medium">{t('contacts.onVibtribe')}</span>
                               </div>
                             </div>
                             <button
@@ -393,7 +395,7 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-semibold text-foreground truncate">{c.name}</p>
-                              <p className="text-[11px] text-muted-foreground">Not on VibTribe yet</p>
+                              <p className="text-[11px] text-muted-foreground">{t('contacts.notOnVibtribe')}</p>
                             </div>
                             <button
                               onClick={() => setInviteTarget(c)}
@@ -411,7 +413,7 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
                   {filtered.length === 0 && (
                     <div className="text-center py-8">
                       <Users size={32} className="text-muted-foreground mx-auto mb-2" />
-                      <p className="text-sm text-muted-foreground">No contacts found</p>
+                      <p className="text-sm text-muted-foreground">{t('contacts.none')}</p>
                     </div>
                   )}
                 </>

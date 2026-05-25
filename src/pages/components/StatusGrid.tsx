@@ -4,6 +4,7 @@ import StatusViewer from './StatusViewer';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { CircleDot } from 'lucide-react';
+import { useT } from '@/contexts/LanguageContext';
 
 interface ContactStatus {
   id: string;
@@ -20,6 +21,7 @@ interface ContactStatus {
 }
 
 export default function StatusGrid() {
+  const { t } = useT();
   const { user } = useAuth();
   const supabase = createClient();
   const [contactStatuses, setContactStatuses] = useState<ContactStatus[]>([]);
@@ -151,7 +153,7 @@ export default function StatusGrid() {
       <div className="px-4 lg:px-8 pb-8">
         <div className="glass rounded-2xl border border-border p-10 flex flex-col items-center justify-center text-center">
           <CircleDot size={40} className="text-muted-foreground mb-4" />
-          <p className="text-base font-semibold text-foreground mb-1">No status updates</p>
+          <p className="text-base font-semibold text-foreground mb-1">{t('status.empty')}</p>
           <p className="text-sm text-muted-foreground max-w-xs">
             Status updates from your contacts will appear here. Add contacts to see their stories.
           </p>

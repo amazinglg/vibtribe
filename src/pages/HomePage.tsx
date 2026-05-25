@@ -9,8 +9,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useChatStore } from '@/store/chatStore';
 import TermsAcceptanceGate from '@/components/TermsAcceptanceGate';
 import LandingPage from './LandingPage';
+import { useT } from '@/contexts/LanguageContext';
 
 export default function ChatsPage() {
+  const { t } = useT();
   const { user, profile, loading } = useAuth();
   const router = useNavigate();
   const { selectedChatId, setSelectedChatId } = useChatStore();
@@ -69,7 +71,7 @@ export default function ChatsPage() {
           <div className="w-16 h-16 gradient-primary rounded-full flex items-center justify-center mx-auto mb-4 glow-primary animate-pulse">
             <span className="text-2xl">💬</span>
           </div>
-          <p className="text-muted-foreground text-sm">Loading VibTribe...</p>
+          <p className="text-muted-foreground text-sm">{t('app.loading')}</p>
         </div>
       </div>
     );

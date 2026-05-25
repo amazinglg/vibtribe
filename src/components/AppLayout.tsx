@@ -17,30 +17,31 @@ import CallProvider from '@/components/CallProvider';
 import { createClient } from '@/lib/supabase/client';
 import EncryptionPinModal from '@/components/EncryptionPinModal';
 import { hasLocalPrivateKey, hasServerKey } from '@/lib/encryption';
+import { useT } from '@/contexts/LanguageContext';
 
 
-
-const NAV_ITEMS = [
-  { href: '/', label: 'Chats', icon: MessageCircle, badge: 0 },
-  { href: '/status-screen', label: 'Status', icon: CircleDot, badge: 0 },
-  { href: '/profile-screen', label: 'Profile', icon: User, badge: 0 },
-];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = useLocation().pathname;
   const router = useNavigate();
   const { user, profile, signOut, isAdmin } = useAuth();
   const { isSecureSession, closeSecureChat } = useChatStore();
+  const { t } = useT();
+  const NAV_ITEMS = [
+    { href: '/', label: t('nav.chats'), icon: MessageCircle, badge: 0 },
+    { href: '/status-screen', label: t('nav.status'), icon: CircleDot, badge: 0 },
+    { href: '/profile-screen', label: t('nav.profile'), icon: User, badge: 0 },
+  ];
 
   // Derive a short page title for the mobile topbar based on the current route.
   const pageTitle = pathname === '/'
-    ? 'Messages'
+    ? t('nav.messages')
     : pathname.startsWith('/status')
-      ? 'Status'
+      ? t('nav.status')
       : pathname.startsWith('/profile')
-        ? 'Profile'
+        ? t('nav.profile')
         : pathname.startsWith('/admin')
-          ? 'Admin'
+          ? t('nav.admin')
           : '';
 
   // Auto-relock secured chat when tab is hidden / app backgrounded / phone locked
@@ -316,7 +317,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </div>
             )}
             {sidebarExpanded && (
-              <button onClick={handleSignOut} className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 transition-colors" title="Sign Out">
+              <button onClick={handleSignOut} className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 transition-colors" title={t('top.signOut')}>
                 <LogOut size={16} />
               </button>
             )}
@@ -356,17 +357,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
           <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 glass rounded-full text-xs text-vt-green font-medium">
             <Wifi size={12} />
-            <span>Online</span>
+            <span>{t('top.online')}</span>
           </div>
 
           {/* 🔒 Secure Chats Button */}
           <button
             onClick={() => setSecureVaultOpen(true)}
             className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 gradient-primary text-white rounded-xl border border-primary/60 shadow-md glow-primary hover:opacity-90 transition-all duration-200 group"
-            title="Secured Chats"
+            title={t('top.securedChats')}
           >
             <Lock size={16} className="group-hover:animate-pulse" />
-            <span className="hidden md:inline text-xs font-semibold">Secured</span>
+            <span className="hidden md:inline text-xs font-semibold">{t('top.secured')}</span>
           </button>
 
           {/* Help — inline next to Secure */}
@@ -377,7 +378,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <Link
               to="/admin"
               className="p-2 sm:p-2.5 glass rounded-xl text-vt-amber hover:bg-vt-amber/10 transition-all"
-              title="Admin Panel"
+              title={t('top.adminPanel')}
             >
               <Shield size={18} />
             </Link>

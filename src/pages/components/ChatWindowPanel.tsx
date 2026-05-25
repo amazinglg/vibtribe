@@ -15,6 +15,7 @@ import AppImage from "@/components/ui/AppImage";
 import { useCall } from '@/components/CallProvider';
 import { toast } from 'sonner';
 import { EMOJI_CATEGORIES, type EmojiCategoryKey } from '@/lib/emojis';
+import { useT } from '@/contexts/LanguageContext';
 
 interface Message {
   id: string;
@@ -216,6 +217,7 @@ function CallModal({
 }
 
 export default function ChatWindowPanel() {
+  const { t } = useT();
   const { selectedChatId, setSelectedChatId } = useChatStore();
   const isSecureSession = useChatStore((s) => s.isSecureSession);
   const { user } = useAuth();
@@ -1001,8 +1003,8 @@ export default function ChatWindowPanel() {
           <div className="w-24 h-24 gradient-tri rounded-full flex items-center justify-center mx-auto mb-4 glow-primary">
             <span className="text-4xl">💬</span>
           </div>
-          <h3 className="font-bold text-xl text-foreground mb-2">Select a conversation</h3>
-          <p className="text-sm text-muted-foreground">Choose a chat from the list to start messaging</p>
+          <h3 className="font-bold text-xl text-foreground mb-2">{t('chat.selectConversation')}</h3>
+          <p className="text-sm text-muted-foreground">{t('chat.selectConversation.sub')}</p>
         </div>
       </div>
     );
@@ -1071,7 +1073,7 @@ export default function ChatWindowPanel() {
           className="lg:hidden -ml-1 p-2 rounded-xl text-foreground hover:bg-primary/10 active:bg-primary/20 transition-all flex-shrink-0"
           onClick={() => setSelectedChatId(null)}
           aria-label="Back to chats"
-          title="Back to chats"
+            title={t('chat.back')}
         >
           <ArrowLeft size={22} strokeWidth={2.5} />
         </button>
@@ -1115,7 +1117,7 @@ export default function ChatWindowPanel() {
           <button
             onClick={handleVoiceCallClick}
             className="p-2 rounded-xl transition-all flex-shrink-0 text-muted-foreground hover:text-vt-green hover:bg-vt-green/10"
-            title="Voice Call"
+            title={t('chat.voiceCall')}
             aria-label="Voice call"
           >
             <Phone size={18} />
@@ -1124,7 +1126,7 @@ export default function ChatWindowPanel() {
           <button
             onClick={handleVideoCallClick}
             className="p-2 rounded-xl transition-all flex-shrink-0 text-muted-foreground hover:text-vt-green hover:bg-vt-green/10"
-            title="Video Call"
+            title={t('chat.videoCall')}
             aria-label="Video call"
           >
             <Video size={18} />
@@ -1134,7 +1136,7 @@ export default function ChatWindowPanel() {
             <button
               onClick={(e) => { e.stopPropagation(); setShowMoreMenu(v => !v); setShowDisappearMenu(false); }}
               className={`p-2 rounded-xl transition-all flex-shrink-0 ${showMoreMenu ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
-              title="More options"
+              title={t('chat.more')}
               aria-label="More options"
             >
               <MoreVertical size={18} />
@@ -1306,7 +1308,7 @@ export default function ChatWindowPanel() {
           className="w-full flex items-center justify-center gap-1.5 py-1.5 bg-vt-green/5 border-b border-vt-green/10 hover:bg-vt-green/10 transition-colors"
         >
           <ShieldCheck size={11} className="text-vt-green" />
-          <span className="text-[11px] text-vt-green underline-offset-2 hover:underline">Messages are end-to-end encrypted · Tap to learn more</span>
+          <span className="text-[11px] text-vt-green underline-offset-2 hover:underline">{t('chat.e2eBanner')}</span>
         </button>
       )}
       {e2eEnabled && contact && !contact.publicKey && (
@@ -1701,7 +1703,7 @@ export default function ChatWindowPanel() {
           value={inputText}
           onChange={e => setInputText(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-          placeholder={e2eEnabled ? '🔒 Encrypted message...' : 'Type a message...'}
+          placeholder={e2eEnabled ? t('chat.typeEncrypted') : t('chat.type')}
           className="flex-1 min-w-0 bg-input border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all"
         />
         {inputText.trim() ? (

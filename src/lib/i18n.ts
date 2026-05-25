@@ -107,6 +107,75 @@ const en = {
   'profile.language.title': 'Change Language',
   'profile.language.desc': 'Pick your preferred app language. Your choice is saved on this device.',
   'profile.language.saved': 'Language updated',
+
+  // nav + topbar
+  'nav.chats': 'Chats',
+  'nav.status': 'Status',
+  'nav.profile': 'Profile',
+  'nav.messages': 'Messages',
+  'nav.admin': 'Admin',
+  'top.secured': 'Secured',
+  'top.online': 'Online',
+  'top.signOut': 'Sign Out',
+  'top.adminPanel': 'Admin Panel',
+  'top.securedChats': 'Secured Chats',
+
+  // chat list
+  'chatlist.search': 'Search conversations...',
+  'chatlist.tab.all': 'All',
+  'chatlist.tab.unread': 'Unread',
+  'chatlist.tab.groups': 'Groups',
+  'chatlist.tab.contacts': 'Contacts',
+  'chatlist.newChat': 'New Chat',
+  'chatlist.newGroup': 'Create New Group',
+  'chatlist.empty.title': 'No conversations yet',
+  'chatlist.empty.subtitle': 'Tap "New Chat" to start',
+  'chatlist.allowContacts': 'Allow contacts access',
+  'chatlist.contactsDenied': 'Contacts access denied',
+  'chatlist.searchContacts': 'Search contacts...',
+
+  // chat window
+  'chat.selectConversation': 'Select a conversation',
+  'chat.selectConversation.sub': 'Pick a chat from the list to start messaging',
+  'chat.type': 'Type a message...',
+  'chat.typeEncrypted': '🔒 Encrypted message...',
+  'chat.e2eBanner': 'Messages are end-to-end encrypted · Tap to learn more',
+  'chat.back': 'Back to chats',
+  'chat.voiceCall': 'Voice Call',
+  'chat.videoCall': 'Video Call',
+  'chat.more': 'More options',
+  'chat.unblock': 'Unblock',
+
+  // contacts panel
+  'contacts.title': 'Contacts',
+  'contacts.subtitle': 'Find friends on VibTribe',
+  'contacts.find': 'Find Your Contacts',
+  'contacts.denied': 'Access Denied',
+  'contacts.search': 'Search contacts...',
+  'contacts.onVibtribe': 'On VibTribe',
+  'contacts.notOnVibtribe': 'Not on VibTribe yet',
+  'contacts.none': 'No contacts found',
+
+  // status
+  'status.new': 'New status',
+  'status.caption': 'Add a caption…',
+  'status.active': 'Active',
+  'status.my': 'My Status',
+  'status.empty': 'No status updates',
+  'status.text': 'Text Status',
+  'status.placeholder': "What's on your mind?",
+
+  // profile tabs
+  'profile.tab.account': 'Account',
+  'profile.tab.privacy': 'Privacy',
+  'profile.tab.notifications': 'Notifications',
+  'profile.tab.devices': 'Devices',
+  'profile.tab.themes': 'Themes',
+  'profile.tab.blocked': 'Blocked Users',
+  'profile.tab.more': 'More',
+
+  // misc
+  'app.loading': 'Loading VibTribe...',
 };
 
 const hi: typeof en = {
@@ -208,6 +277,68 @@ const hi: typeof en = {
   'profile.language.title': 'भाषा बदलें',
   'profile.language.desc': 'अपनी पसंदीदा ऐप भाषा चुनें। आपका चयन इस डिवाइस पर सहेजा जाता है।',
   'profile.language.saved': 'भाषा अपडेट हो गई',
+
+  'nav.chats': 'चैट्स',
+  'nav.status': 'स्टेटस',
+  'nav.profile': 'प्रोफ़ाइल',
+  'nav.messages': 'संदेश',
+  'nav.admin': 'एडमिन',
+  'top.secured': 'सुरक्षित',
+  'top.online': 'ऑनलाइन',
+  'top.signOut': 'साइन आउट',
+  'top.adminPanel': 'एडमिन पैनल',
+  'top.securedChats': 'सुरक्षित चैट्स',
+
+  'chatlist.search': 'बातचीत खोजें...',
+  'chatlist.tab.all': 'सभी',
+  'chatlist.tab.unread': 'अनरीड',
+  'chatlist.tab.groups': 'ग्रुप्स',
+  'chatlist.tab.contacts': 'संपर्क',
+  'chatlist.newChat': 'नई चैट',
+  'chatlist.newGroup': 'नया ग्रुप बनाएं',
+  'chatlist.empty.title': 'अभी कोई बातचीत नहीं',
+  'chatlist.empty.subtitle': 'शुरू करने के लिए "नई चैट" पर टैप करें',
+  'chatlist.allowContacts': 'संपर्क एक्सेस की अनुमति दें',
+  'chatlist.contactsDenied': 'संपर्क एक्सेस अस्वीकृत',
+  'chatlist.searchContacts': 'संपर्क खोजें...',
+
+  'chat.selectConversation': 'एक बातचीत चुनें',
+  'chat.selectConversation.sub': 'मैसेज करने के लिए सूची से एक चैट चुनें',
+  'chat.type': 'संदेश लिखें...',
+  'chat.typeEncrypted': '🔒 एन्क्रिप्टेड संदेश...',
+  'chat.e2eBanner': 'संदेश एंड-टू-एंड एन्क्रिप्टेड हैं · और जानने के लिए टैप करें',
+  'chat.back': 'चैट्स पर वापस',
+  'chat.voiceCall': 'वॉइस कॉल',
+  'chat.videoCall': 'वीडियो कॉल',
+  'chat.more': 'और विकल्प',
+  'chat.unblock': 'अनब्लॉक करें',
+
+  'contacts.title': 'संपर्क',
+  'contacts.subtitle': 'VibTribe पर दोस्त खोजें',
+  'contacts.find': 'अपने संपर्क खोजें',
+  'contacts.denied': 'एक्सेस अस्वीकृत',
+  'contacts.search': 'संपर्क खोजें...',
+  'contacts.onVibtribe': 'VibTribe पर',
+  'contacts.notOnVibtribe': 'अभी VibTribe पर नहीं',
+  'contacts.none': 'कोई संपर्क नहीं मिला',
+
+  'status.new': 'नया स्टेटस',
+  'status.caption': 'कैप्शन जोड़ें…',
+  'status.active': 'सक्रिय',
+  'status.my': 'मेरा स्टेटस',
+  'status.empty': 'कोई स्टेटस अपडेट नहीं',
+  'status.text': 'टेक्स्ट स्टेटस',
+  'status.placeholder': 'आपके मन में क्या है?',
+
+  'profile.tab.account': 'खाता',
+  'profile.tab.privacy': 'प्राइवेसी',
+  'profile.tab.notifications': 'सूचनाएँ',
+  'profile.tab.devices': 'डिवाइसेज़',
+  'profile.tab.themes': 'थीम्स',
+  'profile.tab.blocked': 'ब्लॉक किए उपयोगकर्ता',
+  'profile.tab.more': 'और',
+
+  'app.loading': 'VibTribe लोड हो रहा है...',
 };
 
 export type TranslationKey = keyof typeof en;
