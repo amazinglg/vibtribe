@@ -1,10 +1,11 @@
 import * as React from 'react'
 import {
-  Body, Container, Head, Heading, Html, Preview, Section, Text,
+  Body, Container, Head, Heading, Html, Img, Preview, Section, Text,
 } from '@react-email/components'
 import type { TemplateEntry } from './registry'
 
 const SITE_NAME = 'VibTribe'
+const LOGO_URL = 'https://www.vibtribe.in/icons/icon-192x192.png'
 
 interface OtpCodeProps {
   code?: string
@@ -23,6 +24,7 @@ const OtpCodeEmail = ({ code = '000000', purpose = 'signup', name }: OtpCodeProp
       <Preview>Your {SITE_NAME} verification code is {code}</Preview>
       <Body style={main}>
         <Container style={container}>
+          <Img src={LOGO_URL} width="56" height="56" alt={SITE_NAME} style={logo} />
           <Heading style={h1}>{heading}</Heading>
           <Text style={text}>{intro}</Text>
           <Section style={codeBox}>
@@ -51,6 +53,7 @@ export const template = {
 
 const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
 const container = { padding: '32px 28px', maxWidth: '480px' }
+const logo = { borderRadius: '12px', marginBottom: '20px' }
 const h1 = { fontSize: '22px', fontWeight: 'bold' as const, color: '#0a0a0f', margin: '0 0 16px' }
 const text = { fontSize: '14px', color: '#55575d', lineHeight: '1.55', margin: '0 0 20px' }
 const codeBox = {
