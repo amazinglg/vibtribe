@@ -244,7 +244,7 @@ export default function SecureVaultModal({ isOpen, onClose }: SecureVaultModalPr
             <Lock size={20} className="text-white" />
           </div>
           <div>
-            <h2 className="font-bold text-lg text-foreground">Secure Vault</h2>
+            <h2 className="font-bold text-lg text-foreground">Secured Chats</h2>
             <p className="text-xs text-muted-foreground">Enter your PIN or pattern</p>
           </div>
           <button onClick={handleClose} className="ml-auto p-2 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-all">
@@ -280,72 +280,46 @@ export default function SecureVaultModal({ isOpen, onClose }: SecureVaultModalPr
           {foundChat ? (
             <div className="float-up">
               <div className="flex items-center gap-4 p-4 bg-vt-green/10 border border-vt-green/30 rounded-2xl mb-4">
-                <div className="w-12 h-12 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-lg">
+                <div className="w-12 h-12 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
                   {foundChat.avatar}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-foreground">{foundChat.name}</p>
-                  {savedNickname && (
-                    <p className="text-xs text-primary/70 mt-0.5">Preferred name set</p>
+                  {editingNickname ? (
+                    <div className="flex gap-1.5 items-center">
+                      <input
+                        type="text"
+                        value={nicknameInput}
+                        onChange={e => setNicknameInput(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') handleSaveNickname(); if (e.key === 'Escape') { setEditingNickname(false); setNicknameInput(savedNickname); } }}
+                        placeholder="Custom name (only you see this)"
+                        maxLength={40}
+                        className="flex-1 min-w-0 px-2.5 py-1.5 bg-input border border-border rounded-lg text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                        autoFocus
+                      />
+                      <button onClick={handleSaveNickname} className="p-1.5 gradient-primary text-white rounded-lg hover:opacity-90" title="Save">
+                        <Check size={14} />
+                      </button>
+                      <button onClick={() => { setEditingNickname(false); setNicknameInput(savedNickname); }} className="p-1.5 glass border border-border text-muted-foreground rounded-lg hover:bg-muted" title="Cancel">
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5">
+                      <p className="font-semibold text-foreground truncate">{foundChat.name}</p>
+                      <button
+                        onClick={() => { setEditingNickname(true); setNicknameInput(savedNickname); }}
+                        className="p-1 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all flex-shrink-0"
+                        title="Set a custom name (only visible to you in Secured Chats)"
+                      >
+                        <Edit3 size={12} />
+                      </button>
+                    </div>
                   )}
                   <p className="text-sm text-muted-foreground truncate">{foundChat.lastMessage}</p>
                 </div>
-                <div className="ml-auto">
+                <div className="ml-auto flex-shrink-0">
                   <Lock size={16} className="text-vt-green" />
                 </div>
-              </div>
-
-              {/* Preferred Nickname Section */}
-              <div className="mb-4 p-4 glass rounded-2xl border border-border">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Preferred Name</p>
-                    <p className="text-xs text-muted-foreground">Only visible to you — does not affect the other user</p>
-                  </div>
-                  {!editingNickname && (
-                    <button
-                      onClick={() => { setEditingNickname(true); setNicknameInput(savedNickname); }}
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-primary border border-primary/30 rounded-lg hover:bg-primary/10 transition-all"
-                    >
-                      <Edit3 size={11} />
-                      {savedNickname ? 'Edit' : 'Set Name'}
-                    </button>
-                  )}
-                </div>
-                {editingNickname ? (
-                  <div className="flex gap-2 mt-2">
-                    <input
-                      type="text"
-                      value={nicknameInput}
-                      onChange={e => setNicknameInput(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && handleSaveNickname()}
-                      placeholder="Enter a preferred name..."
-                      maxLength={40}
-                      className="flex-1 px-3 py-2 bg-input border border-border rounded-xl text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all"
-                      autoFocus
-                    />
-                    <button
-                      onClick={handleSaveNickname}
-                      className="p-2 gradient-primary text-white rounded-xl hover:opacity-90 transition-all"
-                    >
-                      <Check size={16} />
-                    </button>
-                    <button
-                      onClick={() => { setEditingNickname(false); setNicknameInput(savedNickname); }}
-                      className="p-2 glass border border-border text-muted-foreground rounded-xl hover:bg-muted transition-all"
-                    >
-                      <X size={16} />
-                    </button>
-                  </div>
-                ) : (
-                  <p className="text-sm text-foreground mt-1">
-                    {savedNickname ? (
-                      <span className="font-medium text-primary">{savedNickname}</span>
-                    ) : (
-                      <span className="text-muted-foreground italic">No preferred name set</span>
-                    )}
-                  </p>
-                )}
               </div>
 
               <button

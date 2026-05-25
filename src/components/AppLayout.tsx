@@ -362,11 +362,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           {/* 🔒 Secure Chats Button */}
           <button
             onClick={() => setSecureVaultOpen(true)}
-            className="flex items-center gap-1.5 px-2 sm:px-3 py-2 glass rounded-xl border border-primary/30 text-primary hover:bg-primary/10 transition-all duration-200 hover:glow-primary group"
-            title="Secure Chats"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 gradient-primary text-white rounded-xl border border-primary/60 shadow-md glow-primary hover:opacity-90 transition-all duration-200 group"
+            title="Secured Chats"
           >
             <Lock size={16} className="group-hover:animate-pulse" />
-            <span className="hidden md:inline text-xs font-semibold">Secure</span>
+            <span className="hidden md:inline text-xs font-semibold">Secured</span>
           </button>
 
           {/* Help — inline next to Secure */}

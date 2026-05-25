@@ -124,13 +124,16 @@ export default function AdminUserDetailPage() {
 
   const handleChangeRole = async (newRole: 'user' | 'admin' | 'master_admin') => {
     if (!isMaster) { toast.error('Only the master admin can change roles'); return; }
-    if (!confirm(`Change role to "${newRole}"?`)) return;
     if (newRole === 'master_admin') {
-      // Promote: set role=admin AND is_master_admin=true (cannot via API — blocked by trigger)
-      toast.error('The master admin flag is immutable and protected at the database level.');
+      if (!confirm(`Promote this user to MASTER ADMIN? They will have full unrestricted access — this is irreversible from their side.`)) return;
+      await update({ role: 'admin', is_master_admin: true }, 'User promoted to Master Admin');
       return;
     }
-    await update({ role: newRole }, `Role updated to ${newRole}`);
+    if (!confirm(`Change role to "${newRole}"?`)) return;
+    // If demoting a master admin back to plain admin/user, also clear the flag
+    const updates: any = { role: newRole };
+    if (target.is_master_admin) updates.is_master_admin = false;
+    await update(updates, `Role updated to ${newRole}`);
   };
 
   if (loading || loadingData || !target) {
@@ -240,7 +243,7 @@ export default function AdminUserDetailPage() {
               <option value="master_admin">Master Admin</option>
             </select>
             <p className="text-[10px] text-muted-foreground mt-2">
-              Only the master admin can change roles. The Master Admin flag itself is immutable and protected at the database level.
+              Only the master admin can change roles. Promoting a user to Master Admin grants them full unrestricted access.
             </p>
           </div>
         )}
