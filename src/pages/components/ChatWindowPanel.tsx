@@ -30,7 +30,6 @@ interface Message {
   editedAt?: string | null;
   deletedForEveryone?: boolean;
   createdAt?: string;
-  sentSecure?: boolean;
 }
 
 // Call Modal Component
@@ -219,7 +218,6 @@ function CallModal({
 export default function ChatWindowPanel() {
   const { t } = useT();
   const { selectedChatId, setSelectedChatId } = useChatStore();
-  const isSecureSession = useChatStore((s) => s.isSecureSession);
   const { user } = useAuth();
   const { startCall } = useCall();
   const supabase = createClient();
@@ -313,28 +311,9 @@ export default function ChatWindowPanel() {
                 reactions: [],
                 encrypted,
                 createdAt: newMsg.created_at,
-                sentSecure: !!newMsg.sent_secure,
               }]);
               // Mark as read (recipient — uses RPC to bypass RLS sender restriction)
               await supabase.rpc('mark_messages_read', { _chat_id: selectedChatId });
-
-              // If THIS user has marked the chat as secure, route the notification
-              // through their secure-notification preference instead of the normal path.
-              try {
-                if (useChatStore.getState().isSecureSession) {
-                  // Only show browser notification if user has enabled secured chat notifications
-                  const notifPrefsRaw = localStorage.getItem(`vt_notif_prefs_${user.id}`);
-                  const notifPrefs = notifPrefsRaw ? JSON.parse(notifPrefsRaw) : {};
-                  const secureNotifsEnabled = notifPrefs.secureChats === true;
-                  if (secureNotifsEnabled && 'Notification' in window && Notification.permission === 'granted') {
-                    new Notification('New Secured Message', {
-                      body: `New message in your secured chat`,
-                      icon: '/favicon.ico',
-                    });
-                  }
-                  // If secureNotifsEnabled is false, silently skip — no notification
-                }
-              } catch {}
             }
           }
         )
@@ -575,7 +554,6 @@ export default function ChatWindowPanel() {
           editedAt: (m as any).edited_at || null,
           deletedForEveryone: tombstone,
           createdAt: m.created_at,
-          sentSecure: !!(m as any).sent_secure,
         });
       }
       setMessages(decryptedMsgs);
