@@ -1,11 +1,12 @@
 import * as React from 'react'
 import {
-  Body, Button, Container, Head, Heading, Hr, Html, Preview, Text,
+  Body, Button, Container, Head, Heading, Hr, Html, Img, Preview, Text,
 } from '@react-email/components'
 import type { TemplateEntry } from './registry'
 
 const SITE_NAME = 'VibTribe'
 const SITE_URL = 'https://www.vibtribe.in'
+const LOGO_URL = 'https://www.vibtribe.in/icons/icon-192x192.png'
 
 interface TicketReplyProps {
   name?: string
@@ -20,6 +21,7 @@ const TicketReplyEmail = ({ name, ticketTitle, ticketDescription, reply }: Ticke
     <Preview>Reply to your {SITE_NAME} support ticket</Preview>
     <Body style={main}>
       <Container style={container}>
+        <Img src={LOGO_URL} width="48" height="48" alt={SITE_NAME} style={logo} />
         <Heading style={h1}>We've replied to your support ticket</Heading>
         <Text style={text}>Hi{name ? ` ${name}` : ''},</Text>
         <Text style={text}>
@@ -57,6 +59,7 @@ export const template = {
 
 const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
 const container = { padding: '32px 28px', maxWidth: '560px' }
+const logo = { borderRadius: '10px', marginBottom: '16px' }
 const h1 = { fontSize: '20px', fontWeight: 'bold' as const, color: '#0a0a0f', margin: '0 0 16px' }
 const text = { fontSize: '14px', color: '#55575d', lineHeight: '1.55', margin: '0 0 14px' }
 const label = { fontSize: '11px', color: '#999', textTransform: 'uppercase' as const, letterSpacing: '1px', margin: '18px 0 4px' }
