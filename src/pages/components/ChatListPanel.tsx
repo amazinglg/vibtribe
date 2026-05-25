@@ -229,7 +229,9 @@ export default function ChatListPanel() {
           else if (preview?.startsWith('__media__:')) {
             try {
               const m = JSON.parse(preview.slice('__media__:'.length));
-              preview = m.type === 'image' ? '📷 Photo'
+              const isVid = m.type === 'video' || (m.mime && String(m.mime).startsWith('video/'));
+              preview = isVid ? '🎥 Video'
+                : m.type === 'image' ? '📷 Photo'
                 : m.type === 'audio' ? '🎵 Audio'
                 : `📎 ${m.name || 'File'}`;
             } catch { preview = '📎 Media'; }
