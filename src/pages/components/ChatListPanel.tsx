@@ -19,6 +19,7 @@ interface Chat {
   avatarUrl?: string | null;
   lastMessage: string;
   time: string;
+  rawTime?: string;
   unread: number;
   online: boolean;
   typing: boolean;
@@ -27,6 +28,7 @@ interface Chat {
   isGroup?: boolean;
   hasMedia?: boolean;
   participantId?: string;
+  isBroadcast?: boolean;
 }
 
 export default function ChatListPanel() {
