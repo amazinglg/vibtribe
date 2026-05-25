@@ -224,7 +224,7 @@ export const Route = createFileRoute('/api/public/auth-otp')({
             const html = await render(el)
             const text = await render(el, { plainText: true })
             const subj = typeof welcomeTpl.subject === 'function'
-              ? welcomeTpl.subject({ name: payload.fullName })
+              ? (welcomeTpl.subject as (d: Record<string, any>) => string)({ name: payload.fullName })
               : welcomeTpl.subject
             await supabase.from('email_send_log').insert({
               message_id: welcomeId,
