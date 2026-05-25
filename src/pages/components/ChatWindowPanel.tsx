@@ -15,6 +15,7 @@ import AppImage from "@/components/ui/AppImage";
 import { useCall } from '@/components/CallProvider';
 import { toast } from 'sonner';
 import { EMOJI_CATEGORIES, type EmojiCategoryKey } from '@/lib/emojis';
+import { useT } from '@/contexts/LanguageContext';
 
 interface Message {
   id: string;
@@ -216,6 +217,7 @@ function CallModal({
 }
 
 export default function ChatWindowPanel() {
+  const { t } = useT();
   const { selectedChatId, setSelectedChatId } = useChatStore();
   const isSecureSession = useChatStore((s) => s.isSecureSession);
   const { user } = useAuth();
