@@ -37,6 +37,9 @@ export function TermsContent() {
       <h2 className="text-lg font-semibold mt-6">5. Encryption &amp; Privacy</h2>
       <p>VibTribe applies strong end-to-end encryption to one-to-one chat messages and media using keys derived on your device from your PIN. We do not have the ability to read end-to-end encrypted message or media content. However, certain metadata (such as account identifiers, timestamps, delivery status, and message-size information) is necessarily processed on our servers to deliver the service. Group chats, call signalling, presence, status updates, and support tickets are NOT end-to-end encrypted today; they are protected in transit (HTTPS) and at rest by access controls. See our <Link to="/privacy" className="text-primary underline">Privacy Policy</Link> for full details.</p>
 
+      <h2 className="text-lg font-semibold mt-6">5a. Email Address</h2>
+      <p>If you provide an email address during signup, we store it securely and use it solely to (a) verify your identity with a 6-digit one-time code, (b) recover your password, (c) send account, support, and ticket-related communications, and (d) send service notifications you have not opted out of. Your email address is visible only to you, our administrators, and the master admin — it is never shown to other users. You can opt out of non-essential emails at any time from Profile &rarr; Notifications. Security and authentication emails (OTP codes, password resets) will continue to be sent regardless of opt-out status.</p>
+
       <h2 className="text-lg font-semibold mt-6">6. User Content</h2>
       <p>You retain ownership of the content you send. You grant us a limited licence to transmit, store, and display that content solely to operate the App. We do not claim ownership of your messages, media, or status updates.</p>
 
