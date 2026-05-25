@@ -4,6 +4,7 @@ import StatusViewer from './StatusViewer';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { CircleDot } from 'lucide-react';
+import { useT } from '@/contexts/LanguageContext';
 
 interface ContactStatus {
   id: string;
