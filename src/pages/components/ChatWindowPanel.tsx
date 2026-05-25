@@ -669,16 +669,19 @@ export default function ChatWindowPanel() {
     }
   };
 
-  const handleFileAttach = async (file: File, type: 'image' | 'file' | 'audio') => {
+  const handleFileAttach = async (file: File, type: 'image' | 'file' | 'audio' | 'video') => {
     if (!file || !selectedChatId || !user) return;
     setShowAttachMenu(false);
     const tempId = `temp-${Date.now()}`;
+    // Auto-detect video files coming through the image picker
+    if (type === 'image' && file.type?.startsWith('video/')) type = 'video';
     const isImage = type === 'image';
-    const previewUrl = isImage ? URL.createObjectURL(file) : undefined;
+    const isVideo = type === 'video';
+    const previewUrl = (isImage || isVideo) ? URL.createObjectURL(file) : undefined;
     const tempMsg: Message = {
       id: tempId,
       senderId: user.id,
-      text: isImage ? `📷 ${file.name}` : `📎 ${file.name}`,
+      text: isImage ? `📷 ${file.name}` : isVideo ? `🎥 ${file.name}` : `📎 ${file.name}`,
       time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
       status: 'sent',
       reactions: [],
@@ -1414,13 +1417,17 @@ export default function ChatWindowPanel() {
             // Defensive: never render raw `e2e:` ciphertext
             const safeText = isEncrypted(msg.text) ? '[Encrypted message]' : msg.text;
             // Encrypted-media envelope (text after decryption)
-            let encMedia: { type: 'image'|'file'|'audio'; url: string; mime: string; name?: string } | null = null;
+            let encMedia: { type: 'image'|'file'|'audio'|'video'; url: string; mime: string; name?: string } | null = null;
             if (typeof safeText === 'string' && safeText.startsWith('__media__:')) {
               try { encMedia = JSON.parse(safeText.slice('__media__:'.length)); } catch {}
             }
+            // Back-compat: legacy messages stored video as type 'image' or 'file'.
+            if (encMedia && encMedia.mime?.startsWith('video/') && encMedia.type !== 'video') {
+              encMedia.type = 'video';
+            }
             const isRemovedStickerMsg = typeof safeText === 'string' && safeText.startsWith('[STICKER:');
             const displayText = encMedia
-              ? (encMedia.type === 'image' ? '📷 Photo' : encMedia.type === 'audio' ? '🎵 Audio' : `📎 ${encMedia.name || 'File'}`)
+              ? (encMedia.type === 'image' ? '📷 Photo' : encMedia.type === 'video' ? '🎥 Video' : encMedia.type === 'audio' ? '🎵 Audio' : `📎 ${encMedia.name || 'File'}`)
               : isImageMsg
               ? '📷 Image'
               : isFileMsg

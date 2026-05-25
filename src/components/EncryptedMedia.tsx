@@ -7,7 +7,7 @@ interface Props {
   url: string;
   mime: string;
   name?: string;
-  kind: 'image' | 'file' | 'audio';
+  kind: 'image' | 'file' | 'audio' | 'video';
   theirPublicKey: string;
   onImageClick?: (blobUrl: string) => void;
 }
@@ -76,6 +76,16 @@ export default function EncryptedMedia({ url, mime, name, kind, theirPublicKey, 
   }
   if (kind === 'audio') {
     return <audio controls src={blobUrl} className="max-w-[220px]" />;
+  }
+  if (kind === 'video') {
+    return (
+      <video
+        controls
+        playsInline
+        src={blobUrl}
+        className="max-w-[240px] rounded-xl"
+      />
+    );
   }
   return (
     <a
