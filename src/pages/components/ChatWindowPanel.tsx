@@ -1371,21 +1371,26 @@ export default function ChatWindowPanel() {
               const ss = String(dur % 60).padStart(2, '0');
               const when = new Date(msg.time ? Date.now() : Date.now()).toLocaleString();
               return (
-                <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                  <div className="glass border border-border rounded-2xl px-4 py-2.5 text-sm flex items-center gap-3">
-                    {kind === 'video' ? <Video size={16} className="text-vt-green" /> : <Phone size={16} className="text-vt-green" />}
-                    <div className="flex flex-col">
-                      <span className="text-foreground/90">{kind === 'video' ? 'Video' : 'Voice'} call · {mm}:{ss}</span>
-                      <span className="text-[10px] text-muted-foreground">{msg.time}</span>
+                <React.Fragment key={msg.id}>
+                  {__sep}
+                  <div className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                    <div className="glass border border-border rounded-2xl px-4 py-2.5 text-sm flex items-center gap-3">
+                      {kind === 'video' ? <Video size={16} className="text-vt-green" /> : <Phone size={16} className="text-vt-green" />}
+                      <div className="flex flex-col">
+                        <span className="text-foreground/90">{kind === 'video' ? 'Video' : 'Voice'} call · {mm}:{ss}</span>
+                        <span className="text-[10px] text-muted-foreground">{msg.time}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </React.Fragment>
               );
             }
             if (isMissedCall) {
               const callKind = missedMatch![1] || 'voice';
               return (
-                <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                <React.Fragment key={msg.id}>
+                  {__sep}
+                  <div className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                   <div className="glass border border-border rounded-2xl px-4 py-2.5 text-sm flex items-center gap-3">
                     <PhoneOff size={16} className="text-red-400" />
                     <div className="flex flex-col">
@@ -1401,8 +1406,9 @@ export default function ChatWindowPanel() {
                         Call back
                       </button>
                     )}
+                    </div>
                   </div>
-                </div>
+                </React.Fragment>
               );
             }
             // Defensive: never render raw `e2e:` ciphertext
