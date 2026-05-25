@@ -5,6 +5,7 @@ import { Camera, Type, Sparkles, Globe, Users, UserCheck, ChevronDown, X, Send, 
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import StatusViewer from './StatusViewer';
+import { useT } from '@/contexts/LanguageContext';
 
 type VisibilityOption = 'all' | 'contacts' | 'selected';
 
@@ -15,6 +16,7 @@ const VISIBILITY_OPTIONS: { value: VisibilityOption; label: string; desc: string
 ];
 
 export default function StatusHero() {
+  const { t } = useT();
   const [uploading, setUploading] = useState(false);
   const [showVisibility, setShowVisibility] = useState(false);
   const [visibility, setVisibility] = useState<VisibilityOption>('all');
