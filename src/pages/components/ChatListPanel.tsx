@@ -843,7 +843,7 @@ function ContactsTabContent({
               <Phone size={18} className="text-white" />
             </div>
             <div>
-              <p className="text-sm font-bold text-foreground">Allow contacts access</p>
+              <p className="text-sm font-bold text-foreground">{t('chatlist.allowContacts')}</p>
               <p className="text-xs text-muted-foreground mt-0.5">
                 Find friends already on VibTribe and invite the rest from your phonebook.
               </p>
@@ -882,7 +882,7 @@ function ContactsTabContent({
     return (
       <div className="p-4">
         <div className="p-4 rounded-2xl border border-red-500/30 bg-red-500/5">
-          <p className="text-sm font-semibold text-foreground">Contacts access denied</p>
+          <p className="text-sm font-semibold text-foreground">{t('chatlist.contactsDenied')}</p>
           <p className="text-xs text-muted-foreground mt-1 mb-3">
             Enable contacts permission from your browser/app settings to discover friends, then try again.
           </p>
