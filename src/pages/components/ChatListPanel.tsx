@@ -461,7 +461,7 @@ export default function ChatListPanel() {
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Search conversations..."
+              placeholder={t('chatlist.search')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-9 pr-4 py-2.5 bg-input border border-border rounded-xl text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all"
@@ -472,11 +472,11 @@ export default function ChatListPanel() {
               <button
                 key={`tab-${tab}`}
                 onClick={() => setActiveTab(tab)}
-                className={`flex-1 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all ${
+                className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   activeTab === tab ? 'gradient-primary text-white' : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                {tab}
+                {t(`chatlist.tab.${tab}` as any)}
                 {tab === 'unread' && (
                   <span className="ml-1 text-[10px]">({chats.filter(c => c.unread > 0).length})</span>
                 )}
@@ -491,7 +491,7 @@ export default function ChatListPanel() {
               className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 gradient-primary rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-all glow-primary"
             >
               <UserPlus size={16} />
-              Create New Group
+              {t('chatlist.newGroup')}
             </button>
           ) : activeTab === 'contacts' ? null : (
             <button
@@ -499,7 +499,7 @@ export default function ChatListPanel() {
               className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 gradient-primary rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-all glow-primary"
             >
               <Plus size={16} />
-              New Chat
+              {t('chatlist.newChat')}
             </button>
           )}
         </div>
