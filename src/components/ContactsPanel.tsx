@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Users, Phone, UserPlus, MessageSquare, X, Share2, Check } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useT } from '@/contexts/LanguageContext';
 
 interface Contact {
   name: string;
@@ -24,6 +25,7 @@ const getInviteMsg = () =>
   `Hey! I'm using VibTribe — a secure messaging app. Join me here: ${getPlatformUrl()}/sign-up 🚀`;
 
 export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelProps) {
+  const { t } = useT();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [permissionState, setPermissionState] = useState<'idle' | 'requesting' | 'granted' | 'denied'>('idle');
   const [loading, setLoading] = useState(false);
