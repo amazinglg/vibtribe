@@ -244,7 +244,7 @@ export default function SecureVaultModal({ isOpen, onClose }: SecureVaultModalPr
             <Lock size={20} className="text-white" />
           </div>
           <div>
-            <h2 className="font-bold text-lg text-foreground">Secure Vault</h2>
+            <h2 className="font-bold text-lg text-foreground">Secured Chats</h2>
             <p className="text-xs text-muted-foreground">Enter your PIN or pattern</p>
           </div>
           <button onClick={handleClose} className="ml-auto p-2 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-all">
