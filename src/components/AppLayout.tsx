@@ -25,7 +25,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = useLocation().pathname;
   const router = useNavigate();
   const { user, profile, signOut, isAdmin } = useAuth();
-  const { isSecureSession, closeSecureChat } = useChatStore();
   const { t } = useT();
   const NAV_ITEMS = [
     { href: '/', label: t('nav.chats'), icon: MessageCircle, badge: 0 },
@@ -44,25 +43,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           ? t('nav.admin')
           : '';
 
-  // Auto-relock secured chat when tab is hidden / app backgrounded / phone locked
-  useEffect(() => {
-    const onVisibility = () => {
-      if (document.hidden && useChatStore.getState().isSecureSession) {
-        closeSecureChat();
-      }
-    };
-    const onBlur = () => {
-      if (useChatStore.getState().isSecureSession) closeSecureChat();
-    };
-    document.addEventListener('visibilitychange', onVisibility);
-    window.addEventListener('blur', onBlur);
-    window.addEventListener('pagehide', onBlur);
-    return () => {
-      document.removeEventListener('visibilitychange', onVisibility);
-      window.removeEventListener('blur', onBlur);
-      window.removeEventListener('pagehide', onBlur);
-    };
-  }, [closeSecureChat]);
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
   const [secureVaultOpen, setSecureVaultOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);

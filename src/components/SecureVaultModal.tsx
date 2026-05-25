@@ -48,7 +48,7 @@ export function setPreferredNickname(myUserId: string, contactUserId: string, ni
 export default function SecureVaultModal({ isOpen, onClose }: SecureVaultModalProps) {
   const { user } = useAuth();
   const supabase = createClient();
-  const openSecureChat = useChatStore((s) => s.openSecureChat);
+  const setSelectedChatId = useChatStore((s) => s.setSelectedChatId);
   const [mode, setMode] = useState<Mode>('code');
   const [code, setCode] = useState('');
   const [showCode, setShowCode] = useState(false);
@@ -226,7 +226,7 @@ export default function SecureVaultModal({ isOpen, onClose }: SecureVaultModalPr
   };
 
   const handleOpenSecureChat = () => {
-    if (foundChat) openSecureChat(foundChat.id);
+    if (foundChat) setSelectedChatId(foundChat.id);
     handleClose();
   };
 

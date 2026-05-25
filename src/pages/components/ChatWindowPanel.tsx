@@ -30,7 +30,6 @@ interface Message {
   editedAt?: string | null;
   deletedForEveryone?: boolean;
   createdAt?: string;
-  sentSecure?: boolean;
 }
 
 // Call Modal Component
@@ -219,7 +218,6 @@ function CallModal({
 export default function ChatWindowPanel() {
   const { t } = useT();
   const { selectedChatId, setSelectedChatId } = useChatStore();
-  const isSecureSession = useChatStore((s) => s.isSecureSession);
   const { user } = useAuth();
   const { startCall } = useCall();
   const supabase = createClient();
@@ -313,28 +311,9 @@ export default function ChatWindowPanel() {
                 reactions: [],
                 encrypted,
                 createdAt: newMsg.created_at,
-                sentSecure: !!newMsg.sent_secure,
               }]);
               // Mark as read (recipient — uses RPC to bypass RLS sender restriction)
               await supabase.rpc('mark_messages_read', { _chat_id: selectedChatId });
-
-              // If THIS user has marked the chat as secure, route the notification
-              // through their secure-notification preference instead of the normal path.
-              try {
-                if (useChatStore.getState().isSecureSession) {
-                  // Only show browser notification if user has enabled secured chat notifications
-                  const notifPrefsRaw = localStorage.getItem(`vt_notif_prefs_${user.id}`);
-                  const notifPrefs = notifPrefsRaw ? JSON.parse(notifPrefsRaw) : {};
-                  const secureNotifsEnabled = notifPrefs.secureChats === true;
-                  if (secureNotifsEnabled && 'Notification' in window && Notification.permission === 'granted') {
-                    new Notification('New Secured Message', {
-                      body: `New message in your secured chat`,
-                      icon: '/favicon.ico',
-                    });
-                  }
-                  // If secureNotifsEnabled is false, silently skip — no notification
-                }
-              } catch {}
             }
           }
         )
@@ -575,7 +554,6 @@ export default function ChatWindowPanel() {
           editedAt: (m as any).edited_at || null,
           deletedForEveryone: tombstone,
           createdAt: m.created_at,
-          sentSecure: !!(m as any).sent_secure,
         });
       }
       setMessages(decryptedMsgs);
@@ -634,7 +612,6 @@ export default function ChatWindowPanel() {
       reactions: [],
       encrypted: e2eEnabled,
       createdAt: new Date().toISOString(),
-      sentSecure: isSecureSession,
     };
     setMessages(prev => [...prev, tempMsg]);
     if (!overrideText) setInputText('');
@@ -648,11 +625,11 @@ export default function ChatWindowPanel() {
 
       const { data } = await supabase
         .from('messages')
-        .insert({ chat_id: selectedChatId, sender_id: user.id, content: contentToStore, message_status: 'sent', sent_secure: isSecureSession })
+        .insert({ chat_id: selectedChatId, sender_id: user.id, content: contentToStore, message_status: 'sent' })
         .select()
         .single();
       if (data) {
-        setMessages(prev => prev.map(m => m.id === tempId ? { ...m, id: data.id, status: 'delivered', createdAt: data.created_at, sentSecure: isSecureSession } : m));
+        setMessages(prev => prev.map(m => m.id === tempId ? { ...m, id: data.id, status: 'delivered', createdAt: data.created_at } : m));
         await supabase.from('chats').update({ updated_at: new Date().toISOString() }).eq('id', selectedChatId);
         if (contact?.userId) {
           const senderName = profile?.full_name || 'Someone';
@@ -660,7 +637,7 @@ export default function ChatWindowPanel() {
             recipient_user_id: contact.userId,
             chat_id: selectedChatId,
             title: senderName,
-            body: isSecureSession ? '🔒 New private message' : text,
+            body: text,
             tag: `chat-${selectedChatId}`,
             url: '/',
             type: 'message',
@@ -692,7 +669,6 @@ export default function ChatWindowPanel() {
       mediaUrl: previewUrl,
       mediaType: type,
       encrypted: e2eEnabled,
-      sentSecure: isSecureSession,
     };
     setMessages(prev => [...prev, tempMsg]);
 
@@ -726,11 +702,11 @@ export default function ChatWindowPanel() {
       }
       const { data } = await supabase
         .from('messages')
-        .insert({ chat_id: selectedChatId, sender_id: user.id, content, message_status: 'sent', sent_secure: isSecureSession })
+        .insert({ chat_id: selectedChatId, sender_id: user.id, content, message_status: 'sent' })
         .select()
         .single();
       if (data) {
-        setMessages(prev => prev.map(m => m.id === tempId ? { ...m, id: data.id, status: 'delivered', mediaUrl: previewUrl || publicUrl, sentSecure: isSecureSession } : m));
+        setMessages(prev => prev.map(m => m.id === tempId ? { ...m, id: data.id, status: 'delivered', mediaUrl: previewUrl || publicUrl } : m));
         await supabase.from('chats').update({ updated_at: new Date().toISOString() }).eq('id', selectedChatId);
         if (contact?.userId) {
           const senderName = profile?.full_name || 'Someone';
@@ -1169,8 +1145,6 @@ export default function ChatWindowPanel() {
                           if (upErr) throw upErr;
                           setMyChatSecured(false);
                           toast.success('Chat moved back to your normal chats');
-                          // Exit the secure session view
-                          useChatStore.getState().closeSecureChat();
                           setSelectedChatId(null);
                         } catch (e: any) {
                           toast.error(e?.message || 'Could not unsecure this chat');
@@ -1338,16 +1312,7 @@ export default function ChatWindowPanel() {
             ))}
           </div>
         ) : (
-          (myChatSecured
-            ? messages.filter((m) => {
-                // Only filter MY own messages by where they were sent from.
-                // Received messages are shown in both views since the other
-                // user has no concept of my secure/normal split.
-                if (m.senderId !== user?.id) return true;
-                return isSecureSession ? !!m.sentSecure : !m.sentSecure;
-              })
-            : messages
-          ).map((msg, __idx, messages) => {
+          messages.map((msg, __idx, messages) => {
             // Day-separator: render "Today" / "Yesterday" / formatted date
             // when this message falls on a different day than the previous one.
             const __sep = (() => {
@@ -1524,24 +1489,6 @@ export default function ChatWindowPanel() {
 
                   <div className={`flex items-center gap-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
                     <span className="text-[10px] text-muted-foreground">{msg.time}</span>
-                    {msg.sentSecure && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toast.info('This message was sent via a private (secured) chat.', {
-                            description: isMe
-                              ? 'You have this chat marked as secure on your side.'
-                              : 'The sender has this chat marked as secure on their side.',
-                          });
-                        }}
-                        className={`p-0.5 rounded-full ${isMe ? 'text-white/70 hover:text-white' : 'text-primary hover:text-primary/80'}`}
-                        title="Sent via private chat"
-                        aria-label="Sent via private chat"
-                      >
-                        <Lock size={11} />
-                      </button>
-                    )}
                     {isMe && (
                       msg.status === 'read' ? <CheckCheck size={12} className="text-primary" /> :
                       msg.status === 'delivered' ? <CheckCheck size={12} className="text-muted-foreground" /> :
