@@ -60,7 +60,7 @@ async function enqueueOtpEmail(
       subject: subj,
       html,
       text,
-      purpose: 'transactional',
+      purpose: 'auth',
       label: `otp_${purpose}`,
       queued_at: new Date().toISOString(),
     },
@@ -127,11 +127,22 @@ export const Route = createFileRoute('/api/public/auth-otp')({
           const { data: avail } = await supabase.rpc('is_real_email_available', { _email: payload.email })
           if (avail === false) return jerr(409, 'This email is already linked to an account')
 
+          // Rate limit: 5 OTP requests per email per rolling 24h
+          const { data: remaining } = await supabase.rpc('check_otp_rate_limit', { _email: payload.email })
+          if (typeof remaining === 'number' && remaining <= 0) {
+            return jerr(429, 'Too many code requests. Please try again in 24 hours.')
+          }
+
           const code = generateCode()
           const { error: issueErr } = await supabase.rpc('issue_email_otp', {
             _email: payload.email, _code: code, _purpose: 'signup',
           })
-          if (issueErr) return jerr(500, 'Failed to issue code')
+          if (issueErr) {
+            if ((issueErr.message || '').includes('OTP_RATE_LIMITED')) {
+              return jerr(429, 'Too many code requests. Please try again in 24 hours.')
+            }
+            return jerr(500, 'Failed to issue code')
+          }
           try {
             await enqueueOtpEmail(supabase, payload.email, code, 'signup', payload.name)
           } catch (e: any) {
@@ -160,6 +171,11 @@ export const Route = createFileRoute('/api/public/auth-otp')({
 
           // Always return ok to avoid leaking account existence
           if (prof?.real_email) {
+            const { data: remaining } = await supabase.rpc('check_otp_rate_limit', { _email: prof.real_email })
+            if (typeof remaining === 'number' && remaining <= 0) {
+              // Return ok to avoid leaking account existence; user retries later
+              return Response.json({ ok: true })
+            }
             const code = generateCode()
             const { error: issueErr } = await supabase.rpc('issue_email_otp', {
               _email: prof.real_email, _code: code, _purpose: 'password_reset',
