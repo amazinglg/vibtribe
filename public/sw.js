@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vibtribe-v12';
+const CACHE_NAME = 'vibtribe-v13';
 const IMG_CACHE = 'vibtribe-images-v1';
 const STATIC_ASSETS = ['/', '/manifest.json', '/favicon.ico'];
 
@@ -122,12 +122,13 @@ self.addEventListener('notificationclick', (event) => {
   const message = event.action === 'answer' ? { type: 'ANSWER_CALL', payload: data } : { type: 'OPEN_NOTIFICATION', payload: data };
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      for (const client of clientList) {
-        if (client.url.startsWith(self.location.origin) && 'focus' in client) {
-          client.postMessage(message);
-          const nav = 'navigate' in client ? client.navigate(targetUrl.href).catch(() => null) : Promise.resolve(null);
-          return nav.then(() => client.focus());
-        }
+      // Prefer focusing an existing window and letting the SPA update via postMessage.
+      // Avoid client.navigate() — it triggers a full reload which loses the postMessage
+      // (and on iOS PWA often fails silently), so the user sees "nothing happens".
+      const existing = clientList.find((c) => c.url.startsWith(self.location.origin));
+      if (existing) {
+        existing.postMessage(message);
+        return ('focus' in existing ? existing.focus() : Promise.resolve()).catch(() => null);
       }
       return self.clients.openWindow(targetUrl.href);
     })
