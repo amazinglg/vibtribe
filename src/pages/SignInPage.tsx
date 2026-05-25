@@ -6,10 +6,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import AppLogo from '@/components/ui/AppLogo';
 import HelpButton from '@/components/HelpButton';
 import { createClient } from '@/lib/supabase/client';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { useT } from '@/contexts/LanguageContext';
 
 export default function SignInPage() {
   const router = useNavigate();
   const { signIn, signInWithEmail } = useAuth();
+  const { t } = useT();
   const supabase = createClient();
   const [mobile, setMobile] = useState('');
   const [password, setPassword] = useState('');
@@ -91,6 +94,11 @@ export default function SignInPage() {
       <div className="absolute bottom-0 right-0 w-80 h-80 gradient-cyan rounded-full blur-3xl opacity-15 animate-pulse" style={{ animationDelay: '1s' }} />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 gradient-pink rounded-full blur-3xl opacity-10 animate-pulse" style={{ animationDelay: '2s' }} />
 
+      {/* Top-right language switcher */}
+      <div className="absolute top-3 right-3 z-30">
+        <LanguageSwitcher variant="pill" />
+      </div>
+
       <div className="relative w-full max-w-md float-up">
         {/* Logo */}
         <div className="text-center mb-8">
@@ -98,13 +106,13 @@ export default function SignInPage() {
             <AppLogo size={48} />
             <span className="font-bold text-3xl text-gradient-primary tracking-tight">VibTribe</span>
           </div>
-          <p className="text-muted-foreground text-sm">Where your vibe finds its tribe ✨</p>
+          <p className="text-muted-foreground text-sm">{t('auth.tagline')}</p>
         </div>
 
         {/* Card */}
         <div className="glass-strong rounded-3xl border border-border p-8 shadow-card">
-          <h1 className="font-bold text-2xl text-foreground mb-1">Welcome back</h1>
-          <p className="text-muted-foreground text-sm mb-6">Sign in to continue your conversations</p>
+          <h1 className="font-bold text-2xl text-foreground mb-1">{t('auth.welcomeBack')}</h1>
+          <p className="text-muted-foreground text-sm mb-6">{t('auth.signInSubtitle')}</p>
 
           <form onSubmit={handleSignIn} className="space-y-4">
             {/* Toggle mobile/email */}
@@ -114,20 +122,20 @@ export default function SignInPage() {
                 onClick={() => { setUseEmail(false); setError(''); }}
                 className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${!useEmail ? 'gradient-primary text-white' : 'text-muted-foreground hover:text-foreground'}`}
               >
-                📱 Mobile Number
+                {t('auth.mobileTab')}
               </button>
               <button
                 type="button"
                 onClick={() => { setUseEmail(true); setError(''); }}
                 className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${useEmail ? 'gradient-primary text-white' : 'text-muted-foreground hover:text-foreground'}`}
               >
-                ✉️ Email
+                {t('auth.emailTab')}
               </button>
             </div>
 
             {!useEmail ? (
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1.5">Mobile Number</label>
+                <label className="block text-sm font-medium text-foreground mb-1.5">{t('auth.mobile')}</label>
                 <div className="relative">
                   <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                   <input
@@ -144,7 +152,7 @@ export default function SignInPage() {
               </div>
             ) : (
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1.5">Email Address</label>
+                <label className="block text-sm font-medium text-foreground mb-1.5">{t('auth.email')}</label>
                 <input
                   type="email"
                   value={email}
@@ -158,9 +166,9 @@ export default function SignInPage() {
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-sm font-medium text-foreground">Password</label>
+                <label className="block text-sm font-medium text-foreground">{t('auth.password')}</label>
                 <Link to="/forgot-password" className="text-xs text-primary hover:text-primary/80 transition-colors">
-                  Forgot password?
+                  {t('auth.forgotPassword')}
                 </Link>
               </div>
               <div className="relative">
@@ -196,25 +204,25 @@ export default function SignInPage() {
               className="w-full gradient-primary text-white font-semibold py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed glow-primary mt-2"
             >
               {loading ? (
-                <><Loader2 size={18} className="animate-spin" /><span>Signing in...</span></>
+                <><Loader2 size={18} className="animate-spin" /><span>{t('auth.signingIn')}</span></>
               ) : (
-                <><span>Sign In</span><ArrowRight size={18} /></>
+                <><span>{t('common.signIn')}</span><ArrowRight size={18} /></>
               )}
             </button>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
-              New to VibTribe?{' '}
+              {t('auth.newToVibtribe')}{' '}
               <Link to="/sign-up" className="text-primary font-semibold hover:text-primary/80 transition-colors">
-                Create account
+                {t('common.createAccount')}
               </Link>
             </p>
           </div>
 
           {/* Help & Support */}
           <div className="mt-6 pt-4 border-t border-border text-center">
-            <p className="text-xs text-muted-foreground mb-2">Need help signing in?</p>
+            <p className="text-xs text-muted-foreground mb-2">{t('auth.needHelpSignIn')}</p>
             <HelpButton variant="inline" />
           </div>
         </div>

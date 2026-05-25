@@ -14,6 +14,9 @@ import { useTheme, APP_THEMES, ThemeId } from '@/contexts/ThemeContext';
 import { triggerPwaInstall, isPwaInstallAvailable, isPwaInstalled } from '@/components/PWAInstallBanner';
 import { usePermissions } from '@/hooks/usePermissions';
 import EncryptionPinModal from '@/components/EncryptionPinModal';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { useT } from '@/contexts/LanguageContext';
+import { Globe } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -83,6 +86,7 @@ export default function ProfileContent() {
   const router = useNavigate();
   const { user, profile, updateProfile, updatePassword, signOut, isAdmin } = useAuth();
   const { currentTheme, setTheme } = useTheme();
+  const { t } = useT();
   const supabase = createClient();
   const [activeTab, setActiveTab] = useState<Tab>('account');
   const [editMode, setEditMode] = useState(false);
@@ -1488,6 +1492,19 @@ export default function ProfileContent() {
 
               {/* My Tickets */}
               <MyTickets />
+
+              {/* Change Language */}
+              <div className="glass rounded-2xl border border-border p-5">
+                <h3 className="font-semibold text-base text-foreground mb-1 flex items-center gap-2">
+                  <Globe size={16} className="text-primary" />
+                  {t('profile.language.title')}
+                </h3>
+                <p className="text-xs text-muted-foreground mb-4">{t('profile.language.desc')}</p>
+                <LanguageSwitcher
+                  variant="card"
+                  onChange={() => toast.success(t('profile.language.saved'))}
+                />
+              </div>
             </div>
           )}
         </div>

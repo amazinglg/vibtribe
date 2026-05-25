@@ -7,6 +7,7 @@ const ChatWindowPanel = lazy(() => import('./components/ChatWindowPanel'));
 import { useAuth } from '@/contexts/AuthContext';
 import { useChatStore } from '@/store/chatStore';
 import TermsAcceptanceGate from '@/components/TermsAcceptanceGate';
+import LandingPage from './LandingPage';
 
 export default function ChatsPage() {
   const { user, profile, loading } = useAuth();
@@ -56,10 +57,8 @@ export default function ChatsPage() {
 
   useEffect(() => {
     console.log('[VT-HOME] state', { loading, hasUser: !!user });
-    if (!loading && !user) {
-      console.warn('[VT-HOME] no user — redirecting to /sign-in');
-      router?.({ to: '/sign-in', replace: true });
-    }
+    // Unauthenticated visitors now see the public landing page (rendered below)
+    // instead of being force-redirected to /sign-in.
   }, [user, loading, router]);
 
   if (loading) {
@@ -75,7 +74,8 @@ export default function ChatsPage() {
     );
   }
 
-  if (!user) return null;
+  // Public marketing landing page for non-authenticated visitors.
+  if (!user) return <LandingPage />;
 
   return (
     <AppLayout>

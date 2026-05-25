@@ -10,6 +10,7 @@ import {
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 
 import appCss from "../styles.css?url";
@@ -161,10 +162,12 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <AuthProvider>
-          <Outlet />
-          <ServiceWorkerRegistration />
-        </AuthProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <Outlet />
+            <ServiceWorkerRegistration />
+          </AuthProvider>
+        </LanguageProvider>
       </ThemeProvider>
       <Toaster
         position="bottom-right"
