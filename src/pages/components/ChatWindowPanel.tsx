@@ -1322,12 +1322,6 @@ export default function ChatWindowPanel() {
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
-        <div className="flex items-center gap-3">
-          <div className="flex-1 h-px bg-border" />
-          <span className="text-[11px] text-muted-foreground px-3 py-1 glass rounded-full">Today</span>
-          <div className="flex-1 h-px bg-border" />
-        </div>
-
         {loading ? (
           <div className="flex flex-col gap-3">
             {[1, 2, 3].map(i => (
@@ -1337,7 +1331,31 @@ export default function ChatWindowPanel() {
             ))}
           </div>
         ) : (
-          messages.map((msg) => {
+          messages.map((msg, __idx) => {
+            // Day-separator: render "Today" / "Yesterday" / formatted date
+            // when this message falls on a different day than the previous one.
+            const __sep = (() => {
+              const cur = msg.createdAt ? new Date(msg.createdAt) : null;
+              if (!cur || isNaN(cur.getTime())) return null;
+              const prev = __idx > 0 ? messages[__idx - 1] : null;
+              const prevDate = prev?.createdAt ? new Date(prev.createdAt) : null;
+              const sameDay = prevDate && !isNaN(prevDate.getTime())
+                && prevDate.toDateString() === cur.toDateString();
+              if (sameDay) return null;
+              const today = new Date();
+              const yesterday = new Date(); yesterday.setDate(today.getDate() - 1);
+              let label: string;
+              if (cur.toDateString() === today.toDateString()) label = 'Today';
+              else if (cur.toDateString() === yesterday.toDateString()) label = 'Yesterday';
+              else label = cur.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: cur.getFullYear() === today.getFullYear() ? undefined : 'numeric' });
+              return (
+                <div key={`sep-${msg.id}`} className="flex items-center gap-3">
+                  <div className="flex-1 h-px bg-border" />
+                  <span className="text-[11px] text-muted-foreground px-3 py-1 glass rounded-full">{label}</span>
+                  <div className="flex-1 h-px bg-border" />
+                </div>
+              );
+            })();
             const isMe = msg.senderId === user?.id;
             const isImageMsg = msg.text?.startsWith('[IMAGE:') || msg.mediaType === 'image';
             const isFileMsg = msg.text?.startsWith('[FILE:') || msg.mediaType === 'file';
@@ -1353,21 +1371,26 @@ export default function ChatWindowPanel() {
               const ss = String(dur % 60).padStart(2, '0');
               const when = new Date(msg.time ? Date.now() : Date.now()).toLocaleString();
               return (
-                <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                  <div className="glass border border-border rounded-2xl px-4 py-2.5 text-sm flex items-center gap-3">
-                    {kind === 'video' ? <Video size={16} className="text-vt-green" /> : <Phone size={16} className="text-vt-green" />}
-                    <div className="flex flex-col">
-                      <span className="text-foreground/90">{kind === 'video' ? 'Video' : 'Voice'} call · {mm}:{ss}</span>
-                      <span className="text-[10px] text-muted-foreground">{msg.time}</span>
+                <React.Fragment key={msg.id}>
+                  {__sep}
+                  <div className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                    <div className="glass border border-border rounded-2xl px-4 py-2.5 text-sm flex items-center gap-3">
+                      {kind === 'video' ? <Video size={16} className="text-vt-green" /> : <Phone size={16} className="text-vt-green" />}
+                      <div className="flex flex-col">
+                        <span className="text-foreground/90">{kind === 'video' ? 'Video' : 'Voice'} call · {mm}:{ss}</span>
+                        <span className="text-[10px] text-muted-foreground">{msg.time}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </React.Fragment>
               );
             }
             if (isMissedCall) {
               const callKind = missedMatch![1] || 'voice';
               return (
-                <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                <React.Fragment key={msg.id}>
+                  {__sep}
+                  <div className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                   <div className="glass border border-border rounded-2xl px-4 py-2.5 text-sm flex items-center gap-3">
                     <PhoneOff size={16} className="text-red-400" />
                     <div className="flex flex-col">
@@ -1383,8 +1406,9 @@ export default function ChatWindowPanel() {
                         Call back
                       </button>
                     )}
+                    </div>
                   </div>
-                </div>
+                </React.Fragment>
               );
             }
             // Defensive: never render raw `e2e:` ciphertext
@@ -1409,8 +1433,9 @@ export default function ChatWindowPanel() {
               : null;
 
             return (
+              <React.Fragment key={msg.id}>
+              {__sep}
               <div
-                key={msg.id}
                 className={`flex ${isMe ? 'justify-end' : 'justify-start'} group`}
                 onMouseEnter={() => setHoveredMsg(msg.id)}
                 onMouseLeave={() => setHoveredMsg(null)}
@@ -1527,6 +1552,7 @@ export default function ChatWindowPanel() {
                   )}
                 </div>
               </div>
+              </React.Fragment>
             );
           })
         )}
