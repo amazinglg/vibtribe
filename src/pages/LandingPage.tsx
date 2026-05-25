@@ -3,6 +3,7 @@ import { Link } from '@tanstack/react-router';
 import {
   ShieldCheck, Sparkles, PhoneCall, Lock, Zap, Palette,
   ArrowRight, Mail, MessageCircle, Check, Github, Twitter, Globe,
+  Smartphone, Apple, Download, Share2, PlusSquare, Clock,
 } from 'lucide-react';
 import AppLogo from '@/components/ui/AppLogo';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
@@ -133,6 +134,99 @@ export default function LandingPage() {
             desc={t('landing.feature.themes.desc')}
           />
         </div>
+      </section>
+
+      {/* Get the App — Platform Availability */}
+      <section id="download" className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24">
+        <div className="text-center mb-8">
+          <span className="text-[11px] font-bold uppercase tracking-widest text-primary">Get the app</span>
+          <h2 className="font-bold text-2xl sm:text-4xl text-foreground mt-2 mb-2">Available on your phone</h2>
+          <p className="text-sm text-muted-foreground max-w-lg mx-auto">
+            VibTribe is currently built as a native Android app. iPhone users can install it as a Progressive Web App (PWA) in seconds.
+          </p>
+        </div>
+
+        <div className="grid sm:grid-cols-2 gap-3 sm:gap-4 max-w-4xl mx-auto">
+          {/* Android Card */}
+          <div className="glass rounded-3xl border border-border p-6 sm:p-7 relative overflow-hidden">
+            <div className="absolute -top-12 -right-12 w-40 h-40 gradient-primary rounded-full blur-3xl opacity-20" />
+            <div className="relative">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-2xl gradient-primary flex items-center justify-center glow-primary">
+                  <Smartphone size={22} className="text-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg text-foreground">Android</h3>
+                  <p className="text-xs text-muted-foreground">Native app</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-xl bg-vt-amber/10 border border-vt-amber/20">
+                <Clock size={14} className="text-vt-amber flex-shrink-0" />
+                <p className="text-xs text-vt-amber font-medium">APK download coming soon — Google Play launch shortly after.</p>
+              </div>
+
+              <ul className="space-y-2 text-sm text-foreground/80 mb-5">
+                <li className="flex items-start gap-2"><Check size={14} className="text-primary mt-0.5 flex-shrink-0" /> Full native performance & push notifications</li>
+                <li className="flex items-start gap-2"><Check size={14} className="text-primary mt-0.5 flex-shrink-0" /> Background calls & message delivery</li>
+                <li className="flex items-start gap-2"><Check size={14} className="text-primary mt-0.5 flex-shrink-0" /> Direct .apk install while we await Play approval</li>
+              </ul>
+
+              <button
+                disabled
+                className="w-full px-4 py-3 rounded-2xl bg-muted text-muted-foreground text-sm font-semibold flex items-center justify-center gap-2 cursor-not-allowed"
+              >
+                <Download size={16} /> APK coming soon
+              </button>
+            </div>
+          </div>
+
+          {/* iOS Card */}
+          <div className="glass rounded-3xl border border-border p-6 sm:p-7 relative overflow-hidden">
+            <div className="absolute -top-12 -right-12 w-40 h-40 gradient-cyan rounded-full blur-3xl opacity-20" />
+            <div className="relative">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-2xl gradient-cyan flex items-center justify-center glow-cyan">
+                  <Apple size={22} className="text-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg text-foreground">iPhone & iPad</h3>
+                  <p className="text-xs text-muted-foreground">Install as Web App</p>
+                </div>
+              </div>
+
+              <p className="text-xs text-muted-foreground mb-3">
+                Add VibTribe to your home screen in 3 quick steps using Safari:
+              </p>
+
+              <ol className="space-y-2 text-sm text-foreground/80 mb-5">
+                <li className="flex items-start gap-2">
+                  <span className="w-5 h-5 rounded-full bg-primary/20 text-primary text-[11px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
+                  <span>Open <span className="font-semibold text-foreground">vibtribe.in</span> in <span className="font-semibold text-foreground">Safari</span> (not Chrome).</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="w-5 h-5 rounded-full bg-primary/20 text-primary text-[11px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+                  <span>Tap the <Share2 size={12} className="inline mx-0.5 text-primary" /> <span className="font-semibold text-foreground">Share</span> button in the toolbar.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="w-5 h-5 rounded-full bg-primary/20 text-primary text-[11px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
+                  <span>Scroll and pick <PlusSquare size={12} className="inline mx-0.5 text-primary" /> <span className="font-semibold text-foreground">Add to Home Screen</span>, then tap Add.</span>
+                </li>
+              </ol>
+
+              <a
+                href="/"
+                className="w-full px-4 py-3 rounded-2xl glass border border-primary/40 text-foreground text-sm font-semibold flex items-center justify-center gap-2 hover:border-primary transition-all"
+              >
+                <Apple size={16} /> Open in Safari to install
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <p className="text-[11px] text-muted-foreground text-center mt-5">
+          Native iOS app is on our roadmap. The PWA gives you the full experience today.
+        </p>
       </section>
 
       {/* About */}
