@@ -277,6 +277,7 @@ export type Database = {
           consumed_at: string | null
           created_at: string
           email: string
+          excluded_from_count: boolean
           expires_at: string
           id: string
           purpose: string
@@ -287,6 +288,7 @@ export type Database = {
           consumed_at?: string | null
           created_at?: string
           email: string
+          excluded_from_count?: boolean
           expires_at?: string
           id?: string
           purpose: string
@@ -297,6 +299,7 @@ export type Database = {
           consumed_at?: string | null
           created_at?: string
           email?: string
+          excluded_from_count?: boolean
           expires_at?: string
           id?: string
           purpose?: string
@@ -742,6 +745,7 @@ export type Database = {
           created_at: string | null
           dob: string | null
           email: string
+          email_marketing_opt_in: boolean
           encrypted_private_key: string | null
           full_name: string
           id: string
@@ -754,6 +758,11 @@ export type Database = {
           last_seen: string | null
           login_attempts: number | null
           mobile_number: string | null
+          notif_mentions: boolean
+          notif_messages: boolean
+          notif_secure_chats: boolean
+          notif_sounds: boolean
+          notif_status: boolean
           profile_completed: boolean | null
           profile_photo_visibility: string
           public_key: string | null
@@ -773,6 +782,7 @@ export type Database = {
           created_at?: string | null
           dob?: string | null
           email: string
+          email_marketing_opt_in?: boolean
           encrypted_private_key?: string | null
           full_name?: string
           id: string
@@ -785,6 +795,11 @@ export type Database = {
           last_seen?: string | null
           login_attempts?: number | null
           mobile_number?: string | null
+          notif_mentions?: boolean
+          notif_messages?: boolean
+          notif_secure_chats?: boolean
+          notif_sounds?: boolean
+          notif_status?: boolean
           profile_completed?: boolean | null
           profile_photo_visibility?: string
           public_key?: string | null
@@ -804,6 +819,7 @@ export type Database = {
           created_at?: string | null
           dob?: string | null
           email?: string
+          email_marketing_opt_in?: boolean
           encrypted_private_key?: string | null
           full_name?: string
           id?: string
@@ -816,6 +832,11 @@ export type Database = {
           last_seen?: string | null
           login_attempts?: number | null
           mobile_number?: string | null
+          notif_mentions?: boolean
+          notif_messages?: boolean
+          notif_secure_chats?: boolean
+          notif_sounds?: boolean
+          notif_status?: boolean
           profile_completed?: boolean | null
           profile_photo_visibility?: string
           public_key?: string | null
@@ -868,6 +889,7 @@ export type Database = {
           created_at: string | null
           dob: string | null
           email: string
+          email_marketing_opt_in: boolean
           encrypted_private_key: string | null
           full_name: string
           id: string
@@ -880,6 +902,11 @@ export type Database = {
           last_seen: string | null
           login_attempts: number | null
           mobile_number: string | null
+          notif_mentions: boolean
+          notif_messages: boolean
+          notif_secure_chats: boolean
+          notif_sounds: boolean
+          notif_status: boolean
           profile_completed: boolean | null
           profile_photo_visibility: string
           public_key: string | null
@@ -908,6 +935,7 @@ export type Database = {
           created_at: string | null
           dob: string | null
           email: string
+          email_marketing_opt_in: boolean
           encrypted_private_key: string | null
           full_name: string
           id: string
@@ -920,6 +948,11 @@ export type Database = {
           last_seen: string | null
           login_attempts: number | null
           mobile_number: string | null
+          notif_mentions: boolean
+          notif_messages: boolean
+          notif_secure_chats: boolean
+          notif_sounds: boolean
+          notif_status: boolean
           profile_completed: boolean | null
           profile_photo_visibility: string
           public_key: string | null
@@ -937,10 +970,15 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      admin_reset_otp_attempts: {
+        Args: { _user_id: string }
+        Returns: undefined
+      }
       admin_reset_user_password: {
         Args: { new_password: string; target_user_id: string }
         Returns: undefined
       }
+      check_otp_rate_limit: { Args: { _email: string }; Returns: number }
       cleanup_expired_statuses: { Args: never; Returns: undefined }
       cleanup_expired_statuses_for_user: { Args: never; Returns: number }
       consume_email_otp: {
@@ -987,6 +1025,7 @@ export type Database = {
           created_at: string | null
           dob: string | null
           email: string
+          email_marketing_opt_in: boolean
           encrypted_private_key: string | null
           full_name: string
           id: string
@@ -999,6 +1038,11 @@ export type Database = {
           last_seen: string | null
           login_attempts: number | null
           mobile_number: string | null
+          notif_mentions: boolean
+          notif_messages: boolean
+          notif_secure_chats: boolean
+          notif_sounds: boolean
+          notif_status: boolean
           profile_completed: boolean | null
           profile_photo_visibility: string
           public_key: string | null
