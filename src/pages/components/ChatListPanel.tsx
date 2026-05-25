@@ -563,7 +563,7 @@ export default function ChatListPanel() {
                 </div>
               </div>
             )}
-            {filtered.length === 0 ? (
+            {filteredWithBroadcast.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-40 gap-3 p-4">
                 <span className="text-3xl">💬</span>
                 <p className="text-sm text-muted-foreground text-center">No conversations yet</p>
@@ -575,7 +575,7 @@ export default function ChatListPanel() {
                   Find Contacts
                 </button>
               </div>
-            ) : filtered.map((chat) => (
+            ) : filteredWithBroadcast.map((chat) => (
               <ChatListItem
                 key={chat.id}
                 chat={chat}
@@ -583,6 +583,7 @@ export default function ChatListPanel() {
                 onClick={() => setSelectedChatId(chat.id)}
                 onContextMenu={(e) => {
                   e.preventDefault();
+                  if (chat.isBroadcast) return;
                   setContextMenu({ chatId: chat.id, x: e.clientX, y: e.clientY });
                 }}
                 onDelete={() => handleDeleteChat(chat.id)}
