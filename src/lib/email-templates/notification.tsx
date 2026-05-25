@@ -1,11 +1,12 @@
 import * as React from 'react'
 import {
-  Body, Button, Container, Head, Heading, Html, Preview, Text,
+  Body, Button, Container, Head, Heading, Html, Img, Preview, Text,
 } from '@react-email/components'
 import type { TemplateEntry } from './registry'
 
 const SITE_NAME = 'VibTribe'
 const SITE_URL = 'https://www.vibtribe.in'
+const LOGO_URL = 'https://www.vibtribe.in/icons/icon-192x192.png'
 
 interface NotificationProps {
   title?: string
@@ -19,6 +20,7 @@ const NotificationEmail = ({ title, body, link }: NotificationProps) => (
     <Preview>{title || `New notification from ${SITE_NAME}`}</Preview>
     <Body style={main}>
       <Container style={container}>
+        <Img src={LOGO_URL} width="48" height="48" alt={SITE_NAME} style={logo} />
         <Heading style={h1}>{title || `New notification`}</Heading>
         {body && <Text style={text}>{body}</Text>}
         <Button style={button} href={link ? `${SITE_URL}${link}` : SITE_URL}>
@@ -39,6 +41,7 @@ export const template = {
 
 const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
 const container = { padding: '32px 28px', maxWidth: '520px' }
+const logo = { borderRadius: '10px', marginBottom: '16px' }
 const h1 = { fontSize: '20px', fontWeight: 'bold' as const, color: '#0a0a0f', margin: '0 0 14px' }
 const text = { fontSize: '14px', color: '#55575d', lineHeight: '1.55', margin: '0 0 18px' }
 const button = {
