@@ -520,12 +520,13 @@ export default function ChatWindowPanel() {
             showAvatar = !!theyHaveUs;
           }
 
+          const isReallyOnline = !!(otherUser.is_online && (otherUser as any).last_seen && (Date.now() - new Date((otherUser as any).last_seen).getTime()) < 2 * 60 * 1000);
           setContact({
             name: displayName,
             avatar: displayName[0]?.toUpperCase() || 'U',
             avatarUrl: showAvatar ? (otherUser as any).avatar_url || null : null,
-            online: otherUser.is_online || false,
-            lastSeen: otherUser.is_online ? 'Online' : 'Last seen recently',
+            online: isReallyOnline,
+            lastSeen: isReallyOnline ? 'Online' : 'Last seen recently',
             publicKey: otherUser.public_key || undefined,
             userId: otherUserId,
             isContact: !!existingContact,
@@ -1854,11 +1855,13 @@ export default function ChatWindowPanel() {
       {enlargeAvatar && contact?.avatarUrl && (
         <div
           className="fixed inset-0 z-[1100] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4"
+          style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1rem)', paddingBottom: 'calc(env(safe-area-inset-bottom) + 1rem)' }}
           onClick={() => setEnlargeAvatar(false)}
         >
           <button
             onClick={(e) => { e.stopPropagation(); setEnlargeAvatar(false); }}
-            className="absolute top-4 right-4 p-3 rounded-full bg-white/10 text-white hover:bg-white/20"
+            className="absolute right-4 p-3 rounded-full bg-white/20 text-white hover:bg-white/30 z-10"
+            style={{ top: 'calc(env(safe-area-inset-top) + 0.75rem)' }}
             aria-label="Close"
           >
             <X size={22} />
@@ -1876,11 +1879,13 @@ export default function ChatWindowPanel() {
       {lightboxUrl && (
         <div
           className="fixed inset-0 z-[1200] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4"
+          style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1rem)', paddingBottom: 'calc(env(safe-area-inset-bottom) + 1rem)' }}
           onClick={() => setLightboxUrl(null)}
         >
           <button
             onClick={(e) => { e.stopPropagation(); setLightboxUrl(null); }}
-            className="absolute top-4 right-4 p-3 rounded-full bg-white/10 text-white hover:bg-white/20"
+            className="absolute right-4 p-3 rounded-full bg-white/20 text-white hover:bg-white/30 z-10"
+            style={{ top: 'calc(env(safe-area-inset-top) + 0.75rem)' }}
             aria-label="Close"
           >
             <X size={22} />

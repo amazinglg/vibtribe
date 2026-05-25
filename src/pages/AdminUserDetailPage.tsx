@@ -193,7 +193,7 @@ export default function AdminUserDetailPage() {
               target.account_status === 'active' ? 'text-vt-green' :
               target.account_status === 'blocked' ? 'text-red-400' : 'text-orange-400'
             } />
-            <Info label="Online" value={target.is_online ? 'Yes' : 'No'} />
+            <Info label="Online" value={target.is_online && target.last_seen && (Date.now() - new Date(target.last_seen).getTime()) < 2 * 60 * 1000 ? 'Yes' : 'No'} />
             <Info label="Login Attempts" value={`${target.login_attempts || 0} / 5`} />
             <Info label="Suspended" value={target.is_suspended ? 'Yes' : 'No'} />
             <Info label="Joined" value={new Date(target.created_at).toLocaleDateString()} />

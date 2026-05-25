@@ -328,7 +328,7 @@ export default function ChatListPanel() {
             time: lastMsg ? formatTime(lastMsg.created_at) : '',
             rawTime: lastMsg?.created_at || (chat as any).updated_at,
             unread: unreadCount,
-            online: otherUser.is_online || false,
+            online: !!(otherUser.is_online && otherUser.last_seen && (Date.now() - new Date(otherUser.last_seen).getTime()) < 2 * 60 * 1000),
             typing: false,
             pinned: false,
             muted: false,
