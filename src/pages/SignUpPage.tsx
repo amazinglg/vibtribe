@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useNavigate } from '@tanstack/react-router';
-import { Phone, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle, User, ChevronDown, Check, Calendar } from 'lucide-react';
+import { Phone, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle, User, ChevronDown, Check, Calendar, Mail, ArrowLeft, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLogo from '@/components/ui/AppLogo';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,13 +33,13 @@ const COUNTRY_CODES = [
 
 export default function SignUpPage() {
   const router = useNavigate();
-  const { signUp } = useAuth();
   const { t } = useT();
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
   const [dob, setDob] = useState('');
   const [countryCode, setCountryCode] = useState('+91');
   const [mobile, setMobile] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -47,6 +47,9 @@ export default function SignUpPage() {
   const [error, setError] = useState('');
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [step, setStep] = useState<'details' | 'verify'>('details');
+  const [otp, setOtp] = useState('');
+  const [resending, setResending] = useState(false);
 
   const selectedCountry = COUNTRY_CODES.find(c => c.code === countryCode) || COUNTRY_CODES[0];
 
@@ -68,7 +71,7 @@ export default function SignUpPage() {
     return age >= 18;
   };
 
-  const handleSignUp = async (e: React.FormEvent) => {
+  const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     if (!fullName.trim()) { setError('Please enter your full name'); return; }
@@ -77,6 +80,7 @@ export default function SignUpPage() {
     if (!/^[a-zA-Z0-9_]+$/.test(username)) { setError('Username can only contain letters, numbers, and underscores'); return; }
     if (!dob) { setError('Please enter your date of birth'); return; }
     if (!isAtLeast18(dob)) { setError('You must be at least 18 years old to sign up on VibTribe'); return; }
+    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setError('Please enter a valid email address'); return; }
     if (!mobile.trim()) { setError('Please enter your mobile number'); return; }
     if (mobile.replace(/\D/g, '').length < 7) { setError('Please enter a valid mobile number'); return; }
     if (!password) { setError('Please enter a password'); return; }
@@ -84,18 +88,75 @@ export default function SignUpPage() {
     if (password !== confirmPassword) { setError('Passwords do not match'); return; }
     if (!acceptedTerms) { setError('Please accept the Terms & Conditions and Privacy Policy to continue'); return; }
 
-    // Store full mobile (with code) in profile metadata, but the auth email
-    // will be derived from the local 10-digit number only (handled in AuthContext).
+    setLoading(true);
+    try {
+      const res = await fetch('/api/public/auth-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'send_signup', email: email.trim().toLowerCase(), name: fullName.trim() }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || 'Failed to send verification code');
+      setStep('verify');
+    } catch (err: any) {
+      setError(err.message || 'Failed to send verification code. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    setError('');
+    setResending(true);
+    try {
+      const res = await fetch('/api/public/auth-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'send_signup', email: email.trim().toLowerCase(), name: fullName.trim() }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || 'Failed to resend code');
+    } catch (err: any) {
+      setError(err.message || 'Failed to resend code');
+    } finally {
+      setResending(false);
+    }
+  };
+
+  const handleVerifyAndCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    if (!/^\d{6}$/.test(otp)) { setError('Enter the 6-digit code from your email'); return; }
     const local = mobile.replace(/\D/g, '').slice(-10);
     const fullMobile = `${countryCode}${local}`;
     setLoading(true);
     try {
-      await signUp(fullMobile, password, { fullName, countryCode, username: username.toLowerCase(), dob });
-      // Record terms acceptance immediately so the in-app gate doesn't re-prompt.
-      try { await supabase.rpc('accept_terms' as any); } catch (e) { console.warn('[VT-SIGNUP] accept_terms failed', e); }
+      const res = await fetch('/api/public/auth-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'create_account',
+          email: email.trim().toLowerCase(),
+          code: otp,
+          password,
+          fullName: fullName.trim(),
+          username: username.toLowerCase(),
+          countryCode,
+          mobileNumber: fullMobile,
+          dob,
+        }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || 'Failed to create account');
+
+      // Sign in with the synthetic auth email returned by the server
+      const authEmail = json.authEmail || `${local}@vibetribe.app`;
+      const { error: signInErr } = await supabase.auth.signInWithPassword({ email: authEmail, password });
+      if (signInErr) throw signInErr;
+      try { await supabase.rpc('accept_terms' as any); } catch {}
       router({ to: '/complete-profile', replace: true });
     } catch (err: any) {
-      setError(err.message || 'Sign up failed. Please try again.');
+      setError(err.message || 'Verification failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -121,10 +182,69 @@ export default function SignUpPage() {
         </div>
 
         <div className="glass-strong rounded-3xl border border-border p-8 shadow-card">
+          {step === 'verify' ? (
+            <>
+              <button
+                type="button"
+                onClick={() => { setStep('details'); setOtp(''); setError(''); }}
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mb-5 transition-colors"
+              >
+                <ArrowLeft size={14} /> Back to details
+              </button>
+              <div className="flex items-center justify-center w-14 h-14 rounded-full gradient-primary glow-primary mx-auto mb-3">
+                <ShieldCheck size={26} className="text-white" />
+              </div>
+              <h1 className="font-bold text-2xl text-foreground mb-1 text-center">Verify your email</h1>
+              <p className="text-muted-foreground text-sm mb-6 text-center">
+                We sent a 6-digit code to <span className="text-foreground font-medium">{email}</span>
+              </p>
+              <form onSubmit={handleVerifyAndCreate} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1.5">Verification code</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={6}
+                    value={otp}
+                    onChange={e => { setOtp(e.target.value.replace(/\D/g, '').slice(0, 6)); setError(''); }}
+                    placeholder="••••••"
+                    className="w-full px-4 py-3 bg-input border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all text-center text-2xl tracking-[0.5em] font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={resending}
+                    className="mt-2 text-xs text-primary hover:text-primary/80 transition-colors disabled:opacity-50"
+                  >
+                    {resending ? 'Resending…' : "Didn't get it? Resend code"}
+                  </button>
+                </div>
+                {error && (
+                  <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-xl">
+                    <AlertCircle size={14} className="text-red-400 flex-shrink-0" />
+                    <p className="text-xs text-red-400">{error}</p>
+                  </div>
+                )}
+                <button
+                  type="submit"
+                  disabled={loading || otp.length !== 6}
+                  className="w-full gradient-primary text-white font-semibold py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed glow-primary"
+                >
+                  {loading ? (
+                    <><Loader2 size={18} className="animate-spin" /><span>Verifying…</span></>
+                  ) : (
+                    <><span>Verify & Create Account</span><ArrowRight size={18} /></>
+                  )}
+                </button>
+              </form>
+            </>
+          ) : (
+          <>
           <h1 className="font-bold text-2xl text-foreground mb-1">{t('auth.createAccountTitle')}</h1>
           <p className="text-muted-foreground text-sm mb-6">{t('auth.createAccountSubtitle')}</p>
 
-          <form onSubmit={handleSignUp} className="space-y-4">
+          <form onSubmit={handleSendOtp} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1.5">{t('auth.fullName')}</label>
               <div className="relative">
@@ -228,6 +348,24 @@ export default function SignUpPage() {
             </div>
 
             <div>
+              <label className="block text-sm font-medium text-foreground mb-1.5">
+                Email <span className="text-red-400">*</span>
+              </label>
+              <div className="relative">
+                <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => { setEmail(e.target.value); setError(''); }}
+                  placeholder="you@example.com"
+                  className="w-full pl-9 pr-4 py-3 bg-input border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all text-sm"
+                  autoComplete="email"
+                />
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-1">We'll send a 6-digit code to verify your email.</p>
+            </div>
+
+            <div>
               <label className="block text-sm font-medium text-foreground mb-1.5">{t('auth.password')}</label>
               <div className="relative">
                 <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -294,9 +432,9 @@ export default function SignUpPage() {
               className="w-full gradient-primary text-white font-semibold py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed glow-primary mt-2"
             >
               {loading ? (
-                <><Loader2 size={18} className="animate-spin" /><span>{t('auth.creatingAccount')}</span></>
+                <><Loader2 size={18} className="animate-spin" /><span>Sending code…</span></>
               ) : (
-                <><span>{t('common.createAccount')}</span><ArrowRight size={18} /></>
+                <><span>Send verification code</span><ArrowRight size={18} /></>
               )}
             </button>
           </form>
@@ -309,6 +447,8 @@ export default function SignUpPage() {
               </Link>
             </p>
           </div>
+          </>
+          )}
         </div>
       </div>
     </div>
