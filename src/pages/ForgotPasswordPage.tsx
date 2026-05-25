@@ -1,37 +1,61 @@
 import React, { useState } from 'react';
-import { Link } from '@tanstack/react-router';
-import { Mail, ArrowRight, Loader2, AlertCircle, CheckCircle2, ArrowLeft } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { Link, useNavigate } from '@tanstack/react-router';
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle, CheckCircle2, ArrowLeft, ShieldCheck } from 'lucide-react';
 import AppLogo from '@/components/ui/AppLogo';
 
 export default function ForgotPasswordPage() {
-  const { resetPassword } = useAuth();
-  const [email, setEmail] = useState('');
+  const navigate = useNavigate();
+  const [identifier, setIdentifier] = useState('');
+  const [otp, setOtp] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [step, setStep] = useState<'identifier' | 'verify' | 'done'>('identifier');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [sent, setSent] = useState(false);
+
+  const handleSend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    if (!identifier.trim()) { setError('Please enter your email or mobile number'); return; }
+    setLoading(true);
+    try {
+      const res = await fetch('/api/public/auth-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'send_reset', identifier: identifier.trim() }),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error(j?.error || 'Failed to send code');
+      }
+      setStep('verify');
+    } catch (err: any) {
+      setError(err.message || 'Failed to send code');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    const raw = email.trim();
-    if (!raw) { setError('Please enter your email or mobile number'); return; }
-
-    // If input looks like a mobile number (mostly digits), strip country code and map to the synthetic email
-    let target = raw;
-    const digitsOnly = raw.replace(/\D/g, '');
-    const looksLikeMobile = !raw.includes('@') && digitsOnly.length >= 10;
-    if (looksLikeMobile) {
-      const local10 = digitsOnly.slice(-10);
-      target = `${local10}@vibetribe.app`;
-    }
-
+    if (!/^\d{6}$/.test(otp)) { setError('Enter the 6-digit code from your email'); return; }
+    if (newPassword.length < 6) { setError('Password must be at least 6 characters'); return; }
+    if (newPassword !== confirmPassword) { setError('Passwords do not match'); return; }
     setLoading(true);
     try {
-      await resetPassword(target);
-      setSent(true);
+      const res = await fetch('/api/public/auth-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reset_password', identifier: identifier.trim(), code: otp, newPassword }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j?.error || 'Failed to reset password');
+      setStep('done');
+      setTimeout(() => navigate({ to: '/sign-in', replace: true }), 2000);
     } catch (err: any) {
-      setError(err.message || 'Failed to send reset email. Please try again.');
+      setError(err.message || 'Failed to reset password');
     } finally {
       setLoading(false);
     }
@@ -51,14 +75,14 @@ export default function ForgotPasswordPage() {
         </div>
 
         <div className="glass-strong rounded-3xl border border-border p-8 shadow-card">
-          {sent ? (
+          {step === 'done' ? (
             <div className="text-center py-4 float-up">
               <div className="w-16 h-16 gradient-primary rounded-full flex items-center justify-center mx-auto mb-4 glow-primary">
                 <CheckCircle2 size={32} className="text-white" />
               </div>
-              <h1 className="font-bold text-2xl text-foreground mb-2">Check your email</h1>
+              <h1 className="font-bold text-2xl text-foreground mb-2">Password reset</h1>
               <p className="text-muted-foreground text-sm mb-6">
-                We sent a password reset link to <span className="text-foreground font-medium">{email}</span>. Click the link to reset your password.
+                Your password has been updated. Redirecting you to sign in…
               </p>
               <Link
                 to="/sign-in"
@@ -68,6 +92,86 @@ export default function ForgotPasswordPage() {
                 Back to Sign In
               </Link>
             </div>
+          ) : step === 'verify' ? (
+            <>
+              <button
+                type="button"
+                onClick={() => { setStep('identifier'); setOtp(''); setNewPassword(''); setConfirmPassword(''); setError(''); }}
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mb-5 transition-colors"
+              >
+                <ArrowLeft size={14} /> Back
+              </button>
+              <div className="flex items-center justify-center w-14 h-14 rounded-full gradient-primary glow-primary mx-auto mb-3">
+                <ShieldCheck size={26} className="text-white" />
+              </div>
+              <h1 className="font-bold text-2xl text-foreground mb-1 text-center">Enter your code</h1>
+              <p className="text-muted-foreground text-sm mb-6 text-center">
+                If an account exists for <span className="text-foreground font-medium">{identifier}</span>, we sent a 6-digit code to its email.
+              </p>
+              <form onSubmit={handleReset} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1.5">Verification code</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={6}
+                    value={otp}
+                    onChange={e => { setOtp(e.target.value.replace(/\D/g, '').slice(0, 6)); setError(''); }}
+                    placeholder="••••••"
+                    className="w-full px-4 py-3 bg-input border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all text-center text-2xl tracking-[0.5em] font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1.5">New password</label>
+                  <div className="relative">
+                    <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={newPassword}
+                      onChange={e => { setNewPassword(e.target.value); setError(''); }}
+                      placeholder="At least 6 characters"
+                      className="w-full pl-9 pr-12 py-3 bg-input border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all text-sm"
+                      autoComplete="new-password"
+                    />
+                    <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1.5">Confirm new password</label>
+                  <div className="relative">
+                    <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={confirmPassword}
+                      onChange={e => { setConfirmPassword(e.target.value); setError(''); }}
+                      placeholder="Re-enter new password"
+                      className="w-full pl-9 pr-4 py-3 bg-input border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all text-sm"
+                      autoComplete="new-password"
+                    />
+                  </div>
+                </div>
+                {error && (
+                  <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-xl">
+                    <AlertCircle size={14} className="text-red-400 flex-shrink-0" />
+                    <p className="text-xs text-red-400">{error}</p>
+                  </div>
+                )}
+                <button
+                  type="submit"
+                  disabled={loading || otp.length !== 6 || !newPassword}
+                  className="w-full gradient-primary text-white font-semibold py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed glow-primary"
+                >
+                  {loading ? (
+                    <><Loader2 size={18} className="animate-spin" /><span>Resetting…</span></>
+                  ) : (
+                    <><span>Reset password</span><ArrowRight size={18} /></>
+                  )}
+                </button>
+              </form>
+            </>
           ) : (
             <>
               <Link to="/sign-in" className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mb-5 transition-colors">
@@ -75,23 +179,23 @@ export default function ForgotPasswordPage() {
                 Back to Sign In
               </Link>
               <h1 className="font-bold text-2xl text-foreground mb-1">Reset password</h1>
-              <p className="text-muted-foreground text-sm mb-6">Enter your email or mobile number and we will send you a reset link</p>
+              <p className="text-muted-foreground text-sm mb-6">Enter your email or mobile number and we'll send a 6-digit code to your registered email.</p>
 
-              <form onSubmit={handleReset} className="space-y-4">
+              <form onSubmit={handleSend} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">Email or Mobile Number</label>
                   <div className="relative">
                     <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                     <input
                       type="text"
-                      value={email}
-                      onChange={e => { setEmail(e.target.value); setError(''); }}
+                      value={identifier}
+                      onChange={e => { setIdentifier(e.target.value); setError(''); }}
                       placeholder="you@example.com or 10-digit mobile"
                       className="w-full pl-9 pr-4 py-3 bg-input border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all text-sm"
                       autoComplete="username"
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">Mobile users: just enter your 10-digit number — country codes are handled automatically.</p>
+                  <p className="text-xs text-muted-foreground mt-1">The code is delivered to the email on file for your account.</p>
                 </div>
 
                 {error && (
@@ -109,7 +213,7 @@ export default function ForgotPasswordPage() {
                   {loading ? (
                     <><Loader2 size={18} className="animate-spin" /><span>Sending...</span></>
                   ) : (
-                    <><span>Send Reset Link</span><ArrowRight size={18} /></>
+                    <><span>Send 6-digit code</span><ArrowRight size={18} /></>
                   )}
                 </button>
               </form>
