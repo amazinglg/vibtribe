@@ -17,30 +17,31 @@ import CallProvider from '@/components/CallProvider';
 import { createClient } from '@/lib/supabase/client';
 import EncryptionPinModal from '@/components/EncryptionPinModal';
 import { hasLocalPrivateKey, hasServerKey } from '@/lib/encryption';
+import { useT } from '@/contexts/LanguageContext';
 
 
-
-const NAV_ITEMS = [
-  { href: '/', label: 'Chats', icon: MessageCircle, badge: 0 },
-  { href: '/status-screen', label: 'Status', icon: CircleDot, badge: 0 },
-  { href: '/profile-screen', label: 'Profile', icon: User, badge: 0 },
-];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = useLocation().pathname;
   const router = useNavigate();
   const { user, profile, signOut, isAdmin } = useAuth();
   const { isSecureSession, closeSecureChat } = useChatStore();
+  const { t } = useT();
+  const NAV_ITEMS = [
+    { href: '/', label: t('nav.chats'), icon: MessageCircle, badge: 0 },
+    { href: '/status-screen', label: t('nav.status'), icon: CircleDot, badge: 0 },
+    { href: '/profile-screen', label: t('nav.profile'), icon: User, badge: 0 },
+  ];
 
   // Derive a short page title for the mobile topbar based on the current route.
   const pageTitle = pathname === '/'
-    ? 'Messages'
+    ? t('nav.messages')
     : pathname.startsWith('/status')
-      ? 'Status'
+      ? t('nav.status')
       : pathname.startsWith('/profile')
-        ? 'Profile'
+        ? t('nav.profile')
         : pathname.startsWith('/admin')
-          ? 'Admin'
+          ? t('nav.admin')
           : '';
 
   // Auto-relock secured chat when tab is hidden / app backgrounded / phone locked
