@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { Shield, Users, Activity, Search, Ban, Trash2, RefreshCw, AlertTriangle, CheckCircle2, ArrowLeft, KeyRound, Pencil, X, Save, Ticket, UserX, UserCheck, Send, LogOut } from 'lucide-react';
+import { Shield, Users, Activity, Search, Ban, Trash2, RefreshCw, AlertTriangle, CheckCircle2, ArrowLeft, KeyRound, Pencil, X, Save, Ticket, UserX, UserCheck, Send, LogOut, ChevronRight, Circle, ArrowUpDown, Filter } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLayout from '@/components/AppLayout';
 import { createClient } from '@/lib/supabase/client';
@@ -79,6 +79,8 @@ export default function AdminPage() {
   const [ticketFilter, setTicketFilter] = useState<'all' | 'open' | 'inprocess' | 'solved'>('all');
   const [unreadTickets, setUnreadTickets] = useState(0);
   const [forceLogoutLoading, setForceLogoutLoading] = useState<string | null>(null);
+  const [userFilter, setUserFilter] = useState<'all' | 'active' | 'suspended' | 'blocked' | 'admins' | 'online'>('all');
+  const [userSort, setUserSort] = useState<'recent' | 'name' | 'lastActive'>('recent');
 
   useEffect(() => {
     if (!loading) {
@@ -324,12 +326,55 @@ export default function AdminPage() {
     }
   };
 
-  const filteredUsers = users.filter(u =>
-    u.full_name?.toLowerCase().includes(search.toLowerCase()) ||
-    u.username?.toLowerCase().includes(search.toLowerCase()) ||
-    u.email?.toLowerCase().includes(search.toLowerCase()) ||
-    u.mobile_number?.includes(search)
-  );
+  const TWO_MIN = 2 * 60 * 1000;
+  const isOnline = (u: PlatformUser) =>
+    !!u.last_seen && (Date.now() - new Date(u.last_seen).getTime()) < TWO_MIN;
+
+  const filteredUsers = users
+    .filter(u => {
+      const q = search.trim().toLowerCase();
+      if (q && !(
+        u.full_name?.toLowerCase().includes(q) ||
+        u.username?.toLowerCase().includes(q) ||
+        u.email?.toLowerCase().includes(q) ||
+        (u as any).real_email?.toLowerCase().includes(q) ||
+        u.mobile_number?.includes(search)
+      )) return false;
+      if (userFilter === 'active') return u.account_status === 'active' && !u.is_suspended;
+      if (userFilter === 'suspended') return u.account_status === 'suspended' || u.is_suspended;
+      if (userFilter === 'blocked') return u.account_status === 'blocked';
+      if (userFilter === 'admins') return u.role === 'admin' || (u as any).is_master_admin;
+      if (userFilter === 'online') return isOnline(u);
+      return true;
+    })
+    .sort((a, b) => {
+      if (userSort === 'name') return (a.full_name || '').localeCompare(b.full_name || '');
+      if (userSort === 'lastActive') {
+        const ta = a.last_seen ? new Date(a.last_seen).getTime() : 0;
+        const tb = b.last_seen ? new Date(b.last_seen).getTime() : 0;
+        return tb - ta;
+      }
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+
+  const userCounts = {
+    all: users.length,
+    active: users.filter(u => u.account_status === 'active' && !u.is_suspended).length,
+    suspended: users.filter(u => u.account_status === 'suspended' || u.is_suspended).length,
+    blocked: users.filter(u => u.account_status === 'blocked').length,
+    admins: users.filter(u => u.role === 'admin' || (u as any).is_master_admin).length,
+    online: users.filter(isOnline).length,
+  };
+
+  const relTime = (iso?: string) => {
+    if (!iso) return 'never';
+    const diff = Date.now() - new Date(iso).getTime();
+    if (diff < 60_000) return 'just now';
+    if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`;
+    if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h ago`;
+    if (diff < 7 * 86_400_000) return `${Math.floor(diff / 86_400_000)}d ago`;
+    return new Date(iso).toLocaleDateString();
+  };
 
   const filteredTickets = tickets.filter(t => {
     const matchesSearch = t.issue_title.toLowerCase().includes(ticketSearch.toLowerCase()) ||
@@ -463,75 +508,143 @@ export default function AdminPage() {
         )}
 
         {activeTab === 'users' && (
-          <div className="flex flex-col gap-6">
-            {/* User List */}
-            <div className="flex-1 glass rounded-2xl border border-border overflow-hidden">
-              <div className="p-4 border-b border-border">
-                <div className="relative">
+          <div className="flex flex-col gap-4">
+            {/* Toolbar */}
+            <div className="glass rounded-2xl border border-border p-3 sm:p-4 space-y-3">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <div className="relative flex-1">
                   <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                   <input
                     type="text"
-                    placeholder="Search users by name, email, or mobile..."
+                    placeholder="Search name, email, mobile…"
                     value={search}
                     onChange={e => setSearch(e.target.value)}
                     className="w-full pl-9 pr-4 py-2.5 bg-input border border-border rounded-xl text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all"
                   />
                 </div>
+                <div className="relative sm:w-44">
+                  <ArrowUpDown size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                  <select
+                    value={userSort}
+                    onChange={e => setUserSort(e.target.value as any)}
+                    className="w-full pl-9 pr-3 py-2.5 bg-input border border-border rounded-xl text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary appearance-none"
+                  >
+                    <option value="recent">Recently joined</option>
+                    <option value="lastActive">Last active</option>
+                    <option value="name">Name (A–Z)</option>
+                  </select>
+                </div>
               </div>
-              <div className="overflow-y-auto max-h-[calc(100vh-300px)]">
-                {filteredUsers.map(u => (
-                  (() => {
-                    const lockedRow = (u as any).is_master_admin && !isMaster;
-                    const Inner = (
-                      <>
-                    <div className="relative flex-shrink-0">
-                      <div className="w-10 h-10 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-sm">
-                        {u.full_name?.[0]?.toUpperCase() || '?'}
-                      </div>
-                      {u.is_online && u.last_seen && (Date.now() - new Date(u.last_seen).getTime()) < 2 * 60 * 1000 && (
-                        <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-vt-green rounded-full border-2 border-background" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-semibold text-foreground truncate">{u.full_name || 'Unknown'}</p>
-                        {u.username && <span className="text-[11px] text-primary truncate">@{u.username}</span>}
-                        {(u as any).is_master_admin
-                          ? <span className="text-[10px] bg-vt-amber/20 text-vt-amber px-1.5 py-0.5 rounded-full font-bold">MASTER</span>
-                          : u.role === 'admin' && <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full font-medium">Admin</span>}
-                        {u.is_suspended && <span className="text-[10px] bg-orange-500/20 text-orange-400 px-1.5 py-0.5 rounded-full font-medium">Suspended</span>}
-                      </div>
-                      <p className="text-xs text-muted-foreground truncate">{(u as any).real_email || u.email || u.mobile_number}</p>
-                    </div>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${
-                      u.account_status === 'active' ? 'bg-vt-green/20 text-vt-green' :
-                      u.account_status === 'suspended' ? 'bg-orange-500/20 text-orange-400' :
-                      u.account_status === 'blocked' ? 'bg-red-500/20 text-red-400' : 'bg-muted text-muted-foreground'
-                    }`}>
-                      {u.account_status}
+
+              {/* Filter chips */}
+              <div className="flex gap-1.5 flex-wrap">
+                {([
+                  { key: 'all', label: 'All' },
+                  { key: 'online', label: 'Online', dot: 'bg-vt-green' },
+                  { key: 'active', label: 'Active' },
+                  { key: 'suspended', label: 'Suspended' },
+                  { key: 'blocked', label: 'Blocked' },
+                  { key: 'admins', label: 'Admins' },
+                ] as const).map(f => (
+                  <button
+                    key={f.key}
+                    onClick={() => setUserFilter(f.key)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                      userFilter === f.key
+                        ? 'gradient-primary text-white shadow'
+                        : 'bg-muted text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {(f as any).dot && <span className={`w-1.5 h-1.5 rounded-full ${(f as any).dot}`} />}
+                    <span>{f.label}</span>
+                    <span className={`text-[10px] px-1.5 rounded-full ${userFilter === f.key ? 'bg-white/20 text-white' : 'bg-background/50 text-muted-foreground'}`}>
+                      {userCounts[f.key]}
                     </span>
-                      </>
-                    );
-                    return lockedRow ? (
-                      <div key={u.id} title="Master admin — protected" className="flex items-center gap-3 px-4 py-3 cursor-not-allowed transition-all border-b border-border/30 bg-vt-amber/5">
-                        {Inner}
-                      </div>
-                    ) : (
-                      <a key={u.id} href={getUserDetailUrl(u.id)} onClick={(e) => { e.preventDefault(); openUserDetails(u.id); }} className="flex items-center gap-3 px-4 py-3 cursor-pointer transition-all border-b border-border/30 hover:bg-muted/50">
-                        {Inner}
-                      </a>
-                    );
-                  })()
+                  </button>
                 ))}
+              </div>
+            </div>
+
+            {/* Result count */}
+            <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
+              <span>{filteredUsers.length} of {users.length} users</span>
+              {(search || userFilter !== 'all') && (
+                <button onClick={() => { setSearch(''); setUserFilter('all'); }} className="text-primary hover:underline">
+                  Clear filters
+                </button>
+              )}
+            </div>
+
+            {/* User list */}
+            <div className="glass rounded-2xl border border-border overflow-hidden">
+              <div className="overflow-y-auto max-h-[calc(100vh-360px)]">
+                {filteredUsers.map(u => {
+                  const lockedRow = (u as any).is_master_admin && !isMaster;
+                  const online = isOnline(u);
+                  const Inner = (
+                    <>
+                      <div className="relative flex-shrink-0">
+                        <div className="w-11 h-11 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-sm">
+                          {u.full_name?.[0]?.toUpperCase() || '?'}
+                        </div>
+                        {online && (
+                          <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-vt-green rounded-full border-2 border-background" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className="text-sm font-semibold text-foreground truncate">{u.full_name || 'Unknown'}</p>
+                          {u.username && <span className="text-[11px] text-primary">@{u.username}</span>}
+                          {(u as any).is_master_admin
+                            ? <span className="text-[9px] bg-vt-amber/20 text-vt-amber px-1.5 py-0.5 rounded-full font-bold uppercase">Master</span>
+                            : u.role === 'admin' && <span className="text-[9px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full font-medium uppercase">Admin</span>}
+                        </div>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {(u as any).real_email || u.email || u.mobile_number || '—'}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground/70 mt-0.5 flex items-center gap-1">
+                          <Circle size={5} className={online ? 'fill-vt-green text-vt-green' : 'fill-muted-foreground/40 text-muted-foreground/40'} />
+                          {online ? 'Online now' : `Last active ${relTime(u.last_seen)}`}
+                          <span className="text-muted-foreground/30">·</span>
+                          <span>Joined {new Date(u.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</span>
+                        </p>
+                      </div>
+                      <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
+                          u.account_status === 'active' && !u.is_suspended ? 'bg-vt-green/20 text-vt-green' :
+                          u.account_status === 'suspended' || u.is_suspended ? 'bg-orange-500/20 text-orange-400' :
+                          u.account_status === 'blocked' ? 'bg-red-500/20 text-red-400' :
+                          'bg-muted text-muted-foreground'
+                        }`}>
+                          {u.is_suspended ? 'suspended' : u.account_status}
+                        </span>
+                        {!lockedRow && <ChevronRight size={14} className="text-muted-foreground/50" />}
+                      </div>
+                    </>
+                  );
+                  return lockedRow ? (
+                    <div key={u.id} title="Master admin — protected" className="flex items-center gap-3 px-4 py-3 cursor-not-allowed border-b border-border/30 bg-vt-amber/5">
+                      {Inner}
+                    </div>
+                  ) : (
+                    <a
+                      key={u.id}
+                      href={getUserDetailUrl(u.id)}
+                      onClick={(e) => { e.preventDefault(); openUserDetails(u.id); }}
+                      className="flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-border/30 hover:bg-muted/50 transition-colors"
+                    >
+                      {Inner}
+                    </a>
+                  );
+                })}
                 {filteredUsers.length === 0 && (
-                  <div className="flex flex-col items-center justify-center py-12 gap-2">
+                  <div className="flex flex-col items-center justify-center py-16 gap-2">
                     <Users size={32} className="text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">No users found</p>
+                    <p className="text-sm text-muted-foreground">No users match these filters</p>
                   </div>
                 )}
               </div>
             </div>
-
           </div>
         )}
 
