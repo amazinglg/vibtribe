@@ -42,13 +42,12 @@ export default function AdminUserDetailPage() {
     const row = Array.isArray(data) ? data[0] : data;
     setTarget(row);
     setLoadingData(false);
-    // Master-admin only: count secure chats created by this user
+    // Master-admin only: count chats this user has moved to their Secure Vault
     if (profile?.is_master_admin) {
       const { count } = await supabase
-        .from('chats')
-        .select('id', { count: 'exact', head: true })
-        .eq('created_by', userId)
-        .eq('is_secure', true);
+        .from('user_secure_chats')
+        .select('chat_id', { count: 'exact', head: true })
+        .eq('user_id', userId);
       setSecureChatCount(count || 0);
     }
   };
