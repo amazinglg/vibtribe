@@ -103,15 +103,27 @@ serve(async (req) => {
         await webpush.sendNotification(
           { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
           payload,
-          { TTL: 86400, urgency: 'high', topic: safeText(body.tag, chatId ? `chat-${chatId}` : 'vibetribe').slice(0, 32) }
+          // No `topic`: FCM/APNs use it to COLLAPSE notifications with the same value,
+          // which made later chat messages silently overwrite earlier ones on Android
+          // when the device was offline/locked. Each push must show independently.
+          { TTL: 86400, urgency: 'high' }
         );
         sent += 1;
       } catch (error: any) {
         const status = error?.statusCode;
         const bodyMsg = String(error?.body || error?.message || '');
-        // 404/410 → endpoint gone. 403 BadJwtToken (Apple) → subscription was created
-        // with a different VAPID key; treat as stale so the client re-subscribes.
-        if (status === 404 || status === 410 || (status === 403 && /BadJwtToken|VapidPkHashMismatch/i.test(bodyMsg))) {
+        // Stale-subscription detection:
+        //  - 404/410           → endpoint gone (Chrome/FCM + Firefox)
+        //  - 401              → FCM rejects the VAPID JWT (key was rotated)
+        //  - 403 BadJwtToken / VapidPkHashMismatch → Apple/FCM rejected our VAPID auth
+        // In all of these cases the saved subscription is unusable, so we drop it
+        // and the client will re-subscribe with the current key on next visit.
+        if (
+          status === 404 ||
+          status === 410 ||
+          status === 401 ||
+          (status === 403 && /BadJwtToken|VapidPkHashMismatch|JWT|vapid/i.test(bodyMsg))
+        ) {
           expired.push(sub.endpoint);
         } else {
           failed.push({ endpoint: sub.endpoint, status, message: bodyMsg });
