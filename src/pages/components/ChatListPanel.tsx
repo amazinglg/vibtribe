@@ -386,18 +386,64 @@ export default function ChatListPanel() {
     loadChats();
   };
 
+  const isMaster = !!profile?.is_master_admin || profile?.role === 'master_admin';
+
   const filtered = chats.filter(chat => {
     const matchesSearch = chat.name.toLowerCase().includes(search.toLowerCase());
     const matchesTab = activeTab === 'all' || (activeTab === 'unread' && chat.unread > 0) || (activeTab === 'groups' && chat.isGroup);
     return matchesSearch && matchesTab;
   });
 
+  // Pin VibTribe at top only for master admins. For everyone else, the broadcast
+  // chat shows up inline among regular chats, ordered by its latest message time.
+  const broadcastMatchesSearch = 'vibtribe'.includes(search.toLowerCase());
   const showBroadcastPinned =
+    isMaster &&
     activeTab !== 'contacts' &&
     activeTab !== 'groups' &&
-    'vibtribe'.includes(search.toLowerCase());
+    broadcastMatchesSearch;
   const broadcastTime = broadcastPreview ? formatTime(broadcastPreview.created_at) : '';
   const broadcastLast = broadcastPreview?.content || 'Official VibTribe announcements';
+
+  // Build the in-list broadcast row for non-master users (and master users on
+  // the unread tab, where pinning doesn't apply) — placed inline by time.
+  const inlineBroadcast: Chat | null =
+    !isMaster &&
+    broadcastPreview &&
+    activeTab !== 'contacts' &&
+    activeTab !== 'groups' &&
+    broadcastMatchesSearch &&
+    (activeTab !== 'unread' || broadcastUnread > 0)
+      ? {
+          id: BROADCAST_CHAT_ID,
+          name: 'VibTribe',
+          avatar: 'V',
+          avatarColor: 'gradient-primary',
+          avatarUrl: BROADCAST_LOGO,
+          lastMessage: broadcastPreview.content || 'Official announcement',
+          time: broadcastTime,
+          rawTime: broadcastPreview.created_at,
+          unread: broadcastUnread,
+          online: false,
+          typing: false,
+          pinned: false,
+          muted: false,
+          isBroadcast: true,
+        }
+      : null;
+
+  const filteredWithBroadcast: Chat[] = inlineBroadcast
+    ? (() => {
+        const out = [...filtered];
+        const t = new Date(inlineBroadcast.rawTime || 0).getTime();
+        let idx = out.findIndex(
+          (c) => new Date((c as any).rawTime || 0).getTime() < t,
+        );
+        if (idx === -1) idx = out.length;
+        out.splice(idx, 0, inlineBroadcast);
+        return out;
+      })()
+    : filtered;
 
   return (
     <>
