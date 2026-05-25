@@ -198,13 +198,9 @@ export type Database = {
           disappear_mode: string
           id: string
           is_group: boolean
-          is_secure: boolean | null
           name: string | null
-          parent_chat_id: string | null
           participant_one: string | null
           participant_two: string | null
-          secure_code: string | null
-          secure_code_hash: string | null
           updated_at: string | null
         }
         Insert: {
@@ -215,13 +211,9 @@ export type Database = {
           disappear_mode?: string
           id?: string
           is_group?: boolean
-          is_secure?: boolean | null
           name?: string | null
-          parent_chat_id?: string | null
           participant_one?: string | null
           participant_two?: string | null
-          secure_code?: string | null
-          secure_code_hash?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -232,23 +224,12 @@ export type Database = {
           disappear_mode?: string
           id?: string
           is_group?: boolean
-          is_secure?: boolean | null
           name?: string | null
-          parent_chat_id?: string | null
           participant_one?: string | null
           participant_two?: string | null
-          secure_code?: string | null
-          secure_code_hash?: string | null
           updated_at?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "chats_parent_chat_id_fkey"
-            columns: ["parent_chat_id"]
-            isOneToOne: false
-            referencedRelation: "chats"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "chats_participant_one_fkey"
             columns: ["participant_one"]
@@ -338,7 +319,6 @@ export type Database = {
           message_status: Database["public"]["Enums"]["message_status"] | null
           reactions: Json | null
           sender_id: string | null
-          sent_secure: boolean
         }
         Insert: {
           chat_id?: string | null
@@ -352,7 +332,6 @@ export type Database = {
           message_status?: Database["public"]["Enums"]["message_status"] | null
           reactions?: Json | null
           sender_id?: string | null
-          sent_secure?: boolean
         }
         Update: {
           chat_id?: string | null
@@ -366,7 +345,6 @@ export type Database = {
           message_status?: Database["public"]["Enums"]["message_status"] | null
           reactions?: Json | null
           sender_id?: string | null
-          sent_secure?: boolean
         }
         Relationships: [
           {
