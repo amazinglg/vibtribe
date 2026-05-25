@@ -5,6 +5,8 @@ import { Phone, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle, User, Chevr
 import { useAuth } from '@/contexts/AuthContext';
 import AppLogo from '@/components/ui/AppLogo';
 import { supabase } from '@/integrations/supabase/client';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { useT } from '@/contexts/LanguageContext';
 
 const COUNTRY_CODES = [
   { name: 'India', code: '+91', flag: '🇮🇳' },
@@ -32,6 +34,7 @@ const COUNTRY_CODES = [
 export default function SignUpPage() {
   const router = useNavigate();
   const { signUp } = useAuth();
+  const { t } = useT();
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
   const [dob, setDob] = useState('');
@@ -104,22 +107,26 @@ export default function SignUpPage() {
       <div className="absolute bottom-0 left-0 w-80 h-80 gradient-pink rounded-full blur-3xl opacity-15 animate-pulse" style={{ animationDelay: '1s' }} />
       <div className="absolute top-1/3 left-1/4 w-64 h-64 gradient-primary rounded-full blur-3xl opacity-10 animate-pulse" style={{ animationDelay: '2s' }} />
 
+      <div className="absolute top-3 right-3 z-30">
+        <LanguageSwitcher variant="pill" />
+      </div>
+
       <div className="relative w-full max-w-md float-up">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-3">
             <AppLogo size={48} />
             <span className="font-bold text-3xl text-gradient-primary tracking-tight">VibTribe</span>
           </div>
-          <p className="text-muted-foreground text-sm">Join the tribe today ✨</p>
+          <p className="text-muted-foreground text-sm">{t('auth.joinTribe')}</p>
         </div>
 
         <div className="glass-strong rounded-3xl border border-border p-8 shadow-card">
-          <h1 className="font-bold text-2xl text-foreground mb-1">Create account</h1>
-          <p className="text-muted-foreground text-sm mb-6">Sign up with your mobile number — no verification needed</p>
+          <h1 className="font-bold text-2xl text-foreground mb-1">{t('auth.createAccountTitle')}</h1>
+          <p className="text-muted-foreground text-sm mb-6">{t('auth.createAccountSubtitle')}</p>
 
           <form onSubmit={handleSignUp} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1.5">Full Name</label>
+              <label className="block text-sm font-medium text-foreground mb-1.5">{t('auth.fullName')}</label>
               <div className="relative">
                 <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input
@@ -135,7 +142,7 @@ export default function SignUpPage() {
 
             <div>
               <label className="block text-sm font-medium text-foreground mb-1.5">
-                Username <span className="text-red-400">*</span>
+                {t('auth.username')} <span className="text-red-400">*</span>
               </label>
               <div className="relative">
                 <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -148,12 +155,12 @@ export default function SignUpPage() {
                   autoComplete="username"
                 />
               </div>
-              <p className="text-[11px] text-muted-foreground mt-1">Letters, numbers, underscores. Min 3 characters.</p>
+              <p className="text-[11px] text-muted-foreground mt-1">{t('auth.usernameHint')}</p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-foreground mb-1.5">
-                Date of Birth <span className="text-red-400">*</span>
+                {t('auth.dob')} <span className="text-red-400">*</span>
               </label>
               <div className="relative">
                 <Calendar size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
@@ -165,7 +172,7 @@ export default function SignUpPage() {
                   className="w-full pl-9 pr-4 py-3 bg-input border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all text-sm"
                 />
               </div>
-              <p className="text-[11px] text-muted-foreground mt-1">You must be 18+ to use VibTribe.</p>
+              <p className="text-[11px] text-muted-foreground mt-1">{t('auth.dobHint')}</p>
               <div className="mt-2 flex items-start gap-2 px-3 py-2 rounded-lg bg-primary/10 border border-primary/20">
                 <span className="text-[11px] leading-snug text-foreground/80">
                   🔒 Your date of birth stays confidential. Only you and our support team can see it — it is never shown to other users.
@@ -174,7 +181,7 @@ export default function SignUpPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1.5">Mobile Number</label>
+              <label className="block text-sm font-medium text-foreground mb-1.5">{t('auth.mobile')}</label>
               <div className="flex gap-2">
                 {/* Country Code Selector */}
                 <div className="relative">
@@ -221,14 +228,14 @@ export default function SignUpPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1.5">Password</label>
+              <label className="block text-sm font-medium text-foreground mb-1.5">{t('auth.password')}</label>
               <div className="relative">
                 <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={e => { setPassword(e.target.value); setError(''); }}
-                  placeholder="Min. 6 characters"
+                  placeholder={t('auth.passwordHint')}
                   className="w-full pl-9 pr-12 py-3 bg-input border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all text-sm"
                   autoComplete="new-password"
                 />
@@ -243,7 +250,7 @@ export default function SignUpPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1.5">Confirm Password</label>
+              <label className="block text-sm font-medium text-foreground mb-1.5">{t('auth.confirmPassword')}</label>
               <div className="relative">
                 <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input
@@ -274,10 +281,10 @@ export default function SignUpPage() {
                 {acceptedTerms && <Check size={13} className="text-white" />}
               </button>
               <span className="text-xs text-muted-foreground leading-relaxed">
-                I agree to VibTribe&apos;s{' '}
-                <Link to="/terms" className="text-primary hover:underline" target="_blank">Terms &amp; Conditions</Link>
-                {' '}and{' '}
-                <Link to="/privacy" className="text-primary hover:underline" target="_blank">Privacy Policy</Link>.
+                {t('auth.agreeTerms')}{' '}
+                <Link to="/terms" className="text-primary hover:underline" target="_blank">{t('auth.terms')}</Link>
+                {' '}{t('auth.and')}{' '}
+                <Link to="/privacy" className="text-primary hover:underline" target="_blank">{t('auth.privacy')}</Link>.
               </span>
             </label>
 
@@ -287,18 +294,18 @@ export default function SignUpPage() {
               className="w-full gradient-primary text-white font-semibold py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed glow-primary mt-2"
             >
               {loading ? (
-                <><Loader2 size={18} className="animate-spin" /><span>Creating account...</span></>
+                <><Loader2 size={18} className="animate-spin" /><span>{t('auth.creatingAccount')}</span></>
               ) : (
-                <><span>Create Account</span><ArrowRight size={18} /></>
+                <><span>{t('common.createAccount')}</span><ArrowRight size={18} /></>
               )}
             </button>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
-              Already have an account?{' '}
+              {t('auth.alreadyHaveAccount')}{' '}
               <Link to="/sign-in" className="text-primary font-semibold hover:text-primary/80 transition-colors">
-                Sign in
+                {t('common.signIn')}
               </Link>
             </p>
           </div>
