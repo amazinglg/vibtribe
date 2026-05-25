@@ -481,18 +481,6 @@ export default function ChatListPanel() {
                 </div>
               ))}
             </div>
-          ) : filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-40 gap-3 p-4">
-              <span className="text-3xl">💬</span>
-              <p className="text-sm text-muted-foreground text-center">No conversations yet</p>
-              <button
-                onClick={() => setContactsOpen(true)}
-                className="flex items-center gap-2 px-4 py-2 gradient-primary text-white rounded-xl text-xs font-semibold hover:opacity-90 transition-all"
-              >
-                <Users size={14} />
-                Find Contacts
-              </button>
-            </div>
           ) : (
             <>
             {showBroadcastPinned && (
@@ -527,7 +515,19 @@ export default function ChatListPanel() {
                 </div>
               </div>
             )}
-            {filtered.map((chat) => (
+            {filtered.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-40 gap-3 p-4">
+                <span className="text-3xl">💬</span>
+                <p className="text-sm text-muted-foreground text-center">No conversations yet</p>
+                <button
+                  onClick={() => setContactsOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2 gradient-primary text-white rounded-xl text-xs font-semibold hover:opacity-90 transition-all"
+                >
+                  <Users size={14} />
+                  Find Contacts
+                </button>
+              </div>
+            ) : filtered.map((chat) => (
               <ChatListItem
                 key={chat.id}
                 chat={chat}
