@@ -102,7 +102,10 @@ export default function ProfileContent() {
   const [darkMode, setDarkMode] = useState(true);
   const [notifMessages, setNotifMessages] = useState(true);
   const [notifStatus, setNotifStatus] = useState(true);
+  const [notifMentions, setNotifMentions] = useState(true);
+  const [notifSounds, setNotifSounds] = useState(true);
   const [notifSecureChats, setNotifSecureChats] = useState(false);
+  const [emailMarketingOptIn, setEmailMarketingOptIn] = useState(true);
 
   // Privacy visibility settings (Profile Photo / Status)
   const [profilePhotoVisibility, setProfilePhotoVisibility] = useState<'all' | 'contacts' | 'selected'>('all');
@@ -183,51 +186,54 @@ export default function ProfileContent() {
       setEditMobileNumber(parsed.number);
       if (profile.profile_photo_visibility) setProfilePhotoVisibility(profile.profile_photo_visibility);
       if (profile.status_visibility) setStatusVisibilitySetting(profile.status_visibility);
+      const p: any = profile;
+      if (typeof p.notif_messages === 'boolean') setNotifMessages(p.notif_messages);
+      if (typeof p.notif_status === 'boolean') setNotifStatus(p.notif_status);
+      if (typeof p.notif_mentions === 'boolean') setNotifMentions(p.notif_mentions);
+      if (typeof p.notif_sounds === 'boolean') setNotifSounds(p.notif_sounds);
+      if (typeof p.notif_secure_chats === 'boolean') setNotifSecureChats(p.notif_secure_chats);
+      if (typeof p.email_marketing_opt_in === 'boolean') setEmailMarketingOptIn(p.email_marketing_opt_in);
     }
   }, [profile, user]);
 
-  // Load notification preferences from localStorage
+  // Read ?tab= query param to support deep-linking (e.g. from unsubscribe email)
   useEffect(() => {
-    if (user) {
-      const stored = localStorage.getItem(`vt_notif_prefs_${user.id}`);
-      if (stored) {
-        try {
-          const prefs = JSON.parse(stored);
-          if (typeof prefs.messages === 'boolean') setNotifMessages(prefs.messages);
-          if (typeof prefs.status === 'boolean') setNotifStatus(prefs.status);
-          if (typeof prefs.secureChats === 'boolean') setNotifSecureChats(prefs.secureChats);
-        } catch {}
-      }
-    }
-  }, [user]);
+    if (typeof window === 'undefined') return;
+    const t = new URLSearchParams(window.location.search).get('tab');
+    const valid: Tab[] = ['account', 'privacy', 'notifications', 'devices', 'themes', 'blocked', 'more'];
+    if (t && (valid as string[]).includes(t)) setActiveTab(t as Tab);
+  }, []);
 
-  const saveNotifPrefs = (messages: boolean, status: boolean, secureChats: boolean) => {
-    if (user) {
-      localStorage.setItem(`vt_notif_prefs_${user.id}`, JSON.stringify({ messages, status, secureChats }));
+  const persistNotifPref = async (
+    key: 'notif_messages' | 'notif_status' | 'notif_mentions' | 'notif_sounds' | 'notif_secure_chats' | 'email_marketing_opt_in',
+    value: boolean,
+  ) => {
+    try {
+      await updateProfile({ [key]: value } as any);
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to save preference');
     }
   };
 
   const handleToggleNotifMessages = () => {
-    const next = !notifMessages;
-    setNotifMessages(next);
-    saveNotifPrefs(next, notifStatus, notifSecureChats);
+    const next = !notifMessages; setNotifMessages(next); persistNotifPref('notif_messages', next);
   };
-
   const handleToggleNotifStatus = () => {
-    const next = !notifStatus;
-    setNotifStatus(next);
-    saveNotifPrefs(notifMessages, next, notifSecureChats);
+    const next = !notifStatus; setNotifStatus(next); persistNotifPref('notif_status', next);
   };
-
+  const handleToggleNotifMentions = () => {
+    const next = !notifMentions; setNotifMentions(next); persistNotifPref('notif_mentions', next);
+  };
+  const handleToggleNotifSounds = () => {
+    const next = !notifSounds; setNotifSounds(next); persistNotifPref('notif_sounds', next);
+  };
   const handleToggleNotifSecureChats = () => {
-    const next = !notifSecureChats;
-    setNotifSecureChats(next);
-    saveNotifPrefs(notifMessages, notifStatus, next);
-    if (next) {
-      toast.success('Secured chat notifications enabled');
-    } else {
-      toast.success('Secured chat notifications disabled');
-    }
+    const next = !notifSecureChats; setNotifSecureChats(next); persistNotifPref('notif_secure_chats', next);
+    toast.success(next ? 'Secured chat notifications enabled' : 'Secured chat notifications disabled');
+  };
+  const handleToggleEmailMarketing = () => {
+    const next = !emailMarketingOptIn; setEmailMarketingOptIn(next); persistNotifPref('email_marketing_opt_in', next);
+    toast.success(next ? 'Subscribed to product emails' : 'Unsubscribed from product emails');
   };
 
   useEffect(() => {
@@ -1293,18 +1299,24 @@ export default function ProfileContent() {
                     <p className="text-sm font-medium text-foreground">Mentions</p>
                     <p className="text-xs text-muted-foreground">Get notified when someone mentions you</p>
                   </div>
-                  <div className="w-10 h-6 rounded-full transition-all gradient-primary relative">
-                    <div className="absolute top-1 right-1 w-4 h-4 bg-white rounded-full" />
-                  </div>
+                  <button
+                    onClick={handleToggleNotifMentions}
+                    className={`w-10 h-6 rounded-full transition-all relative ${notifMentions ? 'gradient-primary' : 'bg-muted'}`}
+                  >
+                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${notifMentions ? 'right-1' : 'left-1'}`} />
+                  </button>
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-xl hover:bg-muted/50 transition-colors">
                   <div>
                     <p className="text-sm font-medium text-foreground">Sounds</p>
                     <p className="text-xs text-muted-foreground">Play sounds for notifications</p>
                   </div>
-                  <div className="w-10 h-6 rounded-full transition-all gradient-primary relative">
-                    <div className="absolute top-1 right-1 w-4 h-4 bg-white rounded-full" />
-                  </div>
+                  <button
+                    onClick={handleToggleNotifSounds}
+                    className={`w-10 h-6 rounded-full transition-all relative ${notifSounds ? 'gradient-primary' : 'bg-muted'}`}
+                  >
+                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${notifSounds ? 'right-1' : 'left-1'}`} />
+                  </button>
                 </div>
 
                 {/* Divider */}
@@ -1331,6 +1343,28 @@ export default function ProfileContent() {
                     className={`w-10 h-6 rounded-full transition-all relative flex-shrink-0 ${notifSecureChats ? 'gradient-primary' : 'bg-muted'}`}
                   >
                     <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${notifSecureChats ? 'right-1' : 'left-1'}`} />
+                  </button>
+                </div>
+
+                {/* Divider */}
+                <div className="h-px bg-border my-1" />
+
+                {/* Email Marketing Opt-In */}
+                <div className="flex items-center justify-between p-3 rounded-xl hover:bg-muted/50 transition-colors">
+                  <div className="flex-1 pr-4">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <Mail size={14} className="text-muted-foreground" />
+                      <p className="text-sm font-medium text-foreground">Product & Marketing Emails</p>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Announcements, tips and product updates. Security emails (verification, password reset) are always sent.
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleToggleEmailMarketing}
+                    className={`w-10 h-6 rounded-full transition-all relative flex-shrink-0 ${emailMarketingOptIn ? 'gradient-primary' : 'bg-muted'}`}
+                  >
+                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${emailMarketingOptIn ? 'right-1' : 'left-1'}`} />
                   </button>
                 </div>
               </div>

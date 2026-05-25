@@ -30,6 +30,12 @@ function UnsubscribePage() {
     setStatus(r.ok ? 'done' : 'error')
   }
 
+  const openInAppNotifications = () => {
+    // Same-origin deep-link to in-app notification preferences. Works in
+    // both the installed PWA and the website.
+    window.location.href = '/profile-screen?tab=notifications'
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="max-w-md w-full glass-strong rounded-3xl border border-border p-8 text-center">
@@ -40,13 +46,32 @@ function UnsubscribePage() {
             <p className="text-muted-foreground text-sm mb-6">
               You're about to unsubscribe <strong>{email}</strong> from app emails. Auth emails (password resets, verification codes) will still be sent.
             </p>
-            <button onClick={confirm} className="gradient-primary text-white font-semibold py-3 px-6 rounded-xl">
-              Confirm Unsubscribe
+            <div className="flex flex-col gap-3">
+              <button onClick={confirm} className="gradient-primary text-white font-semibold py-3 px-6 rounded-xl">
+                Confirm Unsubscribe
+              </button>
+              <button onClick={openInAppNotifications} className="text-sm text-primary hover:underline">
+                Or manage all notification preferences in the app →
+              </button>
+            </div>
+          </>
+        )}
+        {status === 'done' && (
+          <>
+            <p className="text-foreground mb-4">You've been unsubscribed. Sorry to see you go.</p>
+            <button onClick={openInAppNotifications} className="gradient-primary text-white font-semibold py-3 px-6 rounded-xl">
+              Manage notification settings
             </button>
           </>
         )}
-        {status === 'done' && <p className="text-foreground">You've been unsubscribed. Sorry to see you go.</p>}
-        {status === 'used' && <p className="text-muted-foreground text-sm">You're already unsubscribed.</p>}
+        {status === 'used' && (
+          <>
+            <p className="text-muted-foreground text-sm mb-4">You're already unsubscribed.</p>
+            <button onClick={openInAppNotifications} className="gradient-primary text-white font-semibold py-3 px-6 rounded-xl">
+              Manage notification settings
+            </button>
+          </>
+        )}
         {status === 'error' && <p className="text-red-400 text-sm">This unsubscribe link is invalid or expired.</p>}
       </div>
     </div>

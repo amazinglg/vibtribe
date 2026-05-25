@@ -1,11 +1,12 @@
 import * as React from 'react'
 import {
-  Body, Button, Container, Head, Heading, Html, Preview, Text,
+  Body, Button, Container, Head, Heading, Html, Img, Preview, Text,
 } from '@react-email/components'
 import type { TemplateEntry } from './registry'
 
 const SITE_NAME = 'VibTribe'
 const SITE_URL = 'https://www.vibtribe.in'
+const LOGO_URL = 'https://www.vibtribe.in/icons/icon-192x192.png'
 
 interface WelcomeProps { name?: string }
 
@@ -15,6 +16,7 @@ const WelcomeEmail = ({ name }: WelcomeProps) => (
     <Preview>Welcome to {SITE_NAME} — let's get you started</Preview>
     <Body style={main}>
       <Container style={container}>
+        <Img src={LOGO_URL} width="56" height="56" alt={SITE_NAME} style={logo} />
         <Heading style={h1}>Welcome to {SITE_NAME}{name ? `, ${name}` : ''}! 🎉</Heading>
         <Text style={text}>
           You're all set. {SITE_NAME} is built around real-time chat, secure private
@@ -40,6 +42,7 @@ export const template = {
 
 const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
 const container = { padding: '32px 28px', maxWidth: '520px' }
+const logo = { borderRadius: '12px', marginBottom: '20px' }
 const h1 = { fontSize: '22px', fontWeight: 'bold' as const, color: '#0a0a0f', margin: '0 0 16px' }
 const text = { fontSize: '14px', color: '#55575d', lineHeight: '1.55', margin: '0 0 14px' }
 const list = { fontSize: '14px', color: '#55575d', lineHeight: '1.7', margin: '0 0 6px' }
