@@ -4,6 +4,7 @@ import { AlertCircle, X } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
 import ChatListPanel from './components/ChatListPanel';
 const ChatWindowPanel = lazy(() => import('./components/ChatWindowPanel'));
+import BroadcastChatPanel, { BROADCAST_CHAT_ID } from './components/BroadcastChatPanel';
 import { useAuth } from '@/contexts/AuthContext';
 import { useChatStore } from '@/store/chatStore';
 import TermsAcceptanceGate from '@/components/TermsAcceptanceGate';
@@ -103,9 +104,13 @@ export default function ChatsPage() {
           <ChatListPanel />
         </div>
         <div className={`${selectedChatId ? 'flex' : 'hidden lg:flex'} flex-1 min-w-0`}>
-          <Suspense fallback={<div className="flex-1 flex items-center justify-center gradient-bg-page"><div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>}>
-            <ChatWindowPanel />
-          </Suspense>
+          {selectedChatId === BROADCAST_CHAT_ID ? (
+            <BroadcastChatPanel />
+          ) : (
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center gradient-bg-page"><div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>}>
+              <ChatWindowPanel />
+            </Suspense>
+          )}
         </div>
       </div>
     </AppLayout>
