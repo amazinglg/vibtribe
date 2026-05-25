@@ -1299,18 +1299,24 @@ export default function ProfileContent() {
                     <p className="text-sm font-medium text-foreground">Mentions</p>
                     <p className="text-xs text-muted-foreground">Get notified when someone mentions you</p>
                   </div>
-                  <div className="w-10 h-6 rounded-full transition-all gradient-primary relative">
-                    <div className="absolute top-1 right-1 w-4 h-4 bg-white rounded-full" />
-                  </div>
+                  <button
+                    onClick={handleToggleNotifMentions}
+                    className={`w-10 h-6 rounded-full transition-all relative ${notifMentions ? 'gradient-primary' : 'bg-muted'}`}
+                  >
+                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${notifMentions ? 'right-1' : 'left-1'}`} />
+                  </button>
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-xl hover:bg-muted/50 transition-colors">
                   <div>
                     <p className="text-sm font-medium text-foreground">Sounds</p>
                     <p className="text-xs text-muted-foreground">Play sounds for notifications</p>
                   </div>
-                  <div className="w-10 h-6 rounded-full transition-all gradient-primary relative">
-                    <div className="absolute top-1 right-1 w-4 h-4 bg-white rounded-full" />
-                  </div>
+                  <button
+                    onClick={handleToggleNotifSounds}
+                    className={`w-10 h-6 rounded-full transition-all relative ${notifSounds ? 'gradient-primary' : 'bg-muted'}`}
+                  >
+                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${notifSounds ? 'right-1' : 'left-1'}`} />
+                  </button>
                 </div>
 
                 {/* Divider */}
@@ -1337,6 +1343,28 @@ export default function ProfileContent() {
                     className={`w-10 h-6 rounded-full transition-all relative flex-shrink-0 ${notifSecureChats ? 'gradient-primary' : 'bg-muted'}`}
                   >
                     <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${notifSecureChats ? 'right-1' : 'left-1'}`} />
+                  </button>
+                </div>
+
+                {/* Divider */}
+                <div className="h-px bg-border my-1" />
+
+                {/* Email Marketing Opt-In */}
+                <div className="flex items-center justify-between p-3 rounded-xl hover:bg-muted/50 transition-colors">
+                  <div className="flex-1 pr-4">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <Mail size={14} className="text-muted-foreground" />
+                      <p className="text-sm font-medium text-foreground">Product & Marketing Emails</p>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Announcements, tips and product updates. Security emails (verification, password reset) are always sent.
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleToggleEmailMarketing}
+                    className={`w-10 h-6 rounded-full transition-all relative flex-shrink-0 ${emailMarketingOptIn ? 'gradient-primary' : 'bg-muted'}`}
+                  >
+                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${emailMarketingOptIn ? 'right-1' : 'left-1'}`} />
                   </button>
                 </div>
               </div>
