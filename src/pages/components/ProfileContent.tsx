@@ -425,9 +425,9 @@ export default function ProfileContent() {
     if (!key) return false;
     // Supabase auth tokens
     if (key.startsWith('sb-') || key.startsWith('supabase.')) return true;
-    // VibTribe local state — includes vt_pin_*, vt_bio_*, vt_nickname_*, vt_notif_prefs_*, etc.
-    // All E2E PIN material (PIN hash, biometric credentials, last-verified timestamps,
-    // chat nicknames used as part of the secure vault) lives under the `vt_` prefix.
+    // VibTribe local state — includes vt_pin_*, vt_nickname_*, vt_notif_prefs_*, etc.
+    // All E2E PIN material (PIN hash, last-verified timestamps, chat nicknames used
+    // as part of the secure vault) lives under the `vt_` prefix.
     if (key.startsWith('vt_')) return true;
     return false;
   };
