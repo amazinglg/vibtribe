@@ -1552,6 +1552,7 @@ export default function ChatWindowPanel() {
                   )}
                 </div>
               </div>
+              </React.Fragment>
             );
           })
         )}
