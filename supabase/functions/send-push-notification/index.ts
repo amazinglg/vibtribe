@@ -108,8 +108,14 @@ serve(async (req) => {
         sent += 1;
       } catch (error: any) {
         const status = error?.statusCode;
-        if (status === 404 || status === 410) expired.push(sub.endpoint);
-        else failed.push({ endpoint: sub.endpoint, status, message: error?.body || error?.message });
+        const bodyMsg = String(error?.body || error?.message || '');
+        // 404/410 → endpoint gone. 403 BadJwtToken (Apple) → subscription was created
+        // with a different VAPID key; treat as stale so the client re-subscribes.
+        if (status === 404 || status === 410 || (status === 403 && /BadJwtToken|VapidPkHashMismatch/i.test(bodyMsg))) {
+          expired.push(sub.endpoint);
+        } else {
+          failed.push({ endpoint: sub.endpoint, status, message: bodyMsg });
+        }
       }
     }));
 
