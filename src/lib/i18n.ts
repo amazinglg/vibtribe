@@ -107,6 +107,75 @@ const en = {
   'profile.language.title': 'Change Language',
   'profile.language.desc': 'Pick your preferred app language. Your choice is saved on this device.',
   'profile.language.saved': 'Language updated',
+
+  // nav + topbar
+  'nav.chats': 'Chats',
+  'nav.status': 'Status',
+  'nav.profile': 'Profile',
+  'nav.messages': 'Messages',
+  'nav.admin': 'Admin',
+  'top.secured': 'Secured',
+  'top.online': 'Online',
+  'top.signOut': 'Sign Out',
+  'top.adminPanel': 'Admin Panel',
+  'top.securedChats': 'Secured Chats',
+
+  // chat list
+  'chatlist.search': 'Search conversations...',
+  'chatlist.tab.all': 'All',
+  'chatlist.tab.unread': 'Unread',
+  'chatlist.tab.groups': 'Groups',
+  'chatlist.tab.contacts': 'Contacts',
+  'chatlist.newChat': 'New Chat',
+  'chatlist.newGroup': 'Create New Group',
+  'chatlist.empty.title': 'No conversations yet',
+  'chatlist.empty.subtitle': 'Tap "New Chat" to start',
+  'chatlist.allowContacts': 'Allow contacts access',
+  'chatlist.contactsDenied': 'Contacts access denied',
+  'chatlist.searchContacts': 'Search contacts...',
+
+  // chat window
+  'chat.selectConversation': 'Select a conversation',
+  'chat.selectConversation.sub': 'Pick a chat from the list to start messaging',
+  'chat.type': 'Type a message...',
+  'chat.typeEncrypted': '🔒 Encrypted message...',
+  'chat.e2eBanner': 'Messages are end-to-end encrypted · Tap to learn more',
+  'chat.back': 'Back to chats',
+  'chat.voiceCall': 'Voice Call',
+  'chat.videoCall': 'Video Call',
+  'chat.more': 'More options',
+  'chat.unblock': 'Unblock',
+
+  // contacts panel
+  'contacts.title': 'Contacts',
+  'contacts.subtitle': 'Find friends on VibTribe',
+  'contacts.find': 'Find Your Contacts',
+  'contacts.denied': 'Access Denied',
+  'contacts.search': 'Search contacts...',
+  'contacts.onVibtribe': 'On VibTribe',
+  'contacts.notOnVibtribe': 'Not on VibTribe yet',
+  'contacts.none': 'No contacts found',
+
+  // status
+  'status.new': 'New status',
+  'status.caption': 'Add a caption…',
+  'status.active': 'Active',
+  'status.my': 'My Status',
+  'status.empty': 'No status updates',
+  'status.text': 'Text Status',
+  'status.placeholder': "What's on your mind?",
+
+  // profile tabs
+  'profile.tab.account': 'Account',
+  'profile.tab.privacy': 'Privacy',
+  'profile.tab.notifications': 'Notifications',
+  'profile.tab.devices': 'Devices',
+  'profile.tab.themes': 'Themes',
+  'profile.tab.blocked': 'Blocked Users',
+  'profile.tab.more': 'More',
+
+  // misc
+  'app.loading': 'Loading VibTribe...',
 };
 
 const hi: typeof en = {
