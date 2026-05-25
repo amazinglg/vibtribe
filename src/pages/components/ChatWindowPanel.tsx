@@ -520,12 +520,13 @@ export default function ChatWindowPanel() {
             showAvatar = !!theyHaveUs;
           }
 
+          const isReallyOnline = !!(otherUser.is_online && (otherUser as any).last_seen && (Date.now() - new Date((otherUser as any).last_seen).getTime()) < 2 * 60 * 1000);
           setContact({
             name: displayName,
             avatar: displayName[0]?.toUpperCase() || 'U',
             avatarUrl: showAvatar ? (otherUser as any).avatar_url || null : null,
-            online: otherUser.is_online || false,
-            lastSeen: otherUser.is_online ? 'Online' : 'Last seen recently',
+            online: isReallyOnline,
+            lastSeen: isReallyOnline ? 'Online' : 'Last seen recently',
             publicKey: otherUser.public_key || undefined,
             userId: otherUserId,
             isContact: !!existingContact,
