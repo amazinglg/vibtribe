@@ -357,17 +357,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
           <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 glass rounded-full text-xs text-vt-green font-medium">
             <Wifi size={12} />
-            <span>Online</span>
+            <span>{t('top.online')}</span>
           </div>
 
           {/* 🔒 Secure Chats Button */}
           <button
             onClick={() => setSecureVaultOpen(true)}
             className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 gradient-primary text-white rounded-xl border border-primary/60 shadow-md glow-primary hover:opacity-90 transition-all duration-200 group"
-            title="Secured Chats"
+            title={t('top.securedChats')}
           >
             <Lock size={16} className="group-hover:animate-pulse" />
-            <span className="hidden md:inline text-xs font-semibold">Secured</span>
+            <span className="hidden md:inline text-xs font-semibold">{t('top.secured')}</span>
           </button>
 
           {/* Help — inline next to Secure */}
@@ -378,7 +378,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <Link
               to="/admin"
               className="p-2 sm:p-2.5 glass rounded-xl text-vt-amber hover:bg-vt-amber/10 transition-all"
-              title="Admin Panel"
+              title={t('top.adminPanel')}
             >
               <Shield size={18} />
             </Link>
