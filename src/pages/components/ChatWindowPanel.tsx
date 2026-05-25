@@ -1489,24 +1489,6 @@ export default function ChatWindowPanel() {
 
                   <div className={`flex items-center gap-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
                     <span className="text-[10px] text-muted-foreground">{msg.time}</span>
-                    {msg.sentSecure && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toast.info('This message was sent via a private (secured) chat.', {
-                            description: isMe
-                              ? 'You have this chat marked as secure on your side.'
-                              : 'The sender has this chat marked as secure on their side.',
-                          });
-                        }}
-                        className={`p-0.5 rounded-full ${isMe ? 'text-white/70 hover:text-white' : 'text-primary hover:text-primary/80'}`}
-                        title="Sent via private chat"
-                        aria-label="Sent via private chat"
-                      >
-                        <Lock size={11} />
-                      </button>
-                    )}
                     {isMe && (
                       msg.status === 'read' ? <CheckCheck size={12} className="text-primary" /> :
                       msg.status === 'delivered' ? <CheckCheck size={12} className="text-muted-foreground" /> :
