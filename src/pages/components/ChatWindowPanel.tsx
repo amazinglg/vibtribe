@@ -1417,13 +1417,17 @@ export default function ChatWindowPanel() {
             // Defensive: never render raw `e2e:` ciphertext
             const safeText = isEncrypted(msg.text) ? '[Encrypted message]' : msg.text;
             // Encrypted-media envelope (text after decryption)
-            let encMedia: { type: 'image'|'file'|'audio'; url: string; mime: string; name?: string } | null = null;
+            let encMedia: { type: 'image'|'file'|'audio'|'video'; url: string; mime: string; name?: string } | null = null;
             if (typeof safeText === 'string' && safeText.startsWith('__media__:')) {
               try { encMedia = JSON.parse(safeText.slice('__media__:'.length)); } catch {}
             }
+            // Back-compat: legacy messages stored video as type 'image' or 'file'.
+            if (encMedia && encMedia.mime?.startsWith('video/') && encMedia.type !== 'video') {
+              encMedia.type = 'video';
+            }
             const isRemovedStickerMsg = typeof safeText === 'string' && safeText.startsWith('[STICKER:');
             const displayText = encMedia
-              ? (encMedia.type === 'image' ? '📷 Photo' : encMedia.type === 'audio' ? '🎵 Audio' : `📎 ${encMedia.name || 'File'}`)
+              ? (encMedia.type === 'image' ? '📷 Photo' : encMedia.type === 'video' ? '🎥 Video' : encMedia.type === 'audio' ? '🎵 Audio' : `📎 ${encMedia.name || 'File'}`)
               : isImageMsg
               ? '📷 Image'
               : isFileMsg
