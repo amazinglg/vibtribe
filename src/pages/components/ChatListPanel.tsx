@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { decryptMessage, isEncrypted } from '@/lib/encryption';
 import { BROADCAST_CHAT_ID } from './BroadcastChatPanel';
+import { useT } from '@/contexts/LanguageContext';
 const BROADCAST_LOGO = '/assets/images/app_logo.png';
 
 interface Chat {
@@ -32,6 +33,7 @@ interface Chat {
 }
 
 export default function ChatListPanel() {
+  const { t } = useT();
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'groups' | 'contacts'>('all');
   const [secureModalOpen, setSecureModalOpen] = useState(false);
