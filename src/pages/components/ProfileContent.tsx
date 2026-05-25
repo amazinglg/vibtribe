@@ -14,6 +14,16 @@ import { useTheme, APP_THEMES, ThemeId } from '@/contexts/ThemeContext';
 import { triggerPwaInstall, isPwaInstallAvailable, isPwaInstalled } from '@/components/PWAInstallBanner';
 import { usePermissions } from '@/hooks/usePermissions';
 import EncryptionPinModal from '@/components/EncryptionPinModal';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 type Tab = 'account' | 'privacy' | 'notifications' | 'devices' | 'themes' | 'blocked' | 'more';
 
@@ -409,60 +419,153 @@ export default function ProfileContent() {
     } catch {}
   };
 
-  const handleUpdateApp = async () => {
-    // Background update — never blank the UI. We silently check for a new
-    // service worker / cached assets, and only reload AFTER the new version
-    // is installed and ready. The user can keep using the app meanwhile.
-    const loadingToast = toast.loading('Checking for updates in the background…');
+  // Keys that MUST survive an update wipe — auth session + E2E encryption material.
+  // Anything else in localStorage/sessionStorage is treated as cache and cleared.
+  const isProtectedKey = (key: string): boolean => {
+    if (!key) return false;
+    // Supabase auth tokens
+    if (key.startsWith('sb-') || key.startsWith('supabase.')) return true;
+    // VibTribe local state — includes vt_pin_*, vt_bio_*, vt_nickname_*, vt_notif_prefs_*, etc.
+    // All E2E PIN material (PIN hash, biometric credentials, last-verified timestamps,
+    // chat nicknames used as part of the secure vault) lives under the `vt_` prefix.
+    if (key.startsWith('vt_')) return true;
+    return false;
+  };
+
+  const [updateDialog, setUpdateDialog] = useState<
+    | { open: false }
+    | { open: true; state: 'checking' | 'available' | 'uptodate' | 'applying' | 'error'; message?: string }
+  >({ open: false });
+
+  // Fetch the live index.html and compare a stable fingerprint (hashed asset URLs)
+  // against what's currently loaded. This detects a real new deploy even if the
+  // service worker hasn't picked it up yet.
+  const fetchRemoteFingerprint = async (): Promise<string | null> => {
     try {
-      let didUpdate = false;
+      const res = await fetch('/?__vt_update_check=' + Date.now(), {
+        cache: 'no-store',
+        credentials: 'same-origin',
+      });
+      if (!res.ok) return null;
+      const html = await res.text();
+      // Hashed asset filenames (e.g. /assets/index-abcd1234.js) change on every deploy.
+      const matches = html.match(/\/assets\/[A-Za-z0-9_\-.]+\.(?:js|css)/g) || [];
+      return matches.sort().join('|');
+    } catch {
+      return null;
+    }
+  };
 
+  const getLocalFingerprint = (): string => {
+    const links = Array.from(document.querySelectorAll<HTMLLinkElement>('link[href*="/assets/"]'))
+      .map((l) => new URL(l.href, location.href).pathname);
+    const scripts = Array.from(document.querySelectorAll<HTMLScriptElement>('script[src*="/assets/"]'))
+      .map((s) => new URL(s.src, location.href).pathname);
+    return [...links, ...scripts].sort().join('|');
+  };
+
+  const handleCheckForUpdate = async () => {
+    setUpdateDialog({ open: true, state: 'checking' });
+    try {
+      // Ask any service worker to check for a new version too.
+      let swHasUpdate = false;
       if ('serviceWorker' in navigator) {
-        const registrations = await navigator.serviceWorker.getRegistrations();
-
-        for (const reg of registrations) {
-          // Trigger a fresh check
+        const regs = await navigator.serviceWorker.getRegistrations();
+        for (const reg of regs) {
           await reg.update().catch(() => {});
-
-          // If a new worker is installing, wait for it to become "installed"
-          const installing = reg.installing || reg.waiting;
-          if (installing) {
-            didUpdate = true;
-            await new Promise<void>((resolve) => {
-              const check = () => {
-                if (installing.state === 'installed' || installing.state === 'activated') {
-                  resolve();
-                }
-              };
-              installing.addEventListener('statechange', check);
-              check();
-              // Hard timeout so we never block forever
-              setTimeout(resolve, 8000);
-            });
-            if (reg.waiting) {
-              reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-            }
-          }
-        }
-
-        // Refresh runtime caches in the background (non-blocking, keeps UI alive)
-        if ('caches' in window) {
-          caches.keys().then((names) =>
-            Promise.all(names.map((n) => caches.delete(n)))
-          ).catch(() => {});
+          if (reg.waiting || reg.installing) swHasUpdate = true;
         }
       }
 
-      toast.dismiss(loadingToast);
-      if (didUpdate) {
-        toast.success('Update ready — refreshing now…');
-        setTimeout(() => window.location.reload(), 1000);
+      const [remote, local] = [await fetchRemoteFingerprint(), getLocalFingerprint()];
+      const remoteHasUpdate = remote != null && remote.length > 0 && remote !== local;
+
+      if (swHasUpdate || remoteHasUpdate) {
+        setUpdateDialog({ open: true, state: 'available' });
       } else {
-        toast.success("You're already on the latest version.");
+        setUpdateDialog({ open: true, state: 'uptodate' });
       }
     } catch {
-      toast.dismiss(loadingToast);
-      toast.error('Could not check for updates. Please try again.');
+      setUpdateDialog({ open: true, state: 'error', message: 'Could not check for updates.' });
+    }
+  };
+
+  const applyUpdate = async () => {
+    setUpdateDialog({ open: true, state: 'applying' });
+    try {
+      // 1. Snapshot protected keys (auth session + E2E PIN material).
+      const preservedLocal: Record<string, string> = {};
+      const preservedSession: Record<string, string> = {};
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && isProtectedKey(k)) {
+            const v = localStorage.getItem(k);
+            if (v != null) preservedLocal[k] = v;
+          }
+        }
+        for (let i = 0; i < sessionStorage.length; i++) {
+          const k = sessionStorage.key(i);
+          if (k && isProtectedKey(k)) {
+            const v = sessionStorage.getItem(k);
+            if (v != null) preservedSession[k] = v;
+          }
+        }
+      } catch {}
+
+      // 2. Wipe localStorage / sessionStorage (cache, theme prefs, transient state),
+      //    then restore protected keys so the user stays signed in and keeps their PIN.
+      try { localStorage.clear(); } catch {}
+      try { sessionStorage.clear(); } catch {}
+      try {
+        for (const [k, v] of Object.entries(preservedLocal)) localStorage.setItem(k, v);
+        for (const [k, v] of Object.entries(preservedSession)) sessionStorage.setItem(k, v);
+      } catch {}
+
+      // 3. Clear non-auth cookies on this origin. (Supabase auth uses localStorage,
+      //    so cookies are safe to drop.)
+      try {
+        const cookies = document.cookie ? document.cookie.split(';') : [];
+        for (const c of cookies) {
+          const name = c.split('=')[0].trim();
+          if (!name) continue;
+          const host = location.hostname;
+          const parts = host.split('.');
+          const domains = [host, '.' + host];
+          if (parts.length > 2) domains.push('.' + parts.slice(-2).join('.'));
+          for (const d of domains) {
+            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${d}`;
+          }
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+        }
+      } catch {}
+
+      // 4. Clear ALL Cache Storage entries (service worker caches, runtime caches).
+      try {
+        if ('caches' in window) {
+          const names = await caches.keys();
+          await Promise.all(names.map((n) => caches.delete(n)));
+        }
+      } catch {}
+
+      // 5. Activate any waiting service worker, then unregister all of them so the
+      //    next page load gets the freshest assets directly from the network.
+      try {
+        if ('serviceWorker' in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          for (const reg of regs) {
+            if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+            await reg.unregister().catch(() => {});
+          }
+        }
+      } catch {}
+
+      // 6. Hard reload with a cache-busting query so the browser fetches a fresh index.html.
+      const url = new URL(window.location.href);
+      url.searchParams.set('__vt_updated', String(Date.now()));
+      window.location.replace(url.toString());
+    } catch {
+      setUpdateDialog({ open: true, state: 'error', message: 'Update failed. Please try again.' });
     }
   };
 
@@ -1349,7 +1452,7 @@ export default function ProfileContent() {
                 <p className="text-xs text-muted-foreground mb-4">Clear cached data and update to the latest version without logging out.</p>
                 <div className="flex flex-wrap gap-2">
                   <button
-                    onClick={handleUpdateApp}
+                    onClick={handleCheckForUpdate}
                     className="flex items-center gap-2 px-4 py-2.5 gradient-primary text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-all glow-primary"
                   >
                     <RefreshCw size={14} />
@@ -1589,6 +1692,72 @@ export default function ProfileContent() {
           onSkip={() => setChangePinOpen(false)}
         />
       )}
+      <AlertDialog
+        open={updateDialog.open}
+        onOpenChange={(o) => { if (!o && updateDialog.open && updateDialog.state !== 'applying') setUpdateDialog({ open: false }); }}
+      >
+        <AlertDialogContent>
+          {updateDialog.open && updateDialog.state === 'checking' && (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Checking for updates…</AlertDialogTitle>
+                <AlertDialogDescription>Looking for a newer version of VibTribe.</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+              </AlertDialogFooter>
+            </>
+          )}
+          {updateDialog.open && updateDialog.state === 'uptodate' && (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>You're up to date</AlertDialogTitle>
+                <AlertDialogDescription>VibTribe is already running the latest version.</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogAction onClick={() => setUpdateDialog({ open: false })}>OK</AlertDialogAction>
+              </AlertDialogFooter>
+            </>
+          )}
+          {updateDialog.open && updateDialog.state === 'available' && (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Update available</AlertDialogTitle>
+                <AlertDialogDescription>
+                  A newer version of VibTribe is ready. Tap <strong>Update now</strong> and we'll
+                  clear cached data and reload to the latest version. You'll stay signed in and
+                  your end-to-end encryption PIN will be preserved.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Later</AlertDialogCancel>
+                <AlertDialogAction onClick={applyUpdate}>Update now</AlertDialogAction>
+              </AlertDialogFooter>
+            </>
+          )}
+          {updateDialog.open && updateDialog.state === 'applying' && (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Updating VibTribe…</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Clearing cache and loading the new version. The app will reload in a moment.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+            </>
+          )}
+          {updateDialog.open && updateDialog.state === 'error' && (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Update failed</AlertDialogTitle>
+                <AlertDialogDescription>{updateDialog.message || 'Something went wrong. Please try again.'}</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogAction onClick={() => setUpdateDialog({ open: false })}>Close</AlertDialogAction>
+              </AlertDialogFooter>
+            </>
+          )}
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
