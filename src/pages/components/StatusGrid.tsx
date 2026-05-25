@@ -21,6 +21,7 @@ interface ContactStatus {
 }
 
 export default function StatusGrid() {
+  const { t } = useT();
   const { user } = useAuth();
   const supabase = createClient();
   const [contactStatuses, setContactStatuses] = useState<ContactStatus[]>([]);
