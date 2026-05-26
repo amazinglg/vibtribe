@@ -28,7 +28,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-type Tab = 'account' | 'privacy' | 'notifications' | 'devices' | 'themes' | 'blocked' | 'more';
+type Tab = 'account' | 'privacy' | 'notifications' | 'devices' | 'themes' | 'blocked' | 'support' | 'more';
 
 const COUNTRY_CODES = [
   { name: 'India', code: '+91', flag: '🇮🇳' },
@@ -200,7 +200,7 @@ export default function ProfileContent() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const t = new URLSearchParams(window.location.search).get('tab');
-    const valid: Tab[] = ['account', 'privacy', 'notifications', 'devices', 'themes', 'blocked', 'more'];
+    const valid: Tab[] = ['account', 'privacy', 'notifications', 'devices', 'themes', 'blocked', 'support', 'more'];
     if (t && (valid as string[]).includes(t)) setActiveTab(t as Tab);
   }, []);
 
@@ -345,6 +345,7 @@ export default function ProfileContent() {
     { key: 'devices', label: t('profile.tab.devices'), icon: <Smartphone size={16} /> },
     { key: 'themes', label: t('profile.tab.themes'), icon: <Palette size={16} /> },
     { key: 'blocked', label: t('profile.tab.blocked'), icon: <Ban size={16} /> },
+    { key: 'support', label: 'Support', icon: <HelpCircle size={16} /> },
     { key: 'more', label: t('profile.tab.more'), icon: <HelpCircle size={16} /> },
   ];
 
