@@ -8,9 +8,11 @@ import {
 import AppLogo from '@/components/ui/AppLogo';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useT } from '@/contexts/LanguageContext';
+import ContactFormModal from '@/components/ContactFormModal';
 
 export default function LandingPage() {
   const { t } = useT();
+  const [contactOpen, setContactOpen] = React.useState(false);
 
   return (
     <div className="min-h-screen gradient-bg-page text-foreground overflow-x-hidden relative">
@@ -252,16 +254,14 @@ export default function LandingPage() {
           <h2 className="font-bold text-2xl sm:text-4xl text-foreground mt-2 mb-2">{t('landing.contact.title')}</h2>
           <p className="text-sm text-muted-foreground max-w-lg mx-auto">{t('landing.contact.body')}</p>
         </div>
-        <div className="max-w-xl mx-auto">
-          <div className="glass rounded-2xl border border-border p-5 flex items-start gap-4">
-            <div className="w-11 h-11 rounded-xl gradient-cyan flex items-center justify-center flex-shrink-0 glow-cyan">
-              <MessageCircle size={18} className="text-white" />
-            </div>
-            <div className="min-w-0">
-              <p className="font-semibold text-sm text-foreground">{t('landing.contact.support')}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{t('landing.contact.supportDesc')}</p>
-            </div>
-          </div>
+        <div className="max-w-md mx-auto flex justify-center">
+          <button
+            onClick={() => setContactOpen(true)}
+            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl gradient-primary text-white text-sm font-semibold glow-primary hover:opacity-90 transition-all"
+          >
+            <MessageCircle size={16} />
+            Contact us
+          </button>
         </div>
       </section>
 
@@ -297,6 +297,7 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+      <ContactFormModal open={contactOpen} onClose={() => setContactOpen(false)} external />
     </div>
   );
 }
