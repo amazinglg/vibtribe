@@ -76,6 +76,16 @@
             "name": "View Status",
             "url": "/status-screen",
             "description": "Check 24-hour statuses"
+        },
+        {
+            "name": "Notifications",
+            "url": "/profile-screen?tab=notifications",
+            "description": "Manage notification preferences"
+        },
+        {
+            "name": "My Profile",
+            "url": "/profile-screen",
+            "description": "Open your account & settings"
         }
     ]
 }
