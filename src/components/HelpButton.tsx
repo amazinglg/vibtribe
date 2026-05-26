@@ -54,6 +54,10 @@ export default function HelpButton({ variant = 'floating' }: HelpButtonProps) {
         issue_title: title.trim(),
         issue_description: description.trim(),
         ticket_status: 'open',
+        is_external: !user,
+        username_snapshot: profile?.username || null,
+        mobile_snapshot: profile?.mobile_number || null,
+        country_code_snapshot: profile?.country_code || null,
       });
       if (insertError) throw insertError;
 
