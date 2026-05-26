@@ -238,15 +238,9 @@ export default function LandingPage() {
             <h2 className="font-bold text-2xl sm:text-4xl text-foreground mt-2 mb-4 max-w-2xl">
               {t('landing.about.title')}
             </h2>
-            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed max-w-2xl mb-8">
+            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed max-w-2xl">
               {t('landing.about.body')}
             </p>
-
-            <div className="grid grid-cols-3 gap-3 sm:gap-6">
-              <Stat value="10K+" label={t('landing.about.stat1Label')} />
-              <Stat value="1M+" label={t('landing.about.stat2Label')} />
-              <Stat value="99.9%" label={t('landing.about.stat3Label')} />
-            </div>
           </div>
         </div>
       </section>
@@ -258,19 +252,7 @@ export default function LandingPage() {
           <h2 className="font-bold text-2xl sm:text-4xl text-foreground mt-2 mb-2">{t('landing.contact.title')}</h2>
           <p className="text-sm text-muted-foreground max-w-lg mx-auto">{t('landing.contact.body')}</p>
         </div>
-        <div className="grid sm:grid-cols-2 gap-3 sm:gap-4 max-w-3xl mx-auto">
-          <a
-            href="mailto:support@vibtribe.in"
-            className="group glass rounded-2xl border border-border p-5 flex items-start gap-4 hover:border-primary/40 transition-all"
-          >
-            <div className="w-11 h-11 rounded-xl gradient-primary flex items-center justify-center flex-shrink-0 glow-primary">
-              <Mail size={18} className="text-white" />
-            </div>
-            <div className="min-w-0">
-              <p className="font-semibold text-sm text-foreground">{t('landing.contact.email')}</p>
-              <p className="text-xs text-muted-foreground mt-0.5 truncate group-hover:text-primary transition-colors">support@vibtribe.in</p>
-            </div>
-          </a>
+        <div className="max-w-xl mx-auto">
           <div className="glass rounded-2xl border border-border p-5 flex items-start gap-4">
             <div className="w-11 h-11 rounded-xl gradient-cyan flex items-center justify-center flex-shrink-0 glow-cyan">
               <MessageCircle size={18} className="text-white" />
