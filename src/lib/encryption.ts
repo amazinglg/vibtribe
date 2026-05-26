@@ -240,20 +240,17 @@ async function deriveSharedKey(privateKey: CryptoKey, theirPublicKeyBase64: stri
 
 // Encrypt a message — real E2E (sender's private key + recipient's public key).
 export async function encryptMessage(plaintext: string, theirPublicKeyBase64: string): Promise<string> {
-  try {
-    const { privateKey } = await getOrCreateKeyPair();
-    const sharedKey = await deriveSharedKey(privateKey, theirPublicKeyBase64);
-    const iv = crypto.getRandomValues(new Uint8Array(12));
-    const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, sharedKey, new TextEncoder().encode(plaintext));
-    const combined = new Uint8Array(iv.length + (ct as ArrayBuffer).byteLength);
-    combined.set(iv, 0);
-    combined.set(new Uint8Array(ct as ArrayBuffer), iv.length);
-    return 'e2e:' + bufToB64(combined);
-  } catch {
-    // Fallback: if local key isn't available, send plaintext rather than
-    // failing the send. UI surfaces an unlock prompt elsewhere.
-    return plaintext;
-  }
+  // Strict E2E: never fall back to plaintext. If the local key isn't
+  // unlocked or the recipient's key is missing, the caller MUST block
+  // the send and prompt the user to set up / unlock encryption.
+  const { privateKey } = await getOrCreateKeyPair();
+  const sharedKey = await deriveSharedKey(privateKey, theirPublicKeyBase64);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, sharedKey, new TextEncoder().encode(plaintext));
+  const combined = new Uint8Array(iv.length + (ct as ArrayBuffer).byteLength);
+  combined.set(iv, 0);
+  combined.set(new Uint8Array(ct as ArrayBuffer), iv.length);
+  return 'e2e:' + bufToB64(combined);
 }
 
 // Decrypt a message
