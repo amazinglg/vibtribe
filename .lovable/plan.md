@@ -1,52 +1,72 @@
-# E2E Encryption (PIN-Backed) + Edit/Delete Messages
 
-## Part 1: True E2E Encryption with 6-digit PIN
+Domain `notify.www.vibtribe.in` is now **verified and active** — emails will send. Good news: the 6-digit OTP flow for signup and password reset is already implemented end-to-end (see `src/routes/api/public/auth-otp.ts`, `SignUpPage`, `ForgotPasswordPage`) and the 5-OTP / 24h rate limit already exists via `check_otp_rate_limit`. So this plan focuses on what's missing and your new requirements.
 
-### How it works
-1. **First time setup** — When a signed-in user opens the app and has no encryption key yet, a modal asks them to **set a 6-digit Encryption PIN**.
-2. We generate an ECDH keypair, then derive an AES key from their PIN using PBKDF2 (100k iterations + random salt).
-3. The private key is encrypted with that AES key and uploaded to the database. The public key is also stored.
-4. **New device / cleared cache** — App detects local IndexedDB is empty but DB has an encrypted blob → asks for PIN → decrypts → caches locally.
-5. **Sending a message** — Real ECDH key exchange + AES-GCM encryption. Server only sees ciphertext.
-6. **Existing users** — Auto-migration: on next login, they're prompted to set their PIN. No backend batch needed; their unread/future messages are encrypted from that point. Old plaintext messages stay readable.
+## 1. Verify the OTP flow is live (test path)
 
-### Database changes
-- `user_profiles`: add `encrypted_private_key` (text), `key_salt` (text), `key_iv` (text), `key_setup_completed` (bool)
-- Public key column already exists.
+- Walk through `/sign-up` with a fresh email → confirm 6-digit code email arrives from `noreply@www.vibtribe.in`, code verifies, account is created.
+- No magic-link / confirmation-link flow remains anywhere in the codebase (already removed).
 
-### Files
-- Rewrite `src/lib/encryption.ts` (PIN-derived key wrap, real ECDH/AES-GCM)
-- New `src/components/EncryptionPinModal.tsx` (set / unlock PIN)
-- Wire into `AuthContext` to surface modal on login when needed
+## 2. Email templates — branded with app logo, no unsubscribe on auth
 
-## Part 2: Message Edit / Delete for Sender
+- `otp-code.tsx` and `welcome.tsx` already use the app logo (`https://www.vibtribe.in/icons/icon-192x192.png`). Polish styling to match VibTribe brand (dark accent, rounded card, monospace OTP).
+- **Auth emails already skip the unsubscribe footer** — only transactional emails append it (per `send-transactional-email` route). Will verify and add explicit `purpose: 'auth'` gating on welcome email so the welcome mail also has no unsubscribe (it's account-related, not marketing).
 
-### Long-press menu (own messages only)
-- **Edit** — inline edit; saves new ciphertext, marks `edited_at`
-- **Delete for me** — adds my user_id to `deleted_for[]`, message hidden only for me
-- **Delete for both** — only if message is < 1 hour old; sets `deleted_for_everyone=true`; renders as "🚫 This message was deleted" for everyone
+## 3. Rate limit — 5 OTPs per 24h (already done) + admin reset
 
-### Database changes
-- `messages`: add `edited_at` (timestamptz), `deleted_for_everyone` (bool), `deleted_for` (uuid[] default '{}')
-- New SECURITY DEFINER RPC `delete_message_for_me(_msg_id uuid)` so users can update their own row in `deleted_for` even when they aren't the sender
-- Update messages RLS UPDATE to allow sender to set `deleted_for_everyone` within 1 hour and to update `content`/`edited_at`
+Already enforced server-side via `check_otp_rate_limit` + `issue_email_otp` raising `OTP_RATE_LIMITED`. Adds:
 
-### UI changes (ChatWindowPanel)
-- Long-press (touchstart hold 500ms) + right-click handlers on own message bubbles
-- Context menu component with Edit / Delete-for-me / Delete-for-both
-- Inline edit input
-- Render "This message was deleted" for `deleted_for_everyone`
-- Filter out messages where current user is in `deleted_for`
-- Handle realtime UPDATE for edits and tombstones
+- New SQL function `admin_reset_otp_attempts(_user_id uuid)` — master-admin only, deletes all `email_otp_codes` rows for that user's email in the last 24h, resetting the window.
+- New server function `adminResetOtpAttempts` (auth-protected, checks `has_role(auth.uid(), 'master_admin')`).
+- New button on `AdminUserDetailPage` → "Reset OTP attempts (5 remaining)" — visible only to master admin. Confirms via dialog, calls server fn, toasts success.
+- Keep this completely separate from the existing admin "Reset password" action (which uses `auth.admin.updateUserById`).
 
-## Verification
-1. Apply migration
-2. Sign in as test user → PIN setup modal appears → set PIN → keys generated
-3. Send message → verify DB row content starts with `e2e:` (ciphertext)
-4. Long-press own message → edit, delete-for-me, delete-for-both — verify each behaves correctly
-5. Reload app → PIN unlock prompt → message decrypts back to plaintext in UI
+## 4. Unsubscribe deep link → profile → notification settings
 
-## Honest caveats
-- Lost PIN = lost message history (same tradeoff as Signal/Telegram). Modal will warn.
-- Group chats remain unencrypted (no multi-party key exchange in this iteration).
-- Encrypted media is still not supported — text only in E2E chats.
+- Update unsubscribe email link target from `/unsubscribe?token=…` to `/unsubscribe?token=…&redirect=notifications`.
+- `src/routes/unsubscribe.tsx` after successful unsubscribe:
+  - If PWA installed (detect via `navigator.standalone` / `display-mode: standalone`) → `navigate('/profile-screen?tab=notifications')`.
+  - Else if on web → same in-app navigation (the website is the app).
+- Add `?tab=notifications` query handling in `ProfileScreenPage` / `ProfileContent` to auto-open the Notifications section and scroll to it.
+- Verify all notification toggles (push, chat, status, etc.) are bound to backend state with proper sync (no UI-only toggles).
+
+## 5. Email privacy — only self, admin, master-admin
+
+- Audit `user_profiles` RLS: ensure `real_email` and `email` columns are **not** returned to other users. Add a column-aware policy or a view `public_user_profiles` (no email columns) that other users query instead.
+- Update all components currently selecting `email` / `real_email` from other users (ContactsPanel, ChatWindow, etc.) to use the safe view.
+- "My Profile" / Account page: show the user's own `real_email` (read-only display + "change email" later).
+- Admin user list + `AdminUserDetailPage`: show `real_email` (admins already allowed via RLS).
+
+## 6. Terms & Conditions
+
+- Update `src/components/legal/LegalContent.tsx` to add a section explaining: we store your email address for account recovery, security notifications, and (with consent) product updates; emails are visible only to you and platform administrators.
+
+## 7. Database cleanup — proposed deletions
+
+Will **only delete after you approve**. Candidates flagged as unused:
+
+| Object | Reason |
+|---|---|
+| `public.force_logout_tokens` | Not referenced anywhere in `src/` code. Confirm before drop. |
+| `public.user_secure_chats` | Not referenced anywhere in `src/` code. Confirm before drop. |
+| Old `email_send_log` rows with `template_name = 'magic_link' / 'signup_link'` | Legacy from link-based flow (if any). |
+
+I'll grep the codebase one more time before dropping anything. Tables like `email_otp_codes`, `email_send_log`, `suppressed_emails`, `email_unsubscribe_tokens`, `push_subscriptions`, `support_tickets` are actively used — keep.
+
+## 8. Out of scope for this round (per your instruction)
+
+- Backfilling OTP flow for existing users — only new signups for now, as you asked.
+- Email change flow for existing users.
+
+---
+
+## Technical sketch
+
+- Migration: `admin_reset_otp_attempts` SQL function + RLS check via `has_role`.
+- Migration: optional `public_user_profiles` view + revoke email columns from `authenticated` on base table (keeps admin/self access via policy).
+- New server fn: `src/lib/admin.functions.ts` → `adminResetOtpAttempts`.
+- UI: button in `AdminUserDetailPage`, notifications-tab deep-link in `ProfileScreenPage` + `unsubscribe.tsx` redirect.
+- Template polish: `src/lib/email-templates/otp-code.tsx`, `welcome.tsx`.
+- Legal copy: `src/components/legal/LegalContent.tsx`.
+- DB drops (separate migration, only after your confirm).
+
+Approve and I'll execute end-to-end, then ask you to test a fresh signup.
