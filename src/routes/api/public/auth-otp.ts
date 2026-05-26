@@ -43,6 +43,34 @@ async function enqueueOtpEmail(
   const text = await render(element, { plainText: true })
   const messageId = crypto.randomUUID()
 
+  // The Lovable Email API requires an unsubscribe_token + idempotency_key for any
+  // email NOT routed through the Supabase Auth hook (which is the only source of
+  // run_id). Our OTP flow is a custom server route, so we send as transactional
+  // (still via the high-priority auth_emails queue) and provide both fields.
+  const normalizedTo = to.trim().toLowerCase()
+  let unsubscribeToken: string
+  const { data: existingTok } = await supabase
+    .from('email_unsubscribe_tokens')
+    .select('token, used_at')
+    .eq('email', normalizedTo)
+    .maybeSingle()
+  if (existingTok?.token && !existingTok.used_at) {
+    unsubscribeToken = existingTok.token
+  } else {
+    const bytes = new Uint8Array(32)
+    crypto.getRandomValues(bytes)
+    const fresh = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('')
+    await supabase
+      .from('email_unsubscribe_tokens')
+      .upsert({ token: fresh, email: normalizedTo }, { onConflict: 'email', ignoreDuplicates: true })
+    const { data: stored } = await supabase
+      .from('email_unsubscribe_tokens')
+      .select('token')
+      .eq('email', normalizedTo)
+      .maybeSingle()
+    unsubscribeToken = stored?.token ?? fresh
+  }
+
   await supabase.from('email_send_log').insert({
     message_id: messageId,
     template_name: `otp_${purpose}`,
@@ -60,8 +88,10 @@ async function enqueueOtpEmail(
       subject: subj,
       html,
       text,
-      purpose: 'auth',
+      purpose: 'transactional',
       label: `otp_${purpose}`,
+      idempotency_key: messageId,
+      unsubscribe_token: unsubscribeToken,
       queued_at: new Date().toISOString(),
     },
   })
