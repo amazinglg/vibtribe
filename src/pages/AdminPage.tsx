@@ -46,6 +46,11 @@ interface SupportTicket {
   admin_reply: string | null;
   replied_at: string | null;
   created_at: string;
+  category?: string | null;
+  is_external?: boolean | null;
+  username_snapshot?: string | null;
+  mobile_snapshot?: string | null;
+  country_code_snapshot?: string | null;
 }
 
 const TICKET_STATUS_CONFIG = {
