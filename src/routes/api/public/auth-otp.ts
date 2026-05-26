@@ -298,6 +298,30 @@ export const Route = createFileRoute('/api/public/auth-otp')({
             const subj = typeof welcomeTpl.subject === 'function'
               ? (welcomeTpl.subject as (d: Record<string, any>) => string)({ name: payload.fullName })
               : welcomeTpl.subject
+            // Get/create unsubscribe token (required for transactional purpose)
+            const normalizedTo = payload.email.trim().toLowerCase()
+            let unsubToken: string
+            const { data: existingTok } = await supabase
+              .from('email_unsubscribe_tokens')
+              .select('token, used_at')
+              .eq('email', normalizedTo)
+              .maybeSingle()
+            if (existingTok?.token && !existingTok.used_at) {
+              unsubToken = existingTok.token
+            } else {
+              const bytes = new Uint8Array(32)
+              crypto.getRandomValues(bytes)
+              const fresh = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('')
+              await supabase
+                .from('email_unsubscribe_tokens')
+                .upsert({ token: fresh, email: normalizedTo }, { onConflict: 'email', ignoreDuplicates: true })
+              const { data: stored } = await supabase
+                .from('email_unsubscribe_tokens')
+                .select('token')
+                .eq('email', normalizedTo)
+                .maybeSingle()
+              unsubToken = stored?.token ?? fresh
+            }
             await supabase.from('email_send_log').insert({
               message_id: welcomeId,
               template_name: 'welcome',
@@ -315,6 +339,8 @@ export const Route = createFileRoute('/api/public/auth-otp')({
                 html, text,
                 purpose: 'transactional',
                 label: 'welcome',
+                idempotency_key: welcomeId,
+                unsubscribe_token: unsubToken,
                 queued_at: new Date().toISOString(),
               },
             })
