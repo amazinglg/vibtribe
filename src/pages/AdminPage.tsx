@@ -299,8 +299,8 @@ export default function AdminPage() {
     if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
     setActionLoading(userId);
     try {
-      const { error } = await supabase.rpc('admin_delete_user', { _user_id: userId });
-      if (error) throw error;
+      const { adminDeleteUser } = await import('@/lib/admin-users.functions');
+      await adminDeleteUser({ data: { userId } });
       setUsers(prev => prev.filter(u => u.id !== userId));
       setSelectedUser(null);
       toast.success('User deleted successfully');
