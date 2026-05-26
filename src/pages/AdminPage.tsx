@@ -743,8 +743,10 @@ export default function AdminPage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-0.5">
                             <p className="text-sm font-semibold text-foreground truncate">{ticket.issue_title}</p>
-                            {ticket.is_external && (
-                              <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold bg-vt-amber/20 text-vt-amber flex-shrink-0">EXTERNAL</span>
+                            {ticket.is_external ? (
+                              <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-vt-amber/20 text-vt-amber border border-vt-amber/40 flex-shrink-0">EXTERNAL</span>
+                            ) : (
+                              <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-primary/20 text-primary border border-primary/40 flex-shrink-0">MEMBER</span>
                             )}
                             {!ticket.admin_reply && ticket.ticket_status === 'open' && (
                               <span className="w-2 h-2 bg-blue-400 rounded-full flex-shrink-0" />
@@ -756,9 +758,18 @@ export default function AdminPage() {
                           </p>
                           <p className="text-[10px] text-muted-foreground">{new Date(ticket.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
                         </div>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${cfg.color}`}>
-                          {cfg.label}
-                        </span>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${cfg.color}`}>
+                            {cfg.label}
+                          </span>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(ticket.id); }}
+                            className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-all"
+                            title="Delete ticket permanently"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
                       </div>
                     );
                   })}
