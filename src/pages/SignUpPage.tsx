@@ -257,24 +257,6 @@ export default function SignUpPage() {
 
             <div>
               <label className="block text-sm font-medium text-foreground mb-1.5">
-                {t('auth.username')} <span className="text-red-400">*</span>
-              </label>
-              <div className="relative">
-                <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  type="text"
-                  value={username}
-                  onChange={e => { setUsername(e.target.value.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase()); setError(''); }}
-                  placeholder="your_username"
-                  className="w-full pl-9 pr-4 py-3 bg-input border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all text-sm"
-                  autoComplete="username"
-                />
-              </div>
-              <p className="text-[11px] text-muted-foreground mt-1">{t('auth.usernameHint')}</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1.5">
                 {t('auth.dob')} <span className="text-red-400">*</span>
               </label>
               <div className="relative">
