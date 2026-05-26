@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from '@tanstack/react-router';
 import {
   ShieldCheck, Sparkles, PhoneCall, Lock, Zap, Palette,
-  ArrowRight, Mail, MessageCircle, Check, Github, Twitter, Globe,
+  ArrowRight, MessageCircle, Check, Github, Twitter, Globe,
   Smartphone, Apple, Download, Share2, PlusSquare, Clock,
 } from 'lucide-react';
 import AppLogo from '@/components/ui/AppLogo';
@@ -330,11 +330,3 @@ function FeatureTile({
   );
 }
 
-function Stat({ value, label }: { value: string; label: string }) {
-  return (
-    <div>
-      <p className="text-2xl sm:text-4xl font-extrabold text-gradient-primary">{value}</p>
-      <p className="text-[11px] sm:text-xs text-muted-foreground mt-1">{label}</p>
-    </div>
-  );
-}
