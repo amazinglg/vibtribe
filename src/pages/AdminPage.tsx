@@ -855,8 +855,26 @@ export default function AdminPage() {
 
               <div>
                 <p className="text-xs text-muted-foreground mb-1.5 font-medium">
-                  {selectedTicket.admin_reply ? 'Update Reply' : 'Send Reply'}
+                  Conversation
                 </p>
+                <div className="bg-muted/30 border border-border rounded-xl p-3 max-h-72 overflow-y-auto flex flex-col gap-2 mb-3">
+                  {loadingThread ? (
+                    <p className="text-xs text-muted-foreground text-center py-4">Loading…</p>
+                  ) : threadMessages.length === 0 ? (
+                    <p className="text-xs text-muted-foreground text-center py-4">No replies yet. Send the first message below.</p>
+                  ) : (
+                    threadMessages.map(m => (
+                      <div key={m.id} className={`flex ${m.sender_type === 'admin' ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`max-w-[80%] rounded-2xl px-3 py-2 ${m.sender_type === 'admin' ? 'bg-primary text-white rounded-br-sm' : 'bg-card border border-border text-foreground rounded-bl-sm'}`}>
+                          <p className="text-[10px] font-semibold opacity-80 mb-0.5">{m.sender_type === 'admin' ? (m.sender_name || 'Support') : 'User'}</p>
+                          <p className="text-sm whitespace-pre-wrap break-words">{m.body}</p>
+                          <p className="text-[9px] opacity-60 mt-1">{new Date(m.created_at).toLocaleString()}</p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground mb-1.5 font-medium">Reply to user</p>
                 <textarea
                   value={replyText}
                   onChange={e => setReplyText(e.target.value)}
@@ -864,16 +882,51 @@ export default function AdminPage() {
                   rows={4}
                   className="w-full px-3 py-2.5 bg-input border border-border rounded-xl text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all resize-none"
                 />
+                <div className="mt-2 flex gap-2">
+                  <button
+                    onClick={handleReplyTicket}
+                    disabled={replyLoading || !replyText.trim()}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 gradient-primary text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {replyLoading ? (
+                      <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /><span>Sending...</span></>
+                    ) : (
+                      <><Send size={14} /><span>Send Reply</span></>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setConfirmDeleteId(selectedTicket.id)}
+                    className="flex items-center justify-center gap-2 px-4 py-2.5 bg-red-500/10 border border-red-500/30 text-red-400 text-sm font-semibold rounded-xl hover:bg-red-500/20 transition-all"
+                    title="Delete ticket permanently"
+                  >
+                    <Trash2 size={14} />
+                    <span>Delete</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete confirmation */}
+        {confirmDeleteId && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => setConfirmDeleteId(null)}>
+            <div className="glass-strong rounded-2xl border border-border p-5 max-w-sm w-full" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-red-500/20 rounded-full flex items-center justify-center">
+                  <AlertTriangle size={18} className="text-red-400" />
+                </div>
+                <h3 className="font-bold text-foreground">Delete ticket permanently?</h3>
+              </div>
+              <p className="text-xs text-muted-foreground mb-4">This will permanently remove the ticket and its entire conversation history from the database. This cannot be undone.</p>
+              <div className="flex gap-2">
+                <button onClick={() => setConfirmDeleteId(null)} className="flex-1 py-2 rounded-xl border border-border text-sm font-semibold text-foreground hover:bg-muted">Cancel</button>
                 <button
-                  onClick={handleReplyTicket}
-                  disabled={replyLoading || !replyText.trim()}
-                  className="mt-2 w-full flex items-center justify-center gap-2 px-4 py-2.5 gradient-primary text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => handleDeleteTicket(confirmDeleteId)}
+                  disabled={deletingTicket === confirmDeleteId}
+                  className="flex-1 py-2 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600 disabled:opacity-50"
                 >
-                  {replyLoading ? (
-                    <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /><span>Sending...</span></>
-                  ) : (
-                    <><Send size={14} /><span>Send Reply</span></>
-                  )}
+                  {deletingTicket === confirmDeleteId ? 'Deleting…' : 'Delete forever'}
                 </button>
               </div>
             </div>
