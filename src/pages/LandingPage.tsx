@@ -270,7 +270,6 @@ export default function LandingPage() {
         <div className="rounded-3xl gradient-tri p-[2px]">
           <div className="rounded-[calc(1.5rem-2px)] bg-background/95 backdrop-blur-xl px-6 py-10 sm:p-14 text-center">
             <h2 className="font-bold text-2xl sm:text-4xl text-foreground mb-2">{t('landing.cta.title')}</h2>
-            <p className="text-sm text-muted-foreground mb-6">{t('landing.cta.subtitle')}</p>
             <Link
               to="/sign-up"
               className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl gradient-primary text-white text-sm font-semibold glow-primary hover:opacity-90 transition-all"

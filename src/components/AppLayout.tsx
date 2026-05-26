@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from '@tanstack/react-router';
 import AppLogo from '@/components/ui/AppLogo';
-import { MessageCircle, CircleDot, User, Bell, Shield, Lock, ChevronLeft, ChevronRight, Wifi, LogOut, Search } from 'lucide-react';
+import { MessageCircle, CircleDot, User, Bell, Shield, Lock, ChevronLeft, ChevronRight, LogOut, Search } from 'lucide-react';
 import SecureVaultModal from './SecureVaultModal';
 import { useAuth } from '@/contexts/AuthContext';
 import PWAInstallBanner from './PWAInstallBanner';
@@ -334,11 +334,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
           {/* Global Search Bar */}
           <GlobalSearchBar />
-
-          <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 glass rounded-full text-xs text-vt-green font-medium">
-            <Wifi size={12} />
-            <span>{t('top.online')}</span>
-          </div>
 
           {/* 🔒 Secure Chats Button */}
           <button
