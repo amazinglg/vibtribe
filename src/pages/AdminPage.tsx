@@ -241,40 +241,17 @@ export default function AdminPage() {
     if (!selectedTicket || !replyText.trim()) return;
     setReplyLoading(true);
     try {
+      const body = replyText.trim();
+      const result = await replyFn({ data: { ticketId: selectedTicket.id, body } });
       const now = new Date().toISOString();
-      await supabase.from('support_tickets').update({
-        admin_reply: replyText.trim(),
-        replied_at: now,
-        ticket_status: 'inprocess',
-        updated_at: now,
-      }).eq('id', selectedTicket.id);
-
-      const updated = { ...selectedTicket, admin_reply: replyText.trim(), replied_at: now, ticket_status: 'inprocess' as const };
+      const updated = { ...selectedTicket, admin_reply: body, replied_at: now, ticket_status: 'inprocess' as const };
       setTickets(prev => prev.map(t => t.id === selectedTicket.id ? updated : t));
       setSelectedTicket(updated);
       setReplyText('');
-      // Fire reply email (non-blocking)
-      try {
-        const { data: sess } = await supabase.auth.getSession();
-        const token = sess.session?.access_token;
-        if (token && selectedTicket.email) {
-          await fetch('/lovable/email/transactional/send', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify({
-              templateName: 'ticket-reply',
-              recipientEmail: selectedTicket.email,
-              templateData: {
-                name: selectedTicket.name,
-                ticketTitle: selectedTicket.issue_title,
-                ticketDescription: selectedTicket.issue_description,
-                reply: replyText.trim(),
-              },
-            }),
-          });
-        }
-      } catch (e) { console.error('ticket reply email failed', e); }
-      toast.success('Reply sent and emailed to the user');
+      await loadThread(selectedTicket.id);
+      if (result?.emailQueued) toast.success('Reply sent — email queued to the user');
+      else if (result?.emailError) toast.warning(`Reply saved. Email issue: ${result.emailError}`);
+      else toast.success('Reply sent');
     } catch {
       toast.error('Failed to send reply');
     } finally {
