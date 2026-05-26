@@ -384,6 +384,77 @@ export const Route = createFileRoute('/api/public/auth-otp')({
           return Response.json({ ok: true })
         }
 
+        // SEND VERIFICATION OTP for an existing logged-in user adding/changing email
+        if (payload.action === 'send_verify_existing') {
+          const userId = await getAuthedUserId()
+          if (!userId) return jerr(401, 'Not authenticated')
+
+          // Reject if email already linked to a different account
+          const { data: existingProfile } = await supabase
+            .from('user_profiles')
+            .select('id')
+            .eq('real_email', payload.email)
+            .neq('id', userId)
+            .maybeSingle()
+          if (existingProfile) return jerr(409, 'This email is already linked to another account')
+
+          const { data: remaining } = await supabase.rpc('check_otp_rate_limit', { _email: payload.email })
+          if (typeof remaining === 'number' && remaining <= 0) {
+            return jerr(429, 'Too many code requests. Please try again in 24 hours.')
+          }
+
+          const code = generateCode()
+          const { error: issueErr } = await supabase.rpc('issue_email_otp', {
+            _email: payload.email, _code: code, _purpose: 'signup',
+          })
+          if (issueErr) {
+            if ((issueErr.message || '').includes('OTP_RATE_LIMITED')) {
+              return jerr(429, 'Too many code requests. Please try again in 24 hours.')
+            }
+            return jerr(500, 'Failed to issue code')
+          }
+          // Look up name for personalized email
+          const { data: prof } = await supabase
+            .from('user_profiles')
+            .select('full_name')
+            .eq('id', userId)
+            .maybeSingle()
+          try {
+            await enqueueOtpEmail(supabase, payload.email, code, 'signup', prof?.full_name || undefined)
+          } catch (e: any) {
+            console.error('enqueue verify existing failed', e)
+            return jerr(500, 'Failed to send code')
+          }
+          return Response.json({ ok: true })
+        }
+
+        // VERIFY OTP and attach real_email to the logged-in user's profile
+        if (payload.action === 'verify_existing') {
+          const userId = await getAuthedUserId()
+          if (!userId) return jerr(401, 'Not authenticated')
+
+          const { data: existingProfile } = await supabase
+            .from('user_profiles')
+            .select('id')
+            .eq('real_email', payload.email)
+            .neq('id', userId)
+            .maybeSingle()
+          if (existingProfile) return jerr(409, 'This email is already linked to another account')
+
+          const ok = await supabase.rpc('consume_email_otp', {
+            _email: payload.email, _code: payload.code, _purpose: 'signup',
+          })
+          if (ok.error || ok.data !== true) return jerr(400, 'Invalid or expired code')
+
+          const { error: updErr } = await supabase
+            .from('user_profiles')
+            .update({ real_email: payload.email })
+            .eq('id', userId)
+          if (updErr) return jerr(500, updErr.message || 'Failed to save email')
+
+          return Response.json({ ok: true })
+        }
+
         return jerr(400, 'Unknown action')
       },
     },
