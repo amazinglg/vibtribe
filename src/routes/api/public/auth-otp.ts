@@ -133,7 +133,19 @@ const ResetPwd = z.object({
   newPassword: passwordSchema,
 })
 
-const Body = z.discriminatedUnion('action', [SendSignup, SendReset, CreateAccount, ResetPwd])
+const SendVerifyExisting = z.object({
+  action: z.literal('send_verify_existing'),
+  email: emailSchema,
+})
+const VerifyExisting = z.object({
+  action: z.literal('verify_existing'),
+  email: emailSchema,
+  code: codeSchema,
+})
+
+const Body = z.discriminatedUnion('action', [
+  SendSignup, SendReset, CreateAccount, ResetPwd, SendVerifyExisting, VerifyExisting,
+])
 
 function jerr(status: number, error: string) {
   return Response.json({ error }, { status })
@@ -152,6 +164,16 @@ export const Route = createFileRoute('/api/public/auth-otp')({
         }
 
         const supabase = getAdminClient()
+
+        // Helper: identify the authenticated caller from the Authorization header.
+        async function getAuthedUserId(): Promise<string | null> {
+          const h = request.headers.get('authorization') || request.headers.get('Authorization') || ''
+          const token = h.toLowerCase().startsWith('bearer ') ? h.slice(7).trim() : ''
+          if (!token) return null
+          const { data, error } = await supabase.auth.getUser(token)
+          if (error || !data?.user) return null
+          return data.user.id
+        }
 
         // SEND SIGNUP OTP
         if (payload.action === 'send_signup') {
