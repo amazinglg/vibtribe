@@ -6,6 +6,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import AppLayout from '@/components/AppLayout';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
+import { useServerFn } from '@tanstack/react-start';
+import { replyToTicket, deleteTicket } from '@/lib/support.functions';
 
 interface PlatformUser {
   id: string;
@@ -86,6 +88,50 @@ export default function AdminPage() {
   const [forceLogoutLoading, setForceLogoutLoading] = useState<string | null>(null);
   const [userFilter, setUserFilter] = useState<'all' | 'active' | 'suspended' | 'blocked' | 'admins' | 'online'>('all');
   const [userSort, setUserSort] = useState<'recent' | 'name' | 'lastActive'>('recent');
+
+  // Ticket thread state
+  const [threadMessages, setThreadMessages] = useState<any[]>([]);
+  const [loadingThread, setLoadingThread] = useState(false);
+  const [deletingTicket, setDeletingTicket] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const replyFn = useServerFn(replyToTicket);
+  const deleteFn = useServerFn(deleteTicket);
+
+  const loadThread = async (ticketId: string) => {
+    setLoadingThread(true);
+    try {
+      const { data } = await supabase
+        .from('support_ticket_messages')
+        .select('*')
+        .eq('ticket_id', ticketId)
+        .order('created_at', { ascending: true });
+      setThreadMessages(data || []);
+    } catch {
+      setThreadMessages([]);
+    } finally {
+      setLoadingThread(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedTicket) loadThread(selectedTicket.id);
+    else setThreadMessages([]);
+  }, [selectedTicket?.id]);
+
+  const handleDeleteTicket = async (ticketId: string) => {
+    setDeletingTicket(ticketId);
+    try {
+      await deleteFn({ data: { ticketId } });
+      setTickets(prev => prev.filter(t => t.id !== ticketId));
+      if (selectedTicket?.id === ticketId) setSelectedTicket(null);
+      setConfirmDeleteId(null);
+      toast.success('Ticket permanently deleted');
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to delete ticket');
+    } finally {
+      setDeletingTicket(null);
+    }
+  };
 
   useEffect(() => {
     if (!loading) {
@@ -195,40 +241,17 @@ export default function AdminPage() {
     if (!selectedTicket || !replyText.trim()) return;
     setReplyLoading(true);
     try {
+      const body = replyText.trim();
+      const result = await replyFn({ data: { ticketId: selectedTicket.id, body } });
       const now = new Date().toISOString();
-      await supabase.from('support_tickets').update({
-        admin_reply: replyText.trim(),
-        replied_at: now,
-        ticket_status: 'inprocess',
-        updated_at: now,
-      }).eq('id', selectedTicket.id);
-
-      const updated = { ...selectedTicket, admin_reply: replyText.trim(), replied_at: now, ticket_status: 'inprocess' as const };
+      const updated = { ...selectedTicket, admin_reply: body, replied_at: now, ticket_status: 'inprocess' as const };
       setTickets(prev => prev.map(t => t.id === selectedTicket.id ? updated : t));
       setSelectedTicket(updated);
       setReplyText('');
-      // Fire reply email (non-blocking)
-      try {
-        const { data: sess } = await supabase.auth.getSession();
-        const token = sess.session?.access_token;
-        if (token && selectedTicket.email) {
-          await fetch('/lovable/email/transactional/send', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify({
-              templateName: 'ticket-reply',
-              recipientEmail: selectedTicket.email,
-              templateData: {
-                name: selectedTicket.name,
-                ticketTitle: selectedTicket.issue_title,
-                ticketDescription: selectedTicket.issue_description,
-                reply: replyText.trim(),
-              },
-            }),
-          });
-        }
-      } catch (e) { console.error('ticket reply email failed', e); }
-      toast.success('Reply sent and emailed to the user');
+      await loadThread(selectedTicket.id);
+      if (result?.emailQueued) toast.success('Reply sent — email queued to the user');
+      else if (result?.emailError) toast.warning(`Reply saved. Email issue: ${result.emailError}`);
+      else toast.success('Reply sent');
     } catch {
       toast.error('Failed to send reply');
     } finally {
@@ -720,8 +743,10 @@ export default function AdminPage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-0.5">
                             <p className="text-sm font-semibold text-foreground truncate">{ticket.issue_title}</p>
-                            {ticket.is_external && (
-                              <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold bg-vt-amber/20 text-vt-amber flex-shrink-0">EXTERNAL</span>
+                            {ticket.is_external ? (
+                              <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-vt-amber/20 text-vt-amber border border-vt-amber/40 flex-shrink-0">EXTERNAL</span>
+                            ) : (
+                              <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-primary/20 text-primary border border-primary/40 flex-shrink-0">MEMBER</span>
                             )}
                             {!ticket.admin_reply && ticket.ticket_status === 'open' && (
                               <span className="w-2 h-2 bg-blue-400 rounded-full flex-shrink-0" />
@@ -733,9 +758,18 @@ export default function AdminPage() {
                           </p>
                           <p className="text-[10px] text-muted-foreground">{new Date(ticket.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
                         </div>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${cfg.color}`}>
-                          {cfg.label}
-                        </span>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${cfg.color}`}>
+                            {cfg.label}
+                          </span>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(ticket.id); }}
+                            className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-all"
+                            title="Delete ticket permanently"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
                       </div>
                     );
                   })}
@@ -821,8 +855,26 @@ export default function AdminPage() {
 
               <div>
                 <p className="text-xs text-muted-foreground mb-1.5 font-medium">
-                  {selectedTicket.admin_reply ? 'Update Reply' : 'Send Reply'}
+                  Conversation
                 </p>
+                <div className="bg-muted/30 border border-border rounded-xl p-3 max-h-72 overflow-y-auto flex flex-col gap-2 mb-3">
+                  {loadingThread ? (
+                    <p className="text-xs text-muted-foreground text-center py-4">Loading…</p>
+                  ) : threadMessages.length === 0 ? (
+                    <p className="text-xs text-muted-foreground text-center py-4">No replies yet. Send the first message below.</p>
+                  ) : (
+                    threadMessages.map(m => (
+                      <div key={m.id} className={`flex ${m.sender_type === 'admin' ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`max-w-[80%] rounded-2xl px-3 py-2 ${m.sender_type === 'admin' ? 'bg-primary text-white rounded-br-sm' : 'bg-card border border-border text-foreground rounded-bl-sm'}`}>
+                          <p className="text-[10px] font-semibold opacity-80 mb-0.5">{m.sender_type === 'admin' ? (m.sender_name || 'Support') : 'User'}</p>
+                          <p className="text-sm whitespace-pre-wrap break-words">{m.body}</p>
+                          <p className="text-[9px] opacity-60 mt-1">{new Date(m.created_at).toLocaleString()}</p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground mb-1.5 font-medium">Reply to user</p>
                 <textarea
                   value={replyText}
                   onChange={e => setReplyText(e.target.value)}
@@ -830,16 +882,51 @@ export default function AdminPage() {
                   rows={4}
                   className="w-full px-3 py-2.5 bg-input border border-border rounded-xl text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all resize-none"
                 />
+                <div className="mt-2 flex gap-2">
+                  <button
+                    onClick={handleReplyTicket}
+                    disabled={replyLoading || !replyText.trim()}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 gradient-primary text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {replyLoading ? (
+                      <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /><span>Sending...</span></>
+                    ) : (
+                      <><Send size={14} /><span>Send Reply</span></>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setConfirmDeleteId(selectedTicket.id)}
+                    className="flex items-center justify-center gap-2 px-4 py-2.5 bg-red-500/10 border border-red-500/30 text-red-400 text-sm font-semibold rounded-xl hover:bg-red-500/20 transition-all"
+                    title="Delete ticket permanently"
+                  >
+                    <Trash2 size={14} />
+                    <span>Delete</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete confirmation */}
+        {confirmDeleteId && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => setConfirmDeleteId(null)}>
+            <div className="glass-strong rounded-2xl border border-border p-5 max-w-sm w-full" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-red-500/20 rounded-full flex items-center justify-center">
+                  <AlertTriangle size={18} className="text-red-400" />
+                </div>
+                <h3 className="font-bold text-foreground">Delete ticket permanently?</h3>
+              </div>
+              <p className="text-xs text-muted-foreground mb-4">This will permanently remove the ticket and its entire conversation history from the database. This cannot be undone.</p>
+              <div className="flex gap-2">
+                <button onClick={() => setConfirmDeleteId(null)} className="flex-1 py-2 rounded-xl border border-border text-sm font-semibold text-foreground hover:bg-muted">Cancel</button>
                 <button
-                  onClick={handleReplyTicket}
-                  disabled={replyLoading || !replyText.trim()}
-                  className="mt-2 w-full flex items-center justify-center gap-2 px-4 py-2.5 gradient-primary text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => handleDeleteTicket(confirmDeleteId)}
+                  disabled={deletingTicket === confirmDeleteId}
+                  className="flex-1 py-2 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600 disabled:opacity-50"
                 >
-                  {replyLoading ? (
-                    <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /><span>Sending...</span></>
-                  ) : (
-                    <><Send size={14} /><span>Send Reply</span></>
-                  )}
+                  {deletingTicket === confirmDeleteId ? 'Deleting…' : 'Delete forever'}
                 </button>
               </div>
             </div>
