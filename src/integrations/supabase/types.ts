@@ -664,42 +664,57 @@ export type Database = {
       support_tickets: {
         Row: {
           admin_reply: string | null
+          category: string | null
+          country_code_snapshot: string | null
           created_at: string | null
           email: string
           id: string
+          is_external: boolean
           issue_description: string
           issue_title: string
+          mobile_snapshot: string | null
           name: string
           replied_at: string | null
           ticket_status: Database["public"]["Enums"]["ticket_status"] | null
           updated_at: string | null
           user_id: string | null
+          username_snapshot: string | null
         }
         Insert: {
           admin_reply?: string | null
+          category?: string | null
+          country_code_snapshot?: string | null
           created_at?: string | null
           email: string
           id?: string
+          is_external?: boolean
           issue_description: string
           issue_title: string
+          mobile_snapshot?: string | null
           name: string
           replied_at?: string | null
           ticket_status?: Database["public"]["Enums"]["ticket_status"] | null
           updated_at?: string | null
           user_id?: string | null
+          username_snapshot?: string | null
         }
         Update: {
           admin_reply?: string | null
+          category?: string | null
+          country_code_snapshot?: string | null
           created_at?: string | null
           email?: string
           id?: string
+          is_external?: boolean
           issue_description?: string
           issue_title?: string
+          mobile_snapshot?: string | null
           name?: string
           replied_at?: string | null
           ticket_status?: Database["public"]["Enums"]["ticket_status"] | null
           updated_at?: string | null
           user_id?: string | null
+          username_snapshot?: string | null
         }
         Relationships: [
           {
@@ -1068,6 +1083,10 @@ export type Database = {
         Returns: boolean
       }
       is_master_admin: { Args: never; Returns: boolean }
+      is_mobile_available: {
+        Args: { _country_code: string; _mobile: string }
+        Returns: boolean
+      }
       is_real_email_available: { Args: { _email: string }; Returns: boolean }
       issue_email_otp: {
         Args: { _code: string; _email: string; _purpose: string }

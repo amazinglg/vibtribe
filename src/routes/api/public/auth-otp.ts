@@ -107,6 +107,8 @@ const SendSignup = z.object({
   action: z.literal('send_signup'),
   email: emailSchema,
   name: z.string().trim().max(120).optional(),
+  countryCode: z.string().trim().regex(/^\+\d{1,4}$/).optional(),
+  mobileNumber: z.string().trim().regex(/^\+?\d{7,16}$/).optional(),
 })
 const SendReset = z.object({
   action: z.literal('send_reset'),
@@ -156,6 +158,19 @@ export const Route = createFileRoute('/api/public/auth-otp')({
           // Don't allow signup OTP to an email already linked to an account
           const { data: avail } = await supabase.rpc('is_real_email_available', { _email: payload.email })
           if (avail === false) return jerr(409, 'This email is already linked to an account')
+
+          // If mobile was provided up front, also block duplicate mobile numbers
+          if (payload.countryCode && payload.mobileNumber) {
+            const fullMobile = payload.mobileNumber.startsWith('+')
+              ? payload.mobileNumber
+              : `${payload.countryCode}${payload.mobileNumber}`
+            const mobileLocal = fullMobile.replace(payload.countryCode, '').replace(/\D/g, '')
+            const { data: mobAvail } = await supabase.rpc('is_mobile_available', {
+              _country_code: payload.countryCode,
+              _mobile: mobileLocal,
+            })
+            if (mobAvail === false) return jerr(409, 'This mobile number is already linked to an account')
+          }
 
           // Rate limit: 5 OTP requests per email per rolling 24h
           const { data: remaining } = await supabase.rpc('check_otp_rate_limit', { _email: payload.email })
@@ -226,10 +241,21 @@ export const Route = createFileRoute('/api/public/auth-otp')({
           })
           if (ok.error || ok.data !== true) return jerr(400, 'Invalid or expired code')
 
+          // Defense-in-depth: re-verify email + mobile are still unique
+          const { data: emailAvail } = await supabase.rpc('is_real_email_available', { _email: payload.email })
+          if (emailAvail === false) return jerr(409, 'This email is already linked to an account')
+
           // Build the synthetic auth email from mobile number
           const fullMobile = payload.mobileNumber.startsWith('+')
             ? payload.mobileNumber
             : `${payload.countryCode}${payload.mobileNumber}`
+          const mobileLocal = fullMobile.replace(payload.countryCode, '').replace(/\D/g, '')
+          const { data: mobAvail2 } = await supabase.rpc('is_mobile_available', {
+            _country_code: payload.countryCode,
+            _mobile: mobileLocal,
+          })
+          if (mobAvail2 === false) return jerr(409, 'This mobile number is already linked to an account')
+
           const authEmail = syntheticEmail(fullMobile)
 
           const { data: created, error: createErr } = await supabase.auth.admin.createUser({

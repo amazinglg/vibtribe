@@ -89,7 +89,13 @@ export default function SignUpPage() {
       const res = await fetch('/api/public/auth-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'send_signup', email: email.trim().toLowerCase(), name: fullName.trim() }),
+        body: JSON.stringify({
+          action: 'send_signup',
+          email: email.trim().toLowerCase(),
+          name: fullName.trim(),
+          countryCode,
+          mobileNumber: mobile.replace(/\D/g, '').slice(-10),
+        }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || 'Failed to send verification code');
