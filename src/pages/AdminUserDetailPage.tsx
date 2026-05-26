@@ -127,8 +127,8 @@ export default function AdminUserDetailPage() {
     if (!confirm('Delete this user? Cannot be undone.')) return;
     setActionLoading(true);
     try {
-      const { error } = await supabase.rpc('admin_delete_user', { _user_id: userId });
-      if (error) throw error;
+      const { adminDeleteUser } = await import('@/lib/admin-users.functions');
+      await adminDeleteUser({ data: { userId } });
       toast.success('User deleted');
       navigate({ to: '/admin' });
     } catch (e: any) { toast.error(e.message || 'Failed'); }
