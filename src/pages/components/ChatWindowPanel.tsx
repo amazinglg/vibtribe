@@ -601,6 +601,18 @@ export default function ChatWindowPanel() {
   const sendMessage = async (overrideText?: string) => {
     const raw = overrideText ?? inputText;
     if (!raw.trim() || !selectedChatId || !user) return;
+    // Strict E2E: 1:1 chats require both sides to have set up encryption.
+    if (chatType !== 'group') {
+      if (!contact?.publicKey) {
+        toast.error(`${contact?.name || 'This user'} hasn't enabled encryption yet. Ask them to set up their encryption PIN.`);
+        return;
+      }
+      const ok = await hasLocalPrivateKey();
+      if (!ok) {
+        toast.error('Set up or unlock your encryption PIN to send messages.');
+        return;
+      }
+    }
     let text = raw.trim();
     const tempId = `temp-${Date.now()}`;
     const tempMsg: Message = {
@@ -619,7 +631,7 @@ export default function ChatWindowPanel() {
 
     try {
       let contentToStore = text;
-      if (e2eEnabled && contact?.publicKey) {
+      if (chatType !== 'group' && contact?.publicKey) {
         contentToStore = await encryptMessage(text, contact.publicKey);
       }
 
@@ -652,6 +664,18 @@ export default function ChatWindowPanel() {
 
   const handleFileAttach = async (file: File, type: 'image' | 'file' | 'audio' | 'video') => {
     if (!file || !selectedChatId || !user) return;
+    // Strict E2E: 1:1 chats must encrypt; block if keys are missing.
+    if (chatType !== 'group') {
+      if (!contact?.publicKey) {
+        toast.error(`${contact?.name || 'This user'} hasn't enabled encryption yet.`);
+        return;
+      }
+      const ok = await hasLocalPrivateKey();
+      if (!ok) {
+        toast.error('Set up or unlock your encryption PIN to share files.');
+        return;
+      }
+    }
     setShowAttachMenu(false);
     const tempId = `temp-${Date.now()}`;
     // Auto-detect video files coming through the image picker
@@ -775,11 +799,16 @@ export default function ChatWindowPanel() {
     if (!editingMsg) return;
     const newText = editText.trim();
     if (!newText) { toast.error('Message cannot be empty'); return; }
+    if (chatType !== 'group') {
+      if (!contact?.publicKey) { toast.error('Recipient has no encryption key.'); return; }
+      const ok = await hasLocalPrivateKey();
+      if (!ok) { toast.error('Unlock your encryption PIN to edit messages.'); return; }
+    }
     const msgId = editingMsg.id;
     setEditingMsg(null);
     try {
       let stored = newText;
-      if (e2eEnabled && contact?.publicKey) {
+      if (chatType !== 'group' && contact?.publicKey) {
         stored = await encryptMessage(newText, contact.publicKey);
       }
       const { error } = await supabase.rpc('edit_my_message', { _msg_id: msgId, _new_content: stored });
