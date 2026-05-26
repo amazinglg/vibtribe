@@ -62,8 +62,9 @@ export default function CompleteProfilePage() {
         </div>
 
         <div className="glass-strong rounded-3xl border border-border p-8 shadow-card">
-          <h1 className="font-bold text-2xl text-foreground mb-1">Complete your profile</h1>
-          <p className="text-muted-foreground text-sm mb-6">Add a few details to personalize your VibTribe experience</p>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-primary mb-1">Step 2 of 3</p>
+          <h1 className="font-bold text-2xl text-foreground mb-1">Choose your username</h1>
+          <p className="text-muted-foreground text-sm mb-6">Pick a unique handle for your VibTribe profile. Next you'll set your 6-digit end-to-end encryption passcode.</p>
 
           {/* Avatar placeholder */}
           <div className="flex justify-center mb-6">
@@ -129,7 +130,7 @@ export default function CompleteProfilePage() {
             </button>
 
             <p className="text-center text-[11px] text-muted-foreground pt-1">
-              Username is required to continue
+              Next: set your 6-digit end-to-end encryption passcode
             </p>
           </form>
         </div>
