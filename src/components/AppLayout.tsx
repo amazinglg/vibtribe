@@ -16,6 +16,7 @@ import { useChatStore } from '@/store/chatStore';
 import CallProvider from '@/components/CallProvider';
 import { createClient } from '@/lib/supabase/client';
 import EncryptionPinModal from '@/components/EncryptionPinModal';
+import EmailVerificationGate from '@/components/EmailVerificationGate';
 import { hasLocalPrivateKey, hasServerKey } from '@/lib/encryption';
 import { useT } from '@/contexts/LanguageContext';
 
@@ -404,6 +405,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           /* No skip — PIN entry is mandatory for setup, new devices, and weekly re-checks */
         />
       )}
+      <EmailVerificationGate />
     </div>
     </CallProvider>
   );
