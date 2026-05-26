@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from '@tanstack/react-router';
 import AppLogo from '@/components/ui/AppLogo';
-import { MessageCircle, CircleDot, User, Bell, Shield, Lock, ChevronLeft, ChevronRight, Wifi, LogOut, Search } from 'lucide-react';
+import { MessageCircle, CircleDot, User, Bell, Shield, Lock, ChevronLeft, ChevronRight, LogOut, Search } from 'lucide-react';
 import SecureVaultModal from './SecureVaultModal';
 import { useAuth } from '@/contexts/AuthContext';
 import PWAInstallBanner from './PWAInstallBanner';
