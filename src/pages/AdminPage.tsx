@@ -6,6 +6,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import AppLayout from '@/components/AppLayout';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
+import { useServerFn } from '@tanstack/react-start';
+import { replyToTicket, deleteTicket } from '@/lib/support.functions';
 
 interface PlatformUser {
   id: string;
@@ -86,6 +88,50 @@ export default function AdminPage() {
   const [forceLogoutLoading, setForceLogoutLoading] = useState<string | null>(null);
   const [userFilter, setUserFilter] = useState<'all' | 'active' | 'suspended' | 'blocked' | 'admins' | 'online'>('all');
   const [userSort, setUserSort] = useState<'recent' | 'name' | 'lastActive'>('recent');
+
+  // Ticket thread state
+  const [threadMessages, setThreadMessages] = useState<any[]>([]);
+  const [loadingThread, setLoadingThread] = useState(false);
+  const [deletingTicket, setDeletingTicket] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const replyFn = useServerFn(replyToTicket);
+  const deleteFn = useServerFn(deleteTicket);
+
+  const loadThread = async (ticketId: string) => {
+    setLoadingThread(true);
+    try {
+      const { data } = await supabase
+        .from('support_ticket_messages')
+        .select('*')
+        .eq('ticket_id', ticketId)
+        .order('created_at', { ascending: true });
+      setThreadMessages(data || []);
+    } catch {
+      setThreadMessages([]);
+    } finally {
+      setLoadingThread(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedTicket) loadThread(selectedTicket.id);
+    else setThreadMessages([]);
+  }, [selectedTicket?.id]);
+
+  const handleDeleteTicket = async (ticketId: string) => {
+    setDeletingTicket(ticketId);
+    try {
+      await deleteFn({ data: { ticketId } });
+      setTickets(prev => prev.filter(t => t.id !== ticketId));
+      if (selectedTicket?.id === ticketId) setSelectedTicket(null);
+      setConfirmDeleteId(null);
+      toast.success('Ticket permanently deleted');
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to delete ticket');
+    } finally {
+      setDeletingTicket(null);
+    }
+  };
 
   useEffect(() => {
     if (!loading) {
