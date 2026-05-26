@@ -720,11 +720,17 @@ export default function AdminPage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-0.5">
                             <p className="text-sm font-semibold text-foreground truncate">{ticket.issue_title}</p>
+                            {ticket.is_external && (
+                              <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold bg-vt-amber/20 text-vt-amber flex-shrink-0">EXTERNAL</span>
+                            )}
                             {!ticket.admin_reply && ticket.ticket_status === 'open' && (
                               <span className="w-2 h-2 bg-blue-400 rounded-full flex-shrink-0" />
                             )}
                           </div>
-                          <p className="text-xs text-muted-foreground truncate">{ticket.name} · {ticket.email}</p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {ticket.name} · {ticket.email}
+                            {ticket.category ? ` · ${ticket.category}` : ''}
+                          </p>
                           <p className="text-[10px] text-muted-foreground">{new Date(ticket.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
                         </div>
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${cfg.color}`}>
@@ -754,8 +760,22 @@ export default function AdminPage() {
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <h3 className="font-bold text-foreground text-base truncate">{selectedTicket.issue_title}</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5 truncate">{selectedTicket.name} · {selectedTicket.email}</p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-bold text-foreground text-base truncate">{selectedTicket.issue_title}</h3>
+                    {selectedTicket.is_external ? (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold bg-vt-amber/20 text-vt-amber">EXTERNAL</span>
+                    ) : (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold bg-primary/20 text-primary">MEMBER</span>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                    {selectedTicket.name} · {selectedTicket.email}
+                    {selectedTicket.username_snapshot ? ` · @${selectedTicket.username_snapshot}` : ''}
+                    {selectedTicket.mobile_snapshot ? ` · ${selectedTicket.country_code_snapshot || ''}${selectedTicket.mobile_snapshot}` : ''}
+                  </p>
+                  {selectedTicket.category && (
+                    <p className="text-[10px] text-primary mt-0.5">Category: {selectedTicket.category}</p>
+                  )}
                   <p className="text-[10px] text-muted-foreground">{new Date(selectedTicket.created_at).toLocaleString()}</p>
                 </div>
                 <button onClick={() => setSelectedTicket(null)} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground transition-colors flex-shrink-0">
