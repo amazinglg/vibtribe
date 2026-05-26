@@ -202,7 +202,28 @@ export default function AdminPage() {
       setTickets(prev => prev.map(t => t.id === selectedTicket.id ? updated : t));
       setSelectedTicket(updated);
       setReplyText('');
-      toast.success('Reply sent successfully');
+      // Fire reply email (non-blocking)
+      try {
+        const { data: sess } = await supabase.auth.getSession();
+        const token = sess.session?.access_token;
+        if (token && selectedTicket.email) {
+          await fetch('/lovable/email/transactional/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({
+              templateName: 'ticket-reply',
+              recipientEmail: selectedTicket.email,
+              templateData: {
+                name: selectedTicket.name,
+                ticketTitle: selectedTicket.issue_title,
+                ticketDescription: selectedTicket.issue_description,
+                reply: replyText.trim(),
+              },
+            }),
+          });
+        }
+      } catch (e) { console.error('ticket reply email failed', e); }
+      toast.success('Reply sent and emailed to the user');
     } catch {
       toast.error('Failed to send reply');
     } finally {
