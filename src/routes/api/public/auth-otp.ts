@@ -88,7 +88,7 @@ const CreateAccount = z.object({
   code: codeSchema,
   password: passwordSchema,
   fullName: z.string().trim().min(1).max(120),
-  username: z.string().trim().regex(/^[a-z0-9_]{3,30}$/),
+  username: z.string().trim().regex(/^[a-z0-9_]{3,30}$/).optional(),
   countryCode: z.string().trim().regex(/^\+\d{1,4}$/),
   mobileNumber: z.string().trim().regex(/^\+?\d{7,16}$/),
   dob: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -211,7 +211,7 @@ export const Route = createFileRoute('/api/public/auth-otp')({
               mobile_number: fullMobile,
               country_code: payload.countryCode,
               avatar_url: payload.avatarUrl || '',
-              username: payload.username,
+              ...(payload.username ? { username: payload.username } : {}),
               dob: payload.dob,
               role: 'user',
             },
@@ -227,7 +227,7 @@ export const Route = createFileRoute('/api/public/auth-otp')({
             .update({
               real_email: payload.email,
               country_code: payload.countryCode,
-              username: payload.username,
+              ...(payload.username ? { username: payload.username } : {}),
               dob: payload.dob,
             })
             .eq('id', created.user.id)
