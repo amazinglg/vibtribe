@@ -36,7 +36,6 @@ export default function LandingPage() {
           </div>
 
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            <LanguageSwitcher variant="pill" className="hidden sm:inline-flex" />
             <Link
               to="/sign-in"
               className="px-2.5 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-semibold text-foreground hover:text-primary transition-colors whitespace-nowrap"
@@ -52,7 +51,7 @@ export default function LandingPage() {
             </Link>
           </div>
         </nav>
-        <div className="sm:hidden px-4 pb-2 flex justify-center">
+        <div className="px-4 pb-2 flex justify-center sm:justify-end sm:max-w-6xl sm:mx-auto sm:pr-6">
           <LanguageSwitcher variant="pill" />
         </div>
       </header>
