@@ -35,24 +35,24 @@ export default function LandingPage() {
             <a href="#contact" className="hover:text-foreground transition-colors">{t('landing.nav.contact')}</a>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <LanguageSwitcher variant="pill" className="hidden sm:inline-flex" />
             <Link
               to="/sign-in"
-              className="px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-semibold text-foreground hover:text-primary transition-colors"
+              className="px-2.5 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-semibold text-foreground hover:text-primary transition-colors whitespace-nowrap"
             >
               {t('landing.nav.login')}
             </Link>
             <Link
               to="/sign-up"
-              className="px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-semibold gradient-primary text-white glow-primary hover:opacity-90 transition-all flex items-center gap-1"
+              className="px-2.5 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-semibold gradient-primary text-white glow-primary hover:opacity-90 transition-all flex items-center gap-1 whitespace-nowrap"
             >
               {t('landing.nav.signup')}
               <ArrowRight size={14} />
             </Link>
           </div>
         </nav>
-        <div className="sm:hidden px-4 pb-2">
+        <div className="sm:hidden px-4 pb-2 flex justify-center">
           <LanguageSwitcher variant="pill" />
         </div>
       </header>
