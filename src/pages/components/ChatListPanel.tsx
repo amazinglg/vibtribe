@@ -619,7 +619,16 @@ export default function ChatListPanel() {
                 key={chat.id}
                 chat={chat}
                 isSelected={selectedChatId === chat.id}
-                onClick={() => setSelectedChatId(chat.id)}
+                onClick={() => {
+                  // Optimistically clear unread on the list as soon as the user
+                  // opens the chat. The ChatWindowPanel separately calls the
+                  // mark_messages_read RPC; this just keeps the list in sync
+                  // without waiting for the realtime UPDATE round-trip.
+                  if (chat.unread > 0) {
+                    setChats(prev => prev.map(c => c.id === chat.id ? { ...c, unread: 0 } : c));
+                  }
+                  setSelectedChatId(chat.id);
+                }}
                 onContextMenu={(e) => {
                   e.preventDefault();
                   if (chat.isBroadcast) return;
