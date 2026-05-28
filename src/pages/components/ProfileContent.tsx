@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Camera, Edit3, Shield, Bell, Lock, Smartphone, LogOut, Key, AlertTriangle, UserCheck, AtSign, Phone, Mail, ChevronDown, Ban, Monitor, RefreshCw, HelpCircle, Palette, Check, Download, Share, X, Copy, ExternalLink, MoreVertical, Trash2 } from 'lucide-react';
+import { Camera, Edit3, Shield, Bell, Lock, Smartphone, LogOut, Key, AlertTriangle, UserCheck, AtSign, Phone, Mail, ChevronDown, Ban, Monitor, RefreshCw, HelpCircle, Palette, Check, Download, Share, X, Copy, ExternalLink, MoreVertical, Trash2, Headphones } from 'lucide-react';
 import { toast } from 'sonner';
 import ImageCropModal from '@/components/ImageCropModal';
 import { useAuth } from '@/contexts/AuthContext';
@@ -345,8 +345,8 @@ export default function ProfileContent() {
     { key: 'devices', label: t('profile.tab.devices'), icon: <Smartphone size={16} /> },
     { key: 'themes', label: t('profile.tab.themes'), icon: <Palette size={16} /> },
     { key: 'blocked', label: t('profile.tab.blocked'), icon: <Ban size={16} /> },
-    { key: 'support', label: 'Support', icon: <HelpCircle size={16} /> },
-    { key: 'more', label: t('profile.tab.more'), icon: <HelpCircle size={16} /> },
+    { key: 'support', label: 'Support', icon: <Headphones size={16} /> },
+    { key: 'more', label: t('profile.tab.more'), icon: <MoreVertical size={16} /> },
   ];
 
   const handleSaveProfile = async () => {
@@ -1535,10 +1535,15 @@ export default function ProfileContent() {
               {/* Help & Support */}
               <div className="glass rounded-2xl border border-border p-5">
                 <h3 className="font-semibold text-base text-foreground mb-1 flex items-center gap-2">
-                  <HelpCircle size={16} className="text-primary" />
+                  <Headphones size={16} className="text-primary" />
                   Help & Support
                 </h3>
                 <p className="text-xs text-muted-foreground mb-4">Having an issue? Submit a ticket and our team will get back to you.</p>
+                <div className="mb-4 flex items-center gap-2 text-xs">
+                  <Mail size={14} className="text-primary" />
+                  <span className="text-muted-foreground">Email us:</span>
+                  <a href="mailto:help.vibtribe.in@gmail.com" className="text-primary font-semibold hover:underline break-all">help.vibtribe.in@gmail.com</a>
+                </div>
                 <HelpButton variant="inline" />
               </div>
 

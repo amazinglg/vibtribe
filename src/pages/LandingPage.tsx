@@ -262,6 +262,12 @@ export default function LandingPage() {
             Contact us
           </button>
         </div>
+        <p className="text-center text-xs text-muted-foreground mt-5">
+          Or email us directly at{' '}
+          <a href="mailto:help.vibtribe.in@gmail.com" className="text-primary font-semibold hover:underline">
+            help.vibtribe.in@gmail.com
+          </a>
+        </p>
       </section>
 
       {/* CTA */}

@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState } from 'react';
-import { HelpCircle, X, Send, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { HelpCircle, X, Send, Loader2, CheckCircle2, AlertCircle, Headphones, Mail } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -114,7 +114,7 @@ export default function HelpButton({ variant = 'floating' }: HelpButtonProps) {
           onClick={handleOpen}
           className="flex items-center gap-2 px-4 py-2 glass border border-border text-sm font-semibold rounded-xl hover:bg-muted transition-all text-foreground"
         >
-          <HelpCircle size={15} className="text-primary" />
+          <Headphones size={15} className="text-primary" />
           Help & Support
         </button>
       )}
@@ -126,7 +126,7 @@ export default function HelpButton({ variant = 'floating' }: HelpButtonProps) {
             <div className="flex items-center justify-between p-5 border-b border-border">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 gradient-primary rounded-xl flex items-center justify-center">
-                  <HelpCircle size={18} className="text-white" />
+                  <Headphones size={18} className="text-white" />
                 </div>
                 <div>
                   <h2 className="font-bold text-foreground text-base">Help & Support</h2>
@@ -139,6 +139,14 @@ export default function HelpButton({ variant = 'floating' }: HelpButtonProps) {
             </div>
 
             <div className="p-5">
+              <a
+                href="mailto:help.vibtribe.in@gmail.com"
+                className="mb-4 flex items-center gap-2 p-3 bg-primary/10 border border-primary/30 rounded-xl text-xs hover:bg-primary/15 transition-all"
+              >
+                <Mail size={14} className="text-primary flex-shrink-0" />
+                <span className="text-muted-foreground">Prefer email?</span>
+                <span className="text-primary font-semibold break-all">help.vibtribe.in@gmail.com</span>
+              </a>
               {success ? (
                 <div className="text-center py-6">
                   <div className="w-16 h-16 bg-vt-green/20 rounded-full flex items-center justify-center mx-auto mb-4">
