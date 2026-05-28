@@ -3,7 +3,7 @@ import { Link } from '@tanstack/react-router';
 import {
   ShieldCheck, Sparkles, PhoneCall, Lock, Zap, Palette,
   ArrowRight, MessageCircle, Check, Github, Twitter, Globe,
-  Smartphone, Apple, Download, Share2, PlusSquare, Clock,
+  Smartphone, Apple, Download, Share2, PlusSquare,
 } from 'lucide-react';
 import AppLogo from '@/components/ui/AppLogo';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
@@ -36,6 +36,15 @@ export default function LandingPage() {
           </div>
 
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <a
+              href="/downloads/vibtribe.apk"
+              download="VibTribe.apk"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold glass border border-primary/40 text-foreground hover:border-primary transition-all whitespace-nowrap"
+              aria-label="Download Android app"
+            >
+              <Download size={14} />
+              Android app
+            </a>
             <Link
               to="/sign-in"
               className="px-2.5 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-semibold text-foreground hover:text-primary transition-colors whitespace-nowrap"
@@ -162,23 +171,22 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-xl bg-vt-amber/10 border border-vt-amber/20">
-                <Clock size={14} className="text-vt-amber flex-shrink-0" />
-                <p className="text-xs text-vt-amber font-medium">APK download coming soon — Google Play launch shortly after.</p>
-              </div>
-
               <ul className="space-y-2 text-sm text-foreground/80 mb-5">
                 <li className="flex items-start gap-2"><Check size={14} className="text-primary mt-0.5 flex-shrink-0" /> Full native performance & push notifications</li>
                 <li className="flex items-start gap-2"><Check size={14} className="text-primary mt-0.5 flex-shrink-0" /> Background calls & message delivery</li>
-                <li className="flex items-start gap-2"><Check size={14} className="text-primary mt-0.5 flex-shrink-0" /> Direct .apk install while we await Play approval</li>
+                <li className="flex items-start gap-2"><Check size={14} className="text-primary mt-0.5 flex-shrink-0" /> Direct .apk install — Google Play launch coming soon</li>
               </ul>
 
-              <button
-                disabled
-                className="w-full px-4 py-3 rounded-2xl bg-muted text-muted-foreground text-sm font-semibold flex items-center justify-center gap-2 cursor-not-allowed"
+              <a
+                href="/downloads/vibtribe.apk"
+                download="VibTribe.apk"
+                className="w-full px-4 py-3 rounded-2xl gradient-primary text-white text-sm font-semibold flex items-center justify-center gap-2 glow-primary hover:opacity-90 transition-all"
               >
-                <Download size={16} /> APK coming soon
-              </button>
+                <Download size={16} /> Download APK
+              </a>
+              <p className="text-[11px] text-muted-foreground mt-2 text-center">
+                Enable "Install from unknown sources" in Android settings if prompted.
+              </p>
             </div>
           </div>
 
