@@ -152,8 +152,10 @@ html {
   -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
   text-size-adjust: 100%;
+  background-color: #070a1b;
 }
 body {
+  background-color: #070a1b;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   -moz-user-select: none;

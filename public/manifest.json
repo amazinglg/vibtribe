@@ -12,6 +12,8 @@
     "background_color": "#070a1b",
     "theme_color": "#070a1b",
     "orientation": "portrait-primary",
+    "navigation_bar_color": "#070a1b",
+    "status_bar_color": "#070a1b",
     "prefer_related_applications": false,
     "related_applications": [],
     "icons": [
