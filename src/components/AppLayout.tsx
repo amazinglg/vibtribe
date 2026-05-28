@@ -392,8 +392,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
         </nav>
 
-        {/* PWA Install Banner */}
-        <PWAInstallBanner />
+        {/* PWA Install Banner removed — native Android app is available for download */}
       </div>
 
       <SecureVaultModal isOpen={secureVaultOpen} onClose={() => setSecureVaultOpen(false)} />
