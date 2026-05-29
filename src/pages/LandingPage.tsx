@@ -36,15 +36,6 @@ export default function LandingPage() {
           </div>
 
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            <a
-              href="/downloads/vibtribe.apk"
-              download="VibTribe.apk"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold glass border border-primary/40 text-foreground hover:border-primary transition-all whitespace-nowrap"
-              aria-label="Download Android app"
-            >
-              <Download size={14} />
-              Android app
-            </a>
             <Link
               to="/sign-in"
               className="px-2.5 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-semibold text-foreground hover:text-primary transition-colors whitespace-nowrap"
@@ -174,19 +165,12 @@ export default function LandingPage() {
               <ul className="space-y-2 text-sm text-foreground/80 mb-5">
                 <li className="flex items-start gap-2"><Check size={14} className="text-primary mt-0.5 flex-shrink-0" /> Full native performance & push notifications</li>
                 <li className="flex items-start gap-2"><Check size={14} className="text-primary mt-0.5 flex-shrink-0" /> Background calls & message delivery</li>
-                <li className="flex items-start gap-2"><Check size={14} className="text-primary mt-0.5 flex-shrink-0" /> Direct .apk install — Google Play launch coming soon</li>
+                <li className="flex items-start gap-2"><Check size={14} className="text-primary mt-0.5 flex-shrink-0" /> Native Android build coming soon</li>
               </ul>
 
-              <a
-                href="/downloads/vibtribe.apk"
-                download="VibTribe.apk"
-                className="w-full px-4 py-3 rounded-2xl gradient-primary text-white text-sm font-semibold flex items-center justify-center gap-2 glow-primary hover:opacity-90 transition-all"
-              >
-                <Download size={16} /> Download APK
-              </a>
-              <p className="text-[11px] text-muted-foreground mt-2 text-center">
-                Enable "Install from unknown sources" in Android settings if prompted.
-              </p>
+              <div className="w-full px-4 py-3 rounded-2xl glass border border-border text-muted-foreground text-sm font-semibold flex items-center justify-center gap-2">
+                <Download size={16} /> Android app coming soon
+              </div>
             </div>
           </div>
 
