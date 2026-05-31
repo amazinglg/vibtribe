@@ -837,13 +837,13 @@ export default function ProfileContent() {
       {/* Tabs + Content */}
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Tab Nav */}
-        <div className="lg:w-56 flex-shrink-0">
-          <div className="glass rounded-2xl border border-border p-2 flex flex-row lg:flex-col gap-1">
+        <div className="lg:w-56 flex-shrink-0 min-w-0">
+          <div className="glass rounded-2xl border border-border p-2 flex flex-row lg:flex-col gap-1 overflow-x-auto lg:overflow-visible scrollbar-thin -mx-1 px-3 lg:mx-0 lg:px-2">
             {TABS.map(tab => (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left ${
+                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left flex-shrink-0 ${
                   activeTab === tab.key ? 'gradient-primary text-white' : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                 }`}
               >
