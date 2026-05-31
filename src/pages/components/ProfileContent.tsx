@@ -821,14 +821,16 @@ export default function ProfileContent() {
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Tab Nav */}
         <div className="lg:w-56 flex-shrink-0 min-w-0">
-          <div className="glass rounded-2xl border border-border p-2 flex flex-row lg:flex-col gap-1 overflow-x-auto lg:overflow-visible scrollbar-thin -mx-1 px-3 lg:mx-0 lg:px-2">
+          <div className="glass rounded-2xl border border-border p-1.5 grid grid-cols-8 gap-0.5 lg:flex lg:flex-col lg:gap-1 lg:p-2">
             {TABS.map(tab => (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left flex-shrink-0 ${
+                className={`flex items-center justify-center lg:justify-start gap-2.5 px-1 py-2 lg:px-3 lg:py-2.5 rounded-xl text-sm font-medium transition-all ${
                   activeTab === tab.key ? 'gradient-primary text-white' : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                 }`}
+                aria-label={tab.label}
+                title={tab.label}
               >
                 {tab.icon}
                 <span className="hidden lg:inline">{tab.label}</span>
