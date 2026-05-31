@@ -1766,15 +1766,15 @@ export default function ProfileContent() {
           {updateDialog.open && updateDialog.state === 'available' && (
             <>
               <AlertDialogHeader>
-                <AlertDialogTitle>Update available</AlertDialogTitle>
+                <AlertDialogTitle>Refresh VibTribe</AlertDialogTitle>
                 <AlertDialogDescription>
-                  A newer version of VibTribe is ready. Tap <strong>Update now</strong> and we'll
-                  clear cached data and reload to the latest version. You'll stay signed in and
-                  your end-to-end encryption PIN will be preserved.
+                  Tap <strong>Update now</strong> to clear cached data and reload the latest
+                  version. You'll stay signed in and your end-to-end encryption PIN will be
+                  preserved.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Later</AlertDialogCancel>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction onClick={applyUpdate}>Update now</AlertDialogAction>
               </AlertDialogFooter>
             </>
