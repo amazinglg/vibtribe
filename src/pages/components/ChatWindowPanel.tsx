@@ -1677,6 +1677,15 @@ export default function ChatWindowPanel() {
         <input
           ref={inputRef}
           type="text"
+          name="chat-message"
+          autoComplete="off"
+          autoCorrect="on"
+          autoCapitalize="sentences"
+          spellCheck={true}
+          data-form-type="other"
+          data-lpignore="true"
+          data-1p-ignore="true"
+          enterKeyHint="send"
           value={inputText}
           onChange={e => setInputText(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()}
