@@ -476,29 +476,12 @@ export default function ProfileContent() {
   };
 
   const handleCheckForUpdate = async () => {
-    setUpdateDialog({ open: true, state: 'checking' });
-    try {
-      // Ask any service worker to check for a new version too.
-      let swHasUpdate = false;
-      if ('serviceWorker' in navigator) {
-        const regs = await navigator.serviceWorker.getRegistrations();
-        for (const reg of regs) {
-          await reg.update().catch(() => {});
-          if (reg.waiting || reg.installing) swHasUpdate = true;
-        }
-      }
-
-      const [remote, local] = [await fetchRemoteFingerprint(), getLocalFingerprint()];
-      const remoteHasUpdate = remote != null && remote.length > 0 && remote !== local;
-
-      if (swHasUpdate || remoteHasUpdate) {
-        setUpdateDialog({ open: true, state: 'available' });
-      } else {
-        setUpdateDialog({ open: true, state: 'uptodate' });
-      }
-    } catch {
-      setUpdateDialog({ open: true, state: 'error', message: 'Could not check for updates.' });
-    }
+    // Fingerprint comparison was unreliable on the production build and could
+    // falsely re-report "update available" right after a successful update.
+    // Instead, treat this button as an explicit cache-reset reload that the
+    // user can confirm. applyUpdate() does the real work (clear caches,
+    // unregister SW, hard reload while preserving auth + E2E PIN).
+    setUpdateDialog({ open: true, state: 'available' });
   };
 
   const applyUpdate = async () => {
