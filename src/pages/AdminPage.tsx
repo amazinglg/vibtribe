@@ -134,12 +134,15 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
-    if (!loading) {
-      if (!user) { router({ to: '/sign-in', replace: true }); return; }
-      if (!isAdmin?.()) { router({ to: '/', replace: true }); return; }
-      loadData();
-    }
-  }, [user, loading]);
+    if (loading) return;
+    if (!user) { router({ to: '/sign-in', replace: true }); return; }
+    // Wait until the profile has finished loading before deciding admin
+    // status — otherwise master admins get bounced to "/" because
+    // isAdmin() reads from a not-yet-populated profile.
+    if (!profile) return;
+    if (!isAdmin?.()) { router({ to: '/', replace: true }); return; }
+    loadData();
+  }, [user, loading, profile]);
 
   useEffect(() => {
     if (activeTab === 'support') loadTickets();
