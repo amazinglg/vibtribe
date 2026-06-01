@@ -146,6 +146,33 @@
   }
 }
 
+/* -----------------------------------------------------------------------
+   Safe-area variables with sensible fallbacks.
+
+   Some Android WebView contexts (including Capacitor without the
+   @capacitor-community/safe-area plugin) resolve env(safe-area-inset-*)
+   to 0, which lets content slide under the status bar / camera cutout /
+   gesture-nav pill. We expose --safe-top / --safe-bottom that combine
+   env() with a guaranteed minimum so the UI never collides with system
+   chrome — even when the WebView lies about insets.
+
+   When running inside a native wrapper we tag <html data-native="..."> in
+   src/lib/native-bridge.ts and raise the floor a little more.
+   ----------------------------------------------------------------------- */
+:root {
+  --safe-top:    max(env(safe-area-inset-top,    0px), 0px);
+  --safe-bottom: max(env(safe-area-inset-bottom, 0px), 0px);
+  --safe-left:   env(safe-area-inset-left,   0px);
+  --safe-right:  env(safe-area-inset-right,  0px);
+}
+html[data-native="capacitor"],
+html[data-native="twa"] {
+  /* Status bar + typical Android notch / camera cutout */
+  --safe-top:    max(env(safe-area-inset-top,    0px), 28px);
+  /* Gesture-nav pill / 3-button nav bar */
+  --safe-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
+}
+
 /* iOS PWA polish — tap highlight, callout, overscroll, text-size adjust,
    and prevent zoom on input focus by enforcing a 16px minimum font-size. */
 html {
