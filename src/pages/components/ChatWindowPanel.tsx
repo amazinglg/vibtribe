@@ -1659,7 +1659,7 @@ export default function ChatWindowPanel() {
       )}
 
       {/* Input Area */}
-      <div className="glass border-t border-border px-2 pt-2 pb-3 mb-2 lg:mb-0 flex items-center gap-1 flex-shrink-0 w-full max-w-full overflow-hidden" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
+      <div className="glass border-t border-border px-2 pt-2 pb-3 mb-2 lg:mb-0 flex items-center gap-1 flex-shrink-0 w-full max-w-full overflow-hidden" style={{ paddingBottom: 'max(0.75rem, var(--safe-bottom))' }}>
         <button
           onClick={(e) => { e.stopPropagation(); setShowAttachMenu(!showAttachMenu); }}
           className={`p-2 rounded-xl transition-all flex-shrink-0 ${showAttachMenu ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
@@ -1840,13 +1840,13 @@ export default function ChatWindowPanel() {
       {enlargeAvatar && contact?.avatarUrl && (
         <div
           className="fixed inset-0 z-[1100] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4"
-          style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1rem)', paddingBottom: 'calc(env(safe-area-inset-bottom) + 1rem)' }}
+          style={{ paddingTop: 'calc(var(--safe-top) + 1rem)', paddingBottom: 'calc(var(--safe-bottom) + 1rem)' }}
           onClick={() => setEnlargeAvatar(false)}
         >
           <button
             onClick={(e) => { e.stopPropagation(); setEnlargeAvatar(false); }}
             className="absolute right-4 p-3 rounded-full bg-white/20 text-white hover:bg-white/30 z-10"
-            style={{ top: 'calc(env(safe-area-inset-top) + 0.75rem)' }}
+            style={{ top: 'calc(var(--safe-top) + 0.75rem)' }}
             aria-label="Close"
           >
             <X size={22} />
@@ -1864,13 +1864,13 @@ export default function ChatWindowPanel() {
       {lightboxUrl && (
         <div
           className="fixed inset-0 z-[1200] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4"
-          style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1rem)', paddingBottom: 'calc(env(safe-area-inset-bottom) + 1rem)' }}
+          style={{ paddingTop: 'calc(var(--safe-top) + 1rem)', paddingBottom: 'calc(var(--safe-bottom) + 1rem)' }}
           onClick={() => setLightboxUrl(null)}
         >
           <button
             onClick={(e) => { e.stopPropagation(); setLightboxUrl(null); }}
             className="absolute right-4 p-3 rounded-full bg-white/20 text-white hover:bg-white/30 z-10"
-            style={{ top: 'calc(env(safe-area-inset-top) + 0.75rem)' }}
+            style={{ top: 'calc(var(--safe-top) + 0.75rem)' }}
             aria-label="Close"
           >
             <X size={22} />

@@ -218,7 +218,7 @@ export default function StatusHero() {
       </div>
       <div
         className="flex-shrink-0 p-3 flex items-center gap-2 bg-black/80 border-t border-white/10"
-        style={{ paddingBottom: 'max(1rem, calc(env(safe-area-inset-bottom) + 5.75rem))' }}
+        style={{ paddingBottom: 'max(1rem, calc(var(--safe-bottom) + 5.75rem))' }}
         onClick={(e) => e.stopPropagation()}
       >
         <input

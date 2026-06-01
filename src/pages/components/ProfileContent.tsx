@@ -1709,7 +1709,7 @@ export default function ProfileContent() {
         typeof document !== 'undefined' && createPortal(
           <div
             className="fixed inset-0 z-[200] bg-black/95 flex items-center justify-center"
-            style={{ padding: 'env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)' }}
+            style={{ padding: 'var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left)' }}
             onClick={() => setAvatarPreviewOpen(false)}
           >
             <button
