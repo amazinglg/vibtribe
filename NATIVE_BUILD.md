@@ -2,6 +2,22 @@
 
 Your PWA at https://www.vibtribe.in is ready to be wrapped as a Trusted Web Activity (TWA) using Bubblewrap and submitted to Google Play.
 
+> ⚠️ **Architecture note.** VibTribe is a server-rendered TanStack Start app
+> on Cloudflare Workers. Capacitor's default model (bundle a static SPA into
+> the APK and load it from `capacitor://localhost`) is **not** compatible
+> with this stack — there is no static `dist/` to ship. The two supported
+> Android paths are:
+>
+> 1. **TWA via Bubblewrap (recommended, documented below).** The APK opens
+>    the live `https://www.vibtribe.in` site in Chrome Custom Tabs. Best
+>    integration with Web APIs, WebCrypto, IndexedDB, push, and Supabase
+>    auth.
+> 2. **Capacitor with remote URL.** A separate Capacitor wrapper project
+>    whose `capacitor.config.ts` sets `server.url = "https://www.vibtribe.in"`
+>    and `server.androidScheme = "https"`. Treat the wrapper as its own repo;
+>    only the safe-area, status-bar, and plugin guidance below applies to
+>    the wrapper, not to this codebase.
+
 ## 1. Install Bubblewrap
 ```bash
 npm i -g @bubblewrap/cli
@@ -58,6 +74,99 @@ Already wired via web-push + VAPID. TWA delegates notification permission to the
 - ✅ Persistent Supabase session (`persistSession: true`) — users stay logged in across app restarts
 - ✅ Visibility-based token refresh — no surprise logouts when Android suspends the app
 - ✅ `.well-known/assetlinks.json` scaffold ready to fill in
+- ✅ `--safe-top` / `--safe-bottom` CSS variables with a 28px / 16px floor
+      so content never slides under the Android status bar or gesture-nav
+      pill — even when the WebView returns 0 for `env(safe-area-inset-*)`
+- ✅ Native wrapper detection (`src/lib/native-bridge.ts`) tags
+      `<html data-native="capacitor|twa">` so CSS opts into stronger insets
+- ✅ WebCrypto / IndexedDB availability check in `src/lib/encryption.ts` —
+      surfaces a clear error if the WebView loaded over http:// instead of
+      throwing a cryptic "Incorrect PIN" message
+
+## 9. Capacitor wrapper checklist (if you use option 2)
+
+These settings live in **your separate Capacitor project**, not in this repo.
+
+```ts
+// capacitor.config.ts (in the wrapper repo)
+import type { CapacitorConfig } from '@capacitor/cli';
+
+const config: CapacitorConfig = {
+  appId: 'in.vibtribe.app',
+  appName: 'VibTribe',
+  webDir: 'www',           // any placeholder; we override with server.url below
+  server: {
+    url: 'https://www.vibtribe.in',
+    androidScheme: 'https', // REQUIRED — WebCrypto & secure cookies need https
+    cleartext: false,
+    allowNavigation: ['*.vibtribe.in', '*.supabase.co', '*.lovable.app'],
+  },
+  android: {
+    allowMixedContent: false,
+    webContentsDebuggingEnabled: false,
+  },
+  plugins: {
+    StatusBar: { style: 'DARK', backgroundColor: '#070a1b', overlaysWebView: false },
+    SplashScreen: { backgroundColor: '#070a1b', launchAutoHide: true },
+  },
+};
+export default config;
+```
+
+Install the plugins the web app expects:
+
+```bash
+npm i @capacitor/core @capacitor/android \
+      @capacitor/status-bar @capacitor/app \
+      @capacitor/preferences @capacitor/push-notifications \
+      @capacitor-community/safe-area
+```
+
+In the wrapper's `MainActivity.java` (or in a small TS bootstrap that runs
+before the WebView loads the remote URL), call:
+
+```ts
+import { StatusBar, Style } from '@capacitor/status-bar';
+import { SafeArea } from '@capacitor-community/safe-area';
+
+await SafeArea.enable({
+  config: { customColorsForSystemBars: true, statusBarColor: '#00000000', navigationBarColor: '#00000000' },
+});
+await StatusBar.setStyle({ style: Style.Dark });
+await StatusBar.setBackgroundColor({ color: '#070a1b' });
+await StatusBar.setOverlaysWebView({ overlay: false });
+```
+
+**Why this matters for VibTribe specifically:**
+- `androidScheme: 'https'` keeps `crypto.subtle` defined → E2E PIN works.
+- Remote `server.url` keeps the WebView origin = `vibtribe.in`, so the
+  Supabase auth session, IndexedDB key cache, and Service Worker registered
+  by the live site continue to work after app restarts.
+- `SafeArea.enable({...})` populates `env(safe-area-inset-*)`. The web
+  app's `--safe-top` / `--safe-bottom` variables (with the 28px / 16px
+  floor we ship) handle the rest.
+- `overlaysWebView: false` keeps the status bar opaque so content can't
+  slide under the camera cutout even if a safe-area plugin call fails.
+
+## 10. Known PWA → Capacitor differences (still web-only by design)
+
+These web APIs do **not** have first-class equivalents inside the WebView.
+The app degrades gracefully but won't be 100% identical:
+
+- **Web Push** (`PushSubscription` / VAPID) does not work in a plain
+  Capacitor WebView. Use `@capacitor/push-notifications` + FCM in the
+  wrapper and forward tokens to the same `push_subscriptions` table.
+  TWA already delegates notification permission to the OS, so push
+  continues to work there with no changes.
+- **`getUserMedia` for video/voice calls** works in both, but on some
+  Android OEM WebViews you must add `<uses-permission android:name="android.permission.RECORD_AUDIO" />`
+  and `CAMERA` to the wrapper's `AndroidManifest.xml`, and implement
+  `onPermissionRequest()` in the WebChromeClient to grant the WebView
+  access.
+- **Service Worker caching** runs inside the WebView for both TWA and
+  Capacitor-with-remote-URL. For fully-bundled Capacitor (option 1 of the
+  un-recommended path) the SW is disabled entirely; you'd need to swap in
+  `@capacitor/preferences` for offline storage.
 
 ## 8. iOS (optional, later)
 TWA is Android-only. For iOS submission use **PWABuilder** (https://www.pwabuilder.com/) → Package for iOS, which produces an Xcode project wrapping the same PWA.

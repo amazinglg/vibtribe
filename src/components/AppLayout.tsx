@@ -318,8 +318,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <header
           className="glass-strong border-b border-border sticky top-0 z-30 flex items-center px-3 sm:px-4 lg:px-6 gap-2 sm:gap-3"
           style={{
-            paddingTop: 'env(safe-area-inset-top)',
-            height: 'calc(64px + env(safe-area-inset-top))',
+            paddingTop: 'var(--safe-top)',
+            height: 'calc(64px + var(--safe-top))',
           }}
         >
           <div className="flex lg:hidden items-center gap-2 min-w-0 flex-shrink">
@@ -367,7 +367,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </main>
 
         {/* Mobile Bottom Nav */}
-        <nav className="lg:hidden fixed bottom-0 left-0 right-0 glass-strong border-t border-border z-40 px-2 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        <nav
+          className="lg:hidden fixed bottom-0 left-0 right-0 glass-strong border-t border-border z-40 px-2 py-2"
+          style={{ paddingBottom: 'max(0.5rem, var(--safe-bottom))' }}
+        >
           <div className="flex items-center justify-around">
             {NAV_ITEMS.map((item) => {
               const Icon = item.icon;

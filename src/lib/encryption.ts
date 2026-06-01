@@ -12,8 +12,31 @@ const DB_NAME = 'vibetribe-keys';
 const DB_VERSION = 1;
 const STORE_NAME = 'keypairs';
 
+/**
+ * Verify the runtime has the crypto primitives we need. Throws a
+ * human-readable error when something is missing — typically inside an
+ * Android WebView served over http:// (Capacitor without
+ * `androidScheme: 'https'`) where `crypto.subtle` is undefined.
+ */
+function assertCryptoAvailable(): void {
+  if (typeof crypto === 'undefined' || !crypto.subtle) {
+    throw new Error(
+      "Secure crypto APIs are unavailable in this WebView. " +
+      "If you're using the Android app, make sure it loads VibTribe over HTTPS " +
+      "(Capacitor: set server.androidScheme = 'https')."
+    );
+  }
+  if (typeof indexedDB === 'undefined') {
+    throw new Error('IndexedDB is unavailable in this WebView — encryption cannot be unlocked.');
+  }
+}
+
 function openKeyDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
+    if (typeof indexedDB === 'undefined') {
+      reject(new Error('IndexedDB is not available'));
+      return;
+    }
     const req = indexedDB.open(DB_NAME, DB_VERSION);
     req.onupgradeneeded = (e) => {
       const db = (e.target as IDBOpenDBRequest).result;
@@ -78,6 +101,7 @@ function b64ToBuf(b64: string): Uint8Array {
 
 // ---------------- PIN -> AES key wrap ----------------
 async function deriveWrapKey(pin: string, salt: Uint8Array): Promise<CryptoKey> {
+  assertCryptoAvailable();
   const baseKey = await crypto.subtle.importKey(
     'raw', new TextEncoder().encode(pin), 'PBKDF2', false, ['deriveKey']
   );

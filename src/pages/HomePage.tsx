@@ -99,8 +99,8 @@ export default function ChatsPage() {
         </div>
       )}
       <div
-        className="gradient-bg-page flex overflow-hidden w-full max-w-full pb-[calc(64px+env(safe-area-inset-bottom))] lg:pb-0"
-        style={{ height: 'calc(100dvh - 64px - env(safe-area-inset-top))' }}
+        className="gradient-bg-page flex overflow-hidden w-full max-w-full pb-[calc(64px+var(--safe-bottom))] lg:pb-0"
+        style={{ height: 'calc(100dvh - 64px - var(--safe-top))' }}
       >
         <div className={`${selectedChatId ? 'hidden lg:flex' : 'flex'} w-full lg:w-auto flex-shrink-0 min-w-0`}>
           <ChatListPanel />

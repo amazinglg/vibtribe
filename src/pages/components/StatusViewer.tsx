@@ -368,7 +368,7 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
 
         {/* Owner viewers panel */}
         {isOwner && showViewers && (
-          <div className="absolute inset-x-0 bottom-0 z-50 max-h-[55%] overflow-y-auto bg-black/90 backdrop-blur-md border-t border-white/15 rounded-t-2xl p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]"
+          <div className="absolute inset-x-0 bottom-0 z-50 max-h-[55%] overflow-y-auto bg-black/90 backdrop-blur-md border-t border-white/15 rounded-t-2xl p-4 pb-[calc(1rem+var(--safe-bottom))]"
                onPointerDown={(e) => e.stopPropagation()}
                onPointerUp={(e) => e.stopPropagation()}
                onClick={(e) => e.stopPropagation()}>

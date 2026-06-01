@@ -12,6 +12,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
+import { useEffect } from "react";
+import { initNativeBridge } from "@/lib/native-bridge";
 
 import appCss from "../styles.css?url";
 
@@ -158,6 +160,10 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  // Tag <html data-native="capacitor|twa|browser"> so CSS safe-area floors
+  // and any native-only behaviour can hook off it.
+  useEffect(() => { initNativeBridge(); }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
