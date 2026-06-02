@@ -165,13 +165,16 @@
   --safe-left:   env(safe-area-inset-left,   0px);
   --safe-right:  env(safe-area-inset-right,  0px);
 }
-html[data-native="capacitor"],
-html[data-native="twa"] {
-  /* Status bar + typical Android notch / camera cutout */
-  --safe-top:    max(env(safe-area-inset-top,    0px), 28px);
-  /* Gesture-nav pill / 3-button nav bar */
-  --safe-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
-}
+/*
+ * Inside a Capacitor / TWA wrapper the WebView is configured with
+ * `StatusBar.overlaysWebView = true` (see capacitor.config.ts) which means
+ * the OS reports the real status-bar / gesture-nav insets via
+ * `env(safe-area-inset-*)`. We therefore rely on those values directly and
+ * deliberately do NOT add a hardcoded floor here — that previously stacked
+ * with the Android-side padding to produce a double gap below the camera
+ * cutout. The browser PWA also resolves env() correctly on iOS notch
+ * devices, so the same rules cover both runtimes.
+ */
 
 /* iOS PWA polish — tap highlight, callout, overscroll, text-size adjust,
    and prevent zoom on input focus by enforcing a 16px minimum font-size. */
