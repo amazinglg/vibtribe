@@ -647,6 +647,7 @@ export default function ChatListPanel() {
                   if (chat.unread > 0) {
                     setChats(prev => prev.map(c => c.id === chat.id ? { ...c, unread: 0 } : c));
                   }
+                  if (chat.isBroadcast) markBroadcastRead();
                   setSelectedChatId(chat.id);
                 }}
                 onContextMenu={(e) => {
