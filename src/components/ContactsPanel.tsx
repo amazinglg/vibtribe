@@ -4,6 +4,7 @@ import { Users, Phone, UserPlus, MessageSquare, X, Share2, Check } from 'lucide-
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useT } from '@/contexts/LanguageContext';
+import { isNativeWrapper, requestNativeContactsPermission } from '@/lib/native-bridge';
 
 interface Contact {
   name: string;
@@ -37,7 +38,31 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
   const requestContacts = async () => {
     setPermissionState('requesting');
     try {
-      // Use Contacts API if available (Android Chrome)
+      // 1) Capacitor native (Android app) — read the real phone address book
+      //    via @capacitor-community/contacts. Requires the runtime permission
+      //    granted in usePermissions / native-bridge.
+      if (isNativeWrapper()) {
+        const granted = await requestNativeContactsPermission();
+        if (granted !== 'granted') {
+          setPermissionState('denied');
+          return;
+        }
+        const { Contacts } = await import('@capacitor-community/contacts');
+        const res = await Contacts.getContacts({
+          projection: { name: true, phones: true, image: true },
+        });
+        // Normalise the plugin's shape to { name, tel } so the existing
+        // matcher below works without changes.
+        const raw = (res?.contacts || []).map((c: any) => ({
+          name: c?.name?.display || [c?.name?.given, c?.name?.family].filter(Boolean).join(' ') || 'Unknown',
+          tel: (c?.phones || []).map((p: any) => p?.number).filter(Boolean),
+        }));
+        setPermissionState('granted');
+        await matchContactsWithPlatform(raw);
+        return;
+      }
+
+      // 2) Web Contacts Picker API (Android Chrome PWA)
       if ('contacts' in navigator && 'ContactsManager' in window) {
         const props = ['name', 'tel'];
         const opts = { multiple: true };
@@ -45,7 +70,7 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
         setPermissionState('granted');
         await matchContactsWithPlatform(rawContacts);
       } else {
-        // Fallback: show manual entry or demo contacts
+        // 3) Fallback — desktop / unsupported browser: show platform users
         setPermissionState('granted');
         await loadDemoContacts();
       }
