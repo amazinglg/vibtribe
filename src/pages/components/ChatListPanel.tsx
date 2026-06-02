@@ -592,6 +592,7 @@ export default function ChatListPanel() {
             {showBroadcastPinned && (
               <div
                 onClick={() => setSelectedChatId(BROADCAST_CHAT_ID)}
+                onClickCapture={markBroadcastRead}
                 className={`relative flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-200 hover:bg-muted/50 ${
                   selectedChatId === BROADCAST_CHAT_ID ? 'bg-primary/10 border-r-2 border-primary' : 'bg-primary/5'
                 }`}
