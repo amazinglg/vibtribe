@@ -420,6 +420,25 @@ export default function ChatListPanel() {
     } catch {}
   };
 
+  // Mark the VibTribe broadcast as read the instant the user opens it.
+  // BroadcastChatPanel also stamps `vt_broadcast_last_read` after its own
+  // load(), but on Android Capacitor that load() occasionally races the
+  // realtime postgres_changes refresh and the unread badge would
+  // reappear after a reload. Stamping here guarantees the badge clears.
+  const markBroadcastRead = () => {
+    try {
+      if (typeof window === 'undefined') return;
+      const ts = broadcastPreview?.created_at || new Date().toISOString();
+      const prev = localStorage.getItem('vt_broadcast_last_read');
+      // Always advance — never move the timestamp backwards.
+      if (!prev || new Date(ts) >= new Date(prev)) {
+        localStorage.setItem('vt_broadcast_last_read', ts);
+      }
+      setBroadcastUnread(0);
+      window.dispatchEvent(new Event('vt-broadcast-read'));
+    } catch {}
+  };
+
   const handleContactStartChat = (chatId: string, name: string) => {
     setSelectedChatId(chatId);
     loadChats();
@@ -573,6 +592,7 @@ export default function ChatListPanel() {
             {showBroadcastPinned && (
               <div
                 onClick={() => setSelectedChatId(BROADCAST_CHAT_ID)}
+                onClickCapture={markBroadcastRead}
                 className={`relative flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-200 hover:bg-muted/50 ${
                   selectedChatId === BROADCAST_CHAT_ID ? 'bg-primary/10 border-r-2 border-primary' : 'bg-primary/5'
                 }`}
@@ -627,6 +647,7 @@ export default function ChatListPanel() {
                   if (chat.unread > 0) {
                     setChats(prev => prev.map(c => c.id === chat.id ? { ...c, unread: 0 } : c));
                   }
+                  if (chat.isBroadcast) markBroadcastRead();
                   setSelectedChatId(chat.id);
                 }}
                 onContextMenu={(e) => {

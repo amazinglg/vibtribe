@@ -39,7 +39,10 @@ const config: CapacitorConfig = {
     StatusBar: {
       style: 'DARK',
       backgroundColor: '#070a1b',
-      overlaysWebView: false,
+      // Let the WebView extend behind the status bar so the page can
+      // resolve the real `env(safe-area-inset-top)` value. The Android
+      // layout no longer adds its own padding (see MainActivity.java).
+      overlaysWebView: true,
     },
     SplashScreen: {
       backgroundColor: '#070a1b',
