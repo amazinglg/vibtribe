@@ -1,4 +1,9 @@
 import { useState, useCallback } from 'react';
+import {
+  isNativeWrapper,
+  requestNativeCameraPermission,
+  requestNativeContactsPermission,
+} from '@/lib/native-bridge';
 
 export type PermissionStatus = 'granted' | 'denied' | 'prompt' | 'unsupported' | 'idle';
 
@@ -51,6 +56,16 @@ export function usePermissions() {
   }, []);
 
   const requestCamera = useCallback(async (): Promise<PermissionRequestResult> => {
+    // Inside Capacitor, fire the native Android camera dialog first so the
+    // OS-level permission is actually granted. The WebView's getUserMedia
+    // call below will then succeed silently.
+    if (isNativeWrapper()) {
+      const native = await requestNativeCameraPermission();
+      if (native !== 'granted') {
+        setPermissions(p => ({ ...p, camera: 'denied' }));
+        return { granted: false, status: 'denied' };
+      }
+    }
     if (!navigator?.mediaDevices?.getUserMedia) {
       setPermissions(p => ({ ...p, camera: 'unsupported' }));
       return { granted: false, status: 'unsupported' };
@@ -69,6 +84,15 @@ export function usePermissions() {
   }, []);
 
   const requestMicAndCamera = useCallback(async (): Promise<PermissionRequestResult> => {
+    if (isNativeWrapper()) {
+      // Trigger the native camera prompt (mic is bundled with getUserMedia
+      // and Android requests RECORD_AUDIO automatically via the WebView).
+      const native = await requestNativeCameraPermission();
+      if (native !== 'granted') {
+        setPermissions(p => ({ ...p, microphone: 'denied', camera: 'denied' }));
+        return { granted: false, status: 'denied' };
+      }
+    }
     if (!navigator?.mediaDevices?.getUserMedia) {
       setPermissions(p => ({ ...p, microphone: 'unsupported', camera: 'unsupported' }));
       return { granted: false, status: 'unsupported' };
@@ -148,5 +172,11 @@ export function usePermissions() {
     requestNotifications,
     requestStorage,
     checkAllPermissions,
+    requestContacts: async (): Promise<PermissionRequestResult> => {
+      // Contacts only exists natively. On the web it's a no-op surface.
+      if (!isNativeWrapper()) return { granted: false, status: 'unsupported' };
+      const status = await requestNativeContactsPermission();
+      return { granted: status === 'granted', status };
+    },
   };
 }
