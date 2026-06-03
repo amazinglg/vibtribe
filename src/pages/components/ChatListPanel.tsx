@@ -824,16 +824,27 @@ function ContactsTabContent({
           setPerm('denied');
           return;
         }
-        const { Contacts } = await import('@capacitor-community/contacts');
-        const res = await Contacts.getContacts({
-          projection: { name: true, phones: true, image: true },
-        });
-        const raw = (res?.contacts || []).map((c: any) => ({
-          name: c?.name?.display || [c?.name?.given, c?.name?.family].filter(Boolean).join(' ') || 'Unknown',
-          tel: (c?.phones || []).map((p: any) => p?.number).filter(Boolean),
-        }));
-        setPerm('granted');
-        await matchContacts(raw);
+        try {
+          const { Contacts } = await import('@capacitor-community/contacts');
+          const res: any = await Contacts.getContacts({
+            projection: { name: true, phones: true },
+          });
+          const raw = (res?.contacts || []).map((c: any) => ({
+            name:
+              c?.name?.display
+              || [c?.name?.given, c?.name?.family].filter(Boolean).join(' ')
+              || 'Unknown',
+            tel: (c?.phones || [])
+              .map((p: any) => (typeof p === 'string' ? p : p?.number))
+              .filter(Boolean),
+          }));
+          setPerm('granted');
+          await matchContacts(raw);
+        } catch (nativeErr) {
+          console.error('[VibTribe] native contacts fetch failed', nativeErr);
+          setPerm('granted');
+          await loadDemo();
+        }
         return;
       }
       // 2) Web Contacts Picker API (Chrome on Android PWA).
@@ -846,43 +857,66 @@ function ContactsTabContent({
         await loadDemo();
       }
     } catch (err: any) {
+      console.error('[VibTribe] requestContacts failed', err);
       if (err?.name === 'SecurityError' || err?.name === 'NotAllowedError') {
         setPerm('denied');
       } else {
         setPerm('granted');
-        await loadDemo();
+        try { await loadDemo(); } catch (e) { console.error('[VibTribe] loadDemo fallback failed', e); }
       }
     }
   };
 
   const matchContacts = async (raw: any[]) => {
     setLoading(true);
-    const normalized: { name: string; phone: string }[] = [];
-    for (const c of raw) {
-      const name = Array.isArray(c.name) ? c.name[0] : c.name || 'Unknown';
-      const phones: string[] = Array.isArray(c.tel) ? c.tel : [c.tel].filter(Boolean);
-      for (const phone of phones) {
-        const clean = phone.replace(/\D/g, '');
-        if (clean.length >= 7) normalized.push({ name, phone: clean });
+    try {
+      const normalized: { name: string; phone: string }[] = [];
+      for (const c of raw) {
+        const name = Array.isArray(c.name) ? c.name[0] : c.name || 'Unknown';
+        const phones: string[] = Array.isArray(c.tel) ? c.tel : [c.tel].filter(Boolean);
+        for (const phone of phones) {
+          const clean = String(phone).replace(/\D/g, '');
+          if (clean.length >= 7) normalized.push({ name: String(name), phone: clean });
+        }
       }
+      // De-dupe phones and chunk the .in() query — Supabase / PostgREST will
+      // reject overly long URLs when the address book has hundreds of
+      // numbers, which previously bubbled up as the root error boundary
+      // ("This page didn't load").
+      const uniquePhones = Array.from(new Set(normalized.map(c => c.phone)));
+      const map = new Map<string, any>();
+      const CHUNK = 100;
+      for (let i = 0; i < uniquePhones.length; i += CHUNK) {
+        const slice = uniquePhones.slice(i, i + CHUNK);
+        try {
+          const { data: platformUsers } = await supabase
+            .from('user_profiles')
+            .select('id, full_name, mobile_number, avatar_url, profile_photo_visibility')
+            .in('mobile_number', slice);
+          for (const u of (platformUsers || [])) {
+            const key = (u as any).mobile_number?.replace(/\D/g, '');
+            if (key) map.set(key, u);
+          }
+        } catch (e) {
+          console.warn('[VibTribe] contact match chunk failed', e);
+        }
+      }
+      setContacts(normalized.map(c => {
+        const m: any = map.get(c.phone);
+        return {
+          name: c.name,
+          phone: c.phone,
+          onPlatform: !!m,
+          userId: m?.id,
+          avatar: m?.full_name?.[0]?.toUpperCase() || c.name?.[0]?.toUpperCase() || 'U',
+          avatarUrl: m && (m.profile_photo_visibility ?? 'all') === 'all' ? (m.avatar_url || null) : null,
+        };
+      }));
+    } catch (e) {
+      console.error('[VibTribe] matchContacts failed', e);
+    } finally {
+      setLoading(false);
     }
-    const { data: platformUsers } = await supabase
-      .from('user_profiles')
-        .select('id, full_name, mobile_number, avatar_url, profile_photo_visibility')
-      .in('mobile_number', normalized.map(c => c.phone));
-    const map = new Map((platformUsers || []).map((u: any) => [u.mobile_number?.replace(/\D/g, ''), u]));
-    setContacts(normalized.map(c => {
-      const m: any = map.get(c.phone);
-      return {
-        name: c.name,
-        phone: c.phone,
-        onPlatform: !!m,
-        userId: m?.id,
-        avatar: m?.full_name?.[0]?.toUpperCase(),
-        avatarUrl: m && (m.profile_photo_visibility ?? 'all') === 'all' ? (m.avatar_url || null) : null,
-      };
-    }));
-    setLoading(false);
   };
 
   const loadDemo = async () => {

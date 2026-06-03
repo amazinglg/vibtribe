@@ -89,12 +89,16 @@ export default function SignInPage() {
 
   return (
     <div
-      className="gradient-bg-page min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
+      className="gradient-bg-page min-h-screen w-full flex flex-col items-center justify-start relative overflow-x-hidden overflow-y-auto px-4"
       style={{
-        paddingTop: 'calc(env(safe-area-inset-top, 0px) + 1rem)',
-        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1rem)',
-        paddingLeft: 'calc(env(safe-area-inset-left, 0px) + 1rem)',
-        paddingRight: 'calc(env(safe-area-inset-right, 0px) + 1rem)',
+        // Use the same --safe-top variable the Chat List header relies on so
+        // the logo can never slide under the camera cutout, regardless of
+        // form height. justify-start (not items-center) prevents flex
+        // overflow from pushing content above the inset on tall forms.
+        paddingTop: 'calc(var(--safe-top) + 1rem)',
+        paddingBottom: 'calc(var(--safe-bottom) + 1rem)',
+        paddingLeft: 'var(--safe-left)',
+        paddingRight: 'var(--safe-right)',
       }}
     >
       {/* Animated background orbs */}
@@ -103,11 +107,14 @@ export default function SignInPage() {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 gradient-pink rounded-full blur-3xl opacity-10 animate-pulse" style={{ animationDelay: '2s' }} />
 
       {/* Top-right language switcher */}
-      <div className="absolute top-3 right-3 z-30">
+      <div
+        className="absolute right-3 z-30"
+        style={{ top: 'calc(var(--safe-top) + 0.75rem)' }}
+      >
         <LanguageSwitcher variant="pill" />
       </div>
 
-      <div className="relative w-full max-w-md float-up">
+      <div className="relative w-full max-w-md float-up my-auto py-4">
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-3">

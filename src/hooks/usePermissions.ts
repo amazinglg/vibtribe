@@ -166,10 +166,27 @@ export function usePermissions() {
   }, []);
 
   const checkAllPermissions = useCallback(async () => {
-    const [mic, cam, notif] = await Promise.all([
+    // On native Android the WebView's navigator.permissions API is decoupled
+    // from the real OS-level POST_NOTIFICATIONS grant — it keeps reporting
+    // 'denied' even after the user grants the system dialog. Read the real
+    // status from the PushNotifications plugin instead.
+    let notif: PermissionStatus;
+    if (isNativeWrapper()) {
+      try {
+        const { PushNotifications } = await import('@capacitor/push-notifications');
+        const perm = await PushNotifications.checkPermissions();
+        notif = perm.receive === 'granted' ? 'granted'
+          : perm.receive === 'denied' ? 'denied'
+          : 'prompt';
+      } catch {
+        notif = await queryPermission('notifications' as PermissionName);
+      }
+    } else {
+      notif = await queryPermission('notifications' as PermissionName);
+    }
+    const [mic, cam] = await Promise.all([
       queryPermission('microphone' as PermissionName),
       queryPermission('camera' as PermissionName),
-      queryPermission('notifications' as PermissionName),
     ]);
     const storagePersisted = navigator?.storage?.persisted
       ? await navigator.storage.persisted().catch(() => false)
