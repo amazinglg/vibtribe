@@ -19,6 +19,7 @@ import EncryptionPinModal from '@/components/EncryptionPinModal';
 import EmailVerificationGate from '@/components/EmailVerificationGate';
 import { hasLocalPrivateKey, hasServerKey } from '@/lib/encryption';
 import { useT } from '@/contexts/LanguageContext';
+import { initNativeBridge, isNativeWrapper, registerNativePushNotifications } from '@/lib/native-bridge';
 
 
 
@@ -51,6 +52,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [notifications, setNotifications] = useState<any[]>([]);
   const supabase = createClient();
   const [pinModal, setPinModal] = useState<null | 'setup' | 'unlock'>(null);
+
+  // Initialise the Capacitor bridge once (status bar, splash, keyboard,
+  // back button, deep links, app resume + network listeners).
+  useEffect(() => { initNativeBridge(); }, []);
+
+  // After login on a native device, register an FCM token so the user can
+  // receive push notifications even when the WebView is asleep.
+  useEffect(() => {
+    if (!user || !isNativeWrapper()) return;
+    registerNativePushNotifications(user.id).catch(() => {});
+  }, [user?.id]);
 
   // After login: check if user needs to set up, unlock, or re-verify E2E encryption.
   // Policy:
