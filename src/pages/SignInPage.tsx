@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useNavigate } from '@tanstack/react-router';
 import { Phone, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
@@ -8,12 +8,25 @@ import HelpButton from '@/components/HelpButton';
 import { createClient } from '@/lib/supabase/client';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useT } from '@/contexts/LanguageContext';
+import { useSafeAreaDebug } from '@/lib/safe-area-debug';
 
 export default function SignInPage() {
   const router = useNavigate();
   const { signIn, signInWithEmail } = useAuth();
   const { t } = useT();
   const supabase = createClient();
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  useSafeAreaDebug('SignIn', () => {
+    const el = wrapperRef.current;
+    if (!el) return { wrapper: null };
+    const cs = getComputedStyle(el);
+    const r = el.getBoundingClientRect();
+    return {
+      wrapperPaddingTop: cs.paddingTop,
+      wrapperPaddingBottom: cs.paddingBottom,
+      wrapperRect: { top: r.top, left: r.left, width: r.width, height: r.height },
+    };
+  });
   const [mobile, setMobile] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
