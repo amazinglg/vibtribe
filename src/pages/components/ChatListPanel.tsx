@@ -991,6 +991,14 @@ function ContactsTabContent({
 
   return (
     <div className="p-4 space-y-4">
+      <button
+        onClick={requestContacts}
+        className="w-full py-2.5 gradient-primary rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-all glow-primary flex items-center justify-center gap-2"
+      >
+        <UserPlus size={16} />
+        {isNativeWrapper() ? 'Sync phone contacts' : 'Import contacts'}
+      </button>
+
       <input
         type="text"
         placeholder="Search contacts..."
