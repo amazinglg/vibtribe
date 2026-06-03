@@ -102,6 +102,7 @@ export default function SignInPage() {
 
   return (
     <div
+      ref={wrapperRef}
       className="gradient-bg-page min-h-screen w-full flex flex-col items-center justify-start relative overflow-x-hidden overflow-y-auto px-4"
       style={{
         // Use the same --safe-top variable the Chat List header relies on so
