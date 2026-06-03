@@ -216,7 +216,7 @@ export async function registerNativePushNotifications(
 
       PushNotifications.addListener('registration', async (token) => {
         try {
-          await supabase.from('fcm_tokens').upsert({
+          await (supabase as unknown as { from: (t: string) => { upsert: (v: unknown, o?: unknown) => Promise<unknown> } }).from('fcm_tokens').upsert({
             user_id: userId,
             token: token.value,
             platform: 'android',
