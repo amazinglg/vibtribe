@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useNavigate } from '@tanstack/react-router';
 import { Phone, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle, User, ChevronDown, Check, Calendar, Mail, ArrowLeft, ShieldCheck } from 'lucide-react';
@@ -7,6 +7,7 @@ import AppLogo from '@/components/ui/AppLogo';
 import { supabase } from '@/integrations/supabase/client';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useT } from '@/contexts/LanguageContext';
+import { useSafeAreaDebug } from '@/lib/safe-area-debug';
 
 const COUNTRY_CODES = [
   { name: 'India', code: '+91', flag: '🇮🇳' },
@@ -34,6 +35,18 @@ const COUNTRY_CODES = [
 export default function SignUpPage() {
   const router = useNavigate();
   const { t } = useT();
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  useSafeAreaDebug('SignUp', () => {
+    const el = wrapperRef.current;
+    if (!el) return { wrapper: null };
+    const cs = getComputedStyle(el);
+    const r = el.getBoundingClientRect();
+    return {
+      wrapperPaddingTop: cs.paddingTop,
+      wrapperPaddingBottom: cs.paddingBottom,
+      wrapperRect: { top: r.top, left: r.left, width: r.width, height: r.height },
+    };
+  });
   const [fullName, setFullName] = useState('');
   const [dob, setDob] = useState('');
   const [countryCode, setCountryCode] = useState('+91');
@@ -165,6 +178,7 @@ export default function SignUpPage() {
 
   return (
     <div
+      ref={wrapperRef}
       className="gradient-bg-page min-h-screen w-full flex flex-col items-center justify-start relative overflow-x-hidden overflow-y-auto px-4"
       style={{
         paddingTop: 'calc(var(--safe-top) + 1rem)',

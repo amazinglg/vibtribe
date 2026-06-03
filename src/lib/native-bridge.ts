@@ -45,6 +45,12 @@ export function initNativeBridge(): 'capacitor' | 'twa' | 'browser' {
       .then(({ StatusBar, Style }) => {
         StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {});
         StatusBar.setStyle({ style: Style.Dark }).catch(() => {});
+        // TEMP DIAGNOSTIC: confirm whether setOverlaysWebView changes the
+        // CSS env(safe-area-inset-top) value on this Android WebView.
+        import('./safe-area-debug').then(({ logSafeArea }) => {
+          logSafeArea('after-setOverlaysWebView');
+          setTimeout(() => logSafeArea('after-setOverlaysWebView+500ms'), 500);
+        }).catch(() => {});
       })
       .catch(() => {});
 
