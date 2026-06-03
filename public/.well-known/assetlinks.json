@@ -8,5 +8,15 @@
         "F6:0C:C5:C5:03:2D:C2:87:0F:53:44:26:80:4D:D2:39:5F:AB:2A:50:57:02:16:3B:51:AB:EA:C4:1B:B1:C9:F3"
       ]
     }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.vibtribe.app",
+      "sha256_cert_fingerprints": [
+        "REPLACE_WITH_YOUR_CAPACITOR_APK_SHA256_FINGERPRINT"
+      ]
+    }
   }
 ]
