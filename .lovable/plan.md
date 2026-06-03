@@ -1,72 +1,83 @@
+## Diagnostic-first plan (no padding changes)
 
-Domain `notify.www.vibtribe.in` is now **verified and active** — emails will send. Good news: the 6-digit OTP flow for signup and password reset is already implemented end-to-end (see `src/routes/api/public/auth-otp.ts`, `SignUpPage`, `ForgotPasswordPage`) and the 5-OTP / 24h rate limit already exists via `check_otp_rate_limit`. So this plan focuses on what's missing and your new requirements.
+### What I already found by reading the code
 
-## 1. Verify the OTP flow is live (test path)
+**1. Where `--safe-top` is defined**
+`src/styles.css` lines 162–167:
+```css
+:root {
+  --safe-top:    max(env(safe-area-inset-top,    0px), 0px);
+  --safe-bottom: max(env(safe-area-inset-bottom, 0px), 0px);
+  --safe-left:   env(safe-area-inset-left,   0px);
+  --safe-right:  env(safe-area-inset-right,  0px);
+}
+```
+The `max(..., 0px)` is a no-op — the value is whatever `env(safe-area-inset-top)` resolves to, or `0px` if it's not defined. There is **no JS that ever writes `--safe-top`**; it is purely CSS, driven entirely by the WebView's `env()` resolution.
 
-- Walk through `/sign-up` with a fresh email → confirm 6-digit code email arrives from `noreply@www.vibtribe.in`, code verifies, account is created.
-- No magic-link / confirmation-link flow remains anywhere in the codebase (already removed).
+**2. What initializes it**
+Nothing on the JS side. The only inputs are:
+- `<meta name="viewport" content="… viewport-fit=cover">` in `src/routes/__root.tsx:81` — present ✅
+- Capacitor `StatusBar.setOverlaysWebView({ overlay: true })` in `src/lib/native-bridge.ts:46`, called from a `useEffect` in `RootComponent` via a **dynamic `import('@capacitor/status-bar')`** — async, runs after first paint.
+- `capacitor.config.ts` sets `StatusBar.overlaysWebView: true` at plugin-config level.
+- `MainActivity.java` deliberately does **not** pad the root view (comment says CSS handles it).
 
-## 2. Email templates — branded with app logo, no unsubscribe on auth
+**3. Why ChatList "works" but auth pages don't (the real root cause)**
+ChatList renders inside `AppLayout`, which has a sticky header at `src/components/AppLayout.tsx:330–335`:
+```jsx
+<header style={{
+  paddingTop: 'var(--safe-top)',
+  height: 'calc(64px + var(--safe-top))',
+}}>
+```
+The header is **64 px tall plus `--safe-top`**. Even when `--safe-top` resolves to `0px`, the 64 px header alone pushes all page content well below the camera cutout. ChatList isn't respecting the safe area — it's being saved by an unrelated 64 px header.
 
-- `otp-code.tsx` and `welcome.tsx` already use the app logo (`https://www.vibtribe.in/icons/icon-192x192.png`). Polish styling to match VibTribe brand (dark accent, rounded card, monospace OTP).
-- **Auth emails already skip the unsubscribe footer** — only transactional emails append it (per `send-transactional-email` route). Will verify and add explicit `purpose: 'auth'` gating on welcome email so the welcome mail also has no unsubscribe (it's account-related, not marketing).
+Auth pages (`SignInPage`, `SignUpPage`, `ForgotPasswordPage`) render **without `AppLayout`**, so they have no header buffer. They rely entirely on `var(--safe-top)`. If `env(safe-area-inset-top)` is `0px` in the Android WebView, their padding collapses to `1rem` and the logo slides under the camera — exactly the reported symptom.
 
-## 3. Rate limit — 5 OTPs per 24h (already done) + admin reset
+**4. Suspected root cause (to be confirmed by logging)**
+On Android, `env(safe-area-inset-top)` returns `0px` even when the Capacitor StatusBar plugin sets `overlaysWebView=true`. The plugin's "overlay" flag asks Android to draw under the status bar, but it does **not** publish the WindowInsets values into the WebView's CSS env. Reliable Android safe-area requires either:
+- `@capacitor-community/safe-area` (which natively reads WindowInsets and injects `--safe-area-inset-*` CSS vars), or
+- Custom native code that reads `WindowInsetsCompat` in `MainActivity` and pushes the top inset into a CSS variable via `bridge.eval(...)`.
 
-Already enforced server-side via `check_otp_rate_limit` + `issue_email_otp` raising `OTP_RATE_LIMITED`. Adds:
+ChatList has been masking this the whole time.
 
-- New SQL function `admin_reset_otp_attempts(_user_id uuid)` — master-admin only, deletes all `email_otp_codes` rows for that user's email in the last 24h, resetting the window.
-- New server function `adminResetOtpAttempts` (auth-protected, checks `has_role(auth.uid(), 'master_admin')`).
-- New button on `AdminUserDetailPage` → "Reset OTP attempts (5 remaining)" — visible only to master admin. Confirms via dialog, calls server fn, toasts success.
-- Keep this completely separate from the existing admin "Reset password" action (which uses `auth.admin.updateUserById`).
+### Diagnostic steps to confirm before any fix
 
-## 4. Unsubscribe deep link → profile → notification settings
+Add temporary logging in three places, capture the values from a fresh Android build, then remove the logging.
 
-- Update unsubscribe email link target from `/unsubscribe?token=…` to `/unsubscribe?token=…&redirect=notifications`.
-- `src/routes/unsubscribe.tsx` after successful unsubscribe:
-  - If PWA installed (detect via `navigator.standalone` / `display-mode: standalone`) → `navigate('/profile-screen?tab=notifications')`.
-  - Else if on web → same in-app navigation (the website is the app).
-- Add `?tab=notifications` query handling in `ProfileScreenPage` / `ProfileContent` to auto-open the Notifications section and scroll to it.
-- Verify all notification toggles (push, chat, status, etc.) are bound to backend state with proper sync (no UI-only toggles).
+1. **`src/routes/__root.tsx` – `RootComponent` `useEffect`**: after `initNativeBridge()`, on a 250 ms `setTimeout` (to let the async StatusBar plugin settle), log:
+   ```ts
+   const cs = getComputedStyle(document.documentElement);
+   console.log('[safe-area:root]', {
+     native: document.documentElement.dataset.native,
+     ua: navigator.userAgent,
+     safeTop: cs.getPropertyValue('--safe-top').trim(),
+     safeBottom: cs.getPropertyValue('--safe-bottom').trim(),
+     envTopProbe: getComputedStyle(document.body).paddingLeft, // body has env(left)
+     innerHeight: window.innerHeight,
+     visualViewportHeight: window.visualViewport?.height,
+   });
+   ```
 
-## 5. Email privacy — only self, admin, master-admin
+2. **`src/pages/SignInPage.tsx`, `SignUpPage.tsx`, `ForgotPasswordPage.tsx`**: in a `useEffect`, log the same `--safe-top` / `--safe-bottom` plus the bounding rect of the outer wrapper and of the logo, so we see whether the wrapper *received* padding but the logo still overlaps, vs. wrapper padding being 0.
 
-- Audit `user_profiles` RLS: ensure `real_email` and `email` columns are **not** returned to other users. Add a column-aware policy or a view `public_user_profiles` (no email columns) that other users query instead.
-- Update all components currently selecting `email` / `real_email` from other users (ContactsPanel, ChatWindow, etc.) to use the safe view.
-- "My Profile" / Account page: show the user's own `real_email` (read-only display + "change email" later).
-- Admin user list + `AdminUserDetailPage`: show `real_email` (admins already allowed via RLS).
+3. **`src/components/AppLayout.tsx`**: in a `useEffect`, log `--safe-top` plus the computed `paddingTop` of the `<header>`. This lets us compare the same variable on ChatList vs auth pages — if both report `0px`, that proves AppLayout is being saved by the 64 px header, not by a working safe-area.
 
-## 6. Terms & Conditions
+4. **Async-timing check**: add a second log inside the StatusBar dynamic-import `.then(...)` in `native-bridge.ts:46` right after `setOverlaysWebView`, re-reading `--safe-top`. If the value changes between the early log and this one, the auth page is mounting before the StatusBar overlay takes effect and we need to set overlay earlier (native side) instead of patching CSS.
 
-- Update `src/components/legal/LegalContent.tsx` to add a section explaining: we store your email address for account recovery, security notifications, and (with consent) product updates; emails are visible only to you and platform administrators.
+### Deliverable
 
-## 7. Database cleanup — proposed deletions
+After running a debug APK and capturing the logs, the report will state, with values:
+- the literal `--safe-top` value on `/sign-in`, `/sign-up`, `/forgot-password`, and `/` (ChatList);
+- whether `env(safe-area-inset-top)` ever becomes non-zero in this WebView;
+- whether timing (auth page mounting before StatusBar overlay) is contributing.
 
-Will **only delete after you approve**. Candidates flagged as unused:
+Only then will a real fix be proposed — most likely one of: install `@capacitor-community/safe-area`, or push `WindowInsetsCompat.getInsets(systemBars()).top` from `MainActivity` into `--safe-top` via `bridge.eval`. No additional CSS padding will be added in this pass.
 
-| Object | Reason |
-|---|---|
-| `public.force_logout_tokens` | Not referenced anywhere in `src/` code. Confirm before drop. |
-| `public.user_secure_chats` | Not referenced anywhere in `src/` code. Confirm before drop. |
-| Old `email_send_log` rows with `template_name = 'magic_link' / 'signup_link'` | Legacy from link-based flow (if any). |
+### Files touched (diagnostic only, all reverted after the report)
 
-I'll grep the codebase one more time before dropping anything. Tables like `email_otp_codes`, `email_send_log`, `suppressed_emails`, `email_unsubscribe_tokens`, `push_subscriptions`, `support_tickets` are actively used — keep.
-
-## 8. Out of scope for this round (per your instruction)
-
-- Backfilling OTP flow for existing users — only new signups for now, as you asked.
-- Email change flow for existing users.
-
----
-
-## Technical sketch
-
-- Migration: `admin_reset_otp_attempts` SQL function + RLS check via `has_role`.
-- Migration: optional `public_user_profiles` view + revoke email columns from `authenticated` on base table (keeps admin/self access via policy).
-- New server fn: `src/lib/admin.functions.ts` → `adminResetOtpAttempts`.
-- UI: button in `AdminUserDetailPage`, notifications-tab deep-link in `ProfileScreenPage` + `unsubscribe.tsx` redirect.
-- Template polish: `src/lib/email-templates/otp-code.tsx`, `welcome.tsx`.
-- Legal copy: `src/components/legal/LegalContent.tsx`.
-- DB drops (separate migration, only after your confirm).
-
-Approve and I'll execute end-to-end, then ask you to test a fresh signup.
+- `src/routes/__root.tsx`
+- `src/pages/SignInPage.tsx`
+- `src/pages/SignUpPage.tsx`
+- `src/pages/ForgotPasswordPage.tsx`
+- `src/components/AppLayout.tsx`
+- `src/lib/native-bridge.ts`
