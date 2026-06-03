@@ -1,5 +1,29 @@
 # VibTribe — Native Android Build (Play Store)
 
+## Capacitor wrapper — required manual steps after pulling
+
+The web project now ships full Capacitor support (push, deep links, back
+button, keyboard, splash, audio routing, wake-lock, image picker, network).
+After pulling, run these once inside the wrapper repo:
+
+1. **Install pods/plugins** — `npm install && npx cap sync android`
+2. **FCM push notifications** — Required for native push to work:
+   - Create (or reuse) a Firebase project, add an Android app with package
+     id `app.vibtribe.app`, and download `google-services.json`.
+   - Drop the file at `android/app/google-services.json`.
+   - In `android/build.gradle` add `classpath 'com.google.gms:google-services:4.4.2'`
+     to `buildscript.dependencies`.
+   - In `android/app/build.gradle` add `apply plugin: 'com.google.gms.google-services'`
+     at the bottom.
+   - Push tokens are written automatically to the new `public.fcm_tokens`
+     Supabase table after each user logs in.
+3. **Deep links** — Replace the `REPLACE_WITH_YOUR_CAPACITOR_APK_SHA256_FINGERPRINT`
+   line in `public/.well-known/assetlinks.json` with the SHA-256 fingerprint
+   of the signing key you ship to Play Store
+   (`keytool -list -v -keystore release.keystore`).
+4. **Build** — `cd android && ./gradlew assembleDebug`
+
+
 Your PWA at https://www.vibtribe.in is ready to be wrapped as a Trusted Web Activity (TWA) using Bubblewrap and submitted to Google Play.
 
 > ⚠️ **Architecture note.** VibTribe is a server-rendered TanStack Start app
