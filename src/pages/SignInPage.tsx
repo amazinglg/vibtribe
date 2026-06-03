@@ -88,7 +88,15 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="gradient-bg-page min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+    <div
+      className="gradient-bg-page min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
+      style={{
+        paddingTop: 'calc(env(safe-area-inset-top, 0px) + 1rem)',
+        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1rem)',
+        paddingLeft: 'calc(env(safe-area-inset-left, 0px) + 1rem)',
+        paddingRight: 'calc(env(safe-area-inset-right, 0px) + 1rem)',
+      }}
+    >
       {/* Animated background orbs */}
       <div className="absolute top-0 left-0 w-96 h-96 gradient-primary rounded-full blur-3xl opacity-20 animate-pulse" />
       <div className="absolute bottom-0 right-0 w-80 h-80 gradient-cyan rounded-full blur-3xl opacity-15 animate-pulse" style={{ animationDelay: '1s' }} />
