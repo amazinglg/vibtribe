@@ -10,6 +10,7 @@ import { createClient } from '@/lib/supabase/client';
 import { decryptMessage, isEncrypted } from '@/lib/encryption';
 import { BROADCAST_CHAT_ID } from './BroadcastChatPanel';
 import { useT } from '@/contexts/LanguageContext';
+import { isNativeWrapper, requestNativeContactsPermission } from '@/lib/native-bridge';
 const BROADCAST_LOGO = '/assets/images/app_logo.png';
 
 interface Chat {
@@ -816,6 +817,26 @@ function ContactsTabContent({
   const requestContacts = async () => {
     setPerm('requesting');
     try {
+      // 1) Capacitor native (Android) — read real phone address book.
+      if (isNativeWrapper()) {
+        const granted = await requestNativeContactsPermission();
+        if (granted !== 'granted') {
+          setPerm('denied');
+          return;
+        }
+        const { Contacts } = await import('@capacitor-community/contacts');
+        const res = await Contacts.getContacts({
+          projection: { name: true, phones: true, image: true },
+        });
+        const raw = (res?.contacts || []).map((c: any) => ({
+          name: c?.name?.display || [c?.name?.given, c?.name?.family].filter(Boolean).join(' ') || 'Unknown',
+          tel: (c?.phones || []).map((p: any) => p?.number).filter(Boolean),
+        }));
+        setPerm('granted');
+        await matchContacts(raw);
+        return;
+      }
+      // 2) Web Contacts Picker API (Chrome on Android PWA).
       if ('contacts' in navigator && 'ContactsManager' in window) {
         const raw = await (navigator as any).contacts.select(['name', 'tel'], { multiple: true });
         setPerm('granted');
@@ -970,6 +991,14 @@ function ContactsTabContent({
 
   return (
     <div className="p-4 space-y-4">
+      <button
+        onClick={requestContacts}
+        className="w-full py-2.5 gradient-primary rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-all glow-primary flex items-center justify-center gap-2"
+      >
+        <UserPlus size={16} />
+        {isNativeWrapper() ? 'Sync phone contacts' : 'Import contacts'}
+      </button>
+
       <input
         type="text"
         placeholder="Search contacts..."
