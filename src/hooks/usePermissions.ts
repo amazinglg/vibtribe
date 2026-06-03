@@ -3,6 +3,7 @@ import {
   isNativeWrapper,
   requestNativeCameraPermission,
   requestNativeContactsPermission,
+  registerNativePushNotifications,
 } from '@/lib/native-bridge';
 
 export type PermissionStatus = 'granted' | 'denied' | 'prompt' | 'unsupported' | 'idle';
@@ -111,6 +112,23 @@ export function usePermissions() {
   }, []);
 
   const requestNotifications = useCallback(async (): Promise<PermissionRequestResult> => {
+    // On Android 13+, the WebView's Notification.requestPermission() does
+    // NOT trigger the OS-level POST_NOTIFICATIONS dialog. We must call the
+    // native PushNotifications plugin so the user sees the system prompt.
+    if (isNativeWrapper()) {
+      try {
+        const { PushNotifications } = await import('@capacitor/push-notifications');
+        let perm = await PushNotifications.checkPermissions();
+        if (perm.receive === 'prompt' || perm.receive === 'prompt-with-rationale') {
+          perm = await PushNotifications.requestPermissions();
+        }
+        const status: PermissionStatus = perm.receive === 'granted' ? 'granted' : 'denied';
+        setPermissions(p => ({ ...p, notifications: status }));
+        return { granted: status === 'granted', status };
+      } catch (e) {
+        console.warn('[VibTribe] native notification permission failed', e);
+      }
+    }
     if (!('Notification' in window)) {
       setPermissions(p => ({ ...p, notifications: 'unsupported' }));
       return { granted: false, status: 'unsupported' };

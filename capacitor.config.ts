@@ -46,7 +46,19 @@ const config: CapacitorConfig = {
     },
     SplashScreen: {
       backgroundColor: '#070a1b',
-      launchAutoHide: true,
+      launchAutoHide: false,
+      launchShowDuration: 2500,
+      androidScaleType: 'CENTER_CROP',
+      showSpinner: false,
+      splashFullScreen: true,
+      splashImmersive: true,
+    },
+    Keyboard: {
+      resize: 'native',
+      resizeOnFullScreen: true,
+    },
+    PushNotifications: {
+      presentationOptions: ['badge', 'sound', 'alert'],
     },
   },
 };

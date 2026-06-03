@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useRef, useState, useCallb
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
+import { acquireCallWakeLock, setCallAudioRoute } from '@/lib/native-bridge';
 
 type CallType = 'voice' | 'video';
 type CallRow = {
@@ -46,6 +47,27 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   const [activeCall, setActiveCall] = useState<CallRow | null>(null);
   const [role, setRole] = useState<'caller' | 'callee' | null>(null);
   const [callState, setCallState] = useState<'ringing' | 'connecting' | 'connected' | 'ended'>('ringing');
+  const wakeLockReleaseRef = useRef<(() => void) | null>(null);
+
+  // Acquire the screen wake-lock while a call is active so Android does not
+  // suspend the WebView; release it when the call ends.
+  useEffect(() => {
+    if (activeCall) {
+      acquireCallWakeLock().then((release) => { wakeLockReleaseRef.current = release; });
+      // Route audio: video calls → speaker, voice → earpiece.
+      setCallAudioRoute(activeCall.call_type === 'video' ? 'speaker' : 'earpiece');
+    } else if (wakeLockReleaseRef.current) {
+      wakeLockReleaseRef.current();
+      wakeLockReleaseRef.current = null;
+    }
+    return () => {
+      if (wakeLockReleaseRef.current) {
+        wakeLockReleaseRef.current();
+        wakeLockReleaseRef.current = null;
+      }
+    };
+  }, [activeCall]);
+
   const [remoteName, setRemoteName] = useState('User');
   const [remoteAvatar, setRemoteAvatar] = useState('U');
   const [callDuration, setCallDuration] = useState(0);
