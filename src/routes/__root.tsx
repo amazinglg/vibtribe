@@ -14,6 +14,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 import { useEffect } from "react";
 import { initNativeBridge } from "@/lib/native-bridge";
+import { logSafeArea } from "@/lib/safe-area-debug";
 
 import appCss from "../styles.css?url";
 
@@ -163,7 +164,20 @@ function RootComponent() {
 
   // Tag <html data-native="capacitor|twa|browser"> so CSS safe-area floors
   // and any native-only behaviour can hook off it.
-  useEffect(() => { initNativeBridge(); }, []);
+  useEffect(() => {
+    initNativeBridge();
+    // TEMP DIAGNOSTIC: probe safe-area resolution at three intervals so we
+    // can correlate against the async StatusBar.setOverlaysWebView() call.
+    logSafeArea('root:immediate');
+    const t1 = window.setTimeout(() => logSafeArea('root:250ms'), 250);
+    const t2 = window.setTimeout(() => logSafeArea('root:1000ms'), 1000);
+    const t3 = window.setTimeout(() => logSafeArea('root:3000ms'), 3000);
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      window.clearTimeout(t3);
+    };
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
