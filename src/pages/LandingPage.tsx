@@ -34,7 +34,7 @@ export default function LandingPage() {
 
       {/* Nav */}
       <header className="relative z-20">
-        <nav className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-3">
+        <nav className="max-w-6xl mx-auto px-4 sm:px-6 py-2 sm:py-4 flex items-center justify-between gap-3">
           <Link to="/" className="flex items-center gap-2 group">
             <AppLogo size={32} />
             <span className="font-bold text-lg sm:text-xl text-gradient-primary tracking-tight">VibTribe</span>
@@ -62,13 +62,13 @@ export default function LandingPage() {
             </Link>
           </div>
         </nav>
-        <div className="px-4 pb-2 flex justify-center sm:justify-end sm:max-w-6xl sm:mx-auto sm:pr-6">
+        <div className="px-4 pb-1 flex justify-center sm:justify-end sm:max-w-6xl sm:mx-auto sm:pr-6">
           <LanguageSwitcher variant="pill" />
         </div>
       </header>
 
       {/* Hero */}
-      <section className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pt-8 sm:pt-16 pb-12 sm:pb-20 text-center">
+      <section className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pt-4 sm:pt-16 pb-12 sm:pb-20 text-center">
         <div className="float-up">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass border border-primary/30 mb-6">
             <ShieldCheck size={13} className="text-primary" />
