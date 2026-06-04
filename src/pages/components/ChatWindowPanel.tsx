@@ -815,6 +815,20 @@ export default function ChatWindowPanel() {
     }
   };
 
+  const deleteAsTribeLeader = async (msgId: string) => {
+    setActionMsg(null);
+    try {
+      const { error } = await supabase.rpc('tribe_delete_message_as_leader', { _msg_id: msgId });
+      if (error) throw error;
+      setMessages(prev => prev.map(m => m.id === msgId
+        ? { ...m, text: '🚫 This message was deleted by a Tribe Leader', deletedForEveryone: true, encrypted: false }
+        : m
+      ));
+    } catch (e: any) {
+      toast.error(e?.message || 'Could not delete as Tribe Leader');
+    }
+  };
+
   const submitEdit = async () => {
     if (!editingMsg) return;
     const newText = editText.trim();
