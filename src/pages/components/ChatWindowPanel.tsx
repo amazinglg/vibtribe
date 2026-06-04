@@ -1775,32 +1775,45 @@ export default function ChatWindowPanel() {
               <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Message options</p>
               <p className="text-sm text-foreground truncate mt-0.5">{actionMsg.text}</p>
             </div>
-            <button
-              onClick={() => {
-                setEditingMsg(actionMsg);
-                setEditText(actionMsg.text);
-                setActionMsg(null);
-              }}
-              disabled={!isWithinHour(actionMsg.createdAt)}
-              className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground disabled:opacity-40"
-            >
-              ✏️ Edit message
-              {!isWithinHour(actionMsg.createdAt) && <span className="ml-auto text-[10px] text-muted-foreground">expired</span>}
-            </button>
+            {actionMsg.senderId === user?.id && (
+              <button
+                onClick={() => {
+                  setEditingMsg(actionMsg);
+                  setEditText(actionMsg.text);
+                  setActionMsg(null);
+                }}
+                disabled={!isWithinHour(actionMsg.createdAt)}
+                className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground disabled:opacity-40"
+              >
+                ✏️ Edit message
+                {!isWithinHour(actionMsg.createdAt) && <span className="ml-auto text-[10px] text-muted-foreground">expired</span>}
+              </button>
+            )}
             <button
               onClick={() => deleteForMe(actionMsg.id)}
               className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground border-t border-border"
             >
               🗑️ Delete for me
             </button>
-            <button
-              onClick={() => deleteForEveryone(actionMsg.id)}
-              disabled={!isWithinHour(actionMsg.createdAt)}
-              className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-red-400 border-t border-border disabled:opacity-40"
-            >
-              🗑️ Delete for everyone
-              {!isWithinHour(actionMsg.createdAt) && <span className="ml-auto text-[10px] text-muted-foreground">past 1 hour</span>}
-            </button>
+            {actionMsg.senderId === user?.id && (
+              <button
+                onClick={() => deleteForEveryone(actionMsg.id)}
+                disabled={!isWithinHour(actionMsg.createdAt)}
+                className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-red-400 border-t border-border disabled:opacity-40"
+              >
+                🗑️ Delete for everyone
+                {!isWithinHour(actionMsg.createdAt) && <span className="ml-auto text-[10px] text-muted-foreground">past 1 hour</span>}
+              </button>
+            )}
+            {chatType === 'group' && tribeRole === 'leader' && (
+              <button
+                onClick={() => deleteAsTribeLeader(actionMsg.id)}
+                className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-red-400 border-t border-border"
+              >
+                🛡️ Delete as Tribe Leader
+                <span className="ml-auto text-[10px] text-muted-foreground">removes for everyone</span>
+              </button>
+            )}
             <button
               onClick={() => setActionMsg(null)}
               className="w-full text-center px-4 py-3 text-sm hover:bg-muted transition-colors text-muted-foreground border-t border-border"
