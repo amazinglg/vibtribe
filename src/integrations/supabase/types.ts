@@ -165,18 +165,21 @@ export type Database = {
           chat_id: string
           id: string
           joined_at: string
+          role: string
           user_id: string
         }
         Insert: {
           chat_id: string
           id?: string
           joined_at?: string
+          role?: string
           user_id: string
         }
         Update: {
           chat_id?: string
           id?: string
           joined_at?: string
+          role?: string
           user_id?: string
         }
         Relationships: [
@@ -187,6 +190,13 @@ export type Database = {
             referencedRelation: "chats"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "chat_members_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "tribe_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       chats: {
@@ -195,12 +205,15 @@ export type Database = {
           chat_type: Database["public"]["Enums"]["chat_type"] | null
           created_at: string | null
           created_by: string | null
+          description: string | null
           disappear_mode: string
+          handle: string | null
           id: string
           is_group: boolean
           name: string | null
           participant_one: string | null
           participant_two: string | null
+          privacy: string
           updated_at: string | null
         }
         Insert: {
@@ -208,12 +221,15 @@ export type Database = {
           chat_type?: Database["public"]["Enums"]["chat_type"] | null
           created_at?: string | null
           created_by?: string | null
+          description?: string | null
           disappear_mode?: string
+          handle?: string | null
           id?: string
           is_group?: boolean
           name?: string | null
           participant_one?: string | null
           participant_two?: string | null
+          privacy?: string
           updated_at?: string | null
         }
         Update: {
@@ -221,12 +237,15 @@ export type Database = {
           chat_type?: Database["public"]["Enums"]["chat_type"] | null
           created_at?: string | null
           created_by?: string | null
+          description?: string | null
           disappear_mode?: string
+          handle?: string | null
           id?: string
           is_group?: boolean
           name?: string | null
           participant_one?: string | null
           participant_two?: string | null
+          privacy?: string
           updated_at?: string | null
         }
         Relationships: [
@@ -467,6 +486,7 @@ export type Database = {
           expires_at: string | null
           id: string
           message_status: Database["public"]["Enums"]["message_status"] | null
+          message_type: string
           reactions: Json | null
           sender_id: string | null
         }
@@ -480,6 +500,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           message_status?: Database["public"]["Enums"]["message_status"] | null
+          message_type?: string
           reactions?: Json | null
           sender_id?: string | null
         }
@@ -493,6 +514,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           message_status?: Database["public"]["Enums"]["message_status"] | null
+          message_type?: string
           reactions?: Json | null
           sender_id?: string | null
         }
@@ -502,6 +524,13 @@ export type Database = {
             columns: ["chat_id"]
             isOneToOne: false
             referencedRelation: "chats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "tribe_public"
             referencedColumns: ["id"]
           },
           {
@@ -815,6 +844,66 @@ export type Database = {
         }
         Relationships: []
       }
+      tribe_invites: {
+        Row: {
+          chat_id: string
+          code: string
+          created_at: string
+          created_by: string
+          expires_at: string | null
+          id: string
+          revoked_at: string | null
+        }
+        Insert: {
+          chat_id: string
+          code: string
+          created_at?: string
+          created_by: string
+          expires_at?: string | null
+          id?: string
+          revoked_at?: string | null
+        }
+        Update: {
+          chat_id?: string
+          code?: string
+          created_at?: string
+          created_by?: string
+          expires_at?: string | null
+          id?: string
+          revoked_at?: string | null
+        }
+        Relationships: []
+      }
+      tribe_join_requests: {
+        Row: {
+          chat_id: string
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          chat_id: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          id?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          chat_id?: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_profiles: {
         Row: {
           account_status: Database["public"]["Enums"]["user_status"] | null
@@ -952,10 +1041,43 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      tribe_public: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          handle: string | null
+          id: string | null
+          member_count: number | null
+          name: string | null
+          privacy: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          handle?: string | null
+          id?: string | null
+          member_count?: never
+          name?: string | null
+          privacy?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          handle?: string | null
+          id?: string | null
+          member_count?: never
+          name?: string | null
+          privacy?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       _hash_otp: { Args: { _code: string }; Returns: string }
+      _insert_tribe_system_message: {
+        Args: { _chat_id: string; _content: string }
+        Returns: undefined
+      }
       accept_terms: { Args: never; Returns: undefined }
       admin_delete_ticket: { Args: { _ticket_id: string }; Returns: undefined }
       admin_delete_user: { Args: { _user_id: string }; Returns: undefined }
@@ -1004,6 +1126,20 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      admin_list_tribes: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          created_at: string
+          created_by: string
+          founder_name: string
+          handle: string
+          id: string
+          member_count: number
+          name: string
+          privacy: string
+        }[]
       }
       admin_list_user_profiles: {
         Args: never
@@ -1154,6 +1290,18 @@ export type Database = {
         Returns: boolean
       }
       is_real_email_available: { Args: { _email: string }; Returns: boolean }
+      is_tribe_founder: {
+        Args: { _chat_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_tribe_leader: {
+        Args: { _chat_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_tribe_member: {
+        Args: { _chat_id: string; _user_id: string }
+        Returns: boolean
+      }
       issue_email_otp: {
         Args: { _code: string; _email: string; _purpose: string }
         Returns: undefined
@@ -1190,6 +1338,38 @@ export type Database = {
       record_login_success: { Args: { _user_id: string }; Returns: undefined }
       reset_password_with_otp: {
         Args: { _code: string; _identifier: string; _new_password: string }
+        Returns: undefined
+      }
+      tribe_change_privacy: {
+        Args: { _chat_id: string; _privacy: string }
+        Returns: undefined
+      }
+      tribe_decide_request: {
+        Args: { _approve: boolean; _request_id: string }
+        Returns: undefined
+      }
+      tribe_delete_message_as_leader: {
+        Args: { _msg_id: string }
+        Returns: undefined
+      }
+      tribe_demote_member: {
+        Args: { _chat_id: string; _user_id: string }
+        Returns: undefined
+      }
+      tribe_join_public: { Args: { _chat_id: string }; Returns: undefined }
+      tribe_join_via_invite: { Args: { _code: string }; Returns: string }
+      tribe_leave: { Args: { _chat_id: string }; Returns: undefined }
+      tribe_promote_member: {
+        Args: { _chat_id: string; _user_id: string }
+        Returns: undefined
+      }
+      tribe_remove_member: {
+        Args: { _chat_id: string; _user_id: string }
+        Returns: undefined
+      }
+      tribe_request_join: { Args: { _chat_id: string }; Returns: undefined }
+      tribe_set_handle: {
+        Args: { _chat_id: string; _handle: string }
         Returns: undefined
       }
     }

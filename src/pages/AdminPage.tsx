@@ -595,7 +595,6 @@ export default function AdminPage() {
                   { key: 'online', label: 'Online', dot: 'bg-vt-green' },
                   { key: 'active', label: 'Active' },
                   { key: 'suspended', label: 'Suspended' },
-                  { key: 'blocked', label: 'Blocked' },
                   { key: 'admins', label: 'Admins' },
                 ] as const).map(f => (
                   <button

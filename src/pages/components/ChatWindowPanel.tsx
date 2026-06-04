@@ -431,7 +431,7 @@ export default function ChatWindowPanel() {
             name: groupName,
             avatar: groupName[0]?.toUpperCase() || 'G',
             online: false,
-            lastSeen: 'Group chat',
+            lastSeen: 'Tribe chat',
             publicKey: undefined,
             userId: undefined,
             isContact: false,

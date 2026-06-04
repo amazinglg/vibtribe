@@ -87,7 +87,7 @@ export default function CreateGroupModal({ isOpen, onClose, onCreated }: Props) 
       setName('');
       setSelected(new Set());
     } catch (e: any) {
-      setError(e?.message || 'Failed to create group');
+      setError(e?.message || 'Failed to create tribe');
     } finally {
       setCreating(false);
     }
@@ -99,7 +99,7 @@ export default function CreateGroupModal({ isOpen, onClose, onCreated }: Props) 
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 gradient-primary rounded-full flex items-center justify-center"><Users size={16} className="text-white" /></div>
-            <h2 className="font-bold text-foreground">New Group</h2>
+            <h2 className="font-bold text-foreground">New Tribe</h2>
           </div>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground"><X size={16} /></button>
         </div>
@@ -107,7 +107,7 @@ export default function CreateGroupModal({ isOpen, onClose, onCreated }: Props) 
           <input
             value={name}
             onChange={e => setName(e.target.value)}
-            placeholder="Group name"
+            placeholder="Tribe name"
             className="bg-input border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           />
           <div className="relative">
@@ -150,7 +150,7 @@ export default function CreateGroupModal({ isOpen, onClose, onCreated }: Props) 
             onClick={handleCreate}
             className="mt-2 py-2.5 gradient-primary rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-all disabled:opacity-50"
           >
-            {creating ? 'Creating...' : 'Create Group'}
+            {creating ? 'Creating...' : 'Create Tribe'}
           </button>
         </div>
       </div>

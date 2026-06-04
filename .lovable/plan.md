@@ -1,83 +1,105 @@
-## Diagnostic-first plan (no padding changes)
+## Tribes Overhaul Plan
 
-### What I already found by reading the code
+This is a large, multi-part change. Outlining the full scope so you can confirm before I build. Once approved I'll ship it in ordered DB → backend → UI batches.
 
-**1. Where `--safe-top` is defined**
-`src/styles.css` lines 162–167:
-```css
-:root {
-  --safe-top:    max(env(safe-area-inset-top,    0px), 0px);
-  --safe-bottom: max(env(safe-area-inset-bottom, 0px), 0px);
-  --safe-left:   env(safe-area-inset-left,   0px);
-  --safe-right:  env(safe-area-inset-right,  0px);
-}
-```
-The `max(..., 0px)` is a no-op — the value is whatever `env(safe-area-inset-top)` resolves to, or `0px` if it's not defined. There is **no JS that ever writes `--safe-top`**; it is purely CSS, driven entirely by the WebView's `env()` resolution.
+### 1. Terminology rename (app-wide)
+- "Group" → "Tribe", "Group admin" → "Tribe Leader", "Create New Group" → "Create New Tribe", chats tab "Groups" → "Tribes", subtitle "Group chat" → "Tribe chat".
+- Code identifiers (`is_group`, `CreateGroupModal`, etc.) stay as-is to avoid breaking migrations; only user-visible strings change. i18n keys updated.
 
-**2. What initializes it**
-Nothing on the JS side. The only inputs are:
-- `<meta name="viewport" content="… viewport-fit=cover">` in `src/routes/__root.tsx:81` — present ✅
-- Capacitor `StatusBar.setOverlaysWebView({ overlay: true })` in `src/lib/native-bridge.ts:46`, called from a `useEffect` in `RootComponent` via a **dynamic `import('@capacitor/status-bar')`** — async, runs after first paint.
-- `capacitor.config.ts` sets `StatusBar.overlaysWebView: true` at plugin-config level.
-- `MainActivity.java` deliberately does **not** pad the root view (comment says CSS handles it).
+### 2. Database changes (one migration)
+New columns on `chats` (only used when `is_group = true`):
+- `handle` text unique (the `@tribename`, immutable except by master admin)
+- `privacy` text check in ('public','private') default 'private'
+- `description` text
+- `created_by` already exists — becomes the founding Tribe Leader (cannot be demoted/removed)
 
-**3. Why ChatList "works" but auth pages don't (the real root cause)**
-ChatList renders inside `AppLayout`, which has a sticky header at `src/components/AppLayout.tsx:330–335`:
-```jsx
-<header style={{
-  paddingTop: 'var(--safe-top)',
-  height: 'calc(64px + var(--safe-top))',
-}}>
-```
-The header is **64 px tall plus `--safe-top`**. Even when `--safe-top` resolves to `0px`, the 64 px header alone pushes all page content well below the camera cutout. ChatList isn't respecting the safe area — it's being saved by an unrelated 64 px header.
+`chat_members` additions:
+- `role` text check in ('leader','member') default 'member'
 
-Auth pages (`SignInPage`, `SignUpPage`, `ForgotPasswordPage`) render **without `AppLayout`**, so they have no header buffer. They rely entirely on `var(--safe-top)`. If `env(safe-area-inset-top)` is `0px` in the Android WebView, their padding collapses to `1rem` and the logo slides under the camera — exactly the reported symptom.
+New tables:
+- `tribe_invites` (id, chat_id, code unique, created_by, expires_at nullable, revoked_at nullable)
+- `tribe_join_requests` (id, chat_id, user_id, status: pending/approved/declined, decided_by, decided_at)
 
-**4. Suspected root cause (to be confirmed by logging)**
-On Android, `env(safe-area-inset-top)` returns `0px` even when the Capacitor StatusBar plugin sets `overlaysWebView=true`. The plugin's "overlay" flag asks Android to draw under the status bar, but it does **not** publish the WindowInsets values into the WebView's CSS env. Reliable Android safe-area requires either:
-- `@capacitor-community/safe-area` (which natively reads WindowInsets and injects `--safe-area-inset-*` CSS vars), or
-- Custom native code that reads `WindowInsetsCompat` in `MainActivity` and pushes the top inset into a CSS variable via `bridge.eval(...)`.
+Update RLS:
+- Only leaders can update `chats` row for tribe (name/avatar/description/privacy/handle subject to immutability rule), insert/delete `chat_members` (except self-leave), update member `role`.
+- Founder protection enforced via trigger: cannot delete/demote `created_by`.
+- Master admin bypass via existing `is_admin_user()`.
+- Anyone authenticated can read minimal tribe info (name/avatar/handle/privacy) via a `tribe_public` view for invite-link previews and global search.
+- Public tribes: any authenticated user can insert themselves into `chat_members`.
+- Private tribes: insert via valid invite code OR approved join request.
 
-ChatList has been masking this the whole time.
+System messages:
+- Reuse `messages` table with `sender_id = NULL` and a `message_type` column (new) = 'system' (created, joined, left, role_changed, privacy_changed, name_changed). Renderable as centered grey pill.
 
-### Diagnostic steps to confirm before any fix
+### 3. Tribe details panel
+Click header (red-circled area) opens a right-side sheet (mobile: full screen) showing:
+- Avatar (leader can edit), name, `@handle`, privacy badge, description, created date + founder.
+- Member list with avatars, "Tribe Leader" tag for leaders, chat icon → opens 1:1 chat.
+- Counts ("X members"), search within members.
+- Actions per viewer:
+  - **All members**: leave tribe, mute, delete chat for me, view info, start DM with member.
+  - **Leaders**: add members, promote/demote (not founder), remove (not founder), edit name/avatar/description, toggle privacy (with confirmation banner explaining sync), generate/copy/revoke invite link, approve/decline join requests.
+  - **Founder only**: same as leader; cannot be removed/demoted by others.
+  - **Master admin** (non-member): all leader powers; can view info but messages hidden if private + not member.
 
-Add temporary logging in three places, capture the values from a fresh Android build, then remove the logging.
+### 4. Invite links & join flow
+- Route `/tribe/join/$code` (public, SSR head with tribe name only).
+- Page fetches via public server fn returning name+avatar only.
+- If signed-out → CTA to sign in then return.
+- If signed-in → "Join Tribe" / "Ignore" buttons.
+  - Public tribe → instant join.
+  - Private tribe via valid invite → instant join.
+  - Private tribe without invite → "Request to join" → creates `tribe_join_requests` row.
+- On accept: system message "X joined the tribe".
+- On decline: requester gets notification "Your request to join @tribe was declined".
 
-1. **`src/routes/__root.tsx` – `RootComponent` `useEffect`**: after `initNativeBridge()`, on a 250 ms `setTimeout` (to let the async StatusBar plugin settle), log:
-   ```ts
-   const cs = getComputedStyle(document.documentElement);
-   console.log('[safe-area:root]', {
-     native: document.documentElement.dataset.native,
-     ua: navigator.userAgent,
-     safeTop: cs.getPropertyValue('--safe-top').trim(),
-     safeBottom: cs.getPropertyValue('--safe-bottom').trim(),
-     envTopProbe: getComputedStyle(document.body).paddingLeft, // body has env(left)
-     innerHeight: window.innerHeight,
-     visualViewportHeight: window.visualViewport?.height,
-   });
-   ```
+### 5. Privacy toggle + handle
+- Setting handle: modal warns "This @handle is permanent and cannot be changed later" before save.
+- Toggling privacy: modal explains "Switching to Public means anyone can join without approval. Existing pending requests will be auto-approved" and vice versa.
+- Handle searchable in `GlobalSearchBar` (extends search to `chats.handle` for `is_group=true`).
 
-2. **`src/pages/SignInPage.tsx`, `SignUpPage.tsx`, `ForgotPasswordPage.tsx`**: in a `useEffect`, log the same `--safe-top` / `--safe-bottom` plus the bounding rect of the outer wrapper and of the logo, so we see whether the wrapper *received* padding but the logo still overlaps, vs. wrapper padding being 0.
+### 6. Messages — leader delete + per-user delete
+- Existing `deleted_for` / `deleted_for_everyone` already supports both.
+- Add long-press menu option "Delete for everyone (as Tribe Leader)" — visible to leaders on any message in the tribe; sets `deleted_for_everyone=true`. RLS update to allow leaders.
+- Members keep existing "delete for me" / "delete for everyone (own messages only, time-limited)".
 
-3. **`src/components/AppLayout.tsx`**: in a `useEffect`, log `--safe-top` plus the computed `paddingTop` of the `<header>`. This lets us compare the same variable on ChatList vs auth pages — if both report `0px`, that proves AppLayout is being saved by the 64 px header, not by a working safe-area.
+### 7. Automated system messages
+On insert into `chat_members` for a tribe → trigger inserts system message ("X joined the tribe"); on delete → ("X left the tribe"); on tribe create → ("Tribe created on {date} by Tribe Leader {name}"); on role change / privacy change / name change → corresponding system messages.
 
-4. **Async-timing check**: add a second log inside the StatusBar dynamic-import `.then(...)` in `native-bridge.ts:46` right after `setOverlaysWebView`, re-reading `--safe-top`. If the value changes between the early log and this one, the auth page is mounting before the StatusBar overlay takes effect and we need to set overlay earlier (native side) instead of patching CSS.
+### 8. Admin Panel — new "Tribes" tab (master admin only)
+- New tab between Users and Support, visible only when `is_master_admin`.
+- List of all tribes: avatar, name, `@handle`, privacy, member count, founder name, created date.
+- Sort by name / created date (asc/desc), search box.
+- Click row → tribe detail page reusing the member-facing details panel with full leader permissions. Messages tab hidden when tribe is private and admin is not a member.
+- Admin can edit handle (the only path to change it post-creation).
 
-### Deliverable
+### 9. Admin Panel — remove "Blocked" filter
+- Remove the Blocked chip from the Users tab filters (image 2).
 
-After running a debug APK and capturing the logs, the report will state, with values:
-- the literal `--safe-top` value on `/sign-in`, `/sign-up`, `/forgot-password`, and `/` (ChatList);
-- whether `env(safe-area-inset-top)` ever becomes non-zero in this WebView;
-- whether timing (auth page mounting before StatusBar overlay) is contributing.
+### 10. Files affected (high level)
+- New migration (DB schema + RLS + triggers).
+- `src/components/CreateGroupModal.tsx` → renamed strings, optional handle/privacy/description at create time.
+- `src/pages/components/ChatWindowPanel.tsx` → make header clickable, open `TribeDetailsSheet`.
+- New `src/components/TribeDetailsSheet.tsx` (the panel).
+- New `src/components/TribeInviteModal.tsx`, `src/components/TribePrivacyToggleDialog.tsx`, `src/components/TribeHandleDialog.tsx`.
+- New route `src/routes/tribe.join.$code.tsx` + public server fn `src/lib/tribes.public.functions.ts`.
+- New server fns `src/lib/tribes.functions.ts` (create/update/promote/demote/remove/leave/toggle-privacy/set-handle/generate-invite/approve-request).
+- `src/pages/components/ChatListPanel.tsx` → tab label "Tribes".
+- `src/components/GlobalSearchBar.tsx` → handle search.
+- `src/pages/AdminPage.tsx` → new Tribes tab (master-admin gated), remove Blocked filter.
+- `src/contexts/LanguageContext.tsx` / `src/lib/i18n.ts` → updated copy.
 
-Only then will a real fix be proposed — most likely one of: install `@capacitor-community/safe-area`, or push `WindowInsetsCompat.getInsets(systemBars()).top` from `MainActivity` into `--safe-top` via `bridge.eval`. No additional CSS padding will be added in this pass.
+### Estimated batches
+1. Migration (schema + RLS + triggers + system-message trigger)
+2. Server functions + public invite route
+3. Tribe details sheet + dialogs + header click wiring
+4. Terminology rename + Tribes tab label + handle search
+5. Admin Tribes tab + remove Blocked filter
 
-### Files touched (diagnostic only, all reverted after the report)
+### Open questions before I start
+1. **Handle uniqueness scope**: globally unique across the whole platform (so it can be searched as `@handle`)? Assuming yes.
+2. **Invite link format**: `https://vibtribe.in/tribe/join/<code>` — OK? Codes 10-char base62, never expire by default, leader can revoke.
+3. **Founder transfer**: should the founder be able to transfer founder status to another leader before leaving? (I'll skip this v1 unless you want it — founder simply cannot leave unless they delete the tribe or another leader is promoted first.)
+4. **Message edit for tribe name/avatar after creation**: leaders can edit name freely, right? (Only `@handle` is immutable.)
 
-- `src/routes/__root.tsx`
-- `src/pages/SignInPage.tsx`
-- `src/pages/SignUpPage.tsx`
-- `src/pages/ForgotPasswordPage.tsx`
-- `src/components/AppLayout.tsx`
-- `src/lib/native-bridge.ts`
+Reply with answers (or "go ahead with your defaults") and I'll start with the migration.
