@@ -1864,13 +1864,13 @@ export default function ChatWindowPanel() {
       {lightboxUrl && (
         <div
           className="fixed inset-0 z-[1200] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4"
-          style={{ paddingTop: 'calc(var(--safe-top) + 1rem)', paddingBottom: 'calc(var(--safe-bottom) + 1rem)' }}
+          style={{ paddingTop: 'calc(min(var(--safe-top), 2.25rem) + 1rem)', paddingBottom: 'calc(var(--safe-bottom) + 1rem)' }}
           onClick={() => setLightboxUrl(null)}
         >
           <button
             onClick={(e) => { e.stopPropagation(); setLightboxUrl(null); }}
             className="absolute right-4 p-3 rounded-full bg-white/20 text-white hover:bg-white/30 z-10"
-            style={{ top: 'calc(var(--safe-top) + 0.75rem)' }}
+            style={{ top: 'calc(min(var(--safe-top), 2.25rem) + 0.75rem)' }}
             aria-label="Close"
           >
             <X size={22} />
