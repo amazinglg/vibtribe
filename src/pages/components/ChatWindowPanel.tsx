@@ -16,6 +16,7 @@ import { useCall } from '@/components/CallProvider';
 import { toast } from 'sonner';
 import { EMOJI_CATEGORIES, type EmojiCategoryKey } from '@/lib/emojis';
 import { useT } from '@/contexts/LanguageContext';
+import TribeDetailsSheet from '@/components/TribeDetailsSheet';
 
 interface Message {
   id: string;
@@ -30,6 +31,7 @@ interface Message {
   editedAt?: string | null;
   deletedForEveryone?: boolean;
   createdAt?: string;
+  messageType?: string;
 }
 
 // Call Modal Component
@@ -241,6 +243,8 @@ export default function ChatWindowPanel() {
   const [myChatSecured, setMyChatSecured] = useState(false);
   const [showDisappearMenu, setShowDisappearMenu] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [tribeRole, setTribeRole] = useState<'leader' | 'member' | null>(null);
+  const [tribeSheetOpen, setTribeSheetOpen] = useState(false);
   const contactPubKeyRef = useRef<string | null>(null);
   const previousChatIdRef = useRef<string | null>(null);
   const [actionMsg, setActionMsg] = useState<Message | null>(null);
@@ -440,6 +444,17 @@ export default function ChatWindowPanel() {
           setE2eEnabled(false);
           setIsBlocked(false);
 
+          // Fetch caller's role in this tribe (founder is implicitly leader via DB triggers)
+          try {
+            const { data: myRow } = await supabase
+              .from('chat_members')
+              .select('role')
+              .eq('chat_id', selectedChatId)
+              .eq('user_id', user.id)
+              .maybeSingle();
+            setTribeRole(((myRow as any)?.role as any) || null);
+          } catch { setTribeRole(null); }
+
           const { data: msgs } = await supabase
             .from('messages')
             .select('*')
@@ -459,6 +474,9 @@ export default function ChatWindowPanel() {
               status: m.message_status || 'sent',
               reactions: m.reactions || [],
               encrypted: false,
+              messageType: (m as any).message_type || 'user',
+              createdAt: m.created_at,
+              deletedForEveryone: !!m.deleted_for_everyone,
             });
           }
           setMessages(out);
@@ -466,6 +484,8 @@ export default function ChatWindowPanel() {
           setLoading(false);
           return;
         }
+        // Non-group: clear tribe role
+        setTribeRole(null);
 
         const otherUserId = chat.participant_one === user.id ? chat.participant_two : chat.participant_one;
         const { data: otherUser } = await supabase
@@ -795,6 +815,20 @@ export default function ChatWindowPanel() {
     }
   };
 
+  const deleteAsTribeLeader = async (msgId: string) => {
+    setActionMsg(null);
+    try {
+      const { error } = await supabase.rpc('tribe_delete_message_as_leader', { _msg_id: msgId });
+      if (error) throw error;
+      setMessages(prev => prev.map(m => m.id === msgId
+        ? { ...m, text: '🚫 This message was deleted by a Tribe Leader', deletedForEveryone: true, encrypted: false }
+        : m
+      ));
+    } catch (e: any) {
+      toast.error(e?.message || 'Could not delete as Tribe Leader');
+    }
+  };
+
   const submitEdit = async () => {
     if (!editingMsg) return;
     const newText = editText.trim();
@@ -828,7 +862,11 @@ export default function ChatWindowPanel() {
   };
 
   const handleLongPressStart = (msg: Message) => {
-    if (msg.senderId !== user?.id || msg.deletedForEveryone) return;
+    if (msg.deletedForEveryone) return;
+    if (msg.messageType === 'system') return;
+    const isOwn = msg.senderId === user?.id;
+    const canLeaderActOnOthers = chatType === 'group' && tribeRole === 'leader' && !isOwn;
+    if (!isOwn && !canLeaderActOnOthers) return;
     if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
     longPressTimerRef.current = setTimeout(() => setActionMsg(msg), 500);
   };
@@ -1086,9 +1124,12 @@ export default function ChatWindowPanel() {
 
         <button
           type="button"
-          onClick={() => contact?.avatarUrl && setEnlargeAvatar(true)}
+          onClick={() => {
+            if (chatType === 'group') setTribeSheetOpen(true);
+            else if (contact?.avatarUrl) setEnlargeAvatar(true);
+          }}
           className="relative flex-shrink-0 focus:outline-none"
-          aria-label="View profile picture"
+          aria-label={chatType === 'group' ? 'Tribe info' : 'View profile picture'}
         >
           {contact?.avatarUrl ? (
             <img src={contact.avatarUrl} alt={contact.name}
@@ -1103,7 +1144,12 @@ export default function ChatWindowPanel() {
           )}
         </button>
 
-        <div className="flex-1 min-w-0">
+        <button
+          type="button"
+          onClick={() => { if (chatType === 'group') setTribeSheetOpen(true); }}
+          className={`flex-1 min-w-0 text-left ${chatType === 'group' ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
+          aria-label={chatType === 'group' ? 'Open tribe info' : undefined}
+        >
           <div className="flex items-center gap-1.5 min-w-0">
             <h3 className="font-semibold text-sm text-foreground truncate min-w-0">{contact?.name || 'Loading...'}</h3>
             {e2eEnabled && (
@@ -1116,7 +1162,7 @@ export default function ChatWindowPanel() {
           <p className={`text-xs truncate ${contact?.online ? 'text-vt-green' : 'text-muted-foreground'}`}>
             {contact?.lastSeen || ''}
           </p>
-        </div>
+        </button>
 
         <div className="flex items-center gap-0.5 flex-shrink-0">
           {/* Voice Call */}
@@ -1423,6 +1469,19 @@ export default function ChatWindowPanel() {
             }
             // Defensive: never render raw `e2e:` ciphertext
             const safeText = isEncrypted(msg.text) ? '[Encrypted message]' : msg.text;
+            // Tribe system message — render centered grey pill
+            if (msg.messageType === 'system') {
+              return (
+                <React.Fragment key={msg.id}>
+                  {__sep}
+                  <div className="flex justify-center">
+                    <span className="text-[11px] text-muted-foreground px-3 py-1 glass rounded-full border border-border/60 text-center max-w-[80%]">
+                      {safeText}
+                    </span>
+                  </div>
+                </React.Fragment>
+              );
+            }
             // Encrypted-media envelope (text after decryption)
             let encMedia: { type: 'image'|'file'|'audio'|'video'; url: string; mime: string; name?: string } | null = null;
             if (typeof safeText === 'string' && safeText.startsWith('__media__:')) {
@@ -1460,7 +1519,11 @@ export default function ChatWindowPanel() {
                   onTouchEnd={handleLongPressEnd}
                   onTouchMove={handleLongPressEnd}
                   onTouchCancel={handleLongPressEnd}
-                  onContextMenu={(e) => { if (isMe && !msg.deletedForEveryone) { e.preventDefault(); setActionMsg(msg); } }}
+                  onContextMenu={(e) => {
+                    if (msg.deletedForEveryone || msg.messageType === 'system') return;
+                    const canOpen = (msg.senderId === user?.id) || (chatType === 'group' && tribeRole === 'leader');
+                    if (canOpen) { e.preventDefault(); setActionMsg(msg); }
+                  }}
                 >
                   <div
                     className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
@@ -1733,32 +1796,45 @@ export default function ChatWindowPanel() {
               <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Message options</p>
               <p className="text-sm text-foreground truncate mt-0.5">{actionMsg.text}</p>
             </div>
-            <button
-              onClick={() => {
-                setEditingMsg(actionMsg);
-                setEditText(actionMsg.text);
-                setActionMsg(null);
-              }}
-              disabled={!isWithinHour(actionMsg.createdAt)}
-              className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground disabled:opacity-40"
-            >
-              ✏️ Edit message
-              {!isWithinHour(actionMsg.createdAt) && <span className="ml-auto text-[10px] text-muted-foreground">expired</span>}
-            </button>
+            {actionMsg.senderId === user?.id && (
+              <button
+                onClick={() => {
+                  setEditingMsg(actionMsg);
+                  setEditText(actionMsg.text);
+                  setActionMsg(null);
+                }}
+                disabled={!isWithinHour(actionMsg.createdAt)}
+                className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground disabled:opacity-40"
+              >
+                ✏️ Edit message
+                {!isWithinHour(actionMsg.createdAt) && <span className="ml-auto text-[10px] text-muted-foreground">expired</span>}
+              </button>
+            )}
             <button
               onClick={() => deleteForMe(actionMsg.id)}
               className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground border-t border-border"
             >
               🗑️ Delete for me
             </button>
-            <button
-              onClick={() => deleteForEveryone(actionMsg.id)}
-              disabled={!isWithinHour(actionMsg.createdAt)}
-              className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-red-400 border-t border-border disabled:opacity-40"
-            >
-              🗑️ Delete for everyone
-              {!isWithinHour(actionMsg.createdAt) && <span className="ml-auto text-[10px] text-muted-foreground">past 1 hour</span>}
-            </button>
+            {actionMsg.senderId === user?.id && (
+              <button
+                onClick={() => deleteForEveryone(actionMsg.id)}
+                disabled={!isWithinHour(actionMsg.createdAt)}
+                className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-red-400 border-t border-border disabled:opacity-40"
+              >
+                🗑️ Delete for everyone
+                {!isWithinHour(actionMsg.createdAt) && <span className="ml-auto text-[10px] text-muted-foreground">past 1 hour</span>}
+              </button>
+            )}
+            {chatType === 'group' && tribeRole === 'leader' && (
+              <button
+                onClick={() => deleteAsTribeLeader(actionMsg.id)}
+                className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-red-400 border-t border-border"
+              >
+                🛡️ Delete as Tribe Leader
+                <span className="ml-auto text-[10px] text-muted-foreground">removes for everyone</span>
+              </button>
+            )}
             <button
               onClick={() => setActionMsg(null)}
               className="w-full text-center px-4 py-3 text-sm hover:bg-muted transition-colors text-muted-foreground border-t border-border"
@@ -1882,6 +1958,15 @@ export default function ChatWindowPanel() {
             onClick={(e) => e.stopPropagation()}
           />
         </div>
+      )}
+
+      {tribeSheetOpen && selectedChatId && chatType === 'group' && (
+        <TribeDetailsSheet
+          chatId={selectedChatId}
+          isOpen={tribeSheetOpen}
+          onClose={() => setTribeSheetOpen(false)}
+          onLeft={() => { setSelectedChatId(null); }}
+        />
       )}
     </div>
   );
