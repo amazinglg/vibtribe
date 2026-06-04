@@ -177,10 +177,10 @@ export default function SignUpPage() {
       <div className="absolute bottom-0 left-0 w-80 h-80 gradient-pink rounded-full blur-3xl opacity-15 animate-pulse" style={{ animationDelay: '1s' }} />
       <div className="absolute top-1/3 left-1/4 w-64 h-64 gradient-primary rounded-full blur-3xl opacity-10 animate-pulse" style={{ animationDelay: '2s' }} />
 
-      <div className="relative w-full max-w-md float-up pt-3 pb-6">
-        <div className="text-center mb-6">
-          <div className="flex items-center justify-center gap-3 mb-3">
-            <AppLogo size={48} />
+      <div className="relative w-full max-w-md float-up pt-0 pb-6">
+        <div className="text-center mb-4">
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <AppLogo size={44} />
             <span className="font-bold text-3xl text-gradient-primary tracking-tight">VibTribe</span>
           </div>
           <p className="text-muted-foreground text-sm">{t('auth.joinTribe')}</p>
