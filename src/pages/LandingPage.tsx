@@ -15,7 +15,18 @@ export default function LandingPage() {
   const [contactOpen, setContactOpen] = React.useState(false);
 
   return (
-    <div className="min-h-screen gradient-bg-page text-foreground overflow-x-hidden relative">
+    <div
+      className="min-h-screen gradient-bg-page text-foreground overflow-x-hidden relative"
+      style={{
+        // Android safe-area: same strategy as SignIn/SignUp. Without this the
+        // sticky header's "Log In" / "Get Started" buttons render under the
+        // status bar/notch on Capacitor Android builds.
+        paddingTop: 'var(--safe-top)',
+        paddingBottom: 'var(--safe-bottom)',
+        paddingLeft: 'var(--safe-left)',
+        paddingRight: 'var(--safe-right)',
+      }}
+    >
       {/* Ambient orbs */}
       <div className="pointer-events-none absolute -top-32 -left-32 w-[28rem] h-[28rem] gradient-primary rounded-full blur-3xl opacity-20" />
       <div className="pointer-events-none absolute top-1/3 -right-32 w-[26rem] h-[26rem] gradient-cyan rounded-full blur-3xl opacity-15" />
