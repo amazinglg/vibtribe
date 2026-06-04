@@ -862,7 +862,11 @@ export default function ChatWindowPanel() {
   };
 
   const handleLongPressStart = (msg: Message) => {
-    if (msg.senderId !== user?.id || msg.deletedForEveryone) return;
+    if (msg.deletedForEveryone) return;
+    if (msg.messageType === 'system') return;
+    const isOwn = msg.senderId === user?.id;
+    const canLeaderActOnOthers = chatType === 'group' && tribeRole === 'leader' && !isOwn;
+    if (!isOwn && !canLeaderActOnOthers) return;
     if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
     longPressTimerRef.current = setTimeout(() => setActionMsg(msg), 500);
   };
