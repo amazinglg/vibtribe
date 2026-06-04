@@ -5,7 +5,7 @@ import { Phone, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle, User, Chevr
 import { useAuth } from '@/contexts/AuthContext';
 import AppLogo from '@/components/ui/AppLogo';
 import { supabase } from '@/integrations/supabase/client';
-import LanguageSwitcher from '@/components/LanguageSwitcher';
+import LanguageDialogButton from '@/components/LanguageDialogButton';
 import { useT } from '@/contexts/LanguageContext';
 
 const COUNTRY_CODES = [
@@ -177,12 +177,8 @@ export default function SignUpPage() {
       <div className="absolute bottom-0 left-0 w-80 h-80 gradient-pink rounded-full blur-3xl opacity-15 animate-pulse" style={{ animationDelay: '1s' }} />
       <div className="absolute top-1/3 left-1/4 w-64 h-64 gradient-primary rounded-full blur-3xl opacity-10 animate-pulse" style={{ animationDelay: '2s' }} />
 
-      <div className="relative w-full max-w-md float-up py-6">
-        <div className="flex justify-end mb-3">
-          <LanguageSwitcher variant="pill" />
-        </div>
-
-        <div className="text-center mb-8">
+      <div className="relative w-full max-w-md float-up pt-3 pb-6">
+        <div className="text-center mb-6">
           <div className="flex items-center justify-center gap-3 mb-3">
             <AppLogo size={48} />
             <span className="font-bold text-3xl text-gradient-primary tracking-tight">VibTribe</span>
@@ -437,6 +433,11 @@ export default function SignUpPage() {
                 {t('common.signIn')}
               </Link>
             </p>
+          </div>
+
+          {/* Change Language */}
+          <div className="mt-4 text-center">
+            <LanguageDialogButton />
           </div>
           </>
           )}
