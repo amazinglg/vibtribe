@@ -177,14 +177,11 @@ export default function SignUpPage() {
       <div className="absolute bottom-0 left-0 w-80 h-80 gradient-pink rounded-full blur-3xl opacity-15 animate-pulse" style={{ animationDelay: '1s' }} />
       <div className="absolute top-1/3 left-1/4 w-64 h-64 gradient-primary rounded-full blur-3xl opacity-10 animate-pulse" style={{ animationDelay: '2s' }} />
 
-      <div
-        className="absolute right-3 z-30"
-        style={{ top: 'calc(var(--safe-top) + 0.75rem)' }}
-      >
-        <LanguageSwitcher variant="pill" />
-      </div>
-
       <div className="relative w-full max-w-md float-up my-auto py-4">
+        <div className="flex justify-end mb-3">
+          <LanguageSwitcher variant="pill" />
+        </div>
+
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-3">
             <AppLogo size={48} />
