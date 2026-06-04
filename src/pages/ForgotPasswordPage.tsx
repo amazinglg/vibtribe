@@ -65,8 +65,8 @@ export default function ForgotPasswordPage() {
     <div
       className="gradient-bg-page min-h-screen w-full flex flex-col items-center justify-start relative overflow-x-hidden overflow-y-auto px-4"
       style={{
-        paddingTop: 'calc(var(--safe-top) + 1rem)',
-        paddingBottom: 'calc(var(--safe-bottom) + 1rem)',
+        paddingTop: 'var(--safe-top)',
+        paddingBottom: 'var(--safe-bottom)',
         paddingLeft: 'var(--safe-left)',
         paddingRight: 'var(--safe-right)',
       }}
@@ -74,7 +74,7 @@ export default function ForgotPasswordPage() {
       <div className="absolute top-0 left-0 w-96 h-96 gradient-primary rounded-full blur-3xl opacity-20 animate-pulse" />
       <div className="absolute bottom-0 right-0 w-80 h-80 gradient-cyan rounded-full blur-3xl opacity-15 animate-pulse" style={{ animationDelay: '1s' }} />
 
-      <div className="relative w-full max-w-md float-up my-auto py-4">
+      <div className="relative w-full max-w-md float-up py-6">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-3">
             <AppLogo size={48} />
