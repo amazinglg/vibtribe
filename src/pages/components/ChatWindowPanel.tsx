@@ -1461,6 +1461,19 @@ export default function ChatWindowPanel() {
             }
             // Defensive: never render raw `e2e:` ciphertext
             const safeText = isEncrypted(msg.text) ? '[Encrypted message]' : msg.text;
+            // Tribe system message — render centered grey pill
+            if (msg.messageType === 'system') {
+              return (
+                <React.Fragment key={msg.id}>
+                  {__sep}
+                  <div className="flex justify-center">
+                    <span className="text-[11px] text-muted-foreground px-3 py-1 glass rounded-full border border-border/60 text-center max-w-[80%]">
+                      {safeText}
+                    </span>
+                  </div>
+                </React.Fragment>
+              );
+            }
             // Encrypted-media envelope (text after decryption)
             let encMedia: { type: 'image'|'file'|'audio'|'video'; url: string; mime: string; name?: string } | null = null;
             if (typeof safeText === 'string' && safeText.startsWith('__media__:')) {
