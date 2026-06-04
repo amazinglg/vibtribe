@@ -444,6 +444,17 @@ export default function ChatWindowPanel() {
           setE2eEnabled(false);
           setIsBlocked(false);
 
+          // Fetch caller's role in this tribe (founder is implicitly leader via DB triggers)
+          try {
+            const { data: myRow } = await supabase
+              .from('chat_members')
+              .select('role')
+              .eq('chat_id', selectedChatId)
+              .eq('user_id', user.id)
+              .maybeSingle();
+            setTribeRole(((myRow as any)?.role as any) || null);
+          } catch { setTribeRole(null); }
+
           const { data: msgs } = await supabase
             .from('messages')
             .select('*')
@@ -463,6 +474,9 @@ export default function ChatWindowPanel() {
               status: m.message_status || 'sent',
               reactions: m.reactions || [],
               encrypted: false,
+              messageType: (m as any).message_type || 'user',
+              createdAt: m.created_at,
+              deletedForEveryone: !!m.deleted_for_everyone,
             });
           }
           setMessages(out);
@@ -470,6 +484,8 @@ export default function ChatWindowPanel() {
           setLoading(false);
           return;
         }
+        // Non-group: clear tribe role
+        setTribeRole(null);
 
         const otherUserId = chat.participant_one === user.id ? chat.participant_two : chat.participant_one;
         const { data: otherUser } = await supabase
