@@ -149,7 +149,15 @@ export function usePermissions() {
   }, []);
 
   const requestStorage = useCallback(async (): Promise<PermissionRequestResult> => {
-    // Storage quota / persistent storage API
+    // Inside the native Android wrapper the app already has full app-scoped
+    // storage (and any runtime storage permission, if requested via Capacitor)
+    // — navigator.storage.persist() in the WebView is unrelated and usually
+    // resolves to `false`, which would make the toggle look broken. Treat
+    // native as always granted.
+    if (isNativeWrapper()) {
+      setPermissions(p => ({ ...p, storage: 'granted' }));
+      return { granted: true, status: 'granted' };
+    }
     if (!navigator?.storage?.persist) {
       setPermissions(p => ({ ...p, storage: 'unsupported' }));
       return { granted: false, status: 'unsupported' };
@@ -184,6 +192,22 @@ export function usePermissions() {
     } else {
       notif = await queryPermission('notifications' as PermissionName);
     }
+    // On Android WebView, navigator.permissions.query for mic/camera is
+    // decoupled from the real OS grant — it keeps reporting 'denied' even
+    // after the user grants the system dialog. So on native, do NOT clobber
+    // the in-memory state set by a successful request*() call; only refresh
+    // from the WebView API on the web.
+    setPermissions(prev => {
+      if (isNativeWrapper()) {
+        return {
+          ...prev,
+          notifications: notif,
+          // Preserve whatever the last request*() call recorded.
+        };
+      }
+      return prev;
+    });
+    if (isNativeWrapper()) return;
     const [mic, cam] = await Promise.all([
       queryPermission('microphone' as PermissionName),
       queryPermission('camera' as PermissionName),
