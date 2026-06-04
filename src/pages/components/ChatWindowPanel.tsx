@@ -1959,6 +1959,15 @@ export default function ChatWindowPanel() {
           />
         </div>
       )}
+
+      {tribeSheetOpen && selectedChatId && chatType === 'group' && (
+        <TribeDetailsSheet
+          chatId={selectedChatId}
+          isOpen={tribeSheetOpen}
+          onClose={() => setTribeSheetOpen(false)}
+          onLeft={() => { setSelectedChatId(null); }}
+        />
+      )}
     </div>
   );
 }
