@@ -106,15 +106,12 @@ export default function SignInPage() {
       <div className="absolute bottom-0 right-0 w-80 h-80 gradient-cyan rounded-full blur-3xl opacity-15 animate-pulse" style={{ animationDelay: '1s' }} />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 gradient-pink rounded-full blur-3xl opacity-10 animate-pulse" style={{ animationDelay: '2s' }} />
 
-      {/* Top-right language switcher */}
-      <div
-        className="absolute right-3 z-30"
-        style={{ top: 'calc(var(--safe-top) + 0.75rem)' }}
-      >
-        <LanguageSwitcher variant="pill" />
-      </div>
-
       <div className="relative w-full max-w-md float-up my-auto py-4">
+        {/* Top bar: language switcher (own row, no overlap with logo) */}
+        <div className="flex justify-end mb-3">
+          <LanguageSwitcher variant="pill" />
+        </div>
+
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-3">
@@ -240,11 +237,6 @@ export default function SignInPage() {
             <p className="text-xs text-muted-foreground mb-2">{t('auth.needHelpSignIn')}</p>
             <HelpButton variant="inline" />
           </div>
-        </div>
-
-        {/* Floating help — always visible on the auth screens */}
-        <div className="fixed bottom-4 right-4 z-40">
-          <HelpButton variant="floating" />
         </div>
       </div>
     </div>
