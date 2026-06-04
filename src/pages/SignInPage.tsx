@@ -91,12 +91,12 @@ export default function SignInPage() {
     <div
       className="gradient-bg-page min-h-screen w-full flex flex-col items-center justify-start relative overflow-x-hidden overflow-y-auto px-4"
       style={{
-        // Use the same --safe-top variable the Chat List header relies on so
-        // the logo can never slide under the camera cutout, regardless of
-        // form height. justify-start (not items-center) prevents flex
-        // overflow from pushing content above the inset on tall forms.
-        paddingTop: 'calc(var(--safe-top) + 1rem)',
-        paddingBottom: 'calc(var(--safe-bottom) + 1rem)',
+        // Safe-area: status bar clearance only — extra spacing comes from the
+        // inner container's py-4. Adding +1rem on top of safe-top and then
+        // centering the inner card with my-auto produced excessive whitespace
+        // above the logo on tall phones.
+        paddingTop: 'var(--safe-top)',
+        paddingBottom: 'var(--safe-bottom)',
         paddingLeft: 'var(--safe-left)',
         paddingRight: 'var(--safe-right)',
       }}
@@ -106,7 +106,7 @@ export default function SignInPage() {
       <div className="absolute bottom-0 right-0 w-80 h-80 gradient-cyan rounded-full blur-3xl opacity-15 animate-pulse" style={{ animationDelay: '1s' }} />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 gradient-pink rounded-full blur-3xl opacity-10 animate-pulse" style={{ animationDelay: '2s' }} />
 
-      <div className="relative w-full max-w-md float-up my-auto py-4">
+      <div className="relative w-full max-w-md float-up py-6">
         {/* Top bar: language switcher (own row, no overlap with logo) */}
         <div className="flex justify-end mb-3">
           <LanguageSwitcher variant="pill" />
