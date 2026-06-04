@@ -18,10 +18,11 @@ export default function LandingPage() {
     <div
       className="min-h-screen gradient-bg-page text-foreground overflow-x-hidden relative"
       style={{
-        // Android safe-area: same strategy as SignIn/SignUp. Without this the
-        // sticky header's "Log In" / "Get Started" buttons render under the
-        // status bar/notch on Capacitor Android builds.
-        paddingTop: 'var(--safe-top)',
+        // Android safe-area: MainActivity injects --safe-top as raw physical
+        // pixels, which become oversized CSS px on high-DPR devices. Cap at
+        // 2.25rem (~36px) — enough to clear any status bar / notch on phones
+        // while preventing the huge empty band above the header.
+        paddingTop: 'min(var(--safe-top), 2.25rem)',
         paddingBottom: 'var(--safe-bottom)',
         paddingLeft: 'var(--safe-left)',
         paddingRight: 'var(--safe-right)',
@@ -34,9 +35,9 @@ export default function LandingPage() {
 
       {/* Nav */}
       <header className="relative z-20">
-        <nav className="max-w-6xl mx-auto px-4 sm:px-6 py-0 sm:py-3 flex items-center justify-between gap-3">
+        <nav className="max-w-6xl mx-auto px-4 sm:px-6 py-2 sm:py-3 flex items-center justify-between gap-3">
           <Link to="/" className="flex items-center gap-2 group">
-            <AppLogo size={28} />
+            <AppLogo size={32} />
             <span className="font-bold text-lg sm:text-xl text-gradient-primary tracking-tight">VibTribe</span>
           </Link>
 
@@ -62,13 +63,13 @@ export default function LandingPage() {
             </Link>
           </div>
         </nav>
-        <div className="px-4 -mt-2 pb-0 flex justify-center sm:mt-0 sm:pb-1 sm:justify-end sm:max-w-6xl sm:mx-auto sm:pr-6">
+        <div className="px-4 pb-2 flex justify-center sm:pb-1 sm:justify-end sm:max-w-6xl sm:mx-auto sm:pr-6">
           <LanguageSwitcher variant="pill" />
         </div>
       </header>
 
       {/* Hero */}
-      <section className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pt-0 sm:pt-14 pb-12 sm:pb-20 text-center">
+      <section className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pt-3 sm:pt-14 pb-12 sm:pb-20 text-center">
         <div className="float-up">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass border border-primary/30 mb-6">
             <ShieldCheck size={13} className="text-primary" />

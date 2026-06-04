@@ -167,7 +167,9 @@ export default function SignUpPage() {
     <div
       className="gradient-bg-page min-h-screen w-full flex flex-col items-center justify-start relative overflow-x-hidden overflow-y-auto px-4"
       style={{
-        paddingTop: 'var(--safe-top)',
+        // Cap injected Android safe-top (physical px) to avoid huge gap on
+        // high-DPR devices.
+        paddingTop: 'min(var(--safe-top), 2.25rem)',
         paddingBottom: 'var(--safe-bottom)',
         paddingLeft: 'var(--safe-left)',
         paddingRight: 'var(--safe-right)',
@@ -177,7 +179,7 @@ export default function SignUpPage() {
       <div className="absolute bottom-0 left-0 w-80 h-80 gradient-pink rounded-full blur-3xl opacity-15 animate-pulse" style={{ animationDelay: '1s' }} />
       <div className="absolute top-1/3 left-1/4 w-64 h-64 gradient-primary rounded-full blur-3xl opacity-10 animate-pulse" style={{ animationDelay: '2s' }} />
 
-      <div className="relative w-full max-w-md float-up -mt-2 pb-6">
+      <div className="relative w-full max-w-md float-up pt-2 pb-6">
         <div className="text-center mb-3">
           <div className="flex items-center justify-center gap-2.5 mb-1.5">
             <AppLogo size={40} />
