@@ -16,6 +16,7 @@ import { useCall } from '@/components/CallProvider';
 import { toast } from 'sonner';
 import { EMOJI_CATEGORIES, type EmojiCategoryKey } from '@/lib/emojis';
 import { useT } from '@/contexts/LanguageContext';
+import TribeDetailsSheet from '@/components/TribeDetailsSheet';
 
 interface Message {
   id: string;
@@ -30,6 +31,7 @@ interface Message {
   editedAt?: string | null;
   deletedForEveryone?: boolean;
   createdAt?: string;
+  messageType?: string;
 }
 
 // Call Modal Component
