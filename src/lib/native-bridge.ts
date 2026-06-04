@@ -35,15 +35,9 @@ export function initNativeBridge(): 'capacitor' | 'twa' | 'browser' {
   document.documentElement.setAttribute('data-native', kind);
 
   if (kind === 'capacitor') {
-    // Android safe areas are handled natively by @capacitor-community/safe-area.
-    // Do not use @capacitor/status-bar here: it competes with native WindowInsets
-    // handling and Android WebView often reports env(safe-area-inset-*) as 0.
-    import('@capacitor-community/safe-area')
-      .then(({ SafeArea, SystemBarsStyle }) => {
-        SafeArea.setSystemBarsStyle({ style: SystemBarsStyle.Dark }).catch(() => {});
-      })
-      .catch(() => {});
-
+    // Android safe areas are injected by MainActivity from real WindowInsets
+    // into the global --safe-* CSS variables. Do not use StatusBar overlays or
+    // a JS safe-area plugin here; those paths competed with native insets.
     // Hide the native splash as soon as the WebView is interactive.
     import('@capacitor/splash-screen')
       .then(({ SplashScreen }) => {
