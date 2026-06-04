@@ -36,18 +36,6 @@ const config: CapacitorConfig = {
     webContentsDebuggingEnabled: false,
   },
   plugins: {
-    SystemBars: {
-      // The @capacitor-community/safe-area plugin owns Android WindowInsets.
-      // Disable Capacitor's competing SystemBars inset handling so there is
-      // exactly one native safe-area authority.
-      insetsHandling: 'disable',
-    },
-    SafeArea: {
-      statusBarStyle: 'DARK',
-      navigationBarStyle: 'DARK',
-      initialViewportFitCover: true,
-      detectViewportFitCoverChanges: true,
-    },
     SplashScreen: {
       backgroundColor: '#070a1b',
       launchAutoHide: false,
