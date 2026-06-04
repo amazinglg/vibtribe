@@ -243,6 +243,8 @@ export default function ChatWindowPanel() {
   const [myChatSecured, setMyChatSecured] = useState(false);
   const [showDisappearMenu, setShowDisappearMenu] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [tribeRole, setTribeRole] = useState<'leader' | 'member' | null>(null);
+  const [tribeSheetOpen, setTribeSheetOpen] = useState(false);
   const contactPubKeyRef = useRef<string | null>(null);
   const previousChatIdRef = useRef<string | null>(null);
   const [actionMsg, setActionMsg] = useState<Message | null>(null);
