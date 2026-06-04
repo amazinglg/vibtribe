@@ -1,7 +1,7 @@
 /**
  * Detect when VibTribe is running inside a native wrapper (Capacitor or
- * Android Trusted Web Activity) and tag <html data-native="..."> so CSS
- * can apply native-specific tweaks (stronger safe-area floors, etc.).
+ * Android Trusted Web Activity) and tag <html data-native="..."> so runtime
+ * behaviour can adjust to native-only capabilities.
  *
  * Safe to call repeatedly. No-op during SSR.
  */
@@ -34,26 +34,10 @@ export function initNativeBridge(): 'capacitor' | 'twa' | 'browser' {
 
   document.documentElement.setAttribute('data-native', kind);
 
-  // --- StatusBar setup (Capacitor only) ---
-  // Configure the native status bar to overlay the WebView so that
-  // `env(safe-area-inset-top)` resolves to the actual inset and the page
-  // can pad itself once. Without this the WebView is laid out below the
-  // status bar AND the CSS adds its own padding → double gap.
   if (kind === 'capacitor') {
-    // Dynamic import keeps the plugin out of the browser bundle.
-    import('@capacitor/status-bar')
-      .then(({ StatusBar, Style }) => {
-        StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {});
-        StatusBar.setStyle({ style: Style.Dark }).catch(() => {});
-        // TEMP DIAGNOSTIC: confirm whether setOverlaysWebView changes the
-        // CSS env(safe-area-inset-top) value on this Android WebView.
-        import('./safe-area-debug').then(({ logSafeArea }) => {
-          logSafeArea('after-setOverlaysWebView');
-          setTimeout(() => logSafeArea('after-setOverlaysWebView+500ms'), 500);
-        }).catch(() => {});
-      })
-      .catch(() => {});
-
+    // Android safe areas are injected by MainActivity from real WindowInsets
+    // into the global --safe-* CSS variables. Do not use StatusBar overlays or
+    // a JS safe-area plugin here; those paths competed with native insets.
     // Hide the native splash as soon as the WebView is interactive.
     import('@capacitor/splash-screen')
       .then(({ SplashScreen }) => {

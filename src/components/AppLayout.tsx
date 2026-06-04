@@ -20,7 +20,6 @@ import EmailVerificationGate from '@/components/EmailVerificationGate';
 import { hasLocalPrivateKey, hasServerKey } from '@/lib/encryption';
 import { useT } from '@/contexts/LanguageContext';
 import { initNativeBridge, isNativeWrapper, registerNativePushNotifications } from '@/lib/native-bridge';
-import { useSafeAreaDebug } from '@/lib/safe-area-debug';
 
 
 
@@ -29,19 +28,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useNavigate();
   const { user, profile, signOut, isAdmin } = useAuth();
   const { t } = useT();
-  useSafeAreaDebug('AppLayout', () => {
-    if (typeof document === 'undefined') return {};
-    const header = document.querySelector('header.glass-strong') as HTMLElement | null;
-    if (!header) return { header: null };
-    const cs = getComputedStyle(header);
-    const r = header.getBoundingClientRect();
-    return {
-      headerPaddingTop: cs.paddingTop,
-      headerHeightCss: cs.height,
-      headerRect: { top: r.top, height: r.height },
-      pathname,
-    };
-  });
   const NAV_ITEMS = [
     { href: '/', label: t('nav.chats'), icon: MessageCircle, badge: 0 },
     { href: '/status-screen', label: t('nav.status'), icon: CircleDot, badge: 0 },

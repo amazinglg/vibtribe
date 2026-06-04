@@ -1,23 +1,10 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle, CheckCircle2, ArrowLeft, ShieldCheck } from 'lucide-react';
 import AppLogo from '@/components/ui/AppLogo';
-import { useSafeAreaDebug } from '@/lib/safe-area-debug';
 
 export default function ForgotPasswordPage() {
   const navigate = useNavigate();
-  const wrapperRef = useRef<HTMLDivElement | null>(null);
-  useSafeAreaDebug('ForgotPassword', () => {
-    const el = wrapperRef.current;
-    if (!el) return { wrapper: null };
-    const cs = getComputedStyle(el);
-    const r = el.getBoundingClientRect();
-    return {
-      wrapperPaddingTop: cs.paddingTop,
-      wrapperPaddingBottom: cs.paddingBottom,
-      wrapperRect: { top: r.top, left: r.left, width: r.width, height: r.height },
-    };
-  });
   const [identifier, setIdentifier] = useState('');
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -76,7 +63,6 @@ export default function ForgotPasswordPage() {
 
   return (
     <div
-      ref={wrapperRef}
       className="gradient-bg-page min-h-screen w-full flex flex-col items-center justify-start relative overflow-x-hidden overflow-y-auto px-4"
       style={{
         paddingTop: 'calc(var(--safe-top) + 1rem)',
