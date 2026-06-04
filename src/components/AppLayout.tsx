@@ -330,8 +330,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <header
           className="glass-strong border-b border-border sticky top-0 z-30 flex items-center px-3 sm:px-4 lg:px-6 gap-2 sm:gap-3"
           style={{
-            paddingTop: 'var(--safe-top)',
-            height: 'calc(64px + var(--safe-top))',
+            // Cap injected Android safe-top (MainActivity injects physical px
+            // as CSS px, which becomes oversized on high-DPR devices).
+            paddingTop: 'min(var(--safe-top), 2.25rem)',
+            height: 'calc(64px + min(var(--safe-top), 2.25rem))',
           }}
         >
           <div className="flex lg:hidden items-center gap-2 min-w-0 flex-shrink">

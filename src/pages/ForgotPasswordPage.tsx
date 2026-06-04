@@ -65,7 +65,7 @@ export default function ForgotPasswordPage() {
     <div
       className="gradient-bg-page min-h-screen w-full flex flex-col items-center justify-start relative overflow-x-hidden overflow-y-auto px-4"
       style={{
-        paddingTop: 'var(--safe-top)',
+        paddingTop: 'min(var(--safe-top), 2.25rem)',
         paddingBottom: 'var(--safe-bottom)',
         paddingLeft: 'var(--safe-left)',
         paddingRight: 'var(--safe-right)',
