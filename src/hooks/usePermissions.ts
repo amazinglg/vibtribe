@@ -66,6 +66,12 @@ export function usePermissions() {
         setPermissions(p => ({ ...p, camera: 'denied' }));
         return { granted: false, status: 'denied' };
       }
+      // Native OS permission granted — that is the source of truth on Android.
+      // The WebView's getUserMedia may still fail without an explicit
+      // onPermissionRequest bridge, which would incorrectly flip the toggle
+      // back to "denied". Trust the native grant.
+      setPermissions(p => ({ ...p, camera: 'granted' }));
+      return { granted: true, status: 'granted' };
     }
     if (!navigator?.mediaDevices?.getUserMedia) {
       setPermissions(p => ({ ...p, camera: 'unsupported' }));
@@ -86,13 +92,14 @@ export function usePermissions() {
 
   const requestMicAndCamera = useCallback(async (): Promise<PermissionRequestResult> => {
     if (isNativeWrapper()) {
-      // Trigger the native camera prompt (mic is bundled with getUserMedia
-      // and Android requests RECORD_AUDIO automatically via the WebView).
       const native = await requestNativeCameraPermission();
       if (native !== 'granted') {
         setPermissions(p => ({ ...p, microphone: 'denied', camera: 'denied' }));
         return { granted: false, status: 'denied' };
       }
+      // Trust the native grant — see requestCamera above.
+      setPermissions(p => ({ ...p, microphone: 'granted', camera: 'granted' }));
+      return { granted: true, status: 'granted' };
     }
     if (!navigator?.mediaDevices?.getUserMedia) {
       setPermissions(p => ({ ...p, microphone: 'unsupported', camera: 'unsupported' }));
