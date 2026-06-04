@@ -42,24 +42,34 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
       //    via @capacitor-community/contacts. Requires the runtime permission
       //    granted in usePermissions / native-bridge.
       if (isNativeWrapper()) {
-        const granted = await requestNativeContactsPermission();
-        if (granted !== 'granted') {
-          setPermissionState('denied');
+        try {
+          const granted = await requestNativeContactsPermission();
+          if (granted !== 'granted') {
+            setPermissionState('denied');
+            return;
+          }
+          const { Contacts } = await import('@capacitor-community/contacts');
+          const res: any = await Contacts.getContacts({
+            projection: { name: true, phones: true, image: true },
+          });
+          const raw = (res?.contacts || []).map((c: any) => ({
+            name: c?.name?.display || [c?.name?.given, c?.name?.family].filter(Boolean).join(' ') || 'Unknown',
+            tel: (c?.phones || []).map((p: any) => p?.number).filter(Boolean),
+          }));
+          setPermissionState('granted');
+          try {
+            await matchContactsWithPlatform(raw);
+          } catch (matchErr) {
+            console.error('[VibTribe] matchContactsWithPlatform failed', matchErr);
+            await loadDemoContacts().catch(() => {});
+          }
+          return;
+        } catch (nativeErr) {
+          console.error('[VibTribe] native contacts sync failed', nativeErr);
+          setPermissionState('granted');
+          await loadDemoContacts().catch(() => {});
           return;
         }
-        const { Contacts } = await import('@capacitor-community/contacts');
-        const res = await Contacts.getContacts({
-          projection: { name: true, phones: true, image: true },
-        });
-        // Normalise the plugin's shape to { name, tel } so the existing
-        // matcher below works without changes.
-        const raw = (res?.contacts || []).map((c: any) => ({
-          name: c?.name?.display || [c?.name?.given, c?.name?.family].filter(Boolean).join(' ') || 'Unknown',
-          tel: (c?.phones || []).map((p: any) => p?.number).filter(Boolean),
-        }));
-        setPermissionState('granted');
-        await matchContactsWithPlatform(raw);
-        return;
       }
 
       // 2) Web Contacts Picker API (Android Chrome PWA)
@@ -75,12 +85,13 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
         await loadDemoContacts();
       }
     } catch (err: any) {
+      console.error('[VibTribe] requestContacts failed', err);
       if (err?.name === 'SecurityError' || err?.name === 'NotAllowedError') {
         setPermissionState('denied');
       } else {
         // API not supported — show demo
         setPermissionState('granted');
-        await loadDemoContacts();
+        await loadDemoContacts().catch(() => {});
       }
     }
   };
