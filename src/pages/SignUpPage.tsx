@@ -167,8 +167,8 @@ export default function SignUpPage() {
     <div
       className="gradient-bg-page min-h-screen w-full flex flex-col items-center justify-start relative overflow-x-hidden overflow-y-auto px-4"
       style={{
-        paddingTop: 'calc(var(--safe-top) + 1rem)',
-        paddingBottom: 'calc(var(--safe-bottom) + 1rem)',
+        paddingTop: 'var(--safe-top)',
+        paddingBottom: 'var(--safe-bottom)',
         paddingLeft: 'var(--safe-left)',
         paddingRight: 'var(--safe-right)',
       }}
@@ -177,7 +177,7 @@ export default function SignUpPage() {
       <div className="absolute bottom-0 left-0 w-80 h-80 gradient-pink rounded-full blur-3xl opacity-15 animate-pulse" style={{ animationDelay: '1s' }} />
       <div className="absolute top-1/3 left-1/4 w-64 h-64 gradient-primary rounded-full blur-3xl opacity-10 animate-pulse" style={{ animationDelay: '2s' }} />
 
-      <div className="relative w-full max-w-md float-up my-auto py-4">
+      <div className="relative w-full max-w-md float-up py-6">
         <div className="flex justify-end mb-3">
           <LanguageSwitcher variant="pill" />
         </div>
