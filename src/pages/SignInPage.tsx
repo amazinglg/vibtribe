@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import AppLogo from '@/components/ui/AppLogo';
 import HelpButton from '@/components/HelpButton';
 import { createClient } from '@/lib/supabase/client';
-import LanguageSwitcher from '@/components/LanguageSwitcher';
+import LanguageDialogButton from '@/components/LanguageDialogButton';
 import { useT } from '@/contexts/LanguageContext';
 
 export default function SignInPage() {
@@ -106,14 +106,9 @@ export default function SignInPage() {
       <div className="absolute bottom-0 right-0 w-80 h-80 gradient-cyan rounded-full blur-3xl opacity-15 animate-pulse" style={{ animationDelay: '1s' }} />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 gradient-pink rounded-full blur-3xl opacity-10 animate-pulse" style={{ animationDelay: '2s' }} />
 
-      <div className="relative w-full max-w-md float-up py-6">
-        {/* Top bar: language switcher (own row, no overlap with logo) */}
-        <div className="flex justify-end mb-3">
-          <LanguageSwitcher variant="pill" />
-        </div>
-
+      <div className="relative w-full max-w-md float-up pt-3 pb-6">
         {/* Logo */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <div className="flex items-center justify-center gap-3 mb-3">
             <AppLogo size={48} />
             <span className="font-bold text-3xl text-gradient-primary tracking-tight">VibTribe</span>
@@ -235,7 +230,14 @@ export default function SignInPage() {
           {/* Help & Support */}
           <div className="mt-6 pt-4 border-t border-border text-center">
             <p className="text-xs text-muted-foreground mb-2">{t('auth.needHelpSignIn')}</p>
-            <HelpButton variant="inline" />
+            <div className="flex justify-center">
+              <HelpButton variant="inline" />
+            </div>
+          </div>
+
+          {/* Change Language */}
+          <div className="mt-4 text-center">
+            <LanguageDialogButton />
           </div>
         </div>
       </div>
