@@ -1498,7 +1498,11 @@ export default function ChatWindowPanel() {
                   onTouchEnd={handleLongPressEnd}
                   onTouchMove={handleLongPressEnd}
                   onTouchCancel={handleLongPressEnd}
-                  onContextMenu={(e) => { if (isMe && !msg.deletedForEveryone) { e.preventDefault(); setActionMsg(msg); } }}
+                  onContextMenu={(e) => {
+                    if (msg.deletedForEveryone || msg.messageType === 'system') return;
+                    const canOpen = (msg.senderId === user?.id) || (chatType === 'group' && tribeRole === 'leader');
+                    if (canOpen) { e.preventDefault(); setActionMsg(msg); }
+                  }}
                 >
                   <div
                     className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
