@@ -23,6 +23,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
+import { Route as TribeJoinCodeRouteImport } from './routes/tribe.join.$code'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as ApiPublicAuthOtpRouteImport } from './routes/api/public/auth-otp'
 import { Route as AdminUserUserIdRouteImport } from './routes/admin.user.$userId'
@@ -102,6 +103,11 @@ const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
   path: '/email/unsubscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TribeJoinCodeRoute = TribeJoinCodeRouteImport.update({
+  id: '/tribe/join/$code',
+  path: '/tribe/join/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   id: '/lovable/email/suppression',
   path: '/lovable/email/suppression',
@@ -164,6 +170,7 @@ export interface FileRoutesByFullPath {
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/tribe/join/$code': typeof TribeJoinCodeRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -187,6 +194,7 @@ export interface FileRoutesByTo {
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/tribe/join/$code': typeof TribeJoinCodeRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -212,6 +220,7 @@ export interface FileRoutesById {
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/tribe/join/$code': typeof TribeJoinCodeRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -238,6 +247,7 @@ export interface FileRouteTypes {
     | '/admin/user/$userId'
     | '/api/public/auth-otp'
     | '/lovable/email/suppression'
+    | '/tribe/join/$code'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -261,6 +271,7 @@ export interface FileRouteTypes {
     | '/admin/user/$userId'
     | '/api/public/auth-otp'
     | '/lovable/email/suppression'
+    | '/tribe/join/$code'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -285,6 +296,7 @@ export interface FileRouteTypes {
     | '/admin/user/$userId'
     | '/api/public/auth-otp'
     | '/lovable/email/suppression'
+    | '/tribe/join/$code'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -308,6 +320,7 @@ export interface RootRouteChildren {
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   ApiPublicAuthOtpRoute: typeof ApiPublicAuthOtpRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
+  TribeJoinCodeRoute: typeof TribeJoinCodeRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
@@ -415,6 +428,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmailUnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/tribe/join/$code': {
+      id: '/tribe/join/$code'
+      path: '/tribe/join/$code'
+      fullPath: '/tribe/join/$code'
+      preLoaderRoute: typeof TribeJoinCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lovable/email/suppression': {
       id: '/lovable/email/suppression'
       path: '/lovable/email/suppression'
@@ -502,6 +522,7 @@ const rootRouteChildren: RootRouteChildren = {
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   ApiPublicAuthOtpRoute: ApiPublicAuthOtpRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
+  TribeJoinCodeRoute: TribeJoinCodeRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
@@ -511,3 +532,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
