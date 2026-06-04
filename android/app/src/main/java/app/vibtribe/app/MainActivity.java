@@ -5,6 +5,7 @@ import android.webkit.WebView;
 import android.view.View;
 import androidx.activity.EdgeToEdge;
 import androidx.core.graphics.Insets;
+import androidx.core.splashscreen.SplashScreen;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import com.getcapacitor.BridgeActivity;
@@ -18,6 +19,7 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        SplashScreen.installSplashScreen(this);
         super.onCreate(savedInstanceState);
         // Single Android safe-area source: real WindowInsets/display-cutout
         // values are injected into the existing global --safe-* CSS variables.
