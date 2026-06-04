@@ -36,13 +36,17 @@ const config: CapacitorConfig = {
     webContentsDebuggingEnabled: false,
   },
   plugins: {
-    StatusBar: {
-      style: 'DARK',
-      backgroundColor: '#070a1b',
-      // Let the WebView extend behind the status bar so the page can
-      // resolve the real `env(safe-area-inset-top)` value. The Android
-      // layout no longer adds its own padding (see MainActivity.java).
-      overlaysWebView: true,
+    SystemBars: {
+      // The @capacitor-community/safe-area plugin owns Android WindowInsets.
+      // Disable Capacitor's competing SystemBars inset handling so there is
+      // exactly one native safe-area authority.
+      insetsHandling: 'disable',
+    },
+    SafeArea: {
+      statusBarStyle: 'DARK',
+      navigationBarStyle: 'DARK',
+      initialViewportFitCover: true,
+      detectViewportFitCoverChanges: true,
     },
     SplashScreen: {
       backgroundColor: '#070a1b',
@@ -55,7 +59,6 @@ const config: CapacitorConfig = {
     },
     Keyboard: {
       resize: 'native',
-      resizeOnFullScreen: true,
     },
     PushNotifications: {
       presentationOptions: ['badge', 'sound', 'alert'],
