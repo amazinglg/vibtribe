@@ -1124,9 +1124,12 @@ export default function ChatWindowPanel() {
 
         <button
           type="button"
-          onClick={() => contact?.avatarUrl && setEnlargeAvatar(true)}
+          onClick={() => {
+            if (chatType === 'group') setTribeSheetOpen(true);
+            else if (contact?.avatarUrl) setEnlargeAvatar(true);
+          }}
           className="relative flex-shrink-0 focus:outline-none"
-          aria-label="View profile picture"
+          aria-label={chatType === 'group' ? 'Tribe info' : 'View profile picture'}
         >
           {contact?.avatarUrl ? (
             <img src={contact.avatarUrl} alt={contact.name}
@@ -1141,7 +1144,12 @@ export default function ChatWindowPanel() {
           )}
         </button>
 
-        <div className="flex-1 min-w-0">
+        <button
+          type="button"
+          onClick={() => { if (chatType === 'group') setTribeSheetOpen(true); }}
+          className={`flex-1 min-w-0 text-left ${chatType === 'group' ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
+          aria-label={chatType === 'group' ? 'Open tribe info' : undefined}
+        >
           <div className="flex items-center gap-1.5 min-w-0">
             <h3 className="font-semibold text-sm text-foreground truncate min-w-0">{contact?.name || 'Loading...'}</h3>
             {e2eEnabled && (
@@ -1154,7 +1162,7 @@ export default function ChatWindowPanel() {
           <p className={`text-xs truncate ${contact?.online ? 'text-vt-green' : 'text-muted-foreground'}`}>
             {contact?.lastSeen || ''}
           </p>
-        </div>
+        </button>
 
         <div className="flex items-center gap-0.5 flex-shrink-0">
           {/* Voice Call */}
