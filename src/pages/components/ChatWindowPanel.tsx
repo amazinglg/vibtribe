@@ -1509,6 +1509,11 @@ export default function ChatWindowPanel() {
           Waiting for {contact.name}'s encryption key before secure messages can be sent.
         </div>
       )}
+      {chatType === 'group' && tribeMissingKeyCount > 0 && (
+        <div className="px-4 py-2 bg-vt-amber/10 border-b border-vt-amber/20 text-center text-[11px] text-vt-amber">
+          🔒 {tribeMissingKeyCount} of {tribeTotalMembers} member{tribeTotalMembers > 1 ? 's' : ''} haven't set up encryption yet — they won't be able to read new messages until they do.
+        </div>
+      )}
 
       {/* Blocked Banner */}
       {isBlocked && (
