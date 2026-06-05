@@ -89,6 +89,22 @@ export const sendCallPush = createServerFn({ method: 'POST' })
   .handler(async ({ data, context }) => {
     const callerId = context.userId;
 
+    // Verify a real ringing call exists between this caller and callee.
+    // Without this any authenticated user could spam fake incoming-call
+    // pushes to any other user.
+    const { data: callRow } = await supabaseAdmin
+      .from('calls')
+      .select('id')
+      .eq('id', data.callId)
+      .eq('caller_id', callerId)
+      .eq('callee_id', data.calleeId)
+      .eq('status', 'ringing')
+      .maybeSingle();
+    if (!callRow) {
+      console.warn('[FCM] sendCallPush rejected — no matching ringing call', { callerId, calleeId: data.calleeId });
+      return { sent: 0 };
+    }
+
     // Look up caller display name/avatar (used by the Android service to
     // render the incoming-call screen).
     let callerName = 'Unknown';
