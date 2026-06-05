@@ -694,6 +694,15 @@ export default function ChatWindowPanel() {
         toast.error('Set up or unlock your encryption PIN to send messages.');
         return;
       }
+    } else {
+      // Tribe send: needs the user's PIN unlocked to wrap the message key
+      // for each member. Members without a pubkey will simply be skipped
+      // and will see a "locked" placeholder until they set up their PIN.
+      const ok = await hasLocalPrivateKey();
+      if (!ok) {
+        toast.error('Set up or unlock your encryption PIN to send tribe messages.');
+        return;
+      }
     }
     let text = raw.trim();
     const tempId = `temp-${Date.now()}`;
@@ -715,6 +724,16 @@ export default function ChatWindowPanel() {
       let contentToStore = text;
       if (chatType !== 'group' && contact?.publicKey) {
         contentToStore = await encryptMessage(text, contact.publicKey);
+      } else if (chatType === 'group') {
+        // Always include self so we can decrypt our own messages on other devices.
+        const members = [...tribeMembersRef.current];
+        const myPk = senderPubKeyCacheRef.current.get(user.id);
+        if (myPk && !members.find(m => m.userId === user.id)) {
+          members.push({ userId: user.id, publicKey: myPk });
+        }
+        if (members.length > 0) {
+          contentToStore = await encryptGroupMessage(text, members);
+        }
       }
 
       const { data } = await supabase
