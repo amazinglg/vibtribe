@@ -203,9 +203,16 @@ export default function ChatListPanel() {
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'chats' }, debouncedReload)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'user_secure_chats', filter: `user_id=eq.${user.id}` }, debouncedReload)
       .subscribe();
+    // When the Android WebView resumes from background, the cached list can
+    // show stale unread badges until realtime catches up. Force-refresh.
+    const onResume = () => { loadChats(); };
+    window.addEventListener('vt-app-resumed', onResume);
+    window.addEventListener('vt-network-online', onResume);
     return () => {
       if (timer) clearTimeout(timer);
       supabase.removeChannel(channel);
+      window.removeEventListener('vt-app-resumed', onResume);
+      window.removeEventListener('vt-network-online', onResume);
     };
   }, [user]);
 
