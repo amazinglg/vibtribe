@@ -444,18 +444,21 @@ export type Database = {
           id: string
           issued_at: string
           issued_by: string | null
+          session_id: string | null
           user_id: string
         }
         Insert: {
           id?: string
           issued_at?: string
           issued_by?: string | null
+          session_id?: string | null
           user_id: string
         }
         Update: {
           id?: string
           issued_at?: string
           issued_by?: string | null
+          session_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -1035,6 +1038,42 @@ export type Database = {
           chat_id?: string
           code?: string
           created_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_sessions: {
+        Row: {
+          app_version: string | null
+          created_at: string
+          device_id: string
+          device_name: string
+          id: string
+          last_seen_at: string
+          platform: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          app_version?: string | null
+          created_at?: string
+          device_id: string
+          device_name?: string
+          id?: string
+          last_seen_at?: string
+          platform?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          app_version?: string | null
+          created_at?: string
+          device_id?: string
+          device_name?: string
+          id?: string
+          last_seen_at?: string
+          platform?: string
+          user_agent?: string | null
           user_id?: string
         }
         Relationships: []
