@@ -1467,39 +1467,6 @@ export default function ProfileContent() {
 
           {activeTab === 'more' && (
             <div className="space-y-4">
-              {/* Update App */}
-              <div className="glass rounded-2xl border border-border p-5">
-                <h3 className="font-semibold text-base text-foreground mb-1 flex items-center gap-2">
-                  <RefreshCw size={16} className="text-primary" />
-                  App Maintenance
-                </h3>
-                <p className="text-xs text-muted-foreground mb-4">Clear cached data and update to the latest version without logging out.</p>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={handleCheckForUpdate}
-                    className="flex items-center gap-2 px-4 py-2.5 gradient-primary text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-all glow-primary"
-                  >
-                    <RefreshCw size={14} />
-                    Update the App
-                  </button>
-                  <button
-                    onClick={handleInstallApp}
-                    disabled={installState === 'installed' || installState === 'installing'}
-                    className="flex items-center gap-2 px-4 py-2.5 glass border border-primary/40 text-primary text-sm font-semibold rounded-xl hover:bg-primary/10 transition-all disabled:opacity-60"
-                    title={installState === 'installed' ? 'Already installed' : 'Install VibTribe on this device'}
-                  >
-                    {isIOSDevice ? <Share size={14} /> : <Download size={14} />}
-                    {installState === 'installed'
-                      ? 'App Installed'
-                      : installState === 'installing'
-                      ? 'Installing…'
-                      : isIOSDevice
-                      ? 'Add to Home Screen'
-                      : 'Install App'}
-                  </button>
-                </div>
-              </div>
-
               {/* Change Language */}
               <div className="glass rounded-2xl border border-border p-5">
                 <h3 className="font-semibold text-base text-foreground mb-1 flex items-center gap-2">
