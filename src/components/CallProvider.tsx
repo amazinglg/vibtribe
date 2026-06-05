@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
 import { acquireCallWakeLock, setCallAudioRoute } from '@/lib/native-bridge';
+import { sendCallPush } from '@/lib/fcm-push.functions';
 
 type CallType = 'voice' | 'video';
 type CallRow = {
@@ -273,6 +274,16 @@ export default function CallProvider({ children }: { children: React.ReactNode }
       setCallState('ringing');
       setRemoteName(opts.calleeName || 'User');
       setRemoteAvatar((opts.calleeAvatar || opts.calleeName?.[0] || 'U').slice(0, 1).toUpperCase());
+
+      // Fire native push so the callee's phone rings even when the app is killed.
+      // Fire-and-forget — never block call setup on push delivery.
+      sendCallPush({ data: {
+        callId: callRow.id,
+        calleeId: opts.calleeId,
+        callerName: opts.calleeName ? undefined : undefined, // caller's name is read on callee side from profile
+        callType: opts.type,
+        chatId: opts.chatId ?? null,
+      } }).catch((e) => console.warn('[Call] push failed', e));
 
       // Pre-acquire local media (so user sees themselves while ringing)
       try { await acquireMedia(opts.type); } catch {}
