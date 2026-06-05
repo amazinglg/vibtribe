@@ -83,13 +83,27 @@ export const sendCallPush = createServerFn({ method: 'POST' })
   .inputValidator((input: {
     callId: string;
     calleeId: string;
-    callerName?: string;
-    callerAvatar?: string;
     callType: 'voice' | 'video';
     chatId?: string | null;
   }) => input)
   .handler(async ({ data, context }) => {
     const callerId = context.userId;
+
+    // Look up caller display name/avatar (used by the Android service to
+    // render the incoming-call screen).
+    let callerName = 'Unknown';
+    let callerAvatar = '';
+    try {
+      const { data: prof } = await supabaseAdmin
+        .from('user_profiles')
+        .select('full_name, username, avatar_url')
+        .eq('id', callerId)
+        .maybeSingle();
+      if (prof) {
+        callerName = prof.full_name || prof.username || 'Unknown';
+        callerAvatar = prof.avatar_url || '';
+      }
+    } catch {}
 
     // Fetch all Android FCM tokens for callee
     const { data: tokens, error } = await supabaseAdmin
@@ -115,8 +129,8 @@ export const sendCallPush = createServerFn({ method: 'POST' })
             type: 'incoming_call',
             callId: data.callId,
             callerId,
-            callerName: data.callerName || 'Unknown',
-            callerAvatar: data.callerAvatar || '',
+            callerName,
+            callerAvatar,
             callType: data.callType,
             chatId: data.chatId || '',
           },
