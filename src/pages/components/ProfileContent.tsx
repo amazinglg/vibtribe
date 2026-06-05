@@ -1396,14 +1396,14 @@ export default function ProfileContent() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <p className="text-sm font-semibold text-foreground">
-                            {session.user_agent ? getDeviceName(session.user_agent) : 'Unknown Device'}
+                            {session.device_name || (session.user_agent ? getDeviceName(session.user_agent) : 'Unknown Device')}
                           </p>
                           {session.isCurrent && (
                             <span className="text-[10px] bg-vt-green/20 text-vt-green px-1.5 py-0.5 rounded-full font-medium">Current</span>
                           )}
                         </div>
                         <p className="text-xs text-muted-foreground">
-                          {session.user_agent ? getBrowserName(session.user_agent) : 'Web'} — {session.isCurrent ? 'Active now' : `Last active ${new Date(session.updated_at).toLocaleDateString()}`}
+                          {session.platform || (session.user_agent ? getBrowserName(session.user_agent) : 'Web')} — {session.isCurrent ? 'Active now' : `Last active ${new Date(session.last_seen_at).toLocaleString()}`}
                         </p>
                       </div>
                       <button
