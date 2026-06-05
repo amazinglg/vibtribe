@@ -172,7 +172,7 @@ export default function ChatListPanel() {
           avatarUrl: (p?.profile_photo_visibility ?? 'all') === 'all' ? (p?.avatar_url || null) : null,
           saved: true,
         };
-      });
+      }).sort((a: any, b: any) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }));
       setContactsList(rows);
       if (rows.length > 0) setContactsPerm('granted');
       return rows;
