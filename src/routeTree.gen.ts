@@ -23,6 +23,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
+import { Route as BlogVibtribeVsSignalVsTelegramRouteImport } from './routes/blog.vibtribe-vs-signal-vs-telegram'
 import { Route as TribeJoinCodeRouteImport } from './routes/tribe.join.$code'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as ApiPublicAuthOtpRouteImport } from './routes/api/public/auth-otp'
@@ -104,6 +105,12 @@ const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
   path: '/email/unsubscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BlogVibtribeVsSignalVsTelegramRoute =
+  BlogVibtribeVsSignalVsTelegramRouteImport.update({
+    id: '/blog/vibtribe-vs-signal-vs-telegram',
+    path: '/blog/vibtribe-vs-signal-vs-telegram',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const TribeJoinCodeRoute = TribeJoinCodeRouteImport.update({
   id: '/tribe/join/$code',
   path: '/tribe/join/$code',
@@ -171,6 +178,7 @@ export interface FileRoutesByFullPath {
   '/status-screen': typeof StatusScreenRoute
   '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/blog/vibtribe-vs-signal-vs-telegram': typeof BlogVibtribeVsSignalVsTelegramRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
@@ -196,6 +204,7 @@ export interface FileRoutesByTo {
   '/status-screen': typeof StatusScreenRoute
   '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/blog/vibtribe-vs-signal-vs-telegram': typeof BlogVibtribeVsSignalVsTelegramRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/admin': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
@@ -223,6 +232,7 @@ export interface FileRoutesById {
   '/status-screen': typeof StatusScreenRoute
   '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/blog/vibtribe-vs-signal-vs-telegram': typeof BlogVibtribeVsSignalVsTelegramRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
@@ -251,6 +261,7 @@ export interface FileRouteTypes {
     | '/status-screen'
     | '/terms'
     | '/unsubscribe'
+    | '/blog/vibtribe-vs-signal-vs-telegram'
     | '/email/unsubscribe'
     | '/admin/'
     | '/admin/user/$userId'
@@ -276,6 +287,7 @@ export interface FileRouteTypes {
     | '/status-screen'
     | '/terms'
     | '/unsubscribe'
+    | '/blog/vibtribe-vs-signal-vs-telegram'
     | '/email/unsubscribe'
     | '/admin'
     | '/admin/user/$userId'
@@ -302,6 +314,7 @@ export interface FileRouteTypes {
     | '/status-screen'
     | '/terms'
     | '/unsubscribe'
+    | '/blog/vibtribe-vs-signal-vs-telegram'
     | '/email/unsubscribe'
     | '/admin/'
     | '/admin/user/$userId'
@@ -329,6 +342,7 @@ export interface RootRouteChildren {
   StatusScreenRoute: typeof StatusScreenRoute
   TermsRoute: typeof TermsRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
+  BlogVibtribeVsSignalVsTelegramRoute: typeof BlogVibtribeVsSignalVsTelegramRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   ApiPublicAuthLoginRoute: typeof ApiPublicAuthLoginRoute
   ApiPublicAuthOtpRoute: typeof ApiPublicAuthOtpRoute
@@ -441,6 +455,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmailUnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog/vibtribe-vs-signal-vs-telegram': {
+      id: '/blog/vibtribe-vs-signal-vs-telegram'
+      path: '/blog/vibtribe-vs-signal-vs-telegram'
+      fullPath: '/blog/vibtribe-vs-signal-vs-telegram'
+      preLoaderRoute: typeof BlogVibtribeVsSignalVsTelegramRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tribe/join/$code': {
       id: '/tribe/join/$code'
       path: '/tribe/join/$code'
@@ -539,6 +560,7 @@ const rootRouteChildren: RootRouteChildren = {
   StatusScreenRoute: StatusScreenRoute,
   TermsRoute: TermsRoute,
   UnsubscribeRoute: UnsubscribeRoute,
+  BlogVibtribeVsSignalVsTelegramRoute: BlogVibtribeVsSignalVsTelegramRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   ApiPublicAuthLoginRoute: ApiPublicAuthLoginRoute,
   ApiPublicAuthOtpRoute: ApiPublicAuthOtpRoute,

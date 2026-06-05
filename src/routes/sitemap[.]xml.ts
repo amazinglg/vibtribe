@@ -17,6 +17,7 @@ export const Route = createFileRoute("/sitemap.xml")({
           { path: "/forgot-password", changefreq: "yearly", priority: "0.3" },
           { path: "/complete-profile", changefreq: "yearly", priority: "0.3" },
           { path: "/profile-screen", changefreq: "monthly", priority: "0.4" },
+          { path: "/blog/vibtribe-vs-signal-vs-telegram", changefreq: "monthly", priority: "0.7" },
         ];
         const xml = [
           `<?xml version="1.0" encoding="UTF-8"?>`,
