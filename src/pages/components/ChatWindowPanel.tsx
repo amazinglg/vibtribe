@@ -622,6 +622,21 @@ export default function ChatWindowPanel() {
     return new Date(dateStr).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   };
 
+  // Resolve a sender's public key (cached) for decrypting tribe messages.
+  const getSenderPubKey = async (senderId: string): Promise<string | null> => {
+    if (!senderId) return null;
+    const cached = senderPubKeyCacheRef.current.get(senderId);
+    if (cached) return cached;
+    const { data } = await supabase
+      .from('user_profiles')
+      .select('public_key')
+      .eq('id', senderId)
+      .maybeSingle();
+    const pk = (data as any)?.public_key || null;
+    if (pk) senderPubKeyCacheRef.current.set(senderId, pk);
+    return pk;
+  };
+
   const sendMessage = async (overrideText?: string) => {
     const raw = overrideText ?? inputText;
     if (!raw.trim() || !selectedChatId || !user) return;
