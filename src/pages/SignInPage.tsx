@@ -31,7 +31,6 @@ export default function SignInPage() {
 
     setLoading(true);
     try {
-      // Check if account is suspended before attempting login
       let identifier: string;
       if (useEmail) {
         identifier = email.trim().toLowerCase();
@@ -41,44 +40,44 @@ export default function SignInPage() {
         identifier = `${local10}@vibetribe.app`;
       }
 
-      const { data: lookup } = await supabase.rpc('pre_login_lookup', { _identifier: identifier });
-      const profileData: any = Array.isArray(lookup) ? lookup[0] : lookup;
+      // Server-side login flow: lookup + suspension check + password attempt
+      // + failure/success recording all happen behind the auth-login route so
+      // the underlying RPCs are not exposed to the public Data API.
+      const res = await fetch('/api/public/auth-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier, password }),
+      });
+      const payload: any = await res.json().catch(() => ({}));
 
-      if (profileData?.is_suspended || profileData?.account_status === 'suspended') {
-        setError('Your account has been suspended due to too many failed login attempts. Please contact support or wait for admin to unsuspend your account.');
+      if (!res.ok) {
+        if (payload?.error === 'account_suspended') {
+          setError('Your account has been suspended due to too many failed login attempts. Please contact support or wait for admin to unsuspend your account.');
+        } else if (payload?.error === 'invalid_credentials') {
+          const remaining = typeof payload.remaining === 'number' ? payload.remaining : null;
+          if (remaining !== null && remaining <= 0) {
+            setError('Your account has been suspended after 5 failed login attempts. Please contact support.');
+          } else if (remaining !== null) {
+            setError(`Invalid credentials. ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining before account suspension.`);
+          } else {
+            setError('Invalid credentials. Please try again.');
+          }
+        } else {
+          setError('Something went wrong. Please try again.');
+        }
         setLoading(false);
         return;
       }
 
-      try {
-        if (useEmail) {
-          await signInWithEmail(email, password);
-        } else {
-          await signIn(mobile, password);
-        }
-
-        // Reset login attempts on successful login
-        if (profileData?.id) {
-          await supabase.rpc('record_login_success', { _user_id: profileData.id });
-        }
-
+      if (payload?.session?.access_token && payload?.session?.refresh_token) {
+        await supabase.auth.setSession({
+          access_token: payload.session.access_token,
+          refresh_token: payload.session.refresh_token,
+        });
         console.log('[VT-LOGIN] sign-in succeeded, navigating to /');
         router({ to: '/', replace: true });
-      } catch (loginErr: any) {
-        console.error('[VT-LOGIN] sign-in failed', loginErr);
-        // Increment failed login attempts
-        if (profileData?.id) {
-          const { data: newCount } = await supabase.rpc('record_login_failure', { _user_id: profileData.id });
-          const currentAttempts = typeof newCount === 'number' ? newCount : (profileData.login_attempts || 0) + 1;
-          if (currentAttempts >= 5) {
-            setError('Your account has been suspended after 5 failed login attempts. Please contact support.');
-          } else {
-            const remaining = 5 - currentAttempts;
-            setError(`Invalid credentials. ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining before account suspension.`);
-          }
-        } else {
-          setError(loginErr.message || 'Invalid credentials. Please try again.');
-        }
+      } else {
+        setError('Invalid credentials. Please try again.');
       }
     } catch (err: any) {
       setError(err.message || 'Something went wrong. Please try again.');
