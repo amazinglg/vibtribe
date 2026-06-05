@@ -268,25 +268,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // email stored in user_profiles.real_email
   const signInWithEmail = async (email: string, password: string) => {
     const trimmed = email.trim().toLowerCase();
-    // First try direct sign-in (covers admins / synthetic emails)
-    let { data, error } = await supabase.auth.signInWithPassword({ email: trimmed, password });
-    if (error) {
-      // Fallback: look up by real_email -> get the synthetic email -> sign in with that
-      const { data: lookup } = await supabase.rpc('pre_login_lookup', { _identifier: trimmed });
-      const profile = Array.isArray(lookup) ? lookup[0] : lookup;
-      if (profile?.email && profile.email !== trimmed) {
-        const retry = await supabase.auth.signInWithPassword({ email: profile.email, password });
-        if (retry.error) throw retry.error;
-        if (retry.data?.session) setSession(retry.data.session);
-        if (retry.data?.user) {
-          setUser(retry.data.user);
-          fetchProfile(retry.data.user.id);
-        }
-        setLoading(false);
-        return retry.data;
-      }
-      throw error;
-    }
+    // Direct sign-in only. The real_email → synthetic-email fallback is now
+    // handled by the /api/public/auth-login server route, which calls the
+    // pre_login_lookup RPC under the service role.
+    const { data, error } = await supabase.auth.signInWithPassword({ email: trimmed, password });
+    if (error) throw error;
     if (data?.session) setSession(data.session);
     if (data?.user) {
       setUser(data.user);
