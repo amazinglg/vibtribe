@@ -1,0 +1,17 @@
+# VibTribe
+
+> A secure social messaging app for real-time chat, voice & video calls, 24-hour status updates, and an encrypted private vault. Free on Android & web.
+
+VibTribe is an end-to-end encrypted messaging platform built for privacy-first social communication. It combines one-on-one and group chats, ephemeral 24-hour status stories, voice and video calling, and a secure personal vault for private files. Tribes (group chats) use a shared 6-digit passcode for end-to-end encryption, and new members joining after messages were sent cannot decrypt historical messages.
+
+## Pages
+
+- [Home](/): Product overview, feature highlights, and app download links.
+- [Join Tribe](/tribe/join/$code): Public invite page for joining a tribe via an invite code.
+- [Privacy Policy](/privacy): Data handling, encryption practices, and user privacy commitments.
+- [Terms of Service](/terms): User agreement, acceptable use, and platform rules.
+
+## Optional
+
+- [Sitemap](/sitemap.xml): XML sitemap for search engine indexing.
+- [Robots](/robots.txt): Crawler directives for search engines.
