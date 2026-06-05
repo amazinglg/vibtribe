@@ -575,6 +575,7 @@ export default function ChatListPanel() {
               setSearch={setContactsSearch}
               setInviteTarget={setInviteTarget}
               onStartedChat={(chatId) => { setSelectedChatId(chatId); loadChats(); }}
+              t={t}
             />
           ) : loading ? (
             <div className="flex flex-col gap-3 p-4">
@@ -812,7 +813,7 @@ const INVITE_MSG = `Hey! I'm using VibTribe — a secure messaging app. Join me 
 
 function ContactsTabContent({
   user, supabase, perm, setPerm, contacts, setContacts,
-  loading, setLoading, search, setSearch, setInviteTarget, onStartedChat,
+  loading, setLoading, search, setSearch, setInviteTarget, onStartedChat, t,
 }: any) {
   const requestContacts = async () => {
     setPerm('requesting');
