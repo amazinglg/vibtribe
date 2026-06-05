@@ -382,8 +382,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
         {/* Mobile Bottom Nav */}
         <nav
-          className="lg:hidden fixed bottom-0 left-0 right-0 glass-strong border-t border-border z-40 px-2 py-2"
-          style={{ paddingBottom: 'max(0.5rem, var(--safe-bottom))' }}
+          className="lg:hidden fixed bottom-0 left-0 right-0 glass-strong border-t border-border z-40 px-2 pt-1.5"
+          style={{ paddingBottom: 'max(0.35rem, var(--safe-bottom-app))' }}
         >
           <div className="flex items-center justify-around">
             {NAV_ITEMS.map((item) => {
@@ -394,7 +394,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   key={`mobile-nav-${item.label.toLowerCase()}`}
                   to={item.href}
                   preload="render"
-                  className={`relative flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all duration-200 ${
+                  className={`relative flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition-all duration-200 ${
                     isActive ? 'text-primary' : 'text-muted-foreground'
                   }`}
                 >
