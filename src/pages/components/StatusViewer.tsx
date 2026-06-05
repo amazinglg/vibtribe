@@ -380,11 +380,18 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
             {viewers.length === 0 ? (
               <p className="text-xs text-white/60">No one has viewed this story yet.</p>
             ) : (
-              <ul className="space-y-2">
+              <ul className="space-y-3">
                 {viewers.map(v => (
-                  <li key={v.id} className="flex items-center justify-between text-xs text-white/90">
-                    <span>{v.name}</span>
-                    <span className="text-white/50">{new Date(v.viewed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  <li key={v.id} className="flex items-center gap-3 text-xs text-white/90">
+                    {v.avatar_url ? (
+                      <img src={v.avatar_url} alt={v.name} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center text-[11px] font-semibold flex-shrink-0">
+                        {(v.name?.[0] || '?').toUpperCase()}
+                      </div>
+                    )}
+                    <span className="flex-1 truncate">{v.name}</span>
+                    <span className="text-white/50 flex-shrink-0">{new Date(v.viewed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                   </li>
                 ))}
               </ul>
