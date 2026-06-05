@@ -233,6 +233,7 @@ export default function TribeDetailsSheet({ chatId, isOpen, onClose, onLeft }: P
     <div className="fixed inset-0 z-[1400] bg-black/60 backdrop-blur-sm flex justify-end" onClick={onClose}>
       <div
         className="w-full sm:max-w-md bg-background border-l border-border h-full overflow-y-auto float-up"
+        style={{ paddingBottom: 'calc(var(--mobile-bottom-nav-offset) + 1rem)' }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 z-10 bg-background/95 backdrop-blur px-4 py-3 border-b border-border flex items-center justify-between">

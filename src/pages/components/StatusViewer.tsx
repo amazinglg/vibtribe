@@ -43,7 +43,7 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
   const [reply, setReply] = useState('');
   const [showReactions, setShowReactions] = useState(false);
   const [sending, setSending] = useState(false);
-  const [viewers, setViewers] = useState<{ id: string; name: string; viewed_at: string }[]>([]);
+  const [viewers, setViewers] = useState<{ id: string; name: string; avatar_url: string | null; viewed_at: string }[]>([]);
   const [showViewers, setShowViewers] = useState(false);
   const [liking, setLiking] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -104,13 +104,14 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
 
       const viewerIds = Array.from(new Set((viewRows || []).map((v: any) => v.viewer_id).filter(Boolean)));
       const { data: profiles } = viewerIds.length > 0
-        ? await supabase.from('user_profiles').select('id, full_name, username').in('id', viewerIds)
+        ? await supabase.from('user_profiles').select('id, full_name, username, avatar_url').in('id', viewerIds)
         : { data: [] };
       const profileById = new Map((profiles || []).map((p: any) => [p.id, p]));
 
       setViewers((viewRows || []).map((v: any) => ({
         id: v.viewer_id,
         name: profileById.get(v.viewer_id)?.full_name || profileById.get(v.viewer_id)?.username || 'Someone',
+        avatar_url: profileById.get(v.viewer_id)?.avatar_url || null,
         viewed_at: v.viewed_at,
       })));
     })();
@@ -379,11 +380,18 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
             {viewers.length === 0 ? (
               <p className="text-xs text-white/60">No one has viewed this story yet.</p>
             ) : (
-              <ul className="space-y-2">
+              <ul className="space-y-3">
                 {viewers.map(v => (
-                  <li key={v.id} className="flex items-center justify-between text-xs text-white/90">
-                    <span>{v.name}</span>
-                    <span className="text-white/50">{new Date(v.viewed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  <li key={v.id} className="flex items-center gap-3 text-xs text-white/90">
+                    {v.avatar_url ? (
+                      <img src={v.avatar_url} alt={v.name} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center text-[11px] font-semibold flex-shrink-0">
+                        {(v.name?.[0] || '?').toUpperCase()}
+                      </div>
+                    )}
+                    <span className="flex-1 truncate">{v.name}</span>
+                    <span className="text-white/50 flex-shrink-0">{new Date(v.viewed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                   </li>
                 ))}
               </ul>
