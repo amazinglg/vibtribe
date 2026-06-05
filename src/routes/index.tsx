@@ -4,7 +4,7 @@ import HomePage from "@/pages/HomePage";
 const OG_IMAGE = "https://www.vibtribe.in/icons/icon-512x512.png";
 const TITLE = "VibTribe — Private Messaging, Status & Secure Vault";
 const DESCRIPTION =
-  "VibTribe is a secure social messaging app for real-time chat, voice & video calls, 24-hour status updates, and an encrypted private vault. Free on Android & web.";
+  "Secure social messaging with real-time chat, voice & video calls, 24-hour status, and an encrypted private vault. Free on Android & web.";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
