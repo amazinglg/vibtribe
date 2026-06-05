@@ -280,7 +280,6 @@ export default function CallProvider({ children }: { children: React.ReactNode }
       sendCallPush({ data: {
         callId: callRow.id,
         calleeId: opts.calleeId,
-        callerName: opts.calleeName ? undefined : undefined, // caller's name is read on callee side from profile
         callType: opts.type,
         chatId: opts.chatId ?? null,
       } }).catch((e) => console.warn('[Call] push failed', e));
