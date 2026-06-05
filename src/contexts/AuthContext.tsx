@@ -34,6 +34,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // Start polling for force-logout signal
         startForceLogoutPolling(session.user.id);
         startPresenceHeartbeat(session.user.id);
+        // Register this device + start a session-row heartbeat for the Devices tab.
+        import('@/lib/sessions').then(({ registerSession }) =>
+          registerSession(session.user.id).then(() => startSessionHeartbeat(session.user.id)),
+        ).catch(() => {});
         // Register FCM token (Capacitor / Android only, no-op in browser)
         import('@/lib/fcmRegister').then(({ registerFcmToken }) =>
           registerFcmToken(session.user.id),
@@ -53,12 +57,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (session?.user) {
         fetchProfile(session.user.id);
         startPresenceHeartbeat(session.user.id);
+        import('@/lib/sessions').then(({ registerSession }) =>
+          registerSession(session.user.id).then(() => startSessionHeartbeat(session.user.id)),
+        ).catch(() => {});
         import('@/lib/fcmRegister').then(({ registerFcmToken }) =>
           registerFcmToken(session.user.id),
         ).catch(() => {});
       } else {
         setProfile(null);
         stopPresenceHeartbeat();
+        stopSessionHeartbeat();
       }
       setLoading(false);
     });
@@ -67,6 +75,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       clearTimeout(safety);
       subscription.unsubscribe();
       stopPresenceHeartbeat();
+      stopSessionHeartbeat();
     };
   }, []);
 
@@ -131,14 +140,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const startForceLogoutPolling = (userId: string) => {
     const checkForceLogout = async () => {
       try {
+        const { getCurrentSessionId, deleteCurrentSession } = await import('@/lib/sessions');
+        const mySessionId = getCurrentSessionId();
+        // Match tokens targeting this device specifically OR all devices (session_id null).
         const { data } = await supabase
           .from('force_logout_tokens')
-          .select('id')
-          .eq('user_id', userId)
-          .limit(1);
-        if (data && data.length > 0) {
-          // Delete the token first, then sign out
-          await supabase.from('force_logout_tokens').delete().eq('user_id', userId);
+          .select('id, session_id')
+          .eq('user_id', userId);
+        const match = (data ?? []).find(
+          (t: any) => t.session_id === null || (mySessionId && t.session_id === mySessionId),
+        );
+        if (match) {
+          // Delete only the matched token (leave per-device tokens for other devices)
+          await supabase.from('force_logout_tokens').delete().eq('id', match.id);
+          await deleteCurrentSession(userId);
           await supabase.auth.signOut({ scope: 'global' });
           setUser(null);
           setSession(null);
@@ -157,6 +172,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (typeof window !== 'undefined') {
       (window as any).__forceLogoutInterval = interval;
     }
+  };
+
+  // Heartbeat: bump user_sessions.last_seen_at every 5 minutes while signed in.
+  const startSessionHeartbeat = (userId: string) => {
+    if (typeof window === 'undefined') return;
+    stopSessionHeartbeat();
+    const tick = () => {
+      import('@/lib/sessions').then(({ heartbeatSession }) =>
+        heartbeatSession(userId),
+      ).catch(() => {});
+    };
+    const interval = setInterval(tick, 5 * 60 * 1000);
+    (window as any).__sessionHeartbeat = interval;
+  };
+  const stopSessionHeartbeat = () => {
+    if (typeof window === 'undefined') return;
+    const i = (window as any).__sessionHeartbeat;
+    if (i) clearInterval(i);
+    (window as any).__sessionHeartbeat = null;
   };
 
   const fetchProfile = async (userId: string) => {
@@ -268,6 +302,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (typeof window !== 'undefined' && (window as any).__forceLogoutInterval) {
       clearInterval((window as any).__forceLogoutInterval);
     }
+    stopSessionHeartbeat();
+    // Remove this device's session row so it disappears from the Devices tab.
+    try {
+      if (user?.id) {
+        const { deleteCurrentSession } = await import('@/lib/sessions');
+        await deleteCurrentSession(user.id);
+      }
+    } catch {}
     const { error } = await supabase.auth.signOut({ scope: 'global' });
     if (error) throw error;
     setProfile(null);

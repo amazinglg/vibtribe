@@ -76,9 +76,11 @@ interface BlockedUser {
 interface Session {
   id: string;
   created_at: string;
-  updated_at: string;
+  last_seen_at: string;
+  device_name?: string;
+  platform?: string;
   user_agent?: string;
-  ip?: string;
+  app_version?: string;
   isCurrent?: boolean;
 }
 
@@ -289,20 +291,19 @@ export default function ProfileContent() {
     if (!user) return;
     setLoadingSessions(true);
     try {
-      // Get all active sessions from Supabase auth
-      const { data, error } = await supabase.auth.admin ? 
-        { data: null, error: null } : 
-        { data: null, error: null };
-      
-      // Fallback: show current session info from user object
-      const currentSession: Session = {
-        id: 'current',
-        created_at: user.created_at || new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown',
-        isCurrent: true,
-      };
-      setSessions([currentSession]);
+      const { listUserSessions, getCurrentSessionId } = await import('@/lib/sessions');
+      const rows = await listUserSessions(user.id);
+      const mySessionId = getCurrentSessionId();
+      setSessions(rows.map((r) => ({
+        id: r.id,
+        created_at: r.created_at,
+        last_seen_at: r.last_seen_at,
+        device_name: r.device_name,
+        platform: r.platform,
+        user_agent: r.user_agent ?? undefined,
+        app_version: r.app_version ?? undefined,
+        isCurrent: r.id === mySessionId,
+      })));
     } catch {
       setSessions([]);
     } finally {
@@ -311,8 +312,9 @@ export default function ProfileContent() {
   };
 
   const handleLogoutSession = async (sessionId: string) => {
-    if (sessionId === 'current') {
-      // Logout current session
+    if (!user) return;
+    const target = sessions.find((s) => s.id === sessionId);
+    if (target?.isCurrent) {
       try {
         await signOut();
         router({ to: '/sign-in', replace: true });
@@ -321,14 +323,17 @@ export default function ProfileContent() {
     }
     setLoggingOutSession(sessionId);
     try {
-      // For other sessions, use global sign out
-      await supabase.auth.signOut({ scope: 'global' });
-      toast.success('Signed out from all devices');
-      router({ to: '/sign-in', replace: true });
-    } catch {
-      toast.error('Failed to sign out from device');
+      const { forceLogoutSession } = await import('@/lib/sessions');
+      await forceLogoutSession(user.id, sessionId);
+      // Optimistically drop the row; the target device's poll signs itself out within ~30s.
+      await supabase.from('user_sessions').delete().eq('id', sessionId).eq('user_id', user.id);
+      setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+      toast.success('Device signed out');
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to sign out device');
+    } finally {
+      setLoggingOutSession(null);
     }
-    setLoggingOutSession(null);
   };
 
   const getDeviceName = (userAgent: string) => {
@@ -1391,14 +1396,14 @@ export default function ProfileContent() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <p className="text-sm font-semibold text-foreground">
-                            {session.user_agent ? getDeviceName(session.user_agent) : 'Unknown Device'}
+                            {session.device_name || (session.user_agent ? getDeviceName(session.user_agent) : 'Unknown Device')}
                           </p>
                           {session.isCurrent && (
                             <span className="text-[10px] bg-vt-green/20 text-vt-green px-1.5 py-0.5 rounded-full font-medium">Current</span>
                           )}
                         </div>
                         <p className="text-xs text-muted-foreground">
-                          {session.user_agent ? getBrowserName(session.user_agent) : 'Web'} — {session.isCurrent ? 'Active now' : `Last active ${new Date(session.updated_at).toLocaleDateString()}`}
+                          {session.platform || (session.user_agent ? getBrowserName(session.user_agent) : 'Web')} — {session.isCurrent ? 'Active now' : `Last active ${new Date(session.last_seen_at).toLocaleString()}`}
                         </p>
                       </div>
                       <button
