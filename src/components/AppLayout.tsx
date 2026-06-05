@@ -299,9 +299,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="p-3 border-t border-border">
           <div className={`flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-muted transition-all cursor-pointer ${!sidebarExpanded ? 'justify-center' : ''}`}>
             <div className="relative flex-shrink-0">
-              <div className="w-9 h-9 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-sm">
-                {avatarLetter}
-              </div>
+              {profile?.avatar_url ? (
+                <img src={profile.avatar_url} alt={displayName} className="w-9 h-9 rounded-full object-cover" />
+              ) : (
+                <div className="w-9 h-9 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-sm">
+                  {avatarLetter}
+                </div>
+              )}
               <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-vt-green rounded-full border-2 border-background" />
             </div>
             {sidebarExpanded && (

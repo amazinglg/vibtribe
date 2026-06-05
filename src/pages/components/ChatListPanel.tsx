@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Trash2, Lock, Users, UserPlus, MessageSquare, Phone, Check } from 'lucide-react';
+import { Search, Plus, Trash2, Lock, Users, UserPlus, MessageSquare, Phone, Check, Pin, PinOff } from 'lucide-react';
 import MarkSecureModal from '@/components/MarkSecureModal';
 import ContactsPanel from '@/components/ContactsPanel';
 import CreateGroupModal from '@/components/CreateGroupModal';
@@ -41,6 +41,20 @@ export default function ChatListPanel() {
   const [secureTarget, setSecureTarget] = useState<{ id: string; name: string } | null>(null);
   const [contextMenu, setContextMenu] = useState<{ chatId: string; x: number; y: number } | null>(null);
   const CHATS_CACHE_KEY = 'vt_chats_cache_v1';
+  const PINS_KEY = 'vt_pinned_chats_v1';
+  const [pinnedIds, setPinnedIds] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try { return JSON.parse(localStorage.getItem(PINS_KEY) || '[]'); } catch { return []; }
+  });
+  const persistPins = (next: string[]) => {
+    setPinnedIds(next);
+    try { localStorage.setItem(PINS_KEY, JSON.stringify(next)); } catch {}
+  };
+  const togglePin = (id: string) => {
+    const isPinned = pinnedIds.includes(id);
+    persistPins(isPinned ? pinnedIds.filter(x => x !== id) : [id, ...pinnedIds]);
+    setContextMenu(null);
+  };
   const [chats, setChats] = useState<Chat[]>(() => {
     if (typeof window === 'undefined') return [];
     try {
@@ -158,7 +172,7 @@ export default function ChatListPanel() {
           avatarUrl: (p?.profile_photo_visibility ?? 'all') === 'all' ? (p?.avatar_url || null) : null,
           saved: true,
         };
-      });
+      }).sort((a: any, b: any) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }));
       setContactsList(rows);
       if (rows.length > 0) setContactsPerm('granted');
       return rows;
@@ -449,7 +463,10 @@ export default function ChatListPanel() {
 
   const filtered = chats.filter(chat => {
     const matchesSearch = chat.name.toLowerCase().includes(search.toLowerCase());
-    const matchesTab = activeTab === 'all' || (activeTab === 'unread' && chat.unread > 0) || (activeTab === 'groups' && chat.isGroup);
+    const matchesTab =
+      (activeTab === 'all' && !chat.isGroup) ||
+      (activeTab === 'unread' && chat.unread > 0) ||
+      (activeTab === 'groups' && chat.isGroup);
     return matchesSearch && matchesTab;
   });
 
@@ -503,6 +520,15 @@ export default function ChatListPanel() {
         return out;
       })()
     : filtered;
+
+  // Pin order: pinned chats first, in user-defined order; rest preserve existing order.
+  const sortedList: Chat[] = (() => {
+    if (pinnedIds.length === 0) return filteredWithBroadcast;
+    const map = new Map(filteredWithBroadcast.map(c => [c.id, c] as const));
+    const pinnedHead: Chat[] = [];
+    for (const id of pinnedIds) { const c = map.get(id); if (c) { pinnedHead.push({ ...c, pinned: true }); map.delete(id); } }
+    return [...pinnedHead, ...Array.from(map.values())];
+  })();
 
   return (
     <>
@@ -624,7 +650,7 @@ export default function ChatListPanel() {
                 </div>
               </div>
             )}
-            {filteredWithBroadcast.length === 0 ? (
+            {sortedList.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-40 gap-3 p-4">
                 <span className="text-3xl">💬</span>
                 <p className="text-sm text-muted-foreground text-center">No conversations yet</p>
@@ -636,7 +662,7 @@ export default function ChatListPanel() {
                   Find Contacts
                 </button>
               </div>
-            ) : filteredWithBroadcast.map((chat) => (
+            ) : sortedList.map((chat) => (
               <ChatListItem
                 key={chat.id}
                 chat={chat}
@@ -678,6 +704,13 @@ export default function ChatListPanel() {
           >
             <Check size={14} className="text-vt-green" />
             Mark as Read
+          </button>
+          <button
+            onClick={() => togglePin(contextMenu.chatId)}
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted w-full text-left transition-colors"
+          >
+            {pinnedIds.includes(contextMenu.chatId) ? <PinOff size={14} className="text-primary" /> : <Pin size={14} className="text-primary" />}
+            {pinnedIds.includes(contextMenu.chatId) ? 'Unpin' : 'Pin to top'}
           </button>
           <button
             onClick={() => {
@@ -782,8 +815,9 @@ function ChatListItem({ chat, isSelected, onClick, onContextMenu, onDelete, onMa
       {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
-          <p className={`text-sm truncate ${hasUnread ? 'font-bold text-foreground' : 'font-semibold text-foreground'}`}>
-            {chat.name}
+          <p className={`text-sm truncate flex items-center gap-1 ${hasUnread ? 'font-bold text-foreground' : 'font-semibold text-foreground'}`}>
+            {chat.pinned && <Pin size={11} className="text-primary flex-shrink-0" />}
+            <span className="truncate">{chat.name}</span>
           </p>
           <span className={`text-[11px] flex-shrink-0 ${hasUnread ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>
             {chat.time}
@@ -902,7 +936,7 @@ function ContactsTabContent({
           console.warn('[VibTribe] contact match chunk failed', e);
         }
       }
-      setContacts(normalized.map(c => {
+      const merged = normalized.map(c => {
         const m: any = map.get(c.phone);
         return {
           name: c.name,
@@ -912,7 +946,27 @@ function ContactsTabContent({
           avatar: m?.full_name?.[0]?.toUpperCase() || c.name?.[0]?.toUpperCase() || 'U',
           avatarUrl: m && (m.profile_photo_visibility ?? 'all') === 'all' ? (m.avatar_url || null) : null,
         };
-      }));
+      }).sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }));
+      setContacts(merged);
+      // Auto-save VibTribe-platform matches into the user's contacts table
+      try {
+        const platformMatches = merged.filter(c => c.onPlatform && c.userId);
+        if (user?.id && platformMatches.length > 0) {
+          const { data: existing } = await supabase
+            .from('contacts')
+            .select('contact_id')
+            .eq('user_id', user.id)
+            .in('contact_id', platformMatches.map(p => p.userId));
+          const existingSet = new Set((existing || []).map((r: any) => r.contact_id));
+          const rows = platformMatches
+            .filter(p => !existingSet.has(p.userId))
+            .map(p => ({ user_id: user.id, contact_id: p.userId, contact_name: p.name }));
+          if (rows.length > 0) {
+            await supabase.from('contacts').insert(rows);
+            window.dispatchEvent(new Event('vt-contacts-changed'));
+          }
+        }
+      } catch (e) { console.warn('auto-save contacts failed', e); }
     } catch (e) {
       console.error('[VibTribe] matchContacts failed', e);
     } finally {

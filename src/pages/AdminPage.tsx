@@ -510,12 +510,12 @@ export default function AdminPage() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 p-1 bg-muted rounded-xl mb-6 w-fit flex-wrap">
+        <div className="flex gap-1 p-1 bg-muted rounded-xl mb-6 w-full sm:w-fit">
           {(['overview', 'users', ...(isMaster ? ['tribes' as const] : []), 'support'] as const).map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`relative px-4 py-2 rounded-lg text-sm font-semibold capitalize transition-all ${activeTab === tab ? 'gradient-primary text-white' : 'text-muted-foreground hover:text-foreground'}`}
+              className={`relative flex-1 sm:flex-none px-2 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold capitalize transition-all whitespace-nowrap ${activeTab === tab ? 'gradient-primary text-white' : 'text-muted-foreground hover:text-foreground'}`}
             >
               {tab === 'support' ? 'Support' : tab === 'tribes' ? 'Tribes' : tab}
               {tab === 'support' && unreadTickets > 0 && (

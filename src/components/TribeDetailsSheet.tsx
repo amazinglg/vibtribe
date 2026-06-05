@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useEffect, useState } from 'react';
-import { X, Users, Lock, Globe, Copy, Trash2, UserPlus, Crown, LogOut, AtSign, Edit2, Link as LinkIcon, RefreshCw, Check, ShieldX } from 'lucide-react';
+import { X, Users, Lock, Globe, Copy, Trash2, UserPlus, Crown, LogOut, AtSign, Edit2, Link as LinkIcon, RefreshCw, Check, ShieldX, Camera } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -66,6 +66,8 @@ export default function TribeDetailsSheet({ chatId, isOpen, onClose, onLeft }: P
   const [descInput, setDescInput] = useState('');
   const [editingHandle, setEditingHandle] = useState(false);
   const [handleInput, setHandleInput] = useState('');
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
   const myRole = members.find(m => m.user_id === user?.id)?.role;
   const isLeader = myRole === 'leader' || (tribe && tribe.created_by === user?.id);
@@ -203,6 +205,30 @@ export default function TribeDetailsSheet({ chatId, isOpen, onClose, onLeft }: P
     if (error) toast.error(error.message); else { toast.success(approve ? 'Approved' : 'Declined'); load(); }
   };
 
+  const onPickAvatar = () => fileInputRef.current?.click();
+  const onAvatarFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || !isLeader) return;
+    if (!file.type.startsWith('image/')) { toast.error('Please choose an image'); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error('Max 5MB'); return; }
+    setUploadingAvatar(true);
+    try {
+      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+      const path = `tribes/${chatId}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from('chat-media').upload(path, file, { upsert: true, contentType: file.type });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from('chat-media').getPublicUrl(path);
+      const url = pub.publicUrl;
+      const { error: updErr } = await supabase.from('chats').update({ avatar_url: url }).eq('id', chatId);
+      if (updErr) throw updErr;
+      toast.success('Tribe photo updated');
+      load();
+    } catch (err: any) {
+      toast.error(err?.message || 'Upload failed');
+    } finally { setUploadingAvatar(false); }
+  };
+
   return (
     <div className="fixed inset-0 z-[1400] bg-black/60 backdrop-blur-sm flex justify-end" onClick={onClose}>
       <div
@@ -215,13 +241,27 @@ export default function TribeDetailsSheet({ chatId, isOpen, onClose, onLeft }: P
         </div>
 
         <div className="p-4 flex flex-col items-center gap-3 border-b border-border">
-          {tribe.avatar_url ? (
-            <img src={tribe.avatar_url} alt="" className="w-24 h-24 rounded-full object-cover border border-border" />
-          ) : (
-            <div className="w-24 h-24 gradient-primary rounded-full flex items-center justify-center text-white text-3xl font-bold">
-              {(tribe.name || 'T')[0]?.toUpperCase()}
-            </div>
-          )}
+          <div className="relative">
+            {tribe.avatar_url ? (
+              <img src={tribe.avatar_url} alt="" className="w-24 h-24 rounded-full object-cover border border-border" />
+            ) : (
+              <div className="w-24 h-24 gradient-primary rounded-full flex items-center justify-center text-white text-3xl font-bold">
+                {(tribe.name || 'T')[0]?.toUpperCase()}
+              </div>
+            )}
+            {isLeader && (
+              <button
+                type="button"
+                onClick={onPickAvatar}
+                disabled={uploadingAvatar}
+                className="absolute -bottom-1 -right-1 w-8 h-8 gradient-primary rounded-full flex items-center justify-center text-white shadow-lg border-2 border-background disabled:opacity-60"
+                title="Change tribe photo"
+              >
+                {uploadingAvatar ? <RefreshCw size={14} className="animate-spin" /> : <Camera size={14} />}
+              </button>
+            )}
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={onAvatarFile} />
+          </div>
           {editingName && isLeader ? (
             <div className="flex gap-1 w-full">
               <input value={nameInput} onChange={e => setNameInput(e.target.value)} className="flex-1 px-2 py-1 bg-input border border-border rounded-lg text-sm text-foreground" />
