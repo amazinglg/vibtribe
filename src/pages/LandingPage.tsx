@@ -76,7 +76,7 @@ export default function LandingPage() {
             <span className="text-[11px] sm:text-xs font-medium text-foreground/90">{t('landing.hero.badge')}</span>
           </div>
           <h1 className="font-extrabold text-4xl sm:text-6xl lg:text-7xl tracking-tight leading-[1.05] mb-5">
-            <span className="text-gradient-primary">{t('landing.hero.title')}</span>
+            <span className="text-gradient-primary">VibTribe — Secure Messaging: {t('landing.hero.title')}</span>
           </h1>
           <p className="max-w-xl mx-auto text-sm sm:text-base lg:text-lg text-muted-foreground leading-relaxed mb-8">
             {t('landing.hero.subtitle')}

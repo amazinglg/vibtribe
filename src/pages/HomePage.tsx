@@ -92,7 +92,7 @@ export default function ChatsPage() {
               <Link to="/profile-screen" className="underline font-semibold">My Profile</Link>{' '}
               to continue using VibTribe (18+ only).
             </p>
-            <button onClick={() => setDobBannerDismissed(true)} className="p-1 text-amber-300 hover:text-amber-100">
+            <button onClick={() => setDobBannerDismissed(true)} className="p-1 text-amber-300 hover:text-amber-100" aria-label="Dismiss">
               <X size={14} />
             </button>
           </div>
