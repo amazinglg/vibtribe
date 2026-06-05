@@ -99,7 +99,7 @@ export default function ChatsPage() {
         </div>
       )}
       <div
-        className="gradient-bg-page flex overflow-hidden w-full max-w-full pb-[calc(64px+var(--safe-bottom))] lg:pb-0"
+        className="gradient-bg-page flex overflow-hidden w-full max-w-full pb-[var(--mobile-bottom-nav-offset)] lg:pb-0"
         style={{ height: 'calc(100dvh - 64px - min(var(--safe-top), 2.25rem))' }}
       >
         <div className={`${selectedChatId ? 'hidden lg:flex' : 'flex'} w-full lg:w-auto flex-shrink-0 min-w-0`}>
