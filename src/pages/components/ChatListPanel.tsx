@@ -650,7 +650,7 @@ export default function ChatListPanel() {
                 </div>
               </div>
             )}
-            {filteredWithBroadcast.length === 0 ? (
+            {sortedList.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-40 gap-3 p-4">
                 <span className="text-3xl">💬</span>
                 <p className="text-sm text-muted-foreground text-center">No conversations yet</p>
@@ -662,7 +662,7 @@ export default function ChatListPanel() {
                   Find Contacts
                 </button>
               </div>
-            ) : filteredWithBroadcast.map((chat) => (
+            ) : sortedList.map((chat) => (
               <ChatListItem
                 key={chat.id}
                 chat={chat}
@@ -704,6 +704,13 @@ export default function ChatListPanel() {
           >
             <Check size={14} className="text-vt-green" />
             Mark as Read
+          </button>
+          <button
+            onClick={() => togglePin(contextMenu.chatId)}
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted w-full text-left transition-colors"
+          >
+            {pinnedIds.includes(contextMenu.chatId) ? <PinOff size={14} className="text-primary" /> : <Pin size={14} className="text-primary" />}
+            {pinnedIds.includes(contextMenu.chatId) ? 'Unpin' : 'Pin to top'}
           </button>
           <button
             onClick={() => {
