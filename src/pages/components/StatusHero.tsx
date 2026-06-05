@@ -204,7 +204,11 @@ export default function StatusHero() {
 
   const mediaComposer = mediaFile && mediaPreviewUrl ? createPortal(
     <div className="fixed inset-0 z-[1000] bg-black/95 flex flex-col" onClick={closeMediaModal}>
-      <div className="flex items-center justify-between px-4 py-3 text-white flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="flex items-center justify-between px-4 py-3 text-white flex-shrink-0"
+        style={{ paddingTop: 'calc(var(--safe-top) + 0.5rem)' }}
+        onClick={(e) => e.stopPropagation()}
+      >
         <button onClick={closeMediaModal} className="p-2"><X size={20} /></button>
         <span className="text-sm font-medium">{t('status.new')}</span>
         <span className="w-9" />
@@ -218,7 +222,7 @@ export default function StatusHero() {
       </div>
       <div
         className="flex-shrink-0 p-3 flex items-center gap-2 bg-black/80 border-t border-white/10"
-        style={{ paddingBottom: 'max(1rem, calc(var(--safe-bottom) + 5.75rem))' }}
+        style={{ paddingBottom: 'max(0.75rem, var(--safe-bottom))' }}
         onClick={(e) => e.stopPropagation()}
       >
         <input
