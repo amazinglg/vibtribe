@@ -34,6 +34,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // Start polling for force-logout signal
         startForceLogoutPolling(session.user.id);
         startPresenceHeartbeat(session.user.id);
+        // Register FCM token (Capacitor / Android only, no-op in browser)
+        import('@/lib/fcmRegister').then(({ registerFcmToken }) =>
+          registerFcmToken(session.user.id),
+        ).catch(() => {});
       }
       setLoading(false);
     }).catch(() => {
@@ -49,6 +53,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (session?.user) {
         fetchProfile(session.user.id);
         startPresenceHeartbeat(session.user.id);
+        import('@/lib/fcmRegister').then(({ registerFcmToken }) =>
+          registerFcmToken(session.user.id),
+        ).catch(() => {});
       } else {
         setProfile(null);
         stopPresenceHeartbeat();
