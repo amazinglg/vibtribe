@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Trash2, Lock, Users, UserPlus, MessageSquare, Phone, Check } from 'lucide-react';
+import { Search, Plus, Trash2, Lock, Users, UserPlus, MessageSquare, Phone, Check, Pin, PinOff } from 'lucide-react';
 import MarkSecureModal from '@/components/MarkSecureModal';
 import ContactsPanel from '@/components/ContactsPanel';
 import CreateGroupModal from '@/components/CreateGroupModal';
@@ -41,6 +41,20 @@ export default function ChatListPanel() {
   const [secureTarget, setSecureTarget] = useState<{ id: string; name: string } | null>(null);
   const [contextMenu, setContextMenu] = useState<{ chatId: string; x: number; y: number } | null>(null);
   const CHATS_CACHE_KEY = 'vt_chats_cache_v1';
+  const PINS_KEY = 'vt_pinned_chats_v1';
+  const [pinnedIds, setPinnedIds] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try { return JSON.parse(localStorage.getItem(PINS_KEY) || '[]'); } catch { return []; }
+  });
+  const persistPins = (next: string[]) => {
+    setPinnedIds(next);
+    try { localStorage.setItem(PINS_KEY, JSON.stringify(next)); } catch {}
+  };
+  const togglePin = (id: string) => {
+    const isPinned = pinnedIds.includes(id);
+    persistPins(isPinned ? pinnedIds.filter(x => x !== id) : [id, ...pinnedIds]);
+    setContextMenu(null);
+  };
   const [chats, setChats] = useState<Chat[]>(() => {
     if (typeof window === 'undefined') return [];
     try {
@@ -449,7 +463,10 @@ export default function ChatListPanel() {
 
   const filtered = chats.filter(chat => {
     const matchesSearch = chat.name.toLowerCase().includes(search.toLowerCase());
-    const matchesTab = activeTab === 'all' || (activeTab === 'unread' && chat.unread > 0) || (activeTab === 'groups' && chat.isGroup);
+    const matchesTab =
+      (activeTab === 'all' && !chat.isGroup) ||
+      (activeTab === 'unread' && chat.unread > 0) ||
+      (activeTab === 'groups' && chat.isGroup);
     return matchesSearch && matchesTab;
   });
 
@@ -503,6 +520,15 @@ export default function ChatListPanel() {
         return out;
       })()
     : filtered;
+
+  // Pin order: pinned chats first, in user-defined order; rest preserve existing order.
+  const sortedList: Chat[] = (() => {
+    if (pinnedIds.length === 0) return filteredWithBroadcast;
+    const map = new Map(filteredWithBroadcast.map(c => [c.id, c] as const));
+    const pinnedHead: Chat[] = [];
+    for (const id of pinnedIds) { const c = map.get(id); if (c) { pinnedHead.push({ ...c, pinned: true }); map.delete(id); } }
+    return [...pinnedHead, ...Array.from(map.values())];
+  })();
 
   return (
     <>
