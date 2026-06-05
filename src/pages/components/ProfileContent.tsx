@@ -113,7 +113,18 @@ export default function ProfileContent() {
 
   // App-level permissions state for the Permissions section
   const { permissions: appPerms, requestNotifications, requestMicAndCamera, requestStorage, checkAllPermissions } = usePermissions();
-  useEffect(() => { checkAllPermissions(); }, [checkAllPermissions]);
+  useEffect(() => {
+    checkAllPermissions();
+    // Re-check OS-level grants whenever the user returns from Android
+    // Settings — toggles should reflect the real system state.
+    const onResume = () => { checkAllPermissions(); };
+    window.addEventListener('vt-app-resumed', onResume);
+    document.addEventListener('visibilitychange', onResume);
+    return () => {
+      window.removeEventListener('vt-app-resumed', onResume);
+      document.removeEventListener('visibilitychange', onResume);
+    };
+  }, [checkAllPermissions]);
 
   // Contact edit states
   const [editContact, setEditContact] = useState(false);
