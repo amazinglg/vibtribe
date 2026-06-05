@@ -815,8 +815,9 @@ function ChatListItem({ chat, isSelected, onClick, onContextMenu, onDelete, onMa
       {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
-          <p className={`text-sm truncate ${hasUnread ? 'font-bold text-foreground' : 'font-semibold text-foreground'}`}>
-            {chat.name}
+          <p className={`text-sm truncate flex items-center gap-1 ${hasUnread ? 'font-bold text-foreground' : 'font-semibold text-foreground'}`}>
+            {chat.pinned && <Pin size={11} className="text-primary flex-shrink-0" />}
+            <span className="truncate">{chat.name}</span>
           </p>
           <span className={`text-[11px] flex-shrink-0 ${hasUnread ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>
             {chat.time}
@@ -935,7 +936,7 @@ function ContactsTabContent({
           console.warn('[VibTribe] contact match chunk failed', e);
         }
       }
-      setContacts(normalized.map(c => {
+      const merged = normalized.map(c => {
         const m: any = map.get(c.phone);
         return {
           name: c.name,
@@ -945,7 +946,27 @@ function ContactsTabContent({
           avatar: m?.full_name?.[0]?.toUpperCase() || c.name?.[0]?.toUpperCase() || 'U',
           avatarUrl: m && (m.profile_photo_visibility ?? 'all') === 'all' ? (m.avatar_url || null) : null,
         };
-      }));
+      }).sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }));
+      setContacts(merged);
+      // Auto-save VibTribe-platform matches into the user's contacts table
+      try {
+        const platformMatches = merged.filter(c => c.onPlatform && c.userId);
+        if (user?.id && platformMatches.length > 0) {
+          const { data: existing } = await supabase
+            .from('contacts')
+            .select('contact_id')
+            .eq('user_id', user.id)
+            .in('contact_id', platformMatches.map(p => p.userId));
+          const existingSet = new Set((existing || []).map((r: any) => r.contact_id));
+          const rows = platformMatches
+            .filter(p => !existingSet.has(p.userId))
+            .map(p => ({ user_id: user.id, contact_id: p.userId, contact_name: p.name }));
+          if (rows.length > 0) {
+            await supabase.from('contacts').insert(rows);
+            window.dispatchEvent(new Event('vt-contacts-changed'));
+          }
+        }
+      } catch (e) { console.warn('auto-save contacts failed', e); }
     } catch (e) {
       console.error('[VibTribe] matchContacts failed', e);
     } finally {
