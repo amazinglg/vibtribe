@@ -109,6 +109,28 @@ export default function StatusGrid() {
         });
       }
 
+      // Fetch real view counts from status_views for all statuses in view
+      const allStatusIds = statuses.map((s: any) => s.id);
+      if (allStatusIds.length) {
+        const { data: viewRows } = await supabase
+          .from('status_views')
+          .select('status_id')
+          .in('status_id', allStatusIds);
+        const countByStatus: Record<string, number> = {};
+        (viewRows || []).forEach((r: any) => {
+          countByStatus[r.status_id] = (countByStatus[r.status_id] || 0) + 1;
+        });
+        // Sum per user (only own status shows count; others show 0)
+        for (const s of statuses) {
+          if (s.user_id === user?.id && grouped[s.user_id]) {
+            grouped[s.user_id].views = Math.max(
+              grouped[s.user_id].views,
+              countByStatus[s.id] || 0,
+            );
+          }
+        }
+      }
+
       // Put own status first
       const all = Object.values(grouped);
       all.sort((a, b) => (a.id.endsWith(user?.id || '') ? -1 : b.id.endsWith(user?.id || '') ? 1 : 0));
