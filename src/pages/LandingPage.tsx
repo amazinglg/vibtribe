@@ -152,8 +152,8 @@ export default function LandingPage() {
       {/* Get the App — Platform Availability */}
       <section id="download" className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24">
         <div className="text-center mb-8">
-          <span className="text-[11px] font-bold uppercase tracking-widest text-primary">Get the app</span>
-          <h2 className="font-bold text-2xl sm:text-4xl text-foreground mt-2 mb-2">Available on your phone</h2>
+          <span className="text-[11px] font-bold uppercase tracking-widest text-primary">{t('landing.app.eyebrow')}</span>
+          <h2 className="font-bold text-2xl sm:text-4xl text-foreground mt-2 mb-2">{t('landing.app.title')}</h2>
           <p className="text-sm text-muted-foreground max-w-lg mx-auto">
             VibTribe is currently built as a native Android app. iPhone users can install it as a Progressive Web App (PWA) in seconds.
           </p>
@@ -169,8 +169,8 @@ export default function LandingPage() {
                   <Smartphone size={22} className="text-white" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg text-foreground">Android</h3>
-                  <p className="text-xs text-muted-foreground">Native app</p>
+                  <h3 className="font-bold text-lg text-foreground">{t('landing.app.androidName')}</h3>
+                  <p className="text-xs text-muted-foreground">{t('landing.app.androidDesc')}</p>
                 </div>
               </div>
 
@@ -196,7 +196,7 @@ export default function LandingPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-lg text-foreground">iPhone & iPad</h3>
-                  <p className="text-xs text-muted-foreground">Install as Web App</p>
+                  <p className="text-xs text-muted-foreground">{t('landing.app.iosDesc')}</p>
                 </div>
               </div>
 
@@ -207,15 +207,15 @@ export default function LandingPage() {
               <ol className="space-y-2 text-sm text-foreground/80 mb-5">
                 <li className="flex items-start gap-2">
                   <span className="w-5 h-5 rounded-full bg-primary/20 text-primary text-[11px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
-                  <span>Open <span className="font-semibold text-foreground">vibtribe.in</span> in <span className="font-semibold text-foreground">Safari</span> (not Chrome).</span>
+                  <span>{t('landing.app.ios.step1')}</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="w-5 h-5 rounded-full bg-primary/20 text-primary text-[11px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
-                  <span>Tap the <Share2 size={12} className="inline mx-0.5 text-primary" /> <span className="font-semibold text-foreground">Share</span> button in the toolbar.</span>
+                  <span><Share2 size={12} className="inline mx-0.5 text-primary" /> {t('landing.app.ios.step2')}</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="w-5 h-5 rounded-full bg-primary/20 text-primary text-[11px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
-                  <span>Scroll and pick <PlusSquare size={12} className="inline mx-0.5 text-primary" /> <span className="font-semibold text-foreground">Add to Home Screen</span>, then tap Add.</span>
+                  <span><PlusSquare size={12} className="inline mx-0.5 text-primary" /> {t('landing.app.ios.step3')}</span>
                 </li>
               </ol>
 
