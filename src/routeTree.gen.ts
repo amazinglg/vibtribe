@@ -26,6 +26,7 @@ import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe
 import { Route as TribeJoinCodeRouteImport } from './routes/tribe.join.$code'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as ApiPublicAuthOtpRouteImport } from './routes/api/public/auth-otp'
+import { Route as ApiPublicAuthLoginRouteImport } from './routes/api/public/auth-login'
 import { Route as AdminUserUserIdRouteImport } from './routes/admin.user.$userId'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
@@ -118,6 +119,11 @@ const ApiPublicAuthOtpRoute = ApiPublicAuthOtpRouteImport.update({
   path: '/api/public/auth-otp',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAuthLoginRoute = ApiPublicAuthLoginRouteImport.update({
+  id: '/api/public/auth-login',
+  path: '/api/public/auth-login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminUserUserIdRoute = AdminUserUserIdRouteImport.update({
   id: '/user/$userId',
   path: '/user/$userId',
@@ -168,6 +174,7 @@ export interface FileRoutesByFullPath {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
+  '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/tribe/join/$code': typeof TribeJoinCodeRoute
@@ -192,6 +199,7 @@ export interface FileRoutesByTo {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/admin': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
+  '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/tribe/join/$code': typeof TribeJoinCodeRoute
@@ -218,6 +226,7 @@ export interface FileRoutesById {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
+  '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/tribe/join/$code': typeof TribeJoinCodeRoute
@@ -245,6 +254,7 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/admin/'
     | '/admin/user/$userId'
+    | '/api/public/auth-login'
     | '/api/public/auth-otp'
     | '/lovable/email/suppression'
     | '/tribe/join/$code'
@@ -269,6 +279,7 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/admin'
     | '/admin/user/$userId'
+    | '/api/public/auth-login'
     | '/api/public/auth-otp'
     | '/lovable/email/suppression'
     | '/tribe/join/$code'
@@ -294,6 +305,7 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/admin/'
     | '/admin/user/$userId'
+    | '/api/public/auth-login'
     | '/api/public/auth-otp'
     | '/lovable/email/suppression'
     | '/tribe/join/$code'
@@ -318,6 +330,7 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
+  ApiPublicAuthLoginRoute: typeof ApiPublicAuthLoginRoute
   ApiPublicAuthOtpRoute: typeof ApiPublicAuthOtpRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   TribeJoinCodeRoute: typeof TribeJoinCodeRoute
@@ -449,6 +462,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAuthOtpRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/auth-login': {
+      id: '/api/public/auth-login'
+      path: '/api/public/auth-login'
+      fullPath: '/api/public/auth-login'
+      preLoaderRoute: typeof ApiPublicAuthLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/user/$userId': {
       id: '/admin/user/$userId'
       path: '/user/$userId'
@@ -520,6 +540,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   UnsubscribeRoute: UnsubscribeRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
+  ApiPublicAuthLoginRoute: ApiPublicAuthLoginRoute,
   ApiPublicAuthOtpRoute: ApiPublicAuthOtpRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   TribeJoinCodeRoute: TribeJoinCodeRoute,
