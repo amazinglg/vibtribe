@@ -387,9 +387,34 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     if (!user?.id || activeCall || typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
     const callId = params.get('call') || params.get('answerCall');
+    const declineId = params.get('declineCall');
+    if (declineId) {
+      // Lockscreen ringer "Decline" tapped — mark the call declined and clear the param.
+      supabase.from('calls')
+        .update({ status: 'declined', ended_at: new Date().toISOString() })
+        .eq('id', declineId)
+        .eq('callee_id', user.id)
+        .eq('status', 'ringing')
+        .then(() => {
+          try {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('declineCall');
+            window.history.replaceState({}, '', url.toString());
+          } catch {}
+        });
+      return;
+    }
     if (!callId) return;
     supabase.from('calls').select('*').eq('id', callId).eq('callee_id', user.id).eq('status', 'ringing').maybeSingle()
-      .then(({ data }) => { if (data) handleIncomingCall(data); });
+      .then(({ data }) => {
+        if (data) handleIncomingCall(data);
+        try {
+          const url = new URL(window.location.href);
+          url.searchParams.delete('call');
+          url.searchParams.delete('answerCall');
+          window.history.replaceState({}, '', url.toString());
+        } catch {}
+      });
   }, [user?.id, activeCall, supabase, handleIncomingCall]);
 
   // Callee accept handler
