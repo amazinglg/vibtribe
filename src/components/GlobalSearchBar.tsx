@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, X, MessageCircle, Phone, AtSign, Mail, Loader2 } from 'lucide-react';
+import { Search, X, MessageCircle, Phone, AtSign, Mail, Loader2, Users as UsersIcon, Lock, Globe } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from '@tanstack/react-router';
@@ -15,10 +15,19 @@ interface SearchUser {
   is_online?: boolean;
 }
 
+interface SearchTribe {
+  id: string;
+  name: string | null;
+  handle: string | null;
+  avatar_url: string | null;
+  privacy: string;
+}
+
 export default function GlobalSearchBar() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchUser[]>([]);
+  const [tribeResults, setTribeResults] = useState<SearchTribe[]>([]);
   const [loading, setLoading] = useState(false);
   const [startingChat, setStartingChat] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -63,9 +72,10 @@ export default function GlobalSearchBar() {
   useEffect(() => {
     if (!isCompleteQuery(query)) {
       setResults([]);
+      setTribeResults([]);
       return;
     }
-    const timer = setTimeout(() => searchUsers(query.trim()), 300);
+    const timer = setTimeout(() => { searchUsers(query.trim()); searchTribes(query.trim()); }, 300);
     return () => clearTimeout(timer);
   }, [query]);
 
@@ -97,6 +107,32 @@ export default function GlobalSearchBar() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const searchTribes = async (q: string) => {
+    if (!q.startsWith('@')) { setTribeResults([]); return; }
+    const handle = q.slice(1).toLowerCase();
+    if (handle.length < 3) { setTribeResults([]); return; }
+    try {
+      const { data } = await supabase
+        .from('chats')
+        .select('id, name, handle, avatar_url, privacy')
+        .eq('is_group', true)
+        .ilike('handle', handle)
+        .limit(5);
+      setTribeResults((data as any) || []);
+    } catch { setTribeResults([]); }
+  };
+
+  const openTribe = async (t: SearchTribe) => {
+    if (!user) return;
+    if (t.privacy === 'public') {
+      const { error } = await supabase.rpc('tribe_join_public', { _chat_id: t.id });
+      if (error && !/already/i.test(error.message)) { /* allow already-member */ }
+    }
+    setSelectedChatId(t.id);
+    router({ to: '/' });
+    setOpen(false); setQuery(''); setResults([]); setTribeResults([]);
   };
 
   const handleStartChat = async (targetUser: SearchUser) => {
@@ -174,7 +210,7 @@ export default function GlobalSearchBar() {
               </div>
             )}
 
-            {!loading && isCompleteQuery(query) && results.length === 0 && (
+            {!loading && isCompleteQuery(query) && results.length === 0 && tribeResults.length === 0 && (
               <div className="py-6 text-center">
                 <p className="text-sm text-muted-foreground">No users found for "{query}"</p>
               </div>
@@ -238,6 +274,33 @@ export default function GlobalSearchBar() {
                 </button>
               </div>
             ))}
+
+            {!loading && tribeResults.length > 0 && (
+              <div className="border-t border-border">
+                <p className="px-4 pt-3 pb-1 text-[10px] uppercase tracking-wider text-muted-foreground">Tribes</p>
+                {tribeResults.map(t => (
+                  <div key={t.id} onClick={() => openTribe(t)} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer">
+                    {t.avatar_url ? (
+                      <img src={t.avatar_url} className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
+                    ) : (
+                      <div className="w-9 h-9 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                        {(t.name || 'T')[0]?.toUpperCase()}
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">{t.name || 'Tribe'}</p>
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="text-primary flex items-center gap-0.5"><AtSign size={10} />{t.handle}</span>
+                        <span className="text-muted-foreground flex items-center gap-0.5">{t.privacy === 'public' ? <Globe size={10} /> : <Lock size={10} />}{t.privacy}</span>
+                      </div>
+                    </div>
+                    <button className="flex items-center gap-1.5 px-3 py-1.5 gradient-primary text-white text-xs font-semibold rounded-lg hover:opacity-90 flex-shrink-0">
+                      <UsersIcon size={12} /> Open
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

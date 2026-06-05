@@ -1,13 +1,14 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { Shield, Users, Activity, Search, Ban, Trash2, RefreshCw, AlertTriangle, CheckCircle2, ArrowLeft, KeyRound, Pencil, X, Save, Ticket, UserX, UserCheck, Send, LogOut, ChevronRight, Circle, ArrowUpDown, Filter } from 'lucide-react';
+import { Shield, Users, Activity, Search, Ban, Trash2, RefreshCw, AlertTriangle, CheckCircle2, ArrowLeft, KeyRound, Pencil, X, Save, Ticket, UserX, UserCheck, Send, LogOut, ChevronRight, Circle, ArrowUpDown, Filter, Lock, Globe, AtSign } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLayout from '@/components/AppLayout';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import { useServerFn } from '@tanstack/react-start';
 import { replyToTicket, deleteTicket } from '@/lib/support.functions';
+import TribeDetailsSheet from '@/components/TribeDetailsSheet';
 
 interface PlatformUser {
   id: string;
@@ -72,7 +73,12 @@ export default function AdminPage() {
   const [search, setSearch] = useState('');
   const [selectedUser, setSelectedUser] = useState<PlatformUser | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'support'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'tribes' | 'support'>('overview');
+  const [tribes, setTribes] = useState<any[]>([]);
+  const [tribeSearch, setTribeSearch] = useState('');
+  const [tribeSort, setTribeSort] = useState<'recent' | 'name' | 'members'>('recent');
+  const [loadingTribes, setLoadingTribes] = useState(false);
+  const [selectedTribeId, setSelectedTribeId] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [editForm, setEditForm] = useState<EditForm>({ full_name: '', email: '', mobile_number: '' });
 
@@ -146,6 +152,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (activeTab === 'support') loadTickets();
+    if (activeTab === 'tribes') loadTribes();
   }, [activeTab]);
 
   // Auto-open ticket if ?ticket=<id> is in URL (from notification click)
@@ -228,6 +235,31 @@ export default function AdminPage() {
       setLoadingTickets(false);
     }
   };
+
+  const loadTribes = async () => {
+    setLoadingTribes(true);
+    try {
+      const { data, error } = await supabase.rpc('admin_list_tribes');
+      if (error) throw error;
+      setTribes(data || []);
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to load tribes');
+    } finally {
+      setLoadingTribes(false);
+    }
+  };
+
+  const filteredTribes = tribes
+    .filter(t => {
+      const q = tribeSearch.trim().toLowerCase();
+      if (!q) return true;
+      return (t.name || '').toLowerCase().includes(q) || (t.handle || '').toLowerCase().includes(q) || (t.founder_name || '').toLowerCase().includes(q);
+    })
+    .sort((a, b) => {
+      if (tribeSort === 'name') return (a.name || '').localeCompare(b.name || '');
+      if (tribeSort === 'members') return Number(b.member_count || 0) - Number(a.member_count || 0);
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
 
   const handleUpdateTicketStatus = async (ticketId: string, newStatus: 'open' | 'inprocess' | 'solved') => {
     try {
@@ -478,14 +510,14 @@ export default function AdminPage() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 p-1 bg-muted rounded-xl mb-6 w-fit">
-          {(['overview', 'users', 'support'] as const).map(tab => (
+        <div className="flex gap-2 p-1 bg-muted rounded-xl mb-6 w-fit flex-wrap">
+          {(['overview', 'users', ...(isMaster ? ['tribes' as const] : []), 'support'] as const).map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`relative px-4 py-2 rounded-lg text-sm font-semibold capitalize transition-all ${activeTab === tab ? 'gradient-primary text-white' : 'text-muted-foreground hover:text-foreground'}`}
             >
-              {tab === 'support' ? 'Support' : tab}
+              {tab === 'support' ? 'Support' : tab === 'tribes' ? 'Tribes' : tab}
               {tab === 'support' && unreadTickets > 0 && (
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
                   {unreadTickets > 9 ? '9+' : unreadTickets}
@@ -972,6 +1004,95 @@ export default function AdminPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Tribes Tab content */}
+      {activeTab === 'tribes' && isMaster && (
+        <div className="max-w-screen-2xl mx-auto px-4 lg:px-8 pb-28 lg:pb-6 flex flex-col gap-4">
+          <div className="glass rounded-2xl border border-border p-3 sm:p-4 space-y-3">
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="relative flex-1">
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Search tribe name, @handle, founder…"
+                  value={tribeSearch}
+                  onChange={e => setTribeSearch(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2.5 bg-input border border-border rounded-xl text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div className="relative sm:w-44">
+                <ArrowUpDown size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                <select
+                  value={tribeSort}
+                  onChange={e => setTribeSort(e.target.value as any)}
+                  className="w-full pl-9 pr-3 py-2.5 bg-input border border-border rounded-xl text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary appearance-none"
+                >
+                  <option value="recent">Recently created</option>
+                  <option value="members">Most members</option>
+                  <option value="name">Name (A–Z)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
+            <span>{filteredTribes.length} of {tribes.length} tribes</span>
+            <button onClick={loadTribes} className="text-primary hover:underline">Refresh</button>
+          </div>
+
+          <div className="glass rounded-2xl border border-border overflow-hidden">
+            {loadingTribes ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : (
+              <div className="overflow-y-auto max-h-[calc(100vh-360px)]">
+                {filteredTribes.map(t => (
+                  <button
+                    key={t.id}
+                    onClick={() => setSelectedTribeId(t.id)}
+                    className="w-full flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-border/30 hover:bg-muted/50 transition-colors text-left"
+                  >
+                    {t.avatar_url ? (
+                      <img src={t.avatar_url} className="w-11 h-11 rounded-full object-cover flex-shrink-0" />
+                    ) : (
+                      <div className="w-11 h-11 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                        {(t.name || 'T')[0]?.toUpperCase()}
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <p className="text-sm font-semibold text-foreground truncate">{t.name || 'Untitled tribe'}</p>
+                        {t.handle && <span className="text-[11px] text-primary flex items-center gap-0.5"><AtSign size={10} />{t.handle}</span>}
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold flex items-center gap-0.5 ${t.privacy === 'public' ? 'bg-vt-green/15 text-vt-green' : 'bg-muted text-foreground'}`}>
+                          {t.privacy === 'public' ? <Globe size={9} /> : <Lock size={9} />} {t.privacy}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground truncate">Founder: {t.founder_name || '—'}</p>
+                      <p className="text-[10px] text-muted-foreground/70 mt-0.5">{t.member_count} member{Number(t.member_count) === 1 ? '' : 's'} · Created {new Date(t.created_at).toLocaleDateString()}</p>
+                    </div>
+                    <ChevronRight size={14} className="text-muted-foreground/50" />
+                  </button>
+                ))}
+                {filteredTribes.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-16 gap-2">
+                    <Users size={32} className="text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">No tribes found</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {selectedTribeId && (
+        <TribeDetailsSheet
+          chatId={selectedTribeId}
+          isOpen={!!selectedTribeId}
+          onClose={() => { setSelectedTribeId(null); loadTribes(); }}
+        />
       )}
     </AppLayout>
   );
