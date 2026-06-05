@@ -63,6 +63,16 @@ const en = {
   'landing.cta.subtitle': 'Free forever. No credit card. Takes 30 seconds.',
   'landing.cta.button': 'Create your free account',
 
+  // landing - get the app
+  'landing.app.eyebrow': 'Get the app',
+  'landing.app.title': 'Available on your phone',
+  'landing.app.androidName': 'Android',
+  'landing.app.androidDesc': 'Native app',
+  'landing.app.iosDesc': 'Install as Web App',
+  'landing.app.ios.step1': 'Open vibtribe.in in Safari (not Chrome).',
+  'landing.app.ios.step2': 'Tap the Share button in the toolbar.',
+  'landing.app.ios.step3': 'Scroll and pick Add to Home Screen, then tap Add.',
+
   'landing.footer.tagline': 'Where your vibe finds its tribe.',
   'landing.footer.product': 'Product',
   'landing.footer.company': 'Company',
