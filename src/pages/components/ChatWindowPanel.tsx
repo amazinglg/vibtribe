@@ -251,6 +251,11 @@ export default function ChatWindowPanel() {
   // per-sender pubkey cache used to decrypt received tribe messages.
   const tribeMembersRef = useRef<GroupMember[]>([]);
   const senderPubKeyCacheRef = useRef<Map<string, string>>(new Map());
+  // Tribe edge-case state: when the current user joined this tribe + how
+  // many members still haven't set up an encryption PIN.
+  const tribeJoinedAtRef = useRef<string | null>(null);
+  const [tribeMissingKeyCount, setTribeMissingKeyCount] = useState(0);
+  const [tribeTotalMembers, setTribeTotalMembers] = useState(0);
   const [actionMsg, setActionMsg] = useState<Message | null>(null);
   const [editingMsg, setEditingMsg] = useState<Message | null>(null);
   const [editText, setEditText] = useState('');
