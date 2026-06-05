@@ -9,7 +9,10 @@ export const Route = createFileRoute('/privacy')({
       { name: 'description', content: 'How VibTribe collects, uses, and protects your data, including end-to-end encryption details.' },
       { property: 'og:title', content: 'Privacy Policy — VibTribe' },
       { property: 'og:description', content: 'Privacy Policy for the VibTribe messaging app.' },
+      { property: 'og:url', content: 'https://www.vibtribe.in/privacy' },
+      { property: 'og:type', content: 'article' },
     ],
+    links: [{ rel: 'canonical', href: 'https://www.vibtribe.in/privacy' }],
   }),
   component: PrivacyPage,
 });

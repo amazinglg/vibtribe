@@ -9,7 +9,10 @@ export const Route = createFileRoute('/terms')({
       { name: 'description', content: 'VibTribe Terms of Service and Privacy Policy governing use of our private messaging platform.' },
       { property: 'og:title', content: 'Terms & Conditions — VibTribe' },
       { property: 'og:description', content: 'Read the Terms of Service and Privacy Policy for the VibTribe messaging app.' },
+      { property: 'og:url', content: 'https://www.vibtribe.in/terms' },
+      { property: 'og:type', content: 'article' },
     ],
+    links: [{ rel: 'canonical', href: 'https://www.vibtribe.in/terms' }],
   }),
   component: TermsPage,
 });
