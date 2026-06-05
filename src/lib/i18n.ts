@@ -246,6 +246,15 @@ const hi: typeof en = {
   'landing.cta.subtitle': 'हमेशा मुफ़्त। कोई क्रेडिट कार्ड नहीं। केवल 30 सेकंड।',
   'landing.cta.button': 'अपना मुफ़्त खाता बनाएं',
 
+  'landing.app.eyebrow': 'ऐप पाएं',
+  'landing.app.title': 'आपके फ़ोन पर उपलब्ध',
+  'landing.app.androidName': 'एंड्रॉइड',
+  'landing.app.androidDesc': 'नेटिव ऐप',
+  'landing.app.iosDesc': 'वेब ऐप के रूप में इंस्टॉल करें',
+  'landing.app.ios.step1': 'Safari में vibtribe.in खोलें (Chrome में नहीं)।',
+  'landing.app.ios.step2': 'टूलबार में Share बटन पर टैप करें।',
+  'landing.app.ios.step3': 'स्क्रॉल करें और Add to Home Screen चुनें, फिर Add पर टैप करें।',
+
   'landing.footer.tagline': 'जहाँ आपका वाइब, अपनी ट्राइब पाता है।',
   'landing.footer.product': 'उत्पाद',
   'landing.footer.company': 'कंपनी',
