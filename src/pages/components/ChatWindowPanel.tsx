@@ -251,6 +251,11 @@ export default function ChatWindowPanel() {
   // per-sender pubkey cache used to decrypt received tribe messages.
   const tribeMembersRef = useRef<GroupMember[]>([]);
   const senderPubKeyCacheRef = useRef<Map<string, string>>(new Map());
+  // Tribe edge-case state: when the current user joined this tribe + how
+  // many members still haven't set up an encryption PIN.
+  const tribeJoinedAtRef = useRef<string | null>(null);
+  const [tribeMissingKeyCount, setTribeMissingKeyCount] = useState(0);
+  const [tribeTotalMembers, setTribeTotalMembers] = useState(0);
   const [actionMsg, setActionMsg] = useState<Message | null>(null);
   const [editingMsg, setEditingMsg] = useState<Message | null>(null);
   const [editText, setEditText] = useState('');
@@ -464,11 +469,12 @@ export default function ChatWindowPanel() {
           try {
             const { data: myRow } = await supabase
               .from('chat_members')
-              .select('role')
+              .select('role, joined_at')
               .eq('chat_id', selectedChatId)
               .eq('user_id', user.id)
               .maybeSingle();
             setTribeRole(((myRow as any)?.role as any) || null);
+            tribeJoinedAtRef.current = (myRow as any)?.joined_at || null;
           } catch { setTribeRole(null); }
 
           // Load tribe members + their pubkeys for per-recipient encryption.
@@ -489,10 +495,21 @@ export default function ChatWindowPanel() {
               tribeMembersRef.current = members;
               // Prime sender pubkey cache so history decrypts without extra fetches.
               for (const m of members) senderPubKeyCacheRef.current.set(m.userId, m.publicKey);
+              // Track members without an encryption key (haven't set up PIN).
+              const missing = (profs || []).filter((p: any) => !p.public_key).length;
+              // Exclude self from "missing" count if caller hasn't set up either.
+              setTribeMissingKeyCount(missing);
+              setTribeTotalMembers(memberIds.length);
             } else {
               tribeMembersRef.current = [];
+              setTribeMissingKeyCount(0);
+              setTribeTotalMembers(0);
             }
-          } catch { tribeMembersRef.current = []; }
+          } catch {
+            tribeMembersRef.current = [];
+            setTribeMissingKeyCount(0);
+            setTribeTotalMembers(0);
+          }
 
           const { data: msgs } = await supabase
             .from('messages')
@@ -501,14 +518,29 @@ export default function ChatWindowPanel() {
             .order('created_at', { ascending: true });
 
           const out: Message[] = [];
+          const joinedAtMs = tribeJoinedAtRef.current
+            ? new Date(tribeJoinedAtRef.current).getTime()
+            : 0;
+          const haveLocalKey = await hasLocalPrivateKey();
           for (const m of (msgs || [])) {
             let text = m.content;
             // Decrypt group envelope using the sender's pubkey; fall back gracefully
             // for legacy 1:1-style ciphertext or plaintext system messages.
             if (isGroupEncrypted(text)) {
-              const sPk = await getSenderPubKey(m.sender_id);
-              if (sPk) text = await decryptGroupMessageForMe(text, user.id, sPk);
-              else text = '🔒 Locked';
+              const sentBeforeJoin =
+                joinedAtMs > 0 &&
+                m.created_at &&
+                new Date(m.created_at).getTime() < joinedAtMs &&
+                m.sender_id !== user.id;
+              if (sentBeforeJoin) {
+                text = '🔒 Sent before you joined the tribe — not available';
+              } else if (!haveLocalKey) {
+                text = '🔒 Unlock encryption to read this message';
+              } else {
+                const sPk = await getSenderPubKey(m.sender_id);
+                if (sPk) text = await decryptGroupMessageForMe(text, user.id, sPk);
+                else text = '🔒 Message locked';
+              }
             } else if (isEncrypted(text)) {
               text = '[Encrypted]';
             }
@@ -702,6 +734,36 @@ export default function ChatWindowPanel() {
       if (!ok) {
         toast.error('Set up or unlock your encryption PIN to send tribe messages.');
         return;
+      }
+      // Refresh member pubkeys so newly-joined members (and members who
+      // just enabled encryption since we opened the chat) are included.
+      try {
+        const { data: memberRows } = await supabase
+          .from('chat_members')
+          .select('user_id')
+          .eq('chat_id', selectedChatId);
+        const memberIds = (memberRows || []).map((r: any) => r.user_id);
+        if (memberIds.length) {
+          const { data: profs } = await supabase
+            .from('user_profiles')
+            .select('id, public_key')
+            .in('id', memberIds);
+          const members: GroupMember[] = (profs || [])
+            .filter((p: any) => !!p.public_key)
+            .map((p: any) => ({ userId: p.id, publicKey: p.public_key }));
+          tribeMembersRef.current = members;
+          for (const m of members) senderPubKeyCacheRef.current.set(m.userId, m.publicKey);
+          const missing = (profs || []).filter((p: any) => !p.public_key).length;
+          setTribeMissingKeyCount(missing);
+          setTribeTotalMembers(memberIds.length);
+          if (missing > 0) {
+            toast.message(
+              `${missing} member${missing > 1 ? "s haven't" : " hasn't"} set up encryption — your message won't reach ${missing > 1 ? 'them' : 'them'} until they do.`,
+            );
+          }
+        }
+      } catch {
+        // best-effort refresh; fall through with whatever we had cached.
       }
     }
     let text = raw.trim();
@@ -1445,6 +1507,11 @@ export default function ChatWindowPanel() {
       {e2eEnabled && contact && !contact.publicKey && (
         <div className="px-4 py-2 bg-vt-amber/10 border-b border-vt-amber/20 text-center text-[11px] text-vt-amber">
           Waiting for {contact.name}'s encryption key before secure messages can be sent.
+        </div>
+      )}
+      {chatType === 'group' && tribeMissingKeyCount > 0 && (
+        <div className="px-4 py-2 bg-vt-amber/10 border-b border-vt-amber/20 text-center text-[11px] text-vt-amber">
+          🔒 {tribeMissingKeyCount} of {tribeTotalMembers} member{tribeTotalMembers > 1 ? 's' : ''} haven't set up encryption yet — they won't be able to read new messages until they do.
         </div>
       )}
 
