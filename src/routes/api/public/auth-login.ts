@@ -55,10 +55,14 @@ export const Route = createFileRoute('/api/public/auth-login')({
           return Response.json({ error: 'account_suspended' }, { status: 403 })
         }
 
-        // 3. Attempt sign-in with the resolved synthetic email
+        // 3. Attempt sign-in with the account's actual auth email. Older admin
+        // profiles may keep a real email in user_profiles.email while auth uses
+        // the mobile-based login email.
+        const { data: authUser } = await admin.auth.admin.getUserById(profile.id)
+        const loginEmail = authUser?.user?.email || profile.email
         const anon = getAnonClient()
         const { data: signInData, error: signInError } = await anon.auth.signInWithPassword({
-          email: profile.email,
+          email: loginEmail,
           password,
         })
 
