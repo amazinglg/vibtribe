@@ -247,6 +247,10 @@ export default function ChatWindowPanel() {
   const [tribeSheetOpen, setTribeSheetOpen] = useState(false);
   const contactPubKeyRef = useRef<string | null>(null);
   const previousChatIdRef = useRef<string | null>(null);
+  // Group E2E: cached member list (with pubkeys) for the active tribe, and a
+  // per-sender pubkey cache used to decrypt received tribe messages.
+  const tribeMembersRef = useRef<GroupMember[]>([]);
+  const senderPubKeyCacheRef = useRef<Map<string, string>>(new Map());
   const [actionMsg, setActionMsg] = useState<Message | null>(null);
   const [editingMsg, setEditingMsg] = useState<Message | null>(null);
   const [editText, setEditText] = useState('');
