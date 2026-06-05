@@ -76,9 +76,11 @@ interface BlockedUser {
 interface Session {
   id: string;
   created_at: string;
-  updated_at: string;
+  last_seen_at: string;
+  device_name?: string;
+  platform?: string;
   user_agent?: string;
-  ip?: string;
+  app_version?: string;
   isCurrent?: boolean;
 }
 
