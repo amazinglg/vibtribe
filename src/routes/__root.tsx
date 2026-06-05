@@ -172,7 +172,9 @@ function RootComponent() {
       <ThemeProvider>
         <LanguageProvider>
           <AuthProvider>
-            <Outlet />
+            <main id="main">
+              <Outlet />
+            </main>
             <ServiceWorkerRegistration />
           </AuthProvider>
         </LanguageProvider>
