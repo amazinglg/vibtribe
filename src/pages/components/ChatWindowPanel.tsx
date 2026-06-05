@@ -5,7 +5,7 @@ import { useChatStore } from '@/store/chatStore';
 import MarkSecureModal from '@/components/MarkSecureModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
-import { getOrCreateKeyPair, encryptMessage, decryptMessage, isEncrypted, encryptBytes, hasLocalPrivateKey } from '@/lib/encryption';
+import { getOrCreateKeyPair, encryptMessage, decryptMessage, isEncrypted, encryptBytes, hasLocalPrivateKey, encryptGroupMessage, decryptGroupMessageForMe, isGroupEncrypted, type GroupMember } from '@/lib/encryption';
 import EncryptedMedia from '@/components/EncryptedMedia';
 import { getPreferredNickname } from '@/components/SecureVaultModal';
 import PermissionPrompt from '@/components/PermissionPrompt';
@@ -247,6 +247,10 @@ export default function ChatWindowPanel() {
   const [tribeSheetOpen, setTribeSheetOpen] = useState(false);
   const contactPubKeyRef = useRef<string | null>(null);
   const previousChatIdRef = useRef<string | null>(null);
+  // Group E2E: cached member list (with pubkeys) for the active tribe, and a
+  // per-sender pubkey cache used to decrypt received tribe messages.
+  const tribeMembersRef = useRef<GroupMember[]>([]);
+  const senderPubKeyCacheRef = useRef<Map<string, string>>(new Map());
   const [actionMsg, setActionMsg] = useState<Message | null>(null);
   const [editingMsg, setEditingMsg] = useState<Message | null>(null);
   const [editText, setEditText] = useState('');
@@ -299,12 +303,15 @@ export default function ChatWindowPanel() {
             if (newMsg.sender_id !== user.id) {
               let text = newMsg.content;
               const encrypted = isEncrypted(text);
-              const pk = contactPubKeyRef.current;
-              if (encrypted && pk) {
-                text = await decryptMessage(text, pk);
+              const groupEnc = isGroupEncrypted(text);
+              if (groupEnc) {
+                const sPk = await getSenderPubKey(newMsg.sender_id);
+                text = sPk
+                  ? await decryptGroupMessageForMe(text, user.id, sPk)
+                  : '🔒 Locked';
               } else if (encrypted) {
-                // Hide raw ciphertext from the user; show a friendly placeholder until keys load.
-                text = '…';
+                const pk = contactPubKeyRef.current;
+                text = pk ? await decryptMessage(text, pk) : '…';
               }
               setMessages(prev => [...prev, {
                 id: newMsg.id,
@@ -313,7 +320,7 @@ export default function ChatWindowPanel() {
                 time: formatTime(newMsg.created_at),
                 status: 'delivered',
                 reactions: [],
-                encrypted,
+                encrypted: encrypted || groupEnc,
                 createdAt: newMsg.created_at,
               }]);
               // Mark as read (recipient — uses RPC to bypass RLS sender restriction)
@@ -347,9 +354,18 @@ export default function ChatWindowPanel() {
             let newText: string | null = null;
             if (typeof upd.content === 'string') {
               const enc = isEncrypted(upd.content);
-              const pk = contactPubKeyRef.current;
-              if (enc && pk) newText = await decryptMessage(upd.content, pk);
-              else if (!enc) newText = upd.content;
+              const gEnc = isGroupEncrypted(upd.content);
+              if (gEnc) {
+                const sPk = await getSenderPubKey(upd.sender_id);
+                newText = sPk
+                  ? await decryptGroupMessageForMe(upd.content, user.id, sPk)
+                  : '🔒 Locked';
+              } else if (enc) {
+                const pk = contactPubKeyRef.current;
+                if (pk) newText = await decryptMessage(upd.content, pk);
+              } else {
+                newText = upd.content;
+              }
             }
             setMessages(prev => prev.map(m => m.id === upd.id
               ? {
@@ -441,7 +457,7 @@ export default function ChatWindowPanel() {
             isContact: false,
           });
           contactPubKeyRef.current = null;
-          setE2eEnabled(false);
+          setE2eEnabled(true);
           setIsBlocked(false);
 
           // Fetch caller's role in this tribe (founder is implicitly leader via DB triggers)
@@ -455,6 +471,29 @@ export default function ChatWindowPanel() {
             setTribeRole(((myRow as any)?.role as any) || null);
           } catch { setTribeRole(null); }
 
+          // Load tribe members + their pubkeys for per-recipient encryption.
+          try {
+            const { data: memberRows } = await supabase
+              .from('chat_members')
+              .select('user_id')
+              .eq('chat_id', selectedChatId);
+            const memberIds = (memberRows || []).map((r: any) => r.user_id);
+            if (memberIds.length) {
+              const { data: profs } = await supabase
+                .from('user_profiles')
+                .select('id, public_key')
+                .in('id', memberIds);
+              const members: GroupMember[] = (profs || [])
+                .filter((p: any) => !!p.public_key)
+                .map((p: any) => ({ userId: p.id, publicKey: p.public_key }));
+              tribeMembersRef.current = members;
+              // Prime sender pubkey cache so history decrypts without extra fetches.
+              for (const m of members) senderPubKeyCacheRef.current.set(m.userId, m.publicKey);
+            } else {
+              tribeMembersRef.current = [];
+            }
+          } catch { tribeMembersRef.current = []; }
+
           const { data: msgs } = await supabase
             .from('messages')
             .select('*')
@@ -464,8 +503,15 @@ export default function ChatWindowPanel() {
           const out: Message[] = [];
           for (const m of (msgs || [])) {
             let text = m.content;
-            // Group chats are not E2E-encrypted in this MVP; strip any stray ciphertext defensively.
-            if (isEncrypted(text)) text = '[Encrypted]';
+            // Decrypt group envelope using the sender's pubkey; fall back gracefully
+            // for legacy 1:1-style ciphertext or plaintext system messages.
+            if (isGroupEncrypted(text)) {
+              const sPk = await getSenderPubKey(m.sender_id);
+              if (sPk) text = await decryptGroupMessageForMe(text, user.id, sPk);
+              else text = '🔒 Locked';
+            } else if (isEncrypted(text)) {
+              text = '[Encrypted]';
+            }
             out.push({
               id: m.id,
               senderId: m.sender_id,
@@ -473,7 +519,7 @@ export default function ChatWindowPanel() {
               time: formatTime(m.created_at),
               status: m.message_status || 'sent',
               reactions: m.reactions || [],
-              encrypted: false,
+              encrypted: isGroupEncrypted(m.content),
               messageType: (m as any).message_type || 'user',
               createdAt: m.created_at,
               deletedForEveryone: !!m.deleted_for_everyone,
@@ -486,6 +532,7 @@ export default function ChatWindowPanel() {
         }
         // Non-group: clear tribe role
         setTribeRole(null);
+        tribeMembersRef.current = [];
 
         const otherUserId = chat.participant_one === user.id ? chat.participant_two : chat.participant_one;
         const { data: otherUser } = await supabase
@@ -618,6 +665,21 @@ export default function ChatWindowPanel() {
     return new Date(dateStr).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   };
 
+  // Resolve a sender's public key (cached) for decrypting tribe messages.
+  const getSenderPubKey = async (senderId: string): Promise<string | null> => {
+    if (!senderId) return null;
+    const cached = senderPubKeyCacheRef.current.get(senderId);
+    if (cached) return cached;
+    const { data } = await supabase
+      .from('user_profiles')
+      .select('public_key')
+      .eq('id', senderId)
+      .maybeSingle();
+    const pk = (data as any)?.public_key || null;
+    if (pk) senderPubKeyCacheRef.current.set(senderId, pk);
+    return pk;
+  };
+
   const sendMessage = async (overrideText?: string) => {
     const raw = overrideText ?? inputText;
     if (!raw.trim() || !selectedChatId || !user) return;
@@ -630,6 +692,15 @@ export default function ChatWindowPanel() {
       const ok = await hasLocalPrivateKey();
       if (!ok) {
         toast.error('Set up or unlock your encryption PIN to send messages.');
+        return;
+      }
+    } else {
+      // Tribe send: needs the user's PIN unlocked to wrap the message key
+      // for each member. Members without a pubkey will simply be skipped
+      // and will see a "locked" placeholder until they set up their PIN.
+      const ok = await hasLocalPrivateKey();
+      if (!ok) {
+        toast.error('Set up or unlock your encryption PIN to send tribe messages.');
         return;
       }
     }
@@ -653,6 +724,16 @@ export default function ChatWindowPanel() {
       let contentToStore = text;
       if (chatType !== 'group' && contact?.publicKey) {
         contentToStore = await encryptMessage(text, contact.publicKey);
+      } else if (chatType === 'group') {
+        // Always include self so we can decrypt our own messages on other devices.
+        const members = [...tribeMembersRef.current];
+        const myPk = senderPubKeyCacheRef.current.get(user.id);
+        if (myPk && !members.find(m => m.userId === user.id)) {
+          members.push({ userId: user.id, publicKey: myPk });
+        }
+        if (members.length > 0) {
+          contentToStore = await encryptGroupMessage(text, members);
+        }
       }
 
       const { data } = await supabase

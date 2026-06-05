@@ -63,6 +63,16 @@ const en = {
   'landing.cta.subtitle': 'Free forever. No credit card. Takes 30 seconds.',
   'landing.cta.button': 'Create your free account',
 
+  // landing - get the app
+  'landing.app.eyebrow': 'Get the app',
+  'landing.app.title': 'Available on your phone',
+  'landing.app.androidName': 'Android',
+  'landing.app.androidDesc': 'Native app',
+  'landing.app.iosDesc': 'Install as Web App',
+  'landing.app.ios.step1': 'Open vibtribe.in in Safari (not Chrome).',
+  'landing.app.ios.step2': 'Tap the Share button in the toolbar.',
+  'landing.app.ios.step3': 'Scroll and pick Add to Home Screen, then tap Add.',
+
   'landing.footer.tagline': 'Where your vibe finds its tribe.',
   'landing.footer.product': 'Product',
   'landing.footer.company': 'Company',
@@ -235,6 +245,15 @@ const hi: typeof en = {
   'landing.cta.title': 'अपनी ट्राइब ढूँढने के लिए तैयार?',
   'landing.cta.subtitle': 'हमेशा मुफ़्त। कोई क्रेडिट कार्ड नहीं। केवल 30 सेकंड।',
   'landing.cta.button': 'अपना मुफ़्त खाता बनाएं',
+
+  'landing.app.eyebrow': 'ऐप पाएं',
+  'landing.app.title': 'आपके फ़ोन पर उपलब्ध',
+  'landing.app.androidName': 'एंड्रॉइड',
+  'landing.app.androidDesc': 'नेटिव ऐप',
+  'landing.app.iosDesc': 'वेब ऐप के रूप में इंस्टॉल करें',
+  'landing.app.ios.step1': 'Safari में vibtribe.in खोलें (Chrome में नहीं)।',
+  'landing.app.ios.step2': 'टूलबार में Share बटन पर टैप करें।',
+  'landing.app.ios.step3': 'स्क्रॉल करें और Add to Home Screen चुनें, फिर Add पर टैप करें।',
 
   'landing.footer.tagline': 'जहाँ आपका वाइब, अपनी ट्राइब पाता है।',
   'landing.footer.product': 'उत्पाद',

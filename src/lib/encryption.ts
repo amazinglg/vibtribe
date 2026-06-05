@@ -336,3 +336,112 @@ export async function decryptBytes(
   const data = all.slice(12);
   return crypto.subtle.decrypt({ name: 'AES-GCM', iv }, sharedKey, data);
 }
+
+// ---------------- Group E2E (per-recipient envelope) ----------------
+// Envelope format:  g2e:<base64(JSON { iv, ct, keys: { [userId]: wrapped } })>
+// - A fresh random AES-256 message key K encrypts the plaintext once.
+// - K is then wrapped once per member using ECDH(myPriv, memberPub) + AES-GCM.
+// - The same 6-digit PIN unlocks each user's private key from IndexedDB, so
+//   no extra PIN is needed for groups.
+
+export type GroupMember = { userId: string; publicKey: string };
+
+export function isGroupEncrypted(content: string): boolean {
+  return typeof content === 'string' && content.startsWith('g2e:');
+}
+
+export async function encryptGroupMessage(
+  plaintext: string,
+  members: GroupMember[],
+): Promise<string> {
+  const { privateKey } = await getOrCreateKeyPair();
+  // Generate fresh message key K
+  const msgKey = await crypto.subtle.generateKey(
+    { name: 'AES-GCM', length: 256 },
+    true,
+    ['encrypt', 'decrypt'],
+  );
+  const rawK = await crypto.subtle.exportKey('raw', msgKey);
+
+  // Encrypt plaintext with K
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ctBuf = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv },
+    msgKey,
+    new TextEncoder().encode(plaintext),
+  );
+
+  // Wrap K per recipient
+  const keys: Record<string, string> = {};
+  for (const m of members) {
+    if (!m.publicKey || !m.userId) continue;
+    try {
+      const shared = await deriveSharedKey(privateKey, m.publicKey);
+      const wIv = crypto.getRandomValues(new Uint8Array(12));
+      const wrapped = await crypto.subtle.encrypt(
+        { name: 'AES-GCM', iv: wIv },
+        shared,
+        rawK,
+      );
+      const combined = new Uint8Array(12 + (wrapped as ArrayBuffer).byteLength);
+      combined.set(wIv, 0);
+      combined.set(new Uint8Array(wrapped as ArrayBuffer), 12);
+      keys[m.userId] = bufToB64(combined);
+    } catch {
+      // Skip member whose key is unusable.
+    }
+  }
+
+  const envelope = {
+    iv: bufToB64(iv),
+    ct: bufToB64(new Uint8Array(ctBuf as ArrayBuffer)),
+    keys,
+  };
+  return 'g2e:' + bufToB64(new TextEncoder().encode(JSON.stringify(envelope)));
+}
+
+export async function decryptGroupMessageForMe(
+  ciphertext: string,
+  myUserId: string,
+  senderPublicKeyBase64: string,
+): Promise<string> {
+  if (!ciphertext.startsWith('g2e:')) return ciphertext;
+  try {
+    const { privateKey } = await getOrCreateKeyPair();
+    const json = new TextDecoder().decode(b64ToBuf(ciphertext.slice(4)));
+    const env = JSON.parse(json) as {
+      iv: string;
+      ct: string;
+      keys: Record<string, string>;
+    };
+    const wrappedB64 = env.keys?.[myUserId];
+    if (!wrappedB64) return '🔒 Not addressed to you in this tribe';
+
+    const shared = await deriveSharedKey(privateKey, senderPublicKeyBase64);
+    const combined = b64ToBuf(wrappedB64);
+    const wIv = combined.slice(0, 12);
+    const wCt = combined.slice(12);
+    const rawK = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv: wIv },
+      shared,
+      wCt,
+    );
+    const msgKey = await crypto.subtle.importKey(
+      'raw',
+      rawK,
+      { name: 'AES-GCM', length: 256 },
+      false,
+      ['decrypt'],
+    );
+    const iv = b64ToBuf(env.iv);
+    const ctBuf = b64ToBuf(env.ct);
+    const plainBuf = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv },
+      msgKey,
+      ctBuf,
+    );
+    return new TextDecoder().decode(plainBuf);
+  } catch {
+    return '🔒 Message locked — unlock encryption to read';
+  }
+}
