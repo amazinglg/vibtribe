@@ -164,6 +164,8 @@
   --safe-bottom: max(env(safe-area-inset-bottom, 0px), 0px);
   --safe-left:   env(safe-area-inset-left,   0px);
   --safe-right:  env(safe-area-inset-right,  0px);
+  --safe-bottom-app: min(var(--safe-bottom), 1rem);
+  --mobile-bottom-nav-offset: calc(58px + var(--safe-bottom-app));
 }
 /*
  * Inside a Capacitor / TWA wrapper the WebView is configured with
