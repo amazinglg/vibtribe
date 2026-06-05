@@ -354,9 +354,18 @@ export default function ChatWindowPanel() {
             let newText: string | null = null;
             if (typeof upd.content === 'string') {
               const enc = isEncrypted(upd.content);
-              const pk = contactPubKeyRef.current;
-              if (enc && pk) newText = await decryptMessage(upd.content, pk);
-              else if (!enc) newText = upd.content;
+              const gEnc = isGroupEncrypted(upd.content);
+              if (gEnc) {
+                const sPk = await getSenderPubKey(upd.sender_id);
+                newText = sPk
+                  ? await decryptGroupMessageForMe(upd.content, user.id, sPk)
+                  : '🔒 Locked';
+              } else if (enc) {
+                const pk = contactPubKeyRef.current;
+                if (pk) newText = await decryptMessage(upd.content, pk);
+              } else {
+                newText = upd.content;
+              }
             }
             setMessages(prev => prev.map(m => m.id === upd.id
               ? {
