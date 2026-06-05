@@ -223,6 +223,7 @@ export const Route = createFileRoute('/api/public/auth-otp')({
         if (payload.action === 'send_reset') {
           const id = payload.identifier.toLowerCase()
           const digits = id.replace(/\D/g, '')
+          const isMobile = !id.includes('@') && digits.length >= 10
           const { data: prof } = await supabase
             .from('user_profiles')
             .select('real_email, full_name')
@@ -236,7 +237,17 @@ export const Route = createFileRoute('/api/public/auth-otp')({
             .limit(1)
             .maybeSingle()
 
-          // Always return ok to avoid leaking account existence
+          // When the user looks up by mobile number, surface a clear error if
+          // no account / no email is on file so they know to contact support.
+          // For email-style identifiers we still return ok to avoid leaking
+          // account existence.
+          if (isMobile && (!prof || !prof.real_email)) {
+            return jerr(
+              404,
+              'No email is registered with this mobile number. Please contact support for help.',
+            )
+          }
+
           if (prof?.real_email) {
             const { data: remaining } = await supabase.rpc('check_otp_rate_limit', { _email: prof.real_email })
             if (typeof remaining === 'number' && remaining <= 0) {
