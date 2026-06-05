@@ -50,7 +50,7 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
           }
           const { Contacts } = await import('@capacitor-community/contacts');
           const res: any = await Contacts.getContacts({
-            projection: { name: true, phones: true, image: true },
+            projection: { name: true, phones: true },
           });
           const raw = (res?.contacts || []).map((c: any) => ({
             name: c?.name?.display || [c?.name?.given, c?.name?.family].filter(Boolean).join(' ') || 'Unknown',
@@ -157,12 +157,18 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
       }
     }
 
-    // Match against platform users — also try last-10-digit match (handles country-code mismatches like +91)
-    const allPhones = normalized.map(c => c.phone);
-    const { data: platformUsers } = await supabase
-      .from('user_profiles')
-      .select('id, full_name, mobile_number, avatar_url, profile_photo_visibility')
-      .or(allPhones.length ? allPhones.map(p => `mobile_number.ilike.%${p.slice(-10)}%`).join(',') : 'id.eq.00000000-0000-0000-0000-000000000000');
+    // Match in bounded chunks so large phone books cannot create an oversized
+    // PostgREST URL that trips the app error boundary on Android WebView.
+    const allPhones = Array.from(new Set(normalized.map(c => c.phone.slice(-10)).filter(Boolean)));
+    const platformUsers: any[] = [];
+    for (let i = 0; i < allPhones.length; i += 50) {
+      const chunk = allPhones.slice(i, i + 50);
+      const { data } = await supabase
+        .from('user_profiles')
+        .select('id, full_name, mobile_number, avatar_url, profile_photo_visibility')
+        .or(chunk.length ? chunk.map(p => `mobile_number.ilike.%${p}%`).join(',') : 'id.eq.00000000-0000-0000-0000-000000000000');
+      platformUsers.push(...(data || []));
+    }
 
     const platformByLast10 = new Map<string, any>();
     for (const u of (platformUsers || [])) {
