@@ -1722,7 +1722,7 @@ export default function ChatWindowPanel() {
       )}
 
       {/* Input Area */}
-      <div className="glass border-t border-border px-2 pt-2 pb-3 mb-2 lg:mb-0 flex items-center gap-1 flex-shrink-0 w-full max-w-full overflow-hidden" style={{ paddingBottom: 'max(0.75rem, var(--safe-bottom))' }}>
+      <div className="glass border-t border-border px-2 py-2 flex items-center gap-1 flex-shrink-0 w-full max-w-full overflow-hidden">
         <button
           onClick={(e) => { e.stopPropagation(); setShowAttachMenu(!showAttachMenu); }}
           className={`p-2 rounded-xl transition-all flex-shrink-0 ${showAttachMenu ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
