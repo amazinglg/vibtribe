@@ -735,6 +735,36 @@ export default function ChatWindowPanel() {
         toast.error('Set up or unlock your encryption PIN to send tribe messages.');
         return;
       }
+      // Refresh member pubkeys so newly-joined members (and members who
+      // just enabled encryption since we opened the chat) are included.
+      try {
+        const { data: memberRows } = await supabase
+          .from('chat_members')
+          .select('user_id')
+          .eq('chat_id', selectedChatId);
+        const memberIds = (memberRows || []).map((r: any) => r.user_id);
+        if (memberIds.length) {
+          const { data: profs } = await supabase
+            .from('user_profiles')
+            .select('id, public_key')
+            .in('id', memberIds);
+          const members: GroupMember[] = (profs || [])
+            .filter((p: any) => !!p.public_key)
+            .map((p: any) => ({ userId: p.id, publicKey: p.public_key }));
+          tribeMembersRef.current = members;
+          for (const m of members) senderPubKeyCacheRef.current.set(m.userId, m.publicKey);
+          const missing = (profs || []).filter((p: any) => !p.public_key).length;
+          setTribeMissingKeyCount(missing);
+          setTribeTotalMembers(memberIds.length);
+          if (missing > 0) {
+            toast.message(
+              `${missing} member${missing > 1 ? "s haven't" : " hasn't"} set up encryption — your message won't reach ${missing > 1 ? 'them' : 'them'} until they do.`,
+            );
+          }
+        }
+      } catch {
+        // best-effort refresh; fall through with whatever we had cached.
+      }
     }
     let text = raw.trim();
     const tempId = `temp-${Date.now()}`;
