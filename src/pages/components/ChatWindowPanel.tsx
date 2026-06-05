@@ -469,11 +469,12 @@ export default function ChatWindowPanel() {
           try {
             const { data: myRow } = await supabase
               .from('chat_members')
-              .select('role')
+              .select('role, joined_at')
               .eq('chat_id', selectedChatId)
               .eq('user_id', user.id)
               .maybeSingle();
             setTribeRole(((myRow as any)?.role as any) || null);
+            tribeJoinedAtRef.current = (myRow as any)?.joined_at || null;
           } catch { setTribeRole(null); }
 
           // Load tribe members + their pubkeys for per-recipient encryption.
@@ -494,10 +495,21 @@ export default function ChatWindowPanel() {
               tribeMembersRef.current = members;
               // Prime sender pubkey cache so history decrypts without extra fetches.
               for (const m of members) senderPubKeyCacheRef.current.set(m.userId, m.publicKey);
+              // Track members without an encryption key (haven't set up PIN).
+              const missing = (profs || []).filter((p: any) => !p.public_key).length;
+              // Exclude self from "missing" count if caller hasn't set up either.
+              setTribeMissingKeyCount(missing);
+              setTribeTotalMembers(memberIds.length);
             } else {
               tribeMembersRef.current = [];
+              setTribeMissingKeyCount(0);
+              setTribeTotalMembers(0);
             }
-          } catch { tribeMembersRef.current = []; }
+          } catch {
+            tribeMembersRef.current = [];
+            setTribeMissingKeyCount(0);
+            setTribeTotalMembers(0);
+          }
 
           const { data: msgs } = await supabase
             .from('messages')
@@ -506,14 +518,29 @@ export default function ChatWindowPanel() {
             .order('created_at', { ascending: true });
 
           const out: Message[] = [];
+          const joinedAtMs = tribeJoinedAtRef.current
+            ? new Date(tribeJoinedAtRef.current).getTime()
+            : 0;
+          const haveLocalKey = await hasLocalPrivateKey();
           for (const m of (msgs || [])) {
             let text = m.content;
             // Decrypt group envelope using the sender's pubkey; fall back gracefully
             // for legacy 1:1-style ciphertext or plaintext system messages.
             if (isGroupEncrypted(text)) {
-              const sPk = await getSenderPubKey(m.sender_id);
-              if (sPk) text = await decryptGroupMessageForMe(text, user.id, sPk);
-              else text = '🔒 Locked';
+              const sentBeforeJoin =
+                joinedAtMs > 0 &&
+                m.created_at &&
+                new Date(m.created_at).getTime() < joinedAtMs &&
+                m.sender_id !== user.id;
+              if (sentBeforeJoin) {
+                text = '🔒 Sent before you joined the tribe — not available';
+              } else if (!haveLocalKey) {
+                text = '🔒 Unlock encryption to read this message';
+              } else {
+                const sPk = await getSenderPubKey(m.sender_id);
+                if (sPk) text = await decryptGroupMessageForMe(text, user.id, sPk);
+                else text = '🔒 Message locked';
+              }
             } else if (isEncrypted(text)) {
               text = '[Encrypted]';
             }
