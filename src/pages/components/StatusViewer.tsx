@@ -43,7 +43,7 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
   const [reply, setReply] = useState('');
   const [showReactions, setShowReactions] = useState(false);
   const [sending, setSending] = useState(false);
-  const [viewers, setViewers] = useState<{ id: string; name: string; viewed_at: string }[]>([]);
+  const [viewers, setViewers] = useState<{ id: string; name: string; avatar_url: string | null; viewed_at: string }[]>([]);
   const [showViewers, setShowViewers] = useState(false);
   const [liking, setLiking] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -104,13 +104,14 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
 
       const viewerIds = Array.from(new Set((viewRows || []).map((v: any) => v.viewer_id).filter(Boolean)));
       const { data: profiles } = viewerIds.length > 0
-        ? await supabase.from('user_profiles').select('id, full_name, username').in('id', viewerIds)
+        ? await supabase.from('user_profiles').select('id, full_name, username, avatar_url').in('id', viewerIds)
         : { data: [] };
       const profileById = new Map((profiles || []).map((p: any) => [p.id, p]));
 
       setViewers((viewRows || []).map((v: any) => ({
         id: v.viewer_id,
         name: profileById.get(v.viewer_id)?.full_name || profileById.get(v.viewer_id)?.username || 'Someone',
+        avatar_url: profileById.get(v.viewer_id)?.avatar_url || null,
         viewed_at: v.viewed_at,
       })));
     })();
