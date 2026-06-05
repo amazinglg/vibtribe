@@ -303,12 +303,15 @@ export default function ChatWindowPanel() {
             if (newMsg.sender_id !== user.id) {
               let text = newMsg.content;
               const encrypted = isEncrypted(text);
-              const pk = contactPubKeyRef.current;
-              if (encrypted && pk) {
-                text = await decryptMessage(text, pk);
+              const groupEnc = isGroupEncrypted(text);
+              if (groupEnc) {
+                const sPk = await getSenderPubKey(newMsg.sender_id);
+                text = sPk
+                  ? await decryptGroupMessageForMe(text, user.id, sPk)
+                  : '🔒 Locked';
               } else if (encrypted) {
-                // Hide raw ciphertext from the user; show a friendly placeholder until keys load.
-                text = '…';
+                const pk = contactPubKeyRef.current;
+                text = pk ? await decryptMessage(text, pk) : '…';
               }
               setMessages(prev => [...prev, {
                 id: newMsg.id,
@@ -317,7 +320,7 @@ export default function ChatWindowPanel() {
                 time: formatTime(newMsg.created_at),
                 status: 'delivered',
                 reactions: [],
-                encrypted,
+                encrypted: encrypted || groupEnc,
                 createdAt: newMsg.created_at,
               }]);
               // Mark as read (recipient — uses RPC to bypass RLS sender restriction)
