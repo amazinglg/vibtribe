@@ -7,7 +7,7 @@ import { ArrowLeft, Shield, Plus, Trash2, Loader2, Lock, X } from 'lucide-react'
 import AppLayout from '@/components/AppLayout'
 import { useAuth } from '@/contexts/AuthContext'
 import {
-  listPermissionsMatrix, setRolePermission, createRole, deleteRole,
+  listPermissionsMatrix, setRoleGroupPermission, createRole, deleteRole,
 } from '@/lib/permissions.functions'
 
 export default function PermissionsPage() {
@@ -16,7 +16,7 @@ export default function PermissionsPage() {
   const isMaster = !!profile?.is_master_admin
 
   const listFn = useServerFn(listPermissionsMatrix)
-  const setFn = useServerFn(setRolePermission)
+  const setGroupFn = useServerFn(setRoleGroupPermission)
   const createFn = useServerFn(createRole)
   const deleteFn = useServerFn(deleteRole)
 
@@ -49,16 +49,25 @@ export default function PermissionsPage() {
     } finally { setLoadingData(false) }
   }
 
-  async function toggle(roleKey: string, permKey: string, next: boolean) {
-    if (!isMaster) return
-    const cell = `${roleKey}::${permKey}`
+  async function toggleGroup(roleKey: string, groupId: string, permKeys: string[], next: boolean) {
+    if (!isMaster || permKeys.length === 0) return
+    const cell = `${roleKey}::${groupId}`
     setBusy(cell)
-    const prev = assignments[cell] ?? false
-    setAssignments(a => ({ ...a, [cell]: next }))
+    const prev: Record<string, boolean> = {}
+    for (const k of permKeys) prev[k] = assignments[`${roleKey}::${k}`] ?? false
+    setAssignments(a => {
+      const copy = { ...a }
+      for (const k of permKeys) copy[`${roleKey}::${k}`] = next
+      return copy
+    })
     try {
-      await setFn({ data: { roleKey, permissionKey: permKey, allowed: next } })
+      await setGroupFn({ data: { roleKey, permissionKeys: permKeys, allowed: next } })
     } catch (e: any) {
-      setAssignments(a => ({ ...a, [cell]: prev }))
+      setAssignments(a => {
+        const copy = { ...a }
+        for (const k of permKeys) copy[`${roleKey}::${k}`] = prev[k]
+        return copy
+      })
       toast.error(e?.message || 'Update failed')
     } finally { setBusy(null) }
   }
@@ -82,9 +91,13 @@ export default function PermissionsPage() {
     } catch (e: any) { toast.error(e?.message || 'Delete failed') }
   }
 
-  // Group keys by category for display
-  const grouped: Record<string, any[]> = {}
-  for (const k of keys) { (grouped[k.category] ||= []).push(k) }
+  // Group keys by category, split into view vs write
+  const grouped: Record<string, { view: any[]; write: any[] }> = {}
+  for (const k of keys) {
+    const g = (grouped[k.category] ||= { view: [], write: [] })
+    if (k.key.endsWith('.view')) g.view.push(k)
+    else g.write.push(k)
+  }
 
   if (loading || loadingData) {
     return <AppLayout><div className="p-12 text-center text-muted-foreground"><Loader2 className="animate-spin mx-auto" /></div></AppLayout>
@@ -120,9 +133,9 @@ export default function PermissionsPage() {
             <table className="w-full text-sm">
               <thead className="bg-muted/40 text-[11px] uppercase tracking-wider text-muted-foreground">
                 <tr>
-                  <th className="text-left px-4 py-3 font-semibold sticky left-0 bg-muted/40 z-10 min-w-[180px]">Permission</th>
+                  <th className="text-left px-4 py-3 font-semibold sticky left-0 bg-muted/40 z-10 min-w-[200px]">Section</th>
                   {roles.map(r => (
-                    <th key={r.key} className="text-center px-3 py-3 font-semibold whitespace-nowrap min-w-[120px]">
+                    <th key={r.key} className="text-center px-3 py-3 font-semibold whitespace-nowrap min-w-[160px]">
                       <div className="flex items-center justify-center gap-1">
                         <span>{r.label}</span>
                         {r.is_system ? (
@@ -138,42 +151,44 @@ export default function PermissionsPage() {
                 </tr>
               </thead>
               <tbody>
-                {Object.entries(grouped).map(([cat, items]) => (
-                  <React.Fragment key={cat}>
-                    <tr className="bg-muted/20">
-                      <td colSpan={1 + roles.length} className="px-4 py-2 text-[11px] uppercase tracking-wider font-bold text-primary">
-                        {cat}
+                {Object.entries(grouped).map(([cat, groups]) => {
+                  const writeKeys: string[] = groups.write.map(k => k.key)
+                  const viewKeys: string[] = groups.view.map(k => k.key)
+                  return (
+                    <tr key={cat} className="border-t border-border/30 hover:bg-muted/20">
+                      <td className="px-4 py-4 sticky left-0 bg-background/95 backdrop-blur z-10">
+                        <div className="font-semibold text-foreground">{cat}</div>
+                        <div className="text-[11px] text-muted-foreground">
+                          {viewKeys.length} view · {writeKeys.length} write
+                        </div>
                       </td>
+                      {roles.map(r => {
+                        const viewAllowed = viewKeys.length > 0 && viewKeys.every(k => assignments[`${r.key}::${k}`])
+                        const writeAllowed = writeKeys.length > 0 && writeKeys.every(k => assignments[`${r.key}::${k}`])
+                        const viewBusy = busy === `${r.key}::__view::${cat}`
+                        const writeBusy = busy === `${r.key}::__write::${cat}`
+                        return (
+                          <td key={r.key} className="px-3 py-3">
+                            <div className="flex flex-col items-center gap-2">
+                              <ToggleWithLabel
+                                label="View"
+                                allowed={viewAllowed}
+                                disabled={!isMaster || viewKeys.length === 0 || viewBusy}
+                                onClick={() => toggleGroup(r.key, `__view::${cat}`, viewKeys, !viewAllowed)}
+                              />
+                              <ToggleWithLabel
+                                label="Write"
+                                allowed={writeAllowed}
+                                disabled={!isMaster || writeKeys.length === 0 || writeBusy}
+                                onClick={() => toggleGroup(r.key, `__write::${cat}`, writeKeys, !writeAllowed)}
+                              />
+                            </div>
+                          </td>
+                        )
+                      })}
                     </tr>
-                    {items.map(k => (
-                      <tr key={k.key} className="border-t border-border/30 hover:bg-muted/20">
-                        <td className="px-4 py-3 sticky left-0 bg-background/95 backdrop-blur z-10">
-                          <div className="font-medium text-foreground">{k.label}</div>
-                          <div className="text-[11px] text-muted-foreground font-mono">{k.key}</div>
-                        </td>
-                        {roles.map(r => {
-                          const cell = `${r.key}::${k.key}`
-                          const allowed = assignments[cell] ?? false
-                          const isBusy = busy === cell
-                          return (
-                            <td key={r.key} className="px-3 py-3 text-center">
-                              <button
-                                disabled={!isMaster || isBusy}
-                                onClick={() => toggle(r.key, k.key, !allowed)}
-                                className={`relative w-10 h-6 rounded-full transition-all ${
-                                  allowed ? 'bg-vt-green' : 'bg-muted'
-                                } ${isMaster ? 'cursor-pointer hover:opacity-80' : 'cursor-not-allowed opacity-70'}`}
-                                aria-label={`${allowed ? 'Disable' : 'Enable'} ${k.label} for ${r.label}`}
-                              >
-                                <span className={`absolute top-0.5 ${allowed ? 'right-0.5' : 'left-0.5'} w-5 h-5 bg-white rounded-full shadow transition-all`} />
-                              </button>
-                            </td>
-                          )
-                        })}
-                      </tr>
-                    ))}
-                  </React.Fragment>
-                ))}
+                  )
+                })}
               </tbody>
             </table>
           </div>
@@ -216,5 +231,22 @@ export default function PermissionsPage() {
         )}
       </div>
     </AppLayout>
+  )
+}
+
+function ToggleWithLabel({ label, allowed, disabled, onClick }: { label: string; allowed: boolean; disabled: boolean; onClick: () => void }) {
+  return (
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={onClick}
+        className={`relative w-10 h-6 rounded-full transition-all ${allowed ? 'bg-vt-green' : 'bg-muted'} ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:opacity-80'}`}
+        aria-label={`${allowed ? 'Disable' : 'Enable'} ${label}`}
+      >
+        <span className={`absolute top-0.5 ${allowed ? 'right-0.5' : 'left-0.5'} w-5 h-5 bg-white rounded-full shadow transition-all`} />
+      </button>
+      <span className="text-xs text-muted-foreground w-10 text-left">{label}</span>
+    </div>
   )
 }
