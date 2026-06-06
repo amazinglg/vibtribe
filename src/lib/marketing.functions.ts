@@ -106,7 +106,15 @@ export const listCampaigns = createServerFn({ method: 'GET' })
       .select('*')
       .order('created_at', { ascending: false })
       .limit(100)
-    return { campaigns: data ?? [] }
+    const rows = data ?? []
+    const ids = Array.from(new Set(rows.map(r => r.created_by).filter(Boolean)))
+    let nameById: Record<string, string> = {}
+    if (ids.length) {
+      const { data: profs } = await supabaseAdmin
+        .from('user_profiles').select('id, full_name, username').in('id', ids)
+      nameById = Object.fromEntries((profs ?? []).map(p => [p.id, p.full_name || p.username || 'Unknown']))
+    }
+    return { campaigns: rows.map(r => ({ ...r, created_by_name: nameById[r.created_by] || '—' })) }
   })
 
 export const getCampaign = createServerFn({ method: 'GET' })
