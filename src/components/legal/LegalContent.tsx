@@ -8,7 +8,7 @@ import { Link } from '@tanstack/react-router';
 export function TermsContent() {
   return (
     <div className="space-y-4 text-sm leading-relaxed text-foreground/90">
-      <p className="text-muted-foreground">Last updated: 24 May 2026</p>
+      <p className="text-muted-foreground">Last updated: 6 June 2026</p>
 
       <h2 className="text-lg font-semibold mt-6">1. Acceptance of Terms</h2>
       <p>By creating an account or using VibTribe ("the App", "we", "us", "our"), you agree to these Terms &amp; Conditions and our Privacy Policy. If you do not agree, you must not use the App.</p>
@@ -39,6 +39,7 @@ export function TermsContent() {
 
       <h2 className="text-lg font-semibold mt-6">5a. Email Address</h2>
       <p>If you provide an email address during signup, we store it securely and use it solely to (a) verify your identity with a 6-digit one-time code, (b) recover your password, (c) send account, support, and ticket-related communications, and (d) send service notifications you have not opted out of. Your email address is visible only to you, our administrators, and the master admin — it is never shown to other users. You can opt out of non-essential emails at any time from Profile &rarr; Notifications. Security and authentication emails (OTP codes, password resets) will continue to be sent regardless of opt-out status.</p>
+      <p>If you have explicitly opted in, we may also send <strong>promotional emails</strong> (product updates, tips, and announcements) from <code>hello@news.vibtribe.in</code>. Every promotional email includes a one-click unsubscribe link that takes effect immediately, and you can also toggle the preference from Profile &rarr; Notifications. Withdrawing consent does not affect security or transactional emails.</p>
 
       <h2 className="text-lg font-semibold mt-6">6. User Content</h2>
       <p>You retain ownership of the content you send. You grant us a limited licence to transmit, store, and display that content solely to operate the App. We do not claim ownership of your messages, media, or status updates.</p>
@@ -124,6 +125,17 @@ export function TermsContent() {
 
       <h3 className="text-base font-semibold mt-4">H. Your Rights</h3>
       <p>Subject to applicable law (including India's Digital Personal Data Protection Act, 2023) you may request access, correction, or deletion of your personal data, and may withdraw consent. Contact the Grievance Officer at <strong>Labhansh.garg@outlook.com</strong>.</p>
+
+      <h3 className="text-base font-semibold mt-4">I. Marketing Emails</h3>
+      <p>We send promotional emails (product updates, tips, and announcements) only to users who have <strong>explicitly opted in</strong>. We record the timestamp, source (signup form, re-consent prompt, or profile settings), and IP address of your consent for compliance audit purposes.</p>
+      <ul className="list-disc pl-5 space-y-1">
+        <li><strong>Legal basis:</strong> your explicit consent — DPDP Act 2023 § 6 (India), GDPR Art. 6(1)(a) (EU/EEA), and CAN-SPAM Act compliance (US).</li>
+        <li><strong>Sender:</strong> VibTribe &lt;hello@news.vibtribe.in&gt;. Reply-to: Labhansh.garg@outlook.com.</li>
+        <li><strong>Withdrawal:</strong> click the unsubscribe link in any promotional email (no login required, takes effect immediately) or toggle off in Profile &rarr; Notifications.</li>
+        <li><strong>Suppression:</strong> hard bounces and spam complaints are automatically suppressed and the user is opted out across the platform.</li>
+        <li><strong>Right to complain:</strong> you may lodge a complaint with India's Data Protection Board or your local EU data-protection authority.</li>
+      </ul>
+      <p>Transactional and security emails (OTP codes, password resets, ticket replies, account notices) are <em>not</em> covered by this consent and will continue regardless.</p>
     </div>
   );
 }
