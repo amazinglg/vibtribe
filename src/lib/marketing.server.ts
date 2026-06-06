@@ -4,9 +4,11 @@
 // reputation on the dedicated `news.vibtribe.in` subdomain.
 
 export const MARKETING_FROM = 'VibTribe <promotions@news.vibtribe.in>'
-export const MARKETING_REPLY_TO = 'Labhansh.garg@outlook.com'
+export const MARKETING_REPLY_TO = 'help.vibtribe.in@gmail.com'
 export const MARKETING_PHYSICAL_ADDRESS =
-  'VibTribe · Labhansh Garg, Founder · Labhansh.garg@outlook.com'
+  'VibTribe · India · help.vibtribe.in@gmail.com'
+const BRAND_LOGO_URL = 'https://www.vibtribe.in/assets/images/app_logo.png'
+const BRAND_SITE_URL = 'https://www.vibtribe.in/'
 
 export interface ResendSendInput {
   to: string
@@ -86,13 +88,32 @@ ${preheader}
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#f5f0e8">
   <tr><td align="center" style="padding:32px 16px 12px 16px;">
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="640" style="max-width:640px;width:100%;">
-      <tr><td style="padding:0 4px 18px 4px;font-family:Georgia,'Times New Roman',serif;font-size:22px;font-weight:600;letter-spacing:-0.01em;color:#1f1d1a;">
-        VibTribe
+      <tr><td style="padding:0 4px 18px 4px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+          <td style="padding:0 10px 0 0;"><img src="${BRAND_LOGO_URL}" width="34" height="34" alt="VibTribe logo" style="display:block;width:34px;height:34px;border-radius:10px;border:0;" /></td>
+          <td style="font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:700;letter-spacing:-0.01em;color:#1f1d1a;">VibTribe</td>
+        </tr></table>
       </td></tr>
     </table>
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="640" style="max-width:640px;width:100%;background:#ffffff;border:1px solid #e8e1d5;border-radius:14px;overflow:hidden;box-shadow:0 1px 0 rgba(31,29,26,0.04);">
       ${banner ? `<tr><td style="padding:0;">${banner}</td></tr>` : ''}
-      <tr><td style="padding:36px 36px 28px 36px;font-size:16px;line-height:1.7;color:#1f1d1a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">${opts.bodyHtml}</td></tr>
+      <tr><td style="padding:36px 36px 30px 36px;font-size:16px;line-height:1.7;color:#1f1d1a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+        ${opts.bodyHtml}
+        <div style="margin-top:32px;padding-top:24px;border-top:1px solid #efe7dc;">
+          <p style="margin:0 0 14px 0;font-family:Georgia,'Times New Roman',serif;font-size:22px;line-height:1.25;color:#1f1d1a;font-weight:700;">Thanks,</p>
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+            <td style="padding:0 14px 0 0;vertical-align:middle;"><img src="${BRAND_LOGO_URL}" width="46" height="46" alt="VibTribe logo" style="display:block;width:46px;height:46px;border-radius:13px;border:0;" /></td>
+            <td style="vertical-align:middle;">
+              <p style="margin:0;font-size:18px;line-height:1.2;font-weight:800;color:#1f1d1a;letter-spacing:0;">VibTribe</p>
+              <p style="margin:4px 0 0 0;font-size:13px;line-height:1.4;color:#7a7468;">Where your vibe finds its tribe</p>
+            </td>
+          </tr></table>
+          <p style="margin:16px 0 0 0;font-size:13px;line-height:1.8;color:#7a7468;">
+            <a href="${BRAND_SITE_URL}" style="color:#1f1d1a;text-decoration:none;font-weight:700;">www.vibtribe.in</a><br />
+            Email - <a href="mailto:${MARKETING_REPLY_TO}" style="color:#1f1d1a;text-decoration:none;font-weight:700;">${MARKETING_REPLY_TO}</a>
+          </p>
+        </div>
+      </td></tr>
     </table>
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="640" style="max-width:640px;width:100%;">
       <tr><td style="padding:22px 8px 36px 8px;font-size:12px;line-height:1.7;color:#7a7468;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
