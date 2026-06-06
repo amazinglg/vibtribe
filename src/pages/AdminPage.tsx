@@ -511,16 +511,17 @@ export default function AdminPage() {
 
         {/* Tabs — single-line, horizontally scrollable on small screens */}
         <div className="flex gap-1 p-1 bg-muted rounded-xl mb-6 w-full sm:w-fit overflow-x-auto no-scrollbar">
-          {(['overview', 'users', ...(isMaster ? ['tribes' as const] : []), 'support', 'marketing' as const] as const).map(tab => (
+          {(['overview', 'users', ...(isMaster ? ['tribes' as const] : []), 'support', 'marketing' as const, ...(isMaster ? ['permissions' as const] : [])] as const).map(tab => (
             <button
               key={tab}
               onClick={() => {
                 if (tab === 'marketing') { router({ to: '/admin/marketing' }); return; }
+                if (tab === 'permissions') { router({ to: '/admin/permissions' }); return; }
                 setActiveTab(tab);
               }}
               className={`relative flex-shrink-0 px-2.5 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold capitalize transition-all whitespace-nowrap ${activeTab === tab ? 'gradient-primary text-white' : 'text-muted-foreground hover:text-foreground'}`}
             >
-              {tab === 'support' ? 'Support' : tab === 'tribes' ? 'Tribes' : tab === 'marketing' ? 'Marketing' : tab}
+              {tab === 'support' ? 'Support' : tab === 'tribes' ? 'Tribes' : tab === 'marketing' ? 'Marketing' : tab === 'permissions' ? 'Permissions' : tab}
               {tab === 'support' && unreadTickets > 0 && (
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
                   {unreadTickets > 9 ? '9+' : unreadTickets}
