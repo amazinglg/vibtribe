@@ -198,7 +198,18 @@ export const sendTestEmail = createServerFn({ method: 'POST' })
       text: htmlToText(html),
       unsubscribeUrl,
     })
-    if (!result.ok) throw new Error(result.error || 'Resend failed')
+    // Log every attempt for visibility
+    await supabaseAdmin.from('email_send_log').insert({
+      template_name: 'marketing_test',
+      recipient_email: data.toEmail,
+      message_id: result.id || `test-${data.campaignId}-${Date.now()}`,
+      status: result.ok ? 'sent' : 'failed',
+      error_message: result.ok ? null : (result.error || `HTTP ${result.status}`),
+      metadata: { campaign_id: data.campaignId, from: MARKETING_FROM, subject: c.subject },
+    }).then(() => {}, () => {})
+    if (!result.ok) {
+      throw new Error(`Resend error (status ${result.status ?? '?'}): ${result.error || 'unknown'}`)
+    }
     return { ok: true, messageId: result.id, from: MARKETING_FROM }
   })
 
