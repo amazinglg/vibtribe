@@ -305,7 +305,7 @@ export default function MarketingPage() {
                         className="p-2 rounded-lg bg-primary/15 text-primary hover:bg-primary/25" aria-label="Edit draft">
                         <Pencil size={14} />
                       </button>
-                      <button onClick={() => handleDelete(c)} className="p-2 text-muted-foreground hover:text-red-400" aria-label="Delete draft">
+                      <button onClick={() => setConfirmDeleteCampaign(c)} className="p-2 text-muted-foreground hover:text-red-400" aria-label="Delete draft">
                         <Trash2 size={14} />
                       </button>
                     </div>
@@ -360,7 +360,7 @@ export default function MarketingPage() {
                                 <button onClick={() => openReport(c)} className="px-2 py-1 text-xs rounded-lg bg-muted hover:bg-primary/20 hover:text-primary inline-flex items-center gap-1">
                                   <Eye size={12} /> Report
                                 </button>
-                                <button onClick={() => handleDelete(c)} className="p-1.5 ml-1 text-muted-foreground hover:text-red-400 align-middle">
+                                <button onClick={() => setConfirmDeleteCampaign(c)} className="p-1.5 ml-1 text-muted-foreground hover:text-red-400 align-middle">
                                   <Trash2 size={14} />
                                 </button>
                               </td>
