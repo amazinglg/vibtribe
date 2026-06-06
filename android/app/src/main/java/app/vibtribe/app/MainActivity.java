@@ -2,6 +2,8 @@ package app.vibtribe.app;
 
 import android.os.Bundle;
 import android.webkit.WebView;
+import android.webkit.WebChromeClient;
+import android.webkit.PermissionRequest;
 import android.view.View;
 import androidx.activity.EdgeToEdge;
 import androidx.core.graphics.Insets;
@@ -54,6 +56,17 @@ public class MainActivity extends BridgeActivity {
                 @Override
                 public void onPageLoaded(WebView webView) {
                     injectSafeAreaCssVars();
+                    // Auto-grant in-WebView mic/camera permission requests.
+                    // The OS-level RECORD_AUDIO / CAMERA permission is requested
+                    // separately via the Capacitor plugins (see usePermissions).
+                    // Without this delegation, getUserMedia() inside the WebView
+                    // is silently denied even after the OS permission is granted.
+                    webView.setWebChromeClient(new WebChromeClient() {
+                        @Override
+                        public void onPermissionRequest(final PermissionRequest request) {
+                            runOnUiThread(() -> request.grant(request.getResources()));
+                        }
+                    });
                 }
             });
         }
