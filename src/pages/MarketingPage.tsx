@@ -131,7 +131,7 @@ export default function MarketingPage() {
 
   useEffect(() => { if (view === 'compose') refreshAudience() }, [audience, view])
 
-  async function handleSave(): Promise<string | null> {
+  async function handleSave(silent = false): Promise<string | null> {
     if (!subject.trim()) { toast.error('Subject is required'); return null }
     if (!contentHtml.trim()) { toast.error('Email body is required'); return null }
     setSaving(true)
@@ -145,7 +145,7 @@ export default function MarketingPage() {
         audienceFilter: { type: audience },
       } })
       setEditingId(r.campaign.id)
-      toast.success('Draft saved')
+      if (!silent) toast.success('Draft saved')
       return r.campaign.id
     } catch (e: any) {
       toast.error(e?.message || 'Failed to save')
@@ -154,7 +154,7 @@ export default function MarketingPage() {
   }
 
   async function handleSendTest() {
-    const id = editingId || await handleSave()
+    const id = editingId || await handleSave(true)
     if (!id) return
     const adminEmail = (profile as any)?.real_email || (profile as any)?.email
     if (!adminEmail) { toast.error('No email on your profile to test-send to'); return }
@@ -168,10 +168,9 @@ export default function MarketingPage() {
   }
 
   async function handleSendAll() {
-    const id = editingId || await handleSave()
+    const id = editingId || await handleSave(true)
     if (!id) return
     setSending(true); setConfirmSend(false)
-    toast.info('Sending campaign… this may take a few minutes')
     try {
       const r = await sendFn({ data: { campaignId: id } })
       toast.success(`Campaign sent: ${r.sent} delivered, ${r.failed} failed, ${r.skipped} skipped`)
