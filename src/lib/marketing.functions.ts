@@ -100,7 +100,7 @@ const CampaignDraft = z.object({
 export const listCampaigns = createServerFn({ method: 'GET' })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await assertMaster(context.userId)
+    await assertAdmin(context.userId)
     const { data } = await supabaseAdmin
       .from('email_campaigns')
       .select('*')
@@ -113,7 +113,7 @@ export const getCampaign = createServerFn({ method: 'GET' })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    await assertMaster(context.userId)
+    await assertAdmin(context.userId)
     const { data: campaign } = await supabaseAdmin
       .from('email_campaigns').select('*').eq('id', data.id).maybeSingle()
     if (!campaign) throw new Error('Campaign not found')
@@ -130,7 +130,7 @@ export const saveCampaign = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => CampaignDraft.parse(d))
   .handler(async ({ data, context }) => {
-    await assertMaster(context.userId)
+    await assertAdmin(context.userId)
     const row = {
       subject: data.subject,
       preheader: data.preheader || null,
@@ -158,7 +158,7 @@ export const previewAudienceSize = createServerFn({ method: 'POST' })
     z.object({ audienceFilter: z.object({ type: z.enum(['opted_in', 'all', 'active_7d', 'active_30d']) }) }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    await assertMaster(context.userId)
+    await assertAdmin(context.userId)
     const aud = await fetchAudience(data.audienceFilter)
     return { count: aud.length }
   })
@@ -169,7 +169,7 @@ export const sendTestEmail = createServerFn({ method: 'POST' })
     z.object({ campaignId: z.string().uuid(), toEmail: z.string().email() }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    await assertMaster(context.userId)
+    await assertAdmin(context.userId)
     const { data: c } = await supabaseAdmin
       .from('email_campaigns').select('*').eq('id', data.campaignId).maybeSingle()
     if (!c) throw new Error('Campaign not found')
@@ -200,7 +200,7 @@ export const sendCampaign = createServerFn({ method: 'POST' })
     z.object({ campaignId: z.string().uuid() }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    await assertMaster(context.userId)
+    await assertAdmin(context.userId)
     const { data: c } = await supabaseAdmin
       .from('email_campaigns').select('*').eq('id', data.campaignId).maybeSingle()
     if (!c) throw new Error('Campaign not found')
@@ -300,7 +300,7 @@ export const deleteCampaign = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    await assertMaster(context.userId)
+    await assertAdmin(context.userId)
     await supabaseAdmin.from('email_campaigns').delete().eq('id', data.id)
     return { ok: true }
   })
