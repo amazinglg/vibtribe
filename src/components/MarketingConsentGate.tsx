@@ -13,6 +13,7 @@ import { toast } from 'sonner';
  * prompting and treat the user as opted-out.
  */
 const STORAGE_KEY_PREFIX = 'vt_marketing_consent_';
+const ANSWERED_KEY_PREFIX = 'vt_marketing_answered_';
 const MAX_PROMPTS = 3;
 const DEFER_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -26,8 +27,13 @@ export default function MarketingConsentGate() {
     let cancelled = false;
     (async () => {
       try {
+        // Fast path: if we've already recorded an answer for this user in this browser, never prompt again.
+        if (localStorage.getItem(`${ANSWERED_KEY_PREFIX}${user.id}`)) return;
         const res = await getMyMarketingConsent();
         if (cancelled || res?.hasAnswered) return;
+        if (!cancelled && res?.hasAnswered === false) {
+          // no-op, fall through to defer logic
+        }
         const key = `${STORAGE_KEY_PREFIX}${user.id}`;
         const raw = localStorage.getItem(key);
         const state = raw ? JSON.parse(raw) : { count: 0, deferredUntil: 0 };
@@ -44,6 +50,7 @@ export default function MarketingConsentGate() {
     setSubmitting(optIn ? 'yes' : 'no');
     try {
       await recordMarketingConsent({ data: { optIn, source: 'reconsent_modal' } });
+      try { localStorage.setItem(`${ANSWERED_KEY_PREFIX}${user!.id}`, String(Date.now())); } catch {}
       toast.success(optIn ? 'Subscribed — thanks!' : 'Got it — no promotional emails.');
       setShow(false);
     } catch (e: any) {
