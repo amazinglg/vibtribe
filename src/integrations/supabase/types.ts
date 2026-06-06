@@ -289,6 +289,101 @@ export type Database = {
         }
         Relationships: []
       }
+      email_campaign_recipients: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          email: string
+          error_message: string | null
+          id: string
+          resend_message_id: string | null
+          sent_at: string | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          email: string
+          error_message?: string | null
+          id?: string
+          resend_message_id?: string | null
+          sent_at?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          email?: string
+          error_message?: string | null
+          id?: string
+          resend_message_id?: string | null
+          sent_at?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_campaign_recipients_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "email_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_campaigns: {
+        Row: {
+          audience_filter: Json
+          banner_image_url: string | null
+          content_html: string
+          created_at: string
+          created_by: string
+          failed_count: number
+          id: string
+          preheader: string | null
+          sent_at: string | null
+          sent_count: number
+          status: string
+          subject: string
+          total_recipients: number
+          updated_at: string
+        }
+        Insert: {
+          audience_filter?: Json
+          banner_image_url?: string | null
+          content_html?: string
+          created_at?: string
+          created_by: string
+          failed_count?: number
+          id?: string
+          preheader?: string | null
+          sent_at?: string | null
+          sent_count?: number
+          status?: string
+          subject: string
+          total_recipients?: number
+          updated_at?: string
+        }
+        Update: {
+          audience_filter?: Json
+          banner_image_url?: string | null
+          content_html?: string
+          created_at?: string
+          created_by?: string
+          failed_count?: number
+          id?: string
+          preheader?: string | null
+          sent_at?: string | null
+          sent_count?: number
+          status?: string
+          subject?: string
+          total_recipients?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       email_otp_codes: {
         Row: {
           attempts: number
@@ -929,6 +1024,9 @@ export type Database = {
           key_setup_completed: boolean
           last_seen: string | null
           login_attempts: number | null
+          marketing_consent_at: string | null
+          marketing_consent_ip: string | null
+          marketing_consent_source: string | null
           mobile_number: string | null
           notif_mentions: boolean
           notif_messages: boolean
@@ -966,6 +1064,9 @@ export type Database = {
           key_setup_completed?: boolean
           last_seen?: string | null
           login_attempts?: number | null
+          marketing_consent_at?: string | null
+          marketing_consent_ip?: string | null
+          marketing_consent_source?: string | null
           mobile_number?: string | null
           notif_mentions?: boolean
           notif_messages?: boolean
@@ -1003,6 +1104,9 @@ export type Database = {
           key_setup_completed?: boolean
           last_seen?: string | null
           login_attempts?: number | null
+          marketing_consent_at?: string | null
+          marketing_consent_ip?: string | null
+          marketing_consent_source?: string | null
           mobile_number?: string | null
           notif_mentions?: boolean
           notif_messages?: boolean
@@ -1143,6 +1247,9 @@ export type Database = {
           key_setup_completed: boolean
           last_seen: string | null
           login_attempts: number | null
+          marketing_consent_at: string | null
+          marketing_consent_ip: string | null
+          marketing_consent_source: string | null
           mobile_number: string | null
           notif_mentions: boolean
           notif_messages: boolean
@@ -1203,6 +1310,9 @@ export type Database = {
           key_setup_completed: boolean
           last_seen: string | null
           login_attempts: number | null
+          marketing_consent_at: string | null
+          marketing_consent_ip: string | null
+          marketing_consent_source: string | null
           mobile_number: string | null
           notif_mentions: boolean
           notif_messages: boolean
@@ -1293,6 +1403,9 @@ export type Database = {
           key_setup_completed: boolean
           last_seen: string | null
           login_attempts: number | null
+          marketing_consent_at: string | null
+          marketing_consent_ip: string | null
+          marketing_consent_source: string | null
           mobile_number: string | null
           notif_mentions: boolean
           notif_messages: boolean

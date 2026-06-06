@@ -73,7 +73,7 @@ export default function AdminPage() {
   const [search, setSearch] = useState('');
   const [selectedUser, setSelectedUser] = useState<PlatformUser | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'tribes' | 'support'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'tribes' | 'support' | 'marketing'>('overview');
   const [tribes, setTribes] = useState<any[]>([]);
   const [tribeSearch, setTribeSearch] = useState('');
   const [tribeSort, setTribeSort] = useState<'recent' | 'name' | 'members'>('recent');
@@ -509,15 +509,18 @@ export default function AdminPage() {
           </button>
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-1 p-1 bg-muted rounded-xl mb-6 w-full sm:w-fit">
-          {(['overview', 'users', ...(isMaster ? ['tribes' as const] : []), 'support'] as const).map(tab => (
+        {/* Tabs — single-line, horizontally scrollable on small screens */}
+        <div className="flex gap-1 p-1 bg-muted rounded-xl mb-6 w-full sm:w-fit overflow-x-auto no-scrollbar">
+          {(['overview', 'users', ...(isMaster ? ['tribes' as const] : []), 'support', ...(isMaster ? ['marketing' as const] : [])] as const).map(tab => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`relative flex-1 sm:flex-none px-2 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold capitalize transition-all whitespace-nowrap ${activeTab === tab ? 'gradient-primary text-white' : 'text-muted-foreground hover:text-foreground'}`}
+              onClick={() => {
+                if (tab === 'marketing') { router({ to: '/admin/marketing' }); return; }
+                setActiveTab(tab);
+              }}
+              className={`relative flex-shrink-0 px-2.5 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold capitalize transition-all whitespace-nowrap ${activeTab === tab ? 'gradient-primary text-white' : 'text-muted-foreground hover:text-foreground'}`}
             >
-              {tab === 'support' ? 'Support' : tab === 'tribes' ? 'Tribes' : tab}
+              {tab === 'support' ? 'Support' : tab === 'tribes' ? 'Tribes' : tab === 'marketing' ? 'Marketing' : tab}
               {tab === 'support' && unreadTickets > 0 && (
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
                   {unreadTickets > 9 ? '9+' : unreadTickets}

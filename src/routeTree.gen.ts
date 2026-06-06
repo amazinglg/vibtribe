@@ -24,8 +24,10 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as BlogVibtribeVsSignalVsTelegramRouteImport } from './routes/blog.vibtribe-vs-signal-vs-telegram'
+import { Route as AdminMarketingRouteImport } from './routes/admin.marketing'
 import { Route as TribeJoinCodeRouteImport } from './routes/tribe.join.$code'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
+import { Route as ApiPublicResendWebhookRouteImport } from './routes/api/public/resend-webhook'
 import { Route as ApiPublicAuthOtpRouteImport } from './routes/api/public/auth-otp'
 import { Route as ApiPublicAuthLoginRouteImport } from './routes/api/public/auth-login'
 import { Route as AdminUserUserIdRouteImport } from './routes/admin.user.$userId'
@@ -111,6 +113,11 @@ const BlogVibtribeVsSignalVsTelegramRoute =
     path: '/blog/vibtribe-vs-signal-vs-telegram',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AdminMarketingRoute = AdminMarketingRouteImport.update({
+  id: '/marketing',
+  path: '/marketing',
+  getParentRoute: () => AdminRoute,
+} as any)
 const TribeJoinCodeRoute = TribeJoinCodeRouteImport.update({
   id: '/tribe/join/$code',
   path: '/tribe/join/$code',
@@ -119,6 +126,11 @@ const TribeJoinCodeRoute = TribeJoinCodeRouteImport.update({
 const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   id: '/lovable/email/suppression',
   path: '/lovable/email/suppression',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicResendWebhookRoute = ApiPublicResendWebhookRouteImport.update({
+  id: '/api/public/resend-webhook',
+  path: '/api/public/resend-webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicAuthOtpRoute = ApiPublicAuthOtpRouteImport.update({
@@ -178,12 +190,14 @@ export interface FileRoutesByFullPath {
   '/status-screen': typeof StatusScreenRoute
   '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/admin/marketing': typeof AdminMarketingRoute
   '/blog/vibtribe-vs-signal-vs-telegram': typeof BlogVibtribeVsSignalVsTelegramRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
+  '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/tribe/join/$code': typeof TribeJoinCodeRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -204,12 +218,14 @@ export interface FileRoutesByTo {
   '/status-screen': typeof StatusScreenRoute
   '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/admin/marketing': typeof AdminMarketingRoute
   '/blog/vibtribe-vs-signal-vs-telegram': typeof BlogVibtribeVsSignalVsTelegramRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/admin': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
+  '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/tribe/join/$code': typeof TribeJoinCodeRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -232,12 +248,14 @@ export interface FileRoutesById {
   '/status-screen': typeof StatusScreenRoute
   '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/admin/marketing': typeof AdminMarketingRoute
   '/blog/vibtribe-vs-signal-vs-telegram': typeof BlogVibtribeVsSignalVsTelegramRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
+  '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/tribe/join/$code': typeof TribeJoinCodeRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -261,12 +279,14 @@ export interface FileRouteTypes {
     | '/status-screen'
     | '/terms'
     | '/unsubscribe'
+    | '/admin/marketing'
     | '/blog/vibtribe-vs-signal-vs-telegram'
     | '/email/unsubscribe'
     | '/admin/'
     | '/admin/user/$userId'
     | '/api/public/auth-login'
     | '/api/public/auth-otp'
+    | '/api/public/resend-webhook'
     | '/lovable/email/suppression'
     | '/tribe/join/$code'
     | '/lovable/email/auth/preview'
@@ -287,12 +307,14 @@ export interface FileRouteTypes {
     | '/status-screen'
     | '/terms'
     | '/unsubscribe'
+    | '/admin/marketing'
     | '/blog/vibtribe-vs-signal-vs-telegram'
     | '/email/unsubscribe'
     | '/admin'
     | '/admin/user/$userId'
     | '/api/public/auth-login'
     | '/api/public/auth-otp'
+    | '/api/public/resend-webhook'
     | '/lovable/email/suppression'
     | '/tribe/join/$code'
     | '/lovable/email/auth/preview'
@@ -314,12 +336,14 @@ export interface FileRouteTypes {
     | '/status-screen'
     | '/terms'
     | '/unsubscribe'
+    | '/admin/marketing'
     | '/blog/vibtribe-vs-signal-vs-telegram'
     | '/email/unsubscribe'
     | '/admin/'
     | '/admin/user/$userId'
     | '/api/public/auth-login'
     | '/api/public/auth-otp'
+    | '/api/public/resend-webhook'
     | '/lovable/email/suppression'
     | '/tribe/join/$code'
     | '/lovable/email/auth/preview'
@@ -346,6 +370,7 @@ export interface RootRouteChildren {
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   ApiPublicAuthLoginRoute: typeof ApiPublicAuthLoginRoute
   ApiPublicAuthOtpRoute: typeof ApiPublicAuthOtpRoute
+  ApiPublicResendWebhookRoute: typeof ApiPublicResendWebhookRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   TribeJoinCodeRoute: typeof TribeJoinCodeRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
@@ -462,6 +487,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogVibtribeVsSignalVsTelegramRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/marketing': {
+      id: '/admin/marketing'
+      path: '/marketing'
+      fullPath: '/admin/marketing'
+      preLoaderRoute: typeof AdminMarketingRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/tribe/join/$code': {
       id: '/tribe/join/$code'
       path: '/tribe/join/$code'
@@ -474,6 +506,13 @@ declare module '@tanstack/react-router' {
       path: '/lovable/email/suppression'
       fullPath: '/lovable/email/suppression'
       preLoaderRoute: typeof LovableEmailSuppressionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/resend-webhook': {
+      id: '/api/public/resend-webhook'
+      path: '/api/public/resend-webhook'
+      fullPath: '/api/public/resend-webhook'
+      preLoaderRoute: typeof ApiPublicResendWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/auth-otp': {
@@ -536,11 +575,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminMarketingRoute: typeof AdminMarketingRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminUserUserIdRoute: typeof AdminUserUserIdRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminMarketingRoute: AdminMarketingRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminUserUserIdRoute: AdminUserUserIdRoute,
 }
@@ -564,6 +605,7 @@ const rootRouteChildren: RootRouteChildren = {
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   ApiPublicAuthLoginRoute: ApiPublicAuthLoginRoute,
   ApiPublicAuthOtpRoute: ApiPublicAuthOtpRoute,
+  ApiPublicResendWebhookRoute: ApiPublicResendWebhookRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   TribeJoinCodeRoute: TribeJoinCodeRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
@@ -575,13 +617,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
