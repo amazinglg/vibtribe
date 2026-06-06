@@ -7,6 +7,7 @@ import AppLogo from '@/components/ui/AppLogo';
 import { supabase } from '@/integrations/supabase/client';
 import LanguageDialogButton from '@/components/LanguageDialogButton';
 import { useT } from '@/contexts/LanguageContext';
+import { recordMarketingConsent } from '@/lib/marketing.functions';
 
 const COUNTRY_CODES = [
   { name: 'India', code: '+91', flag: '🇮🇳' },
@@ -46,6 +47,7 @@ export default function SignUpPage() {
   const [error, setError] = useState('');
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [marketingOptIn, setMarketingOptIn] = useState(false);
   const [step, setStep] = useState<'details' | 'verify'>('details');
   const [otp, setOtp] = useState('');
   const [resending, setResending] = useState(false);
@@ -155,6 +157,10 @@ export default function SignUpPage() {
       const { error: signInErr } = await supabase.auth.signInWithPassword({ email: authEmail, password });
       if (signInErr) throw signInErr;
       try { await supabase.rpc('accept_terms' as any); } catch {}
+      // Record marketing consent decision (explicit opt-in only — DPDP/GDPR).
+      try {
+        await recordMarketingConsent({ data: { optIn: marketingOptIn, source: 'signup' } });
+      } catch {}
       router({ to: '/complete-profile', replace: true });
     } catch (err: any) {
       setError(err.message || 'Verification failed. Please try again.');
@@ -412,6 +418,20 @@ export default function SignUpPage() {
                 <Link to="/terms" className="text-primary hover:underline" target="_blank">{t('auth.terms')}</Link>
                 {' '}{t('auth.and')}{' '}
                 <Link to="/privacy" className="text-primary hover:underline" target="_blank">{t('auth.privacy')}</Link>.
+              </span>
+            </label>
+
+            <label className="flex items-start gap-2.5 cursor-pointer select-none">
+              <button
+                type="button"
+                onClick={() => setMarketingOptIn(v => !v)}
+                aria-pressed={marketingOptIn}
+                className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-md border flex items-center justify-center transition-all ${marketingOptIn ? 'bg-primary border-primary' : 'bg-input border-border hover:border-primary'}`}
+              >
+                {marketingOptIn && <Check size={13} className="text-white" />}
+              </button>
+              <span className="text-xs text-muted-foreground leading-relaxed">
+                Send me product updates, tips, and announcements from VibTribe. You can unsubscribe anytime. (Optional)
               </span>
             </label>
 

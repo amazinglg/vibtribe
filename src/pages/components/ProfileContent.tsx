@@ -17,6 +17,7 @@ import EncryptionPinModal from '@/components/EncryptionPinModal';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useT } from '@/contexts/LanguageContext';
 import { Globe } from 'lucide-react';
+import { recordMarketingConsent } from '@/lib/marketing.functions';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -244,9 +245,18 @@ export default function ProfileContent() {
     const next = !notifSecureChats; setNotifSecureChats(next); persistNotifPref('notif_secure_chats', next);
     toast.success(next ? 'Secured chat notifications enabled' : 'Secured chat notifications disabled');
   };
-  const handleToggleEmailMarketing = () => {
-    const next = !emailMarketingOptIn; setEmailMarketingOptIn(next); persistNotifPref('email_marketing_opt_in', next);
-    toast.success(next ? 'Subscribed to product emails' : 'Unsubscribed from product emails');
+  const handleToggleEmailMarketing = async () => {
+    const next = !emailMarketingOptIn;
+    setEmailMarketingOptIn(next);
+    try {
+      // Use the consent server fn so we capture timestamp + IP + source
+      // for DPDP/GDPR auditability — not just a profile field update.
+      await recordMarketingConsent({ data: { optIn: next, source: 'profile_settings' } });
+      toast.success(next ? 'Subscribed to product emails' : 'Unsubscribed from product emails');
+    } catch (e: any) {
+      setEmailMarketingOptIn(!next);
+      toast.error(e?.message || 'Failed to save preference');
+    }
   };
 
   useEffect(() => {
