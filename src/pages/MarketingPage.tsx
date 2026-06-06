@@ -15,19 +15,12 @@ import {
   previewAudienceSize, deleteCampaign, getCampaign,
 } from '@/lib/marketing.functions'
 
-type AudienceType = 'opted_in' | 'all' | 'active_7d' | 'active_30d'
-
-const AUDIENCE_LABELS: Record<AudienceType, string> = {
-  opted_in: 'Opted-in users (recommended)',
-  all: 'All users (ignore opt-in — not compliant)',
-  active_7d: 'Active in last 7 days (opted-in)',
-  active_30d: 'Active in last 30 days (opted-in)',
-}
+type AudienceType = 'opted_in'
 
 export default function MarketingPage() {
   const router = useNavigate()
-  const { user, profile, loading } = useAuth()
-  const isMaster = !!profile?.is_master_admin
+  const { user, profile, loading, isAdmin } = useAuth()
+  const canAccess = !!profile?.is_master_admin || profile?.role === 'admin' || !!isAdmin
 
   const listFn = useServerFn(listCampaigns)
   const saveFn = useServerFn(saveCampaign)
@@ -59,7 +52,7 @@ export default function MarketingPage() {
   useEffect(() => {
     if (loading) return
     if (!user) { router({ to: '/sign-in', replace: true }); return }
-    if (!isMaster) { router({ to: '/admin', replace: true }); return }
+    if (!canAccess) { router({ to: '/admin', replace: true }); return }
     refresh()
   }, [user, loading, profile])
 
