@@ -166,7 +166,7 @@ export default function MarketingPage() {
         <div style="padding:24px;">${contentHtml}</div>
         <div style="padding:16px 24px;border-top:1px solid #334155;font-size:12px;color:#94a3b8;">
           <p style="margin:0 0 6px 0;">You're receiving this because you opted in to product updates from VibTribe.</p>
-          <p style="margin:0 0 6px 0;">VibTribe · Labhansh Garg, Founder · Labhansh.garg@outlook.com</p>
+          <p style="margin:0 0 6px 0;">VibTribe · India</p>
           <p style="margin:0;"><a href="#" style="color:#60a5fa;">Unsubscribe in one click</a> · <a href="#" style="color:#60a5fa;">Privacy</a></p>
         </div>
       </div>

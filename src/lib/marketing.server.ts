@@ -90,7 +90,7 @@ ${preheader}
       <tr><td style="padding:32px 28px;font-size:15px;line-height:1.6;color:#e2e8f0;">${opts.bodyHtml}</td></tr>
       <tr><td style="padding:24px 28px;border-top:1px solid #334155;font-size:12px;line-height:1.6;color:#94a3b8;">
         <p style="margin:0 0 8px 0;">You're receiving this because you opted in to product updates from VibTribe.</p>
-        <p style="margin:0 0 8px 0;">${escapeHtml(MARKETING_PHYSICAL_ADDRESS)}</p>
+        <p style="margin:0 0 8px 0;">VibTribe · India</p>
         <p style="margin:0;">
           <a href="${escapeHtml(opts.unsubscribeUrl)}" style="color:#60a5fa;text-decoration:underline;">Unsubscribe in one click</a>
           &nbsp;·&nbsp;
