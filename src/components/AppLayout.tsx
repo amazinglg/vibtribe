@@ -17,6 +17,7 @@ import CallProvider from '@/components/CallProvider';
 import { createClient } from '@/lib/supabase/client';
 import EncryptionPinModal from '@/components/EncryptionPinModal';
 import EmailVerificationGate from '@/components/EmailVerificationGate';
+import MarketingConsentGate from '@/components/MarketingConsentGate';
 import { hasLocalPrivateKey, hasServerKey } from '@/lib/encryption';
 import { useT } from '@/contexts/LanguageContext';
 import { initNativeBridge, isNativeWrapper, registerNativePushNotifications } from '@/lib/native-bridge';
