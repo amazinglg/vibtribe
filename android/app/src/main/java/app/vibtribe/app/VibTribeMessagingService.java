@@ -25,6 +25,7 @@ import java.util.Map;
 public class VibTribeMessagingService extends MessagingService {
 
     public static final String CALL_CHANNEL_ID = "vibtribe_incoming_calls";
+    public static final String MSG_CHANNEL_ID  = "vibtribe_messages";
 
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
@@ -40,7 +41,22 @@ public class VibTribeMessagingService extends MessagingService {
             showIncomingCall(callId, callerName, callerAvatar, callType, chatId);
             return;
         }
+        // Make sure the message-notifications channel exists so notifications
+        // with channel_id="vibtribe_messages" actually appear (Android 8+).
+        createMessageChannel(getApplicationContext());
         super.onMessageReceived(remoteMessage);
+    }
+
+    private void createMessageChannel(Context ctx) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
+        NotificationManager nm = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm.getNotificationChannel(MSG_CHANNEL_ID) != null) return;
+        NotificationChannel channel = new NotificationChannel(
+                MSG_CHANNEL_ID, "Messages", NotificationManager.IMPORTANCE_HIGH);
+        channel.setDescription("New chat messages, calls answered, and tribe activity");
+        channel.enableVibration(true);
+        channel.setLockscreenVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+        nm.createNotificationChannel(channel);
     }
 
     private void showIncomingCall(String callId, String callerName, String callerAvatar,

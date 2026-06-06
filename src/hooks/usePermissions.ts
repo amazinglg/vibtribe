@@ -4,6 +4,8 @@ import {
   requestNativeCameraPermission,
   requestNativeContactsPermission,
   registerNativePushNotifications,
+  requestNativeMicrophonePermission,
+  requestNativeStoragePermission,
 } from '@/lib/native-bridge';
 
 export type PermissionStatus = 'granted' | 'denied' | 'prompt' | 'unsupported' | 'idle';
@@ -39,6 +41,12 @@ export function usePermissions() {
   });
 
   const requestMicrophone = useCallback(async (): Promise<PermissionRequestResult> => {
+    if (isNativeWrapper()) {
+      const native = await requestNativeMicrophonePermission();
+      const status: PermissionStatus = native === 'granted' ? 'granted' : 'denied';
+      setPermissions(p => ({ ...p, microphone: status }));
+      return { granted: status === 'granted', status };
+    }
     if (!navigator?.mediaDevices?.getUserMedia) {
       setPermissions(p => ({ ...p, microphone: 'unsupported' }));
       return { granted: false, status: 'unsupported' };
@@ -92,13 +100,17 @@ export function usePermissions() {
 
   const requestMicAndCamera = useCallback(async (): Promise<PermissionRequestResult> => {
     if (isNativeWrapper()) {
-      const native = await requestNativeCameraPermission();
-      if (native !== 'granted') {
-        setPermissions(p => ({ ...p, microphone: 'denied', camera: 'denied' }));
+      // Request camera (OS) and mic (via getUserMedia → WebView delegation) together.
+      const [camNative, micNative] = await Promise.all([
+        requestNativeCameraPermission(),
+        requestNativeMicrophonePermission(),
+      ]);
+      const camStatus: PermissionStatus = camNative === 'granted' ? 'granted' : 'denied';
+      const micStatus: PermissionStatus = micNative === 'granted' ? 'granted' : 'denied';
+      setPermissions(p => ({ ...p, microphone: micStatus, camera: camStatus }));
+      if (camStatus !== 'granted' || micStatus !== 'granted') {
         return { granted: false, status: 'denied' };
       }
-      // Trust the native grant — see requestCamera above.
-      setPermissions(p => ({ ...p, microphone: 'granted', camera: 'granted' }));
       return { granted: true, status: 'granted' };
     }
     if (!navigator?.mediaDevices?.getUserMedia) {
@@ -156,14 +168,15 @@ export function usePermissions() {
   }, []);
 
   const requestStorage = useCallback(async (): Promise<PermissionRequestResult> => {
-    // Inside the native Android wrapper the app already has full app-scoped
-    // storage (and any runtime storage permission, if requested via Capacitor)
-    // — navigator.storage.persist() in the WebView is unrelated and usually
-    // resolves to `false`, which would make the toggle look broken. Treat
-    // native as always granted.
+    // On Android, surface the real READ_MEDIA_IMAGES (or legacy
+    // READ_EXTERNAL_STORAGE) prompt so users can pick photos/files from the
+    // gallery. The Capacitor Camera plugin's `photos` permission triggers
+    // the correct OS dialog for each Android version.
     if (isNativeWrapper()) {
-      setPermissions(p => ({ ...p, storage: 'granted' }));
-      return { granted: true, status: 'granted' };
+      const native = await requestNativeStoragePermission();
+      const status: PermissionStatus = native === 'granted' ? 'granted' : 'denied';
+      setPermissions(p => ({ ...p, storage: status }));
+      return { granted: status === 'granted', status };
     }
     if (!navigator?.storage?.persist) {
       setPermissions(p => ({ ...p, storage: 'unsupported' }));
@@ -199,22 +212,31 @@ export function usePermissions() {
     } else {
       notif = await queryPermission('notifications' as PermissionName);
     }
-    // On Android WebView, navigator.permissions.query for mic/camera is
-    // decoupled from the real OS grant — it keeps reporting 'denied' even
-    // after the user grants the system dialog. So on native, do NOT clobber
-    // the in-memory state set by a successful request*() call; only refresh
-    // from the WebView API on the web.
-    setPermissions(prev => {
-      if (isNativeWrapper()) {
-        return {
-          ...prev,
-          notifications: notif,
-          // Preserve whatever the last request*() call recorded.
-        };
-      }
-      return prev;
-    });
-    if (isNativeWrapper()) return;
+    // On native Android, read the real OS-level Camera plugin permissions
+    // for camera + photos (storage) so the toggles reflect the actual grant
+    // even after the user changes them in system Settings and returns.
+    if (isNativeWrapper()) {
+      let camStatus: PermissionStatus = 'prompt';
+      let storageStatus: PermissionStatus = 'prompt';
+      try {
+        const { Camera } = await import('@capacitor/camera');
+        const perms = await Camera.checkPermissions();
+        camStatus = perms.camera === 'granted' ? 'granted'
+          : perms.camera === 'denied' ? 'denied' : 'prompt';
+        const photos = (perms as { photos?: string }).photos;
+        storageStatus = (photos === 'granted' || photos === 'limited') ? 'granted'
+          : photos === 'denied' ? 'denied' : 'prompt';
+      } catch {}
+      setPermissions(prev => ({
+        ...prev,
+        notifications: notif,
+        camera: camStatus,
+        storage: storageStatus,
+        // Microphone has no Capacitor checkPermissions API — preserve the
+        // last value set by requestMicrophone() / a successful getUserMedia.
+      }));
+      return;
+    }
     const [mic, cam] = await Promise.all([
       queryPermission('microphone' as PermissionName),
       queryPermission('camera' as PermissionName),

@@ -105,7 +105,10 @@ export async function sendPushNotification(supabase: any, payload: PushPayload):
     const isCall = payload.type === 'voice_call' || payload.type === 'video_call';
     const url = payload.url || (payload.callId ? `/?call=${encodeURIComponent(payload.callId)}${chatId ? `&chat=${encodeURIComponent(chatId)}` : ''}` : (chatId ? `/?chat=${encodeURIComponent(chatId)}` : '/'));
     const tag = payload.type === 'message' ? notificationId : (payload.tag || notificationId);
-    const { data, error } = await supabase.functions.invoke('send-push-notification', {
+    // Fire web-push (browser/PWA subscriptions) AND native FCM (Android app
+    // tokens) in parallel — they target different transport channels and
+    // recipients may have either, both, or neither.
+    const webPushPromise = supabase.functions.invoke('send-push-notification', {
       body: {
         action: 'send',
         ...payload,
@@ -118,7 +121,27 @@ export async function sendPushNotification(supabase: any, payload: PushPayload):
         recipient_user_id: recipientId,
       },
     });
-    return !error && data?.sent !== 0;
+
+    // Native FCM message push (skip for calls — sendCallPush handles those
+    // with the full-screen ringer payload).
+    let fcmPromise: Promise<{ sent?: number } | null> = Promise.resolve(null);
+    if (!isCall && recipientId) {
+      fcmPromise = import('@/lib/fcm-push.functions')
+        .then(({ sendMessagePush }) => sendMessagePush({ data: {
+          recipientUserId: recipientId,
+          chatId,
+          title: payload.title,
+          body: payload.body,
+          url,
+          tag,
+        } }))
+        .catch((e) => { console.warn('[Push] FCM message push failed', e); return null; });
+    }
+
+    const [webRes, fcmRes] = await Promise.all([webPushPromise, fcmPromise]);
+    const webOk = !webRes?.error && (webRes?.data?.sent ?? 0) > 0;
+    const fcmOk = (fcmRes?.sent ?? 0) > 0;
+    return webOk || fcmOk;
   } catch (error) {
     console.error('[Push] send failed', error);
     return false;

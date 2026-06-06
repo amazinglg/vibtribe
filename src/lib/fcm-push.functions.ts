@@ -179,3 +179,120 @@ export const sendCallPush = createServerFn({ method: 'POST' })
     }
     return { sent };
   });
+
+// ---------- Server function: send chat-message push to native Android ----------
+// Mirrors the web-push edge function but targets Android FCM tokens so the
+// device shows a real system notification + plays the ringtone, even when
+// the app is killed. Verifies the sender is a participant of the chat.
+export const sendMessagePush = createServerFn({ method: 'POST' })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: {
+    recipientUserId: string;
+    chatId?: string | null;
+    title: string;
+    body: string;
+    url?: string;
+    tag?: string;
+  }) => input)
+  .handler(async ({ data, context }) => {
+    const callerId = context.userId;
+    const recipientId = data.recipientUserId;
+    if (!recipientId || recipientId === callerId) return { sent: 0 };
+
+    // Authorize: caller must share the chat with recipient.
+    const chatId = data.chatId || null;
+    let allowed = false;
+    if (chatId) {
+      const { data: chat } = await supabaseAdmin
+        .from('chats')
+        .select('id, participant_one, participant_two, is_group')
+        .eq('id', chatId)
+        .maybeSingle();
+      if (chat?.is_group) {
+        const { data: members } = await supabaseAdmin
+          .from('chat_members')
+          .select('user_id')
+          .eq('chat_id', chatId)
+          .in('user_id', [callerId, recipientId]);
+        allowed = new Set((members || []).map((m: any) => m.user_id)).size === 2;
+      } else if (chat) {
+        allowed = [chat.participant_one, chat.participant_two].includes(callerId)
+          && [chat.participant_one, chat.participant_two].includes(recipientId);
+      }
+    } else {
+      const { data: direct } = await supabaseAdmin.from('chats').select('id').or(
+        `and(participant_one.eq.${callerId},participant_two.eq.${recipientId}),and(participant_one.eq.${recipientId},participant_two.eq.${callerId})`
+      ).limit(1);
+      allowed = !!direct?.length;
+    }
+    if (!allowed) return { sent: 0, error: 'forbidden' };
+
+    const { data: tokens } = await supabaseAdmin
+      .from('fcm_tokens')
+      .select('token')
+      .eq('user_id', recipientId);
+    if (!tokens || tokens.length === 0) return { sent: 0 };
+
+    const accessToken = await getFcmAccessToken();
+    const projectId = getProjectId();
+    if (!accessToken || !projectId) return { sent: 0 };
+
+    const safe = (s: string, n = 160) => String(s || '').slice(0, n);
+    const title = safe(data.title || 'VibTribe', 80);
+    const body = safe(data.body || 'New message', 160);
+    const url = (typeof data.url === 'string' && data.url.startsWith('/')) ? data.url
+      : (chatId ? `/?chat=${encodeURIComponent(chatId)}` : '/');
+    const tag = safe(data.tag || (chatId ? `chat-${chatId}` : 'vibtribe'), 80);
+
+    const fcmUrl = `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`;
+    let sent = 0;
+    const invalidTokens: string[] = [];
+    await Promise.all(tokens.map(async ({ token }) => {
+      const payload = {
+        message: {
+          token,
+          // notification block makes Android render a system notification
+          // even when the app is killed; data carries the deep-link target.
+          notification: { title, body },
+          data: {
+            type: 'message',
+            chatId: chatId || '',
+            url,
+            tag,
+          },
+          android: {
+            priority: 'HIGH',
+            ttl: '86400s',
+            notification: {
+              tag,
+              click_action: 'FLUTTER_NOTIFICATION_CLICK',
+              channel_id: 'vibtribe_messages',
+              default_sound: true,
+              default_vibrate_timings: true,
+            },
+          },
+        },
+      };
+      try {
+        const res = await fetch(fcmUrl, {
+          method: 'POST',
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+        if (res.ok) { sent++; return; }
+        const txt = await res.text();
+        console.error('[FCM][msg] send failed', res.status, txt);
+        if (res.status === 404 || res.status === 400) invalidTokens.push(token);
+      } catch (e) {
+        console.error('[FCM][msg] send threw', e);
+      }
+    }));
+
+    if (invalidTokens.length) {
+      await supabaseAdmin.from('fcm_tokens').delete().in('token', invalidTokens);
+    }
+    return { sent };
+  });
