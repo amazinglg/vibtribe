@@ -7,6 +7,7 @@ import AppLogo from '@/components/ui/AppLogo';
 import { supabase } from '@/integrations/supabase/client';
 import LanguageDialogButton from '@/components/LanguageDialogButton';
 import { useT } from '@/contexts/LanguageContext';
+import { recordMarketingConsent } from '@/lib/marketing.functions';
 
 const COUNTRY_CODES = [
   { name: 'India', code: '+91', flag: '🇮🇳' },
@@ -46,6 +47,7 @@ export default function SignUpPage() {
   const [error, setError] = useState('');
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [marketingOptIn, setMarketingOptIn] = useState(false);
   const [step, setStep] = useState<'details' | 'verify'>('details');
   const [otp, setOtp] = useState('');
   const [resending, setResending] = useState(false);
@@ -155,6 +157,10 @@ export default function SignUpPage() {
       const { error: signInErr } = await supabase.auth.signInWithPassword({ email: authEmail, password });
       if (signInErr) throw signInErr;
       try { await supabase.rpc('accept_terms' as any); } catch {}
+      // Record marketing consent decision (explicit opt-in only — DPDP/GDPR).
+      try {
+        await recordMarketingConsent({ data: { optIn: marketingOptIn, source: 'signup' } });
+      } catch {}
       router({ to: '/complete-profile', replace: true });
     } catch (err: any) {
       setError(err.message || 'Verification failed. Please try again.');
