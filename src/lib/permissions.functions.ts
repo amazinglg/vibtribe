@@ -64,6 +64,29 @@ export const setRolePermission = createServerFn({ method: 'POST' })
     return { ok: true }
   })
 
+export const setRoleGroupPermission = createServerFn({ method: 'POST' })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    roleKey: z.string().min(1).max(64),
+    permissionKeys: z.array(z.string().min(1).max(64)).min(1).max(64),
+    allowed: z.boolean(),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertMaster(context.userId)
+    const rows = data.permissionKeys.map(k => ({
+      role_key: data.roleKey,
+      permission_key: k,
+      allowed: data.allowed,
+      updated_by: context.userId,
+      updated_at: new Date().toISOString(),
+    }))
+    const { error } = await supabaseAdmin
+      .from('role_permissions')
+      .upsert(rows, { onConflict: 'role_key,permission_key' })
+    if (error) throw new Error(error.message)
+    return { ok: true }
+  })
+
 export const createRole = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({
