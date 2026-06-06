@@ -1,23 +1,31 @@
 package app.vibtribe.app;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.webkit.PermissionRequest;
 import android.webkit.WebView;
 import android.webkit.WebChromeClient;
-import android.webkit.PermissionRequest;
 import android.view.View;
 import androidx.activity.EdgeToEdge;
+import androidx.core.app.ActivityCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.splashscreen.SplashScreen;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.WebViewListener;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends BridgeActivity {
+    private static final int MEDIA_PERMISSION_REQUEST = 8101;
     private int safeTop = 0;
     private int safeBottom = 0;
     private int safeLeft = 0;
     private int safeRight = 0;
+    private PermissionRequest pendingMediaRequest = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
