@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import {
   ArrowLeft, Mail, Plus, Send, Eye, Loader2, Trash2,
   Smartphone, Monitor, Image as ImageIcon, Users, RefreshCw,
-  CheckCircle2, AlertTriangle, Clock, ExternalLink,
+  CheckCircle2, AlertTriangle, Clock, ExternalLink, Pencil,
 } from 'lucide-react'
 import AppLayout from '@/components/AppLayout'
 import { useAuth } from '@/contexts/AuthContext'
