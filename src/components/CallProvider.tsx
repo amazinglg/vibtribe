@@ -88,6 +88,17 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   const durationTimerRef = useRef<any>(null);
   const ringtoneRef = useRef<HTMLAudioElement | null>(null);
 
+  // When the call overlay mounts AFTER media was already acquired (we now
+  // acquire mic/camera inside the click gesture, before the dialog renders),
+  // wire the existing stream into the freshly-mounted local <video>.
+  useEffect(() => {
+    if (!activeCall) return;
+    const stream = localStreamRef.current;
+    if (stream && localVideoRef.current && activeCall.call_type === 'video') {
+      localVideoRef.current.srcObject = stream;
+    }
+  }, [activeCall]);
+
   const cleanup = useCallback(() => {
     try { pcRef.current?.close(); } catch {}
     pcRef.current = null;
