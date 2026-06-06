@@ -11,14 +11,14 @@ import {
 
 // ---------- shared helpers (server-only) ----------
 
-async function assertMaster(userId: string) {
+async function assertAdmin(userId: string) {
   const { data, error } = await supabaseAdmin
     .from('user_profiles')
-    .select('is_master_admin')
+    .select('is_master_admin, role')
     .eq('id', userId)
     .maybeSingle()
-  if (error || !data?.is_master_admin) {
-    throw new Error('Master admin access required')
+  if (error || !data || (!data.is_master_admin && data.role !== 'admin')) {
+    throw new Error('Admin access required')
   }
 }
 
@@ -91,7 +91,7 @@ const CampaignDraft = z.object({
   contentHtml: z.string().min(1).max(200_000),
   bannerImageUrl: z.string().url().optional().nullable().or(z.literal('')),
   audienceFilter: z.object({
-    type: z.enum(['opted_in', 'all', 'active_7d', 'active_30d']),
+    type: z.literal('opted_in'),
   }),
 })
 
