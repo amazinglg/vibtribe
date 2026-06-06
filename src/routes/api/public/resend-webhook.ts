@@ -42,10 +42,12 @@ export const Route = createFileRoute('/api/public/resend-webhook')({
 
         const rawBody = await request.text()
         const secret = process.env.RESEND_WEBHOOK_SECRET
-        if (secret) {
-          const ok = await verifySvix(rawBody, request.headers, secret).catch(() => false)
-          if (!ok) return new Response('Invalid signature', { status: 401 })
+        if (!secret) {
+          console.error('[resend-webhook] RESEND_WEBHOOK_SECRET not configured; refusing request')
+          return new Response('Webhook secret not configured', { status: 500 })
         }
+        const ok = await verifySvix(rawBody, request.headers, secret).catch(() => false)
+        if (!ok) return new Response('Invalid signature', { status: 401 })
 
         let payload: any
         try { payload = JSON.parse(rawBody) } catch { return new Response('Bad JSON', { status: 400 }) }
