@@ -4,8 +4,6 @@ import {
   requestNativeCameraPermission,
   requestNativeContactsPermission,
   registerNativePushNotifications,
-} from '@/lib/native-bridge';
-import {
   requestNativeMicrophonePermission,
   requestNativeStoragePermission,
 } from '@/lib/native-bridge';
