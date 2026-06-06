@@ -3,7 +3,7 @@ import React, { createContext, useContext, useEffect, useRef, useState, useCallb
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
-import { acquireCallWakeLock, setCallAudioRoute } from '@/lib/native-bridge';
+import { acquireCallWakeLock, setCallAudioRoute, isNativeWrapper, requestNativeCameraPermission } from '@/lib/native-bridge';
 import { sendCallPush } from '@/lib/fcm-push.functions';
 
 type CallType = 'voice' | 'video';
@@ -77,6 +77,8 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   const [videoOff, setVideoOff] = useState(false);
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
+  const activeCallRef = useRef<CallRow | null>(null);
+  const callDurationRef = useRef(0);
   const localStreamRef = useRef<MediaStream | null>(null);
   const sendersRef = useRef<{ audio: RTCRtpSender | null; video: RTCRtpSender | null }>({ audio: null, video: null });
   const remoteStreamRef = useRef<MediaStream | null>(null);
@@ -87,6 +89,9 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   const ringTimerRef = useRef<any>(null);
   const durationTimerRef = useRef<any>(null);
   const ringtoneRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => { activeCallRef.current = activeCall; }, [activeCall]);
+  useEffect(() => { callDurationRef.current = callDuration; }, [callDuration]);
 
   // When the call overlay mounts AFTER media was already acquired (we now
   // acquire mic/camera inside the click gesture, before the dialog renders),
@@ -122,8 +127,8 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   }, [supabase]);
 
   const endCall = useCallback(async (finalStatus: 'ended' | 'declined' | 'missed' = 'ended') => {
-    const call = activeCall;
-    const finalDuration = callDuration;
+    const call = activeCallRef.current || activeCall;
+    const finalDuration = callDurationRef.current || callDuration;
     if (call) {
       try {
         await supabase
