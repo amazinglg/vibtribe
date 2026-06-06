@@ -325,13 +325,15 @@ export const deleteCampaign = createServerFn({ method: 'POST' })
     const { error: recErr } = await supabaseAdmin
       .from('email_campaign_recipients').delete().eq('campaign_id', data.id)
     if (recErr) throw new Error(`Failed to delete recipients: ${recErr.message}`)
-    const { error, count } = await supabaseAdmin
+    // Use .select() to reliably get the deleted rows back — `count: 'exact'`
+    // returned 0 in some environments even when the row existed.
+    const { data: deleted, error } = await supabaseAdmin
       .from('email_campaigns')
-      .delete({ count: 'exact' })
+      .delete()
       .eq('id', data.id)
+      .select('id')
     if (error) throw new Error(`Delete failed: ${error.message}`)
-    if (!count) throw new Error('Campaign not found or already deleted')
-    return { ok: true, deleted: count }
+    return { ok: true, deleted: deleted?.length ?? 0 }
   })
 
 // ---------- consent capture ----------
