@@ -72,12 +72,47 @@ public class MainActivity extends BridgeActivity {
                     webView.setWebChromeClient(new WebChromeClient() {
                         @Override
                         public void onPermissionRequest(final PermissionRequest request) {
-                            runOnUiThread(() -> request.grant(request.getResources()));
+                            runOnUiThread(() -> grantWebRtcPermissions(request));
                         }
                     });
                 }
             });
         }
+    }
+
+    private void grantWebRtcPermissions(final PermissionRequest request) {
+        List<String> needed = new ArrayList<>();
+        for (String resource : request.getResources()) {
+            if (PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(resource)
+                    && ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                needed.add(Manifest.permission.RECORD_AUDIO);
+            }
+            if (PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(resource)
+                    && ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                needed.add(Manifest.permission.CAMERA);
+            }
+        }
+        if (needed.isEmpty()) {
+            request.grant(request.getResources());
+            return;
+        }
+        pendingMediaRequest = request;
+        ActivityCompat.requestPermissions(this, needed.toArray(new String[0]), MEDIA_PERMISSION_REQUEST);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode != MEDIA_PERMISSION_REQUEST || pendingMediaRequest == null) return;
+        PermissionRequest request = pendingMediaRequest;
+        pendingMediaRequest = null;
+        for (int result : grantResults) {
+            if (result != PackageManager.PERMISSION_GRANTED) {
+                request.deny();
+                return;
+            }
+        }
+        request.grant(request.getResources());
     }
 
     private void injectSafeAreaCssVars() {
