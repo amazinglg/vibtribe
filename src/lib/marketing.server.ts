@@ -3,7 +3,7 @@
 // emails which use the Lovable Email queue). This isolates promotional
 // reputation on the dedicated `news.vibtribe.in` subdomain.
 
-export const MARKETING_FROM = 'VibTribe <hello@news.vibtribe.in>'
+export const MARKETING_FROM = 'VibTribe <promotions@news.vibtribe.in>'
 export const MARKETING_REPLY_TO = 'Labhansh.garg@outlook.com'
 export const MARKETING_PHYSICAL_ADDRESS =
   'VibTribe · Labhansh Garg, Founder · Labhansh.garg@outlook.com'
