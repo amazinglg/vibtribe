@@ -3,7 +3,7 @@ import React, { createContext, useContext, useEffect, useRef, useState, useCallb
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
-import { acquireCallWakeLock, setCallAudioRoute, isNativeWrapper, requestNativeCameraPermission } from '@/lib/native-bridge';
+import { acquireCallWakeLock, setCallAudioRoute } from '@/lib/native-bridge';
 import { sendCallPush } from '@/lib/fcm-push.functions';
 
 type CallType = 'voice' | 'video';
@@ -242,10 +242,6 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   const acquireMedia = async (type: CallType) => {
     if (!navigator.mediaDevices?.getUserMedia) {
       throw new Error('Media devices are not available on this device.');
-    }
-    if (type === 'video' && isNativeWrapper()) {
-      const camera = await requestNativeCameraPermission();
-      if (camera !== 'granted') throw new Error('Camera permission was denied.');
     }
     const mediaPromise = navigator.mediaDevices.getUserMedia({
       audio: true,
