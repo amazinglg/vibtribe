@@ -421,6 +421,20 @@ export default function SignUpPage() {
               </span>
             </label>
 
+            <label className="flex items-start gap-2.5 cursor-pointer select-none">
+              <button
+                type="button"
+                onClick={() => setMarketingOptIn(v => !v)}
+                aria-pressed={marketingOptIn}
+                className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-md border flex items-center justify-center transition-all ${marketingOptIn ? 'bg-primary border-primary' : 'bg-input border-border hover:border-primary'}`}
+              >
+                {marketingOptIn && <Check size={13} className="text-white" />}
+              </button>
+              <span className="text-xs text-muted-foreground leading-relaxed">
+                Send me product updates, tips, and announcements from VibTribe. You can unsubscribe anytime. (Optional)
+              </span>
+            </label>
+
             <button
               type="submit"
               disabled={loading || !acceptedTerms}
