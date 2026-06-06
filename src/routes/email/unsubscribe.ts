@@ -141,6 +141,21 @@ export const Route = createFileRoute("/email/unsubscribe")({
           return Response.json({ error: 'Failed to process unsubscribe' }, { status: 500 })
         }
 
+        // Also flip the user's marketing opt-in flag so the campaign sender
+        // skips them in future audience queries. Look up by real_email.
+        try {
+          await supabase
+            .from('user_profiles')
+            .update({
+              email_marketing_opt_in: false,
+              marketing_consent_at: new Date().toISOString(),
+              marketing_consent_source: 'unsubscribe_link',
+            })
+            .ilike('real_email', tokenRecord.email)
+        } catch (e) {
+          console.warn('Could not flip marketing opt-in on unsubscribe', { error: e })
+        }
+
         console.log('Email unsubscribed', {
           email_redacted: redactEmail(tokenRecord.email),
         })
