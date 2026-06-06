@@ -320,8 +320,18 @@ export const deleteCampaign = createServerFn({ method: 'POST' })
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId)
-    await supabaseAdmin.from('email_campaigns').delete().eq('id', data.id)
-    return { ok: true }
+    // Cascade-delete recipients first (FK has ON DELETE CASCADE, but be explicit
+    // in case future constraints change) and then remove the campaign row.
+    const { error: recErr } = await supabaseAdmin
+      .from('email_campaign_recipients').delete().eq('campaign_id', data.id)
+    if (recErr) throw new Error(`Failed to delete recipients: ${recErr.message}`)
+    const { error, count } = await supabaseAdmin
+      .from('email_campaigns')
+      .delete({ count: 'exact' })
+      .eq('id', data.id)
+    if (error) throw new Error(`Delete failed: ${error.message}`)
+    if (!count) throw new Error('Campaign not found or already deleted')
+    return { ok: true, deleted: count }
   })
 
 // ---------- consent capture ----------
