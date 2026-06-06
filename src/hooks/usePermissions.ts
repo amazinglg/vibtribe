@@ -212,22 +212,31 @@ export function usePermissions() {
     } else {
       notif = await queryPermission('notifications' as PermissionName);
     }
-    // On Android WebView, navigator.permissions.query for mic/camera is
-    // decoupled from the real OS grant — it keeps reporting 'denied' even
-    // after the user grants the system dialog. So on native, do NOT clobber
-    // the in-memory state set by a successful request*() call; only refresh
-    // from the WebView API on the web.
-    setPermissions(prev => {
-      if (isNativeWrapper()) {
-        return {
-          ...prev,
-          notifications: notif,
-          // Preserve whatever the last request*() call recorded.
-        };
-      }
-      return prev;
-    });
-    if (isNativeWrapper()) return;
+    // On native Android, read the real OS-level Camera plugin permissions
+    // for camera + photos (storage) so the toggles reflect the actual grant
+    // even after the user changes them in system Settings and returns.
+    if (isNativeWrapper()) {
+      let camStatus: PermissionStatus = 'prompt';
+      let storageStatus: PermissionStatus = 'prompt';
+      try {
+        const { Camera } = await import('@capacitor/camera');
+        const perms = await Camera.checkPermissions();
+        camStatus = perms.camera === 'granted' ? 'granted'
+          : perms.camera === 'denied' ? 'denied' : 'prompt';
+        const photos = (perms as { photos?: string }).photos;
+        storageStatus = (photos === 'granted' || photos === 'limited') ? 'granted'
+          : photos === 'denied' ? 'denied' : 'prompt';
+      } catch {}
+      setPermissions(prev => ({
+        ...prev,
+        notifications: notif,
+        camera: camStatus,
+        storage: storageStatus,
+        // Microphone has no Capacitor checkPermissions API — preserve the
+        // last value set by requestMicrophone() / a successful getUserMedia.
+      }));
+      return;
+    }
     const [mic, cam] = await Promise.all([
       queryPermission('microphone' as PermissionName),
       queryPermission('camera' as PermissionName),
