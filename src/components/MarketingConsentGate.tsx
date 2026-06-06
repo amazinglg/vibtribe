@@ -30,9 +30,10 @@ export default function MarketingConsentGate() {
         // Fast path: if we've already recorded an answer for this user in this browser, never prompt again.
         if (localStorage.getItem(`${ANSWERED_KEY_PREFIX}${user.id}`)) return;
         const res = await getMyMarketingConsent();
-        if (cancelled || res?.hasAnswered) return;
-        if (!cancelled && res?.hasAnswered === false) {
-          // no-op, fall through to defer logic
+        if (cancelled) return;
+        if (res?.hasAnswered) {
+          try { localStorage.setItem(`${ANSWERED_KEY_PREFIX}${user.id}`, 'server'); } catch {}
+          return;
         }
         const key = `${STORAGE_KEY_PREFIX}${user.id}`;
         const raw = localStorage.getItem(key);
