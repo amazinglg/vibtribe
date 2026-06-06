@@ -88,6 +88,17 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   const durationTimerRef = useRef<any>(null);
   const ringtoneRef = useRef<HTMLAudioElement | null>(null);
 
+  // When the call overlay mounts AFTER media was already acquired (we now
+  // acquire mic/camera inside the click gesture, before the dialog renders),
+  // wire the existing stream into the freshly-mounted local <video>.
+  useEffect(() => {
+    if (!activeCall) return;
+    const stream = localStreamRef.current;
+    if (stream && localVideoRef.current && activeCall.call_type === 'video') {
+      localVideoRef.current.srcObject = stream;
+    }
+  }, [activeCall]);
+
   const cleanup = useCallback(() => {
     try { pcRef.current?.close(); } catch {}
     pcRef.current = null;
@@ -256,6 +267,24 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     if (!user) return null;
     if (activeCall) return null;
     try {
+      // CRITICAL: Acquire mic/camera FIRST, while we're still inside the user
+      // gesture from the click handler. Any earlier `await` (DB insert, RPC)
+      // consumes the gesture and causes getUserMedia to silently hang on
+      // Android WebView / iOS Safari — which presents as "the caller's screen
+      // freezes the moment they tap call".
+      try {
+        await acquireMedia(opts.type);
+      } catch (mediaErr) {
+        console.error('[Call] getUserMedia failed', mediaErr);
+        // Surface a clear message instead of silently freezing.
+        if (typeof window !== 'undefined') {
+          alert(opts.type === 'video'
+            ? 'Camera/microphone access is required for video calls. Please allow access in your browser settings.'
+            : 'Microphone access is required for voice calls. Please allow access in your browser settings.');
+        }
+        return null;
+      }
+
       const { data: callRow, error } = await supabase
         .from('calls')
         .insert({
@@ -267,7 +296,13 @@ export default function CallProvider({ children }: { children: React.ReactNode }
         })
         .select()
         .single();
-      if (error || !callRow) throw error;
+      if (error || !callRow) {
+        // Tear down the media we just acquired so the camera light doesn't
+        // stay on after a failed call setup.
+        localStreamRef.current?.getTracks().forEach(t => t.stop());
+        localStreamRef.current = null;
+        throw error;
+      }
 
       setActiveCall(callRow);
       setRole('caller');
@@ -284,8 +319,6 @@ export default function CallProvider({ children }: { children: React.ReactNode }
         chatId: opts.chatId ?? null,
       } }).catch((e) => console.warn('[Call] push failed', e));
 
-      // Pre-acquire local media (so user sees themselves while ringing)
-      try { await acquireMedia(opts.type); } catch {}
       playRingtone('outgoing');
 
       // Set up signaling channel
