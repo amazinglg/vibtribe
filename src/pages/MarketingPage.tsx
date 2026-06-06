@@ -204,14 +204,17 @@ export default function MarketingPage() {
   }
 
   const previewHtml = useMemo(() => {
-    return `<!doctype html><html><body style="margin:0;font-family:-apple-system,sans-serif;background:#0f172a;color:#e2e8f0;">
-      <div style="max-width:600px;margin:0 auto;background:#1e293b;border-radius:12px;overflow:hidden;">
-        ${bannerUrl ? `<img src="${bannerUrl}" style="display:block;width:100%;" />` : ''}
-        <div style="padding:24px;">${contentHtml}</div>
-        <div style="padding:16px 24px;border-top:1px solid #334155;font-size:12px;color:#94a3b8;">
+    return `<!doctype html><html><body style="margin:0;padding:32px 16px;font-family:-apple-system,sans-serif;background:#f5f0e8;color:#1f1d1a;">
+      <div style="max-width:640px;margin:0 auto;">
+        <div style="padding:0 4px 18px 4px;font-family:Georgia,serif;font-size:22px;font-weight:600;color:#1f1d1a;">VibTribe</div>
+        <div style="background:#ffffff;border:1px solid #e8e1d5;border-radius:14px;overflow:hidden;">
+          ${bannerUrl ? `<img src="${bannerUrl}" style="display:block;width:100%;" />` : ''}
+          <div style="padding:36px;font-size:16px;line-height:1.7;">${contentHtml}</div>
+        </div>
+        <div style="padding:22px 8px 0 8px;font-size:12px;line-height:1.7;color:#7a7468;">
           <p style="margin:0 0 6px 0;">You're receiving this because you opted in to product updates from VibTribe.</p>
-          <p style="margin:0 0 6px 0;">VibTribe · India</p>
-          <p style="margin:0;"><a href="#" style="color:#60a5fa;">Unsubscribe in one click</a> · <a href="#" style="color:#60a5fa;">Privacy</a></p>
+          <p style="margin:0 0 10px 0;">VibTribe · India</p>
+          <p style="margin:0;"><a href="#" style="color:#1f1d1a;text-decoration:underline;">Unsubscribe in one click</a> · <a href="#" style="color:#1f1d1a;text-decoration:underline;">Privacy</a></p>
         </div>
       </div>
     </body></html>`
