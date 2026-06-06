@@ -77,6 +77,8 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   const [videoOff, setVideoOff] = useState(false);
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
+  const activeCallRef = useRef<CallRow | null>(null);
+  const callDurationRef = useRef(0);
   const localStreamRef = useRef<MediaStream | null>(null);
   const sendersRef = useRef<{ audio: RTCRtpSender | null; video: RTCRtpSender | null }>({ audio: null, video: null });
   const remoteStreamRef = useRef<MediaStream | null>(null);
@@ -87,6 +89,9 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   const ringTimerRef = useRef<any>(null);
   const durationTimerRef = useRef<any>(null);
   const ringtoneRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => { activeCallRef.current = activeCall; }, [activeCall]);
+  useEffect(() => { callDurationRef.current = callDuration; }, [callDuration]);
 
   // When the call overlay mounts AFTER media was already acquired (we now
   // acquire mic/camera inside the click gesture, before the dialog renders),
@@ -122,8 +127,8 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   }, [supabase]);
 
   const endCall = useCallback(async (finalStatus: 'ended' | 'declined' | 'missed' = 'ended') => {
-    const call = activeCall;
-    const finalDuration = callDuration;
+    const call = activeCallRef.current || activeCall;
+    const finalDuration = callDurationRef.current || callDuration;
     if (call) {
       try {
         await supabase
@@ -235,10 +240,17 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   };
 
   const acquireMedia = async (type: CallType) => {
-    const stream = await navigator.mediaDevices.getUserMedia({
+    if (!navigator.mediaDevices?.getUserMedia) {
+      throw new Error('Media devices are not available on this device.');
+    }
+    const mediaPromise = navigator.mediaDevices.getUserMedia({
       audio: true,
       video: type === 'video' ? { facingMode: 'user' } : false,
     });
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      window.setTimeout(() => reject(new Error('Media permission request timed out.')), 8000);
+    });
+    const stream = await Promise.race([mediaPromise, timeoutPromise]);
     localStreamRef.current = stream;
     if (localVideoRef.current && type === 'video') {
       localVideoRef.current.srcObject = stream;
@@ -418,9 +430,11 @@ export default function CallProvider({ children }: { children: React.ReactNode }
 
   useEffect(() => {
     if (!user?.id || activeCall || typeof window === 'undefined') return;
-    const params = new URLSearchParams(window.location.search);
-    const callId = params.get('call') || params.get('answerCall');
-    const declineId = params.get('declineCall');
+    const handleCallUrl = () => {
+      if (activeCallRef.current) return;
+      const params = new URLSearchParams(window.location.search);
+      const callId = params.get('call') || params.get('answerCall');
+      const declineId = params.get('declineCall');
     if (declineId) {
       // Lockscreen ringer "Decline" tapped — mark the call declined and clear the param.
       supabase.from('calls')
@@ -448,7 +462,27 @@ export default function CallProvider({ children }: { children: React.ReactNode }
           window.history.replaceState({}, '', url.toString());
         } catch {}
       });
+    };
+    handleCallUrl();
+    window.addEventListener('popstate', handleCallUrl);
+    window.addEventListener('vt-call-url', handleCallUrl as EventListener);
+    return () => {
+      window.removeEventListener('popstate', handleCallUrl);
+      window.removeEventListener('vt-call-url', handleCallUrl as EventListener);
+    };
   }, [user?.id, activeCall, supabase, handleIncomingCall]);
+
+  useEffect(() => {
+    if (!user?.id || typeof window === 'undefined') return;
+    const onIncomingPush = ((event: CustomEvent<{ callId?: string; chatId?: string | null }>) => {
+      const callId = event.detail?.callId;
+      if (!callId || activeCallRef.current) return;
+      supabase.from('calls').select('*').eq('id', callId).eq('callee_id', user.id).eq('status', 'ringing').maybeSingle()
+        .then(({ data }) => { if (data) handleIncomingCall(data); });
+    }) as EventListener;
+    window.addEventListener('vt-incoming-call', onIncomingPush);
+    return () => window.removeEventListener('vt-incoming-call', onIncomingPush);
+  }, [user?.id, supabase, handleIncomingCall]);
 
   // Callee accept handler
   const acceptCall = async () => {

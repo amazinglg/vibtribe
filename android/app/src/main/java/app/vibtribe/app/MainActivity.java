@@ -1,23 +1,31 @@
 package app.vibtribe.app;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.webkit.PermissionRequest;
 import android.webkit.WebView;
 import android.webkit.WebChromeClient;
-import android.webkit.PermissionRequest;
 import android.view.View;
 import androidx.activity.EdgeToEdge;
+import androidx.core.app.ActivityCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.splashscreen.SplashScreen;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.WebViewListener;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends BridgeActivity {
+    private static final int MEDIA_PERMISSION_REQUEST = 8101;
     private int safeTop = 0;
     private int safeBottom = 0;
     private int safeLeft = 0;
     private int safeRight = 0;
+    private PermissionRequest pendingMediaRequest = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,12 +72,47 @@ public class MainActivity extends BridgeActivity {
                     webView.setWebChromeClient(new WebChromeClient() {
                         @Override
                         public void onPermissionRequest(final PermissionRequest request) {
-                            runOnUiThread(() -> request.grant(request.getResources()));
+                            runOnUiThread(() -> grantWebRtcPermissions(request));
                         }
                     });
                 }
             });
         }
+    }
+
+    private void grantWebRtcPermissions(final PermissionRequest request) {
+        List<String> needed = new ArrayList<>();
+        for (String resource : request.getResources()) {
+            if (PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(resource)
+                    && ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                needed.add(Manifest.permission.RECORD_AUDIO);
+            }
+            if (PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(resource)
+                    && ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                needed.add(Manifest.permission.CAMERA);
+            }
+        }
+        if (needed.isEmpty()) {
+            request.grant(request.getResources());
+            return;
+        }
+        pendingMediaRequest = request;
+        ActivityCompat.requestPermissions(this, needed.toArray(new String[0]), MEDIA_PERMISSION_REQUEST);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode != MEDIA_PERMISSION_REQUEST || pendingMediaRequest == null) return;
+        PermissionRequest request = pendingMediaRequest;
+        pendingMediaRequest = null;
+        for (int result : grantResults) {
+            if (result != PackageManager.PERMISSION_GRANTED) {
+                request.deny();
+                return;
+            }
+        }
+        request.grant(request.getResources());
     }
 
     private void injectSafeAreaCssVars() {
