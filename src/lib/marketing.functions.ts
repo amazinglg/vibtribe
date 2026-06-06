@@ -11,14 +11,14 @@ import {
 
 // ---------- shared helpers (server-only) ----------
 
-async function assertMaster(userId: string) {
+async function assertAdmin(userId: string) {
   const { data, error } = await supabaseAdmin
     .from('user_profiles')
-    .select('is_master_admin')
+    .select('is_master_admin, role')
     .eq('id', userId)
     .maybeSingle()
-  if (error || !data?.is_master_admin) {
-    throw new Error('Master admin access required')
+  if (error || !data || (!data.is_master_admin && data.role !== 'admin')) {
+    throw new Error('Admin access required')
   }
 }
 
@@ -91,7 +91,7 @@ const CampaignDraft = z.object({
   contentHtml: z.string().min(1).max(200_000),
   bannerImageUrl: z.string().url().optional().nullable().or(z.literal('')),
   audienceFilter: z.object({
-    type: z.enum(['opted_in', 'all', 'active_7d', 'active_30d']),
+    type: z.literal('opted_in'),
   }),
 })
 
@@ -100,20 +100,28 @@ const CampaignDraft = z.object({
 export const listCampaigns = createServerFn({ method: 'GET' })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await assertMaster(context.userId)
+    await assertAdmin(context.userId)
     const { data } = await supabaseAdmin
       .from('email_campaigns')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(100)
-    return { campaigns: data ?? [] }
+    const rows = data ?? []
+    const ids = Array.from(new Set(rows.map(r => r.created_by).filter(Boolean)))
+    let nameById: Record<string, string> = {}
+    if (ids.length) {
+      const { data: profs } = await supabaseAdmin
+        .from('user_profiles').select('id, full_name, username').in('id', ids)
+      nameById = Object.fromEntries((profs ?? []).map(p => [p.id, p.full_name || p.username || 'Unknown']))
+    }
+    return { campaigns: rows.map(r => ({ ...r, created_by_name: nameById[r.created_by] || '—' })) }
   })
 
 export const getCampaign = createServerFn({ method: 'GET' })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    await assertMaster(context.userId)
+    await assertAdmin(context.userId)
     const { data: campaign } = await supabaseAdmin
       .from('email_campaigns').select('*').eq('id', data.id).maybeSingle()
     if (!campaign) throw new Error('Campaign not found')
@@ -130,7 +138,7 @@ export const saveCampaign = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => CampaignDraft.parse(d))
   .handler(async ({ data, context }) => {
-    await assertMaster(context.userId)
+    await assertAdmin(context.userId)
     const row = {
       subject: data.subject,
       preheader: data.preheader || null,
@@ -155,10 +163,10 @@ export const saveCampaign = createServerFn({ method: 'POST' })
 export const previewAudienceSize = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { audienceFilter: AudienceFilter }) =>
-    z.object({ audienceFilter: z.object({ type: z.enum(['opted_in', 'all', 'active_7d', 'active_30d']) }) }).parse(d),
+    z.object({ audienceFilter: z.object({ type: z.literal('opted_in') }) }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    await assertMaster(context.userId)
+    await assertAdmin(context.userId)
     const aud = await fetchAudience(data.audienceFilter)
     return { count: aud.length }
   })
@@ -169,7 +177,7 @@ export const sendTestEmail = createServerFn({ method: 'POST' })
     z.object({ campaignId: z.string().uuid(), toEmail: z.string().email() }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    await assertMaster(context.userId)
+    await assertAdmin(context.userId)
     const { data: c } = await supabaseAdmin
       .from('email_campaigns').select('*').eq('id', data.campaignId).maybeSingle()
     if (!c) throw new Error('Campaign not found')
@@ -190,7 +198,18 @@ export const sendTestEmail = createServerFn({ method: 'POST' })
       text: htmlToText(html),
       unsubscribeUrl,
     })
-    if (!result.ok) throw new Error(result.error || 'Resend failed')
+    // Log every attempt for visibility
+    await supabaseAdmin.from('email_send_log').insert({
+      template_name: 'marketing_test',
+      recipient_email: data.toEmail,
+      message_id: result.id || `test-${data.campaignId}-${Date.now()}`,
+      status: result.ok ? 'sent' : 'failed',
+      error_message: result.ok ? null : (result.error || `HTTP ${result.status}`),
+      metadata: { campaign_id: data.campaignId, from: MARKETING_FROM, subject: c.subject },
+    }).then(() => {}, () => {})
+    if (!result.ok) {
+      throw new Error(`Resend error (status ${result.status ?? '?'}): ${result.error || 'unknown'}`)
+    }
     return { ok: true, messageId: result.id, from: MARKETING_FROM }
   })
 
@@ -200,7 +219,7 @@ export const sendCampaign = createServerFn({ method: 'POST' })
     z.object({ campaignId: z.string().uuid() }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    await assertMaster(context.userId)
+    await assertAdmin(context.userId)
     const { data: c } = await supabaseAdmin
       .from('email_campaigns').select('*').eq('id', data.campaignId).maybeSingle()
     if (!c) throw new Error('Campaign not found')
@@ -300,7 +319,7 @@ export const deleteCampaign = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    await assertMaster(context.userId)
+    await assertAdmin(context.userId)
     await supabaseAdmin.from('email_campaigns').delete().eq('id', data.id)
     return { ok: true }
   })

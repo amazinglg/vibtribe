@@ -511,7 +511,7 @@ export default function AdminPage() {
 
         {/* Tabs — single-line, horizontally scrollable on small screens */}
         <div className="flex gap-1 p-1 bg-muted rounded-xl mb-6 w-full sm:w-fit overflow-x-auto no-scrollbar">
-          {(['overview', 'users', ...(isMaster ? ['tribes' as const] : []), 'support', ...(isMaster ? ['marketing' as const] : [])] as const).map(tab => (
+          {(['overview', 'users', ...(isMaster ? ['tribes' as const] : []), 'support', 'marketing' as const] as const).map(tab => (
             <button
               key={tab}
               onClick={() => {

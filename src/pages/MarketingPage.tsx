@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import {
   ArrowLeft, Mail, Plus, Send, Eye, Loader2, Trash2,
   Smartphone, Monitor, Image as ImageIcon, Users, RefreshCw,
-  CheckCircle2, AlertTriangle, Clock, ExternalLink,
+  CheckCircle2, AlertTriangle, Clock, ExternalLink, Pencil,
 } from 'lucide-react'
 import AppLayout from '@/components/AppLayout'
 import { useAuth } from '@/contexts/AuthContext'
@@ -15,19 +15,12 @@ import {
   previewAudienceSize, deleteCampaign, getCampaign,
 } from '@/lib/marketing.functions'
 
-type AudienceType = 'opted_in' | 'all' | 'active_7d' | 'active_30d'
-
-const AUDIENCE_LABELS: Record<AudienceType, string> = {
-  opted_in: 'Opted-in users (recommended)',
-  all: 'All users (ignore opt-in — not compliant)',
-  active_7d: 'Active in last 7 days (opted-in)',
-  active_30d: 'Active in last 30 days (opted-in)',
-}
+type AudienceType = 'opted_in'
 
 export default function MarketingPage() {
   const router = useNavigate()
-  const { user, profile, loading } = useAuth()
-  const isMaster = !!profile?.is_master_admin
+  const { user, profile, loading, isAdmin } = useAuth()
+  const canAccess = !!profile?.is_master_admin || profile?.role === 'admin' || !!isAdmin
 
   const listFn = useServerFn(listCampaigns)
   const saveFn = useServerFn(saveCampaign)
@@ -59,7 +52,7 @@ export default function MarketingPage() {
   useEffect(() => {
     if (loading) return
     if (!user) { router({ to: '/sign-in', replace: true }); return }
-    if (!isMaster) { router({ to: '/admin', replace: true }); return }
+    if (!canAccess) { router({ to: '/admin', replace: true }); return }
     refresh()
   }, [user, loading, profile])
 
@@ -173,7 +166,7 @@ export default function MarketingPage() {
         <div style="padding:24px;">${contentHtml}</div>
         <div style="padding:16px 24px;border-top:1px solid #334155;font-size:12px;color:#94a3b8;">
           <p style="margin:0 0 6px 0;">You're receiving this because you opted in to product updates from VibTribe.</p>
-          <p style="margin:0 0 6px 0;">VibTribe · Labhansh Garg, Founder · Labhansh.garg@outlook.com</p>
+          <p style="margin:0 0 6px 0;">VibTribe · India</p>
           <p style="margin:0;"><a href="#" style="color:#60a5fa;">Unsubscribe in one click</a> · <a href="#" style="color:#60a5fa;">Privacy</a></p>
         </div>
       </div>
@@ -205,54 +198,112 @@ export default function MarketingPage() {
           </button>
         </div>
 
-        {view === 'list' && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="font-semibold text-foreground">Campaigns</h2>
-              <button onClick={startNew} className="gradient-primary text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 glow-primary">
-                <Plus size={16} /> New Campaign
-              </button>
-            </div>
-            <div className="glass rounded-2xl border border-border overflow-hidden">
-              {loadingList ? (
-                <div className="p-12 text-center"><Loader2 className="animate-spin mx-auto text-primary" /></div>
-              ) : campaigns.length === 0 ? (
-                <div className="p-12 text-center text-muted-foreground text-sm">
-                  <Mail size={32} className="mx-auto mb-3 opacity-50" />
-                  No campaigns yet. Click "New Campaign" to compose your first one.
+        {view === 'list' && (() => {
+          const drafts = campaigns.filter(c => c.status === 'draft')
+          const sent = campaigns.filter(c => c.status !== 'draft')
+          const fmt = (d: string) => new Date(d).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })
+          return (
+            <div className="space-y-6">
+              <div className="flex items-center justify-end gap-2">
+                <button onClick={startNew} className="gradient-primary text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 glow-primary">
+                  <Plus size={16} /> New Campaign
+                </button>
+              </div>
+
+              {/* DRAFTS */}
+              <section>
+                <div className="flex items-center gap-2 mb-3">
+                  <Pencil size={14} className="text-muted-foreground" />
+                  <h2 className="font-semibold text-foreground text-sm uppercase tracking-wider">Drafts</h2>
+                  <span className="text-xs text-muted-foreground">({drafts.length})</span>
                 </div>
-              ) : campaigns.map(c => (
-                <div key={c.id} className="flex items-center gap-3 p-4 border-b border-border/30 hover:bg-muted/40">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-semibold text-foreground truncate">{c.subject}</p>
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
-                        c.status === 'sent' ? 'bg-vt-green/20 text-vt-green' :
-                        c.status === 'sending' ? 'bg-vt-amber/20 text-vt-amber' :
-                        c.status === 'failed' ? 'bg-red-500/20 text-red-400' :
-                        'bg-muted text-muted-foreground'
-                      }`}>{c.status}</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {c.status === 'sent' ? `${c.sent_count}/${c.total_recipients} delivered · ${c.failed_count} failed` : 'Draft'}
-                      {' · '}{new Date(c.created_at).toLocaleString('en-IN')}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    {c.status === 'draft' ? (
-                      <button onClick={() => editDraft(c)} className="px-3 py-1.5 text-xs rounded-lg bg-muted hover:bg-primary/20 hover:text-primary">Edit</button>
-                    ) : (
-                      <button onClick={() => openReport(c)} className="px-3 py-1.5 text-xs rounded-lg bg-muted hover:bg-primary/20 hover:text-primary flex items-center gap-1">
-                        <Eye size={12} /> Report
+                <div className="glass rounded-2xl border border-border overflow-hidden">
+                  {loadingList ? (
+                    <div className="p-8 text-center"><Loader2 className="animate-spin mx-auto text-primary" /></div>
+                  ) : drafts.length === 0 ? (
+                    <div className="p-8 text-center text-muted-foreground text-sm">No drafts. Click "New Campaign" to start one.</div>
+                  ) : drafts.map(c => (
+                    <div key={c.id} className="flex items-center gap-3 p-4 border-b border-border/30 hover:bg-muted/40">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground truncate">{c.subject || '(no subject)'}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Last edited {fmt(c.updated_at || c.created_at)} · by {c.created_by_name}
+                        </p>
+                      </div>
+                      <button onClick={() => editDraft(c)} title="Edit & send"
+                        className="p-2 rounded-lg bg-primary/15 text-primary hover:bg-primary/25" aria-label="Edit draft">
+                        <Pencil size={14} />
                       </button>
-                    )}
-                    <button onClick={() => handleDelete(c)} className="p-1.5 text-muted-foreground hover:text-red-400"><Trash2 size={14} /></button>
-                  </div>
+                      <button onClick={() => handleDelete(c)} className="p-2 text-muted-foreground hover:text-red-400" aria-label="Delete draft">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </section>
+
+              {/* SENT */}
+              <section>
+                <div className="flex items-center gap-2 mb-3">
+                  <Send size={14} className="text-muted-foreground" />
+                  <h2 className="font-semibold text-foreground text-sm uppercase tracking-wider">Sent Campaigns</h2>
+                  <span className="text-xs text-muted-foreground">({sent.length})</span>
+                </div>
+                <div className="glass rounded-2xl border border-border overflow-hidden">
+                  {loadingList ? null : sent.length === 0 ? (
+                    <div className="p-8 text-center text-muted-foreground text-sm">No campaigns sent yet.</div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead className="bg-muted/40 text-[11px] uppercase tracking-wider text-muted-foreground">
+                          <tr>
+                            <th className="text-left px-4 py-2 font-semibold">Subject</th>
+                            <th className="text-left px-4 py-2 font-semibold whitespace-nowrap">Sent</th>
+                            <th className="text-left px-4 py-2 font-semibold">Audience</th>
+                            <th className="text-left px-4 py-2 font-semibold">Sent by</th>
+                            <th className="text-left px-4 py-2 font-semibold whitespace-nowrap">Recipients</th>
+                            <th className="text-left px-4 py-2 font-semibold">Status</th>
+                            <th className="px-4 py-2"></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {sent.map(c => (
+                            <tr key={c.id} className="border-t border-border/30 hover:bg-muted/30">
+                              <td className="px-4 py-3 max-w-[260px] truncate font-medium text-foreground">{c.subject}</td>
+                              <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">{fmt(c.sent_at || c.updated_at || c.created_at)}</td>
+                              <td className="px-4 py-3 text-xs text-muted-foreground">Opted-in</td>
+                              <td className="px-4 py-3 text-xs text-muted-foreground">{c.created_by_name}</td>
+                              <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
+                                {c.sent_count}/{c.total_recipients}
+                                {c.failed_count > 0 && <span className="text-red-400"> · {c.failed_count} failed</span>}
+                              </td>
+                              <td className="px-4 py-3">
+                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
+                                  c.status === 'sent' ? 'bg-vt-green/20 text-vt-green' :
+                                  c.status === 'sending' ? 'bg-vt-amber/20 text-vt-amber' :
+                                  c.status === 'failed' ? 'bg-red-500/20 text-red-400' :
+                                  'bg-muted text-muted-foreground'
+                                }`}>{c.status}</span>
+                              </td>
+                              <td className="px-4 py-3 whitespace-nowrap">
+                                <button onClick={() => openReport(c)} className="px-2 py-1 text-xs rounded-lg bg-muted hover:bg-primary/20 hover:text-primary inline-flex items-center gap-1">
+                                  <Eye size={12} /> Report
+                                </button>
+                                <button onClick={() => handleDelete(c)} className="p-1.5 ml-1 text-muted-foreground hover:text-red-400 align-middle">
+                                  <Trash2 size={14} />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </section>
             </div>
-          </div>
-        )}
+          )
+        })()}
 
         {view === 'compose' && (
           <div className="grid lg:grid-cols-2 gap-6">
@@ -290,22 +341,15 @@ export default function MarketingPage() {
               <div className="glass rounded-2xl border border-border p-4 space-y-2">
                 <div className="flex items-center gap-2"><Users size={14} className="text-primary" />
                   <span className="text-xs font-semibold text-muted-foreground">Audience</span></div>
-                <select value={audience} onChange={e => setAudience(e.target.value as AudienceType)}
-                  className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm">
-                  {(Object.keys(AUDIENCE_LABELS) as AudienceType[]).map(k =>
-                    <option key={k} value={k}>{AUDIENCE_LABELS[k]}</option>)}
-                </select>
+                <div className="w-full px-3 py-2 bg-input/60 border border-border rounded-lg text-sm text-foreground flex items-center gap-2">
+                  <CheckCircle2 size={14} className="text-vt-green" />
+                  Opted-in users only
+                </div>
                 <p className="text-xs text-muted-foreground">
                   {audienceCount === null
                     ? 'Counting…'
                     : <>This will send to <strong className="text-foreground">{audienceCount.toLocaleString()}</strong> recipients.</>}
                 </p>
-                {audience === 'all' && (
-                  <div className="flex items-start gap-2 p-2 bg-red-500/10 border border-red-500/30 rounded-lg">
-                    <AlertTriangle size={14} className="text-red-400 mt-0.5 flex-shrink-0" />
-                    <p className="text-[11px] text-red-400">"All users" ignores opt-in status. This violates DPDP/GDPR — use only for service-critical announcements.</p>
-                  </div>
-                )}
               </div>
 
               <div className="flex gap-2">
