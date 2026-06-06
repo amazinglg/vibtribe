@@ -1,202 +1,109 @@
+# Marketing Overhaul + Permissions Tab
 
-# VibTribe Marketing Email System — Implementation Plan
-
-A production-grade, DPDP / GDPR / CAN-SPAM compliant promotional email system built on **Resend** with a dedicated subdomain `news.vibtribe.in`, an in-app admin composer, per-recipient sending (no BCC), consent capture at signup, a re-consent flow for existing users, and full audit logging.
-
----
-
-## 1. Prerequisites you (Labhansh) need to do once
-
-These cannot be automated and block the "send" step. Everything else I'll build regardless.
-
-1. **Create a Resend account** at resend.com (free tier = 3,000 emails/month, 100/day — enough to test; upgrade to Pro $20/mo before first real blast).
-2. **Add domain `news.vibtribe.in`** in Resend → Domains → Add Domain.
-3. **Add the DNS records Resend shows you** at your DNS provider (SPF TXT, 3× DKIM CNAMEs, optional MX, DMARC TXT). Since `vibtribe.in` is bought through Lovable, you'll add them in Project Settings → Domains → Configure → Manage DNS records.
-4. **Wait for Resend to show "Verified"** (5 min – 2 hrs typically).
-5. **Generate a Resend API key** (Resend → API Keys → Create → "Full access" or "Sending access" only).
-6. **Hand me the key** — I'll request it via `add_secret` as `RESEND_API_KEY`.
-
-While DNS propagates, I'll build everything else.
+Big batch of work. I'll group it so the highest-risk items (test send not arriving, permissions tab) get done first and you can verify incrementally.
 
 ---
 
-## 2. Sender identity (locked in)
+## Group A — Diagnose & fix the test send (Issue 1)
 
-| Setting | Value |
-|---|---|
-| From | `VibTribe <hello@news.vibtribe.in>` |
-| Reply-To | `Labhansh.garg@outlook.com` |
-| Marketing subdomain | `news.vibtribe.in` (isolated from `notify.www.vibtribe.in` which keeps OTP/auth pristine) |
-| Physical address in footer | "Labhansh Garg, Founder — VibTribe · Labhansh.garg@outlook.com" (per your instruction to use email as address for now) |
-| Grievance officer | Labhansh Garg, Founder · Labhansh.garg@outlook.com |
+Before any UI changes, find out why the test send to `labhanshgarg.3@gmail.com` didn't arrive.
 
----
+Likely root causes (in order of probability):
+1. **Resend `from` not on a verified domain** — `hello@news.vibtribe.in` may not yet be verified in Resend (domain added but DNS not propagated/verified). In that case Resend silently rejects.
+2. **Wrong/old `RESEND_API_KEY`** — rotated key not picked up by runtime.
+3. **Send returned 200 but Gmail filtered it to Spam/Promotions** — check spam folder first.
 
-## 3. Database changes (one migration)
-
-### 3a. Extend `user_profiles`
-- `marketing_consent_at` `timestamptz` — when the user opted in
-- `marketing_consent_ip` `text` — IP captured at consent
-- `marketing_consent_source` `text` — `'signup'`, `'reconsent_modal'`, `'profile_settings'`, `'imported_legacy'`
-
-### 3b. Backfill existing users
-The current default of `email_marketing_opt_in = true` is **not DPDP/GDPR-compliant** (consent must be explicit, not assumed). I'll:
-- Set `email_marketing_opt_in = false` for all existing users (the safe default)
-- Change the column default to `false` going forward
-- Existing users get a one-time **re-consent modal** the next time they open the app (see §6b)
-
-### 3c. New tables
-
-**`email_campaigns`**
-- id, subject, preheader, content_html, banner_image_url
-- audience_filter (jsonb — `{ type: 'opted_in' | 'all' | 'active_7d' | 'active_30d' }`)
-- status: `draft | sending | sent | failed`
-- created_by, created_at, sent_at, sent_count, failed_count, total_recipients
-
-**`email_campaign_recipients`**
-- campaign_id, user_id, email, status (`queued | sent | failed | unsubscribed_before_send`), resend_message_id, error_message, sent_at
-
-RLS: only `is_master_admin()` can read/write campaigns. Recipients writable only by `service_role`.
-
-### 3d. Reuse existing infra
-- Reuse the existing `email_unsubscribe_tokens` table and `/email/unsubscribe` route (already wired in your project).
-- Reuse `suppressed_emails` — campaign sender checks it before every send.
+What I'll do:
+- Query `email_campaigns` / recipients for the last test send result.
+- Hit Resend `/domains` via the API key to confirm `news.vibtribe.in` status.
+- Add proper server-side logging into `email_send_log` for marketing sends too (currently only stored on the campaign recipient row — easy to miss).
+- Surface the Resend API response (id / error) in the admin UI toast so future failures are visible.
 
 ---
 
-## 4. Server functions & routes (server-side only — keys never touch the client)
+## Group B — Compose UX overhaul (Issues 2, 3, 8, 9)
 
-| File | Purpose |
-|---|---|
-| `src/lib/marketing.functions.ts` | `createCampaign`, `updateCampaign`, `listCampaigns`, `getCampaign`, `sendTestEmail(campaignId, toEmail)`, `sendCampaign(campaignId)`, `getCampaignStats(id)`, `previewAudienceSize(filter)`. All gated by `requireSupabaseAuth` + `is_master_admin()` check. |
-| `src/lib/marketing.server.ts` | `resendSend()` helper — calls Resend HTTP API with `RESEND_API_KEY` from `process.env`, retries on 429, returns message_id. |
-| `src/routes/api/public/resend-webhook.ts` | Receives Resend bounce/complaint webhooks. On `bounced` / `complained` → insert into `suppressed_emails` + flip `email_marketing_opt_in = false`. Verifies signature via Resend's Svix headers. |
-| Reuse `src/routes/email/unsubscribe.ts` | Already handles one-click unsubscribe. I'll extend it to flip `email_marketing_opt_in = false` in `user_profiles` (in addition to current behavior). |
+**2. Rich-text editor instead of raw HTML.**
+Add a WYSIWYG editor (Tiptap — already React-friendly, small, no extra services). Toolbar: bold, italic, underline, strike, H1/H2/H3, bullet/numbered lists, link, alignment, font-size, text color, clear formatting. The editor produces clean HTML that we store in `content_html` — DB schema unchanged.
 
-### Sending engine (the heart of it)
-- Fetches recipients in **batches of 100**
-- Sends **one Resend API call per recipient** (no BCC) using their personal unsubscribe token in `List-Unsubscribe` header + footer
-- **Rate limit:** 10 emails/second (well under Resend's 100/sec Pro tier limit)
-- Each result logged to `email_campaign_recipients` immediately
-- Failures don't stop the batch
-- Long-running send is kicked off and runs to completion server-side; admin UI polls campaign status
+**3. Banner upload from device** (replaces URL field).
+- Create a `marketing-banners` Supabase Storage bucket (public read).
+- New file-picker control: user picks an image → uploaded → public URL stored in existing `banner_image_url` column. Show preview + "Remove" button. URL field goes away.
 
----
+**8. Audience dropdown cleanup.**
+- Default to **Opted-in users**.
+- Remove "All users (ignore opt-in)" and both "Active in last X days" options.
+- Only option left = Opted-in users. (I'll either keep the dropdown with one option locked, or just show a static label — I'll go with the static label, cleaner.)
+- Backend still validates `audience_filter.type === 'opted_in'`.
 
-## 5. Admin UI: `/admin/marketing`
+**9. Beautiful, professional email template** (Claude-inspired).
+Redesign `wrapCampaignHtml` in `marketing.server.ts`:
+- Light cream/off-white background (like Claude's `#f5f0e8`), not dark.
+- Brand header with VibTribe logo + wordmark.
+- Editorial serif headline pairing (e.g. Instrument Serif) with sans body.
+- Card-style CTA blocks if the user uses the editor's "Card" insert (stretch — basic version first).
+- Footer: clean divider, social icons (IG/X/LinkedIn placeholders the user can edit later), App Store + Play Store badges, physical address line, recipient email line, one-click unsubscribe + privacy.
 
-### Tab integration
-Current admin tabs need a 6th tab. I'll:
-- Shorten existing tab labels slightly (e.g. "Tickets" stays, "Users" stays)
-- Make the tab strip horizontally scrollable on mobile with snap-to-tab (single-line as you required on desktop)
-- Add **"Marketing"** tab, gated by `is_master_admin`
-
-### Page layout
-1. **Campaigns list** — table of past + draft campaigns with status, sent/failed counts, "View report" link
-2. **New Campaign button** → opens composer
-
-### Composer
-- Subject + preheader inputs
-- Optional banner image upload (to existing `chat-media` bucket, public)
-- Rich text editor (Tiptap — lightweight, already React-friendly) with image embedding, links, lists, headings, bold/italic
-- **Live preview pane** with Desktop / Mobile toggle (375px iframe for mobile)
-- Auto-appended footer preview (cannot be removed): VibTribe + physical address + unsubscribe link
-- Audience selector with **live count** ("This will send to 1,247 opted-in users")
-- **"Send test to me"** button — sends only to the logged-in admin's email
-- **"Send to all"** button — confirms with modal showing exact recipient count, then kicks off the send
-
-### Campaign report (post-send)
-- Total sent, failed, bounced, complained, unsubscribed
-- Searchable recipient table with per-row status
-- Re-send to failed (only)
+**4. Footer cleanup.**
+Remove `"VibTribe · Labhansh Garg, Founder · Labhansh.garg@outlook.com"` from email footer entirely. Keep it only in Terms and Privacy pages (already there — no change needed). Email footer will instead show: brand, short tagline, address city/country only ("VibTribe, India"), unsubscribe + privacy links.
 
 ---
 
-## 6. Consent flow — new users AND existing users
+## Group C — Campaign list & drafts (Issues 5, 7)
 
-### 6a. New signups (SignUpPage)
-- Add an **unchecked** checkbox: *"Send me product updates, tips, and announcements from VibTribe. You can unsubscribe anytime."*
-- On submit: if checked, write `email_marketing_opt_in=true`, `marketing_consent_at=now()`, `marketing_consent_ip=<client IP>`, `marketing_consent_source='signup'`
-- If unchecked, marketing stays off — transactional/auth emails (OTP, password reset, ticket replies) continue regardless
+**5. Sent campaigns log** on the main Marketing page:
+Table with columns: Subject · Sent date/time · Audience · Sent by (admin name) · Recipients · Sent/Failed counts · Status badge.
+Source: `email_campaigns` joined to `user_profiles` on `created_by`.
 
-### 6b. Existing users — one-time re-consent modal
-- On first app load after this ships, show a non-dismissible-but-skippable modal: *"We're updating how we handle email. Would you like to receive product updates and announcements? (You can change this anytime in Profile → Notifications.)"*
-- Three buttons: **Yes, subscribe me** / **No thanks** / **Decide later**
-- "Decide later" hides for 7 days then reappears (max 3 prompts, then defaults to opted-out)
-- Choice stored with `marketing_consent_source='reconsent_modal'`
-- **Until they answer, they receive zero marketing email** (the migration in §3b already set everyone to opt-out)
+**7. Drafts section + edit.**
+Above the "New Campaign" button add a "Drafts" panel (collapsible or always-visible list). Each draft row: subject · last edited · pencil edit icon · delete. Edit icon opens the compose view pre-filled. Editing is already supported by `saveCampaign` when `status='draft'`.
 
-### 6c. Profile settings
-- Already exists at Profile → Notifications. I'll add a clear "Promotional emails" toggle separated from transactional toggles, with timestamp display ("Subscribed on Jan 15, 2026").
+Layout: page becomes two stacked sections — **Drafts** (top) and **Sent campaigns** (below). "New Campaign" button stays top-right.
 
 ---
 
-## 7. Privacy Policy & Terms updates (`LegalContent.tsx`)
+## Group D — Admin access (Issue 6)
 
-Append to **Terms § 5a (Email Address)**:
-> "If you opted in, we may also send promotional emails (product updates, announcements, tips). You can unsubscribe via the link in every promotional email or from Profile → Notifications. Withdrawing consent does not affect security and transactional emails."
+Currently `/admin/marketing` checks `is_master_admin` only. Change so any user with the `admin` role *or* `is_master_admin` can access. I'll update both the route guard and the server-fn `assertMaster` → `assertAdminOrMaster` for marketing functions.
 
-Add new **Privacy Policy § I — Marketing Emails**:
-- What we send (product updates, tips, announcements)
-- Legal basis: your explicit consent (DPDP § 6, GDPR Art. 6(1)(a))
-- How to withdraw: one-click unsubscribe or Profile settings
-- We log consent timestamp + IP for compliance
-- Right to lodge complaint with India's Data Protection Board / your EU DPA
-- Sender: VibTribe, Labhansh Garg (Founder), Labhansh.garg@outlook.com
-
-Update **§ 13 Grievance Officer** — already lists you, no change needed.
-
-Update **TermsAcceptanceGate** — bumps the "Last updated" date forcing existing users to re-accept (covers the legal requirement of notifying users of material changes).
+(Permissions matrix in Group E will eventually drive this dynamically, but for now a simple role check.)
 
 ---
 
-## 8. Compliance checklist (what this satisfies)
+## Group E — Permissions tab (Issue 10) — biggest piece
 
-| Requirement | How it's met |
-|---|---|
-| **DPDP (India) — explicit consent** | Unchecked checkbox at signup; re-consent modal for existing users; timestamp+IP logged |
-| **DPDP — notice in plain language** | New Privacy § I, surfaced at signup and in re-consent modal |
-| **DPDP — grievance officer** | Already in Terms § 13 (you), email in every campaign footer |
-| **GDPR Art. 6(1)(a) — consent basis** | Same explicit opt-in flow; consent withdrawable in 1 click |
-| **GDPR Art. 7(3) — easy withdrawal** | One-click unsub link (no login) + profile toggle |
-| **CAN-SPAM — physical address** | Auto-appended in every campaign footer |
-| **CAN-SPAM — clear sender** | "VibTribe <hello@news.vibtribe.in>" |
-| **CAN-SPAM — honor opt-outs <10 days** | Immediate (DB flip on click) |
-| **CAN-SPAM — no deceptive subjects** | Admin UI shows compliance hint; can't be auto-enforced |
-| **Gmail/Yahoo 2024 — SPF+DKIM+DMARC** | Resend handles automatically once DNS verified |
-| **Gmail/Yahoo 2024 — one-click List-Unsubscribe header** | Set on every send |
-| **Gmail/Yahoo 2024 — <0.3% spam rate** | Achieved by opt-in-only + suppression list + per-recipient sends |
+I'll use cross-project tools to read the SVN project (`07a74aa3-...`) and study how its permission matrix is built (table structure, toggle logic, "Add Role" flow).
+
+Then for VibTribe:
+- New table `role_permissions` (role, section, can_view, can_write) + `app_roles` table (role name, is_system).
+- Seed with current sections: Dashboard, Users, Tribes, Status, Support, Marketing, Permissions.
+- New page `/admin/permissions` — master-admin-only — with the matrix UI (toggles per role per section, Add Role input).
+- Master Admin role hidden from the matrix.
+- Hard-coded guard: phone number `9826016419` (your account) is always treated as master admin, no UI can downgrade it. I'll add this as a DB-level check in the `has_role` / permission-check function.
+- Wire existing admin sections to read from `role_permissions` instead of hard-coded `is_master_admin` checks (gradual — I'll wire Marketing + Permissions itself first, others can follow).
+- New tab in admin nav after "Marketing" — visible only to master admin. Aligned in web + mobile (will update both the desktop tab bar and mobile menu).
 
 ---
 
-## 9. Build order (what I'll do, in order)
+## Order I'll ship
 
-1. **Migration** — schema changes, backfill existing users to opted-out, new tables, RLS, grants
-2. **Server functions** — `marketing.functions.ts` + Resend HTTP helper
-3. **Resend webhook route** — `/api/public/resend-webhook` for bounces/complaints
-4. **Extend unsubscribe route** — flip `email_marketing_opt_in` in `user_profiles`
-5. **Admin UI** — `/admin/marketing` page + composer + audience picker + send flow + report
-6. **Admin tab strip** — fit the new "Marketing" tab on web + mobile (single-line, scrollable on small screens)
-7. **Signup checkbox** — consent capture on SignUpPage
-8. **Re-consent modal** — `MarketingConsentGate` component shown after login for users without `marketing_consent_at`
-9. **Profile toggle** — add to existing Profile → Notifications
-10. **Legal pages** — update Terms § 5a + add Privacy § I + bump "Last updated"
-11. **Request `RESEND_API_KEY`** from you as the final step (after DNS verified)
+1. **Group A** — diagnose test send, report findings, fix.
+2. **Group D** — quick admin role gate fix.
+3. **Group C + B(8)** — drafts panel, sent log, audience cleanup (smaller wins).
+4. **Group B(2,3,4,9)** — editor, upload, template redesign.
+5. **Group E** — permissions tab (largest piece, done last).
+
+I'll check in after Groups A–D so you can verify, then continue to B(2-4,9) and E.
 
 ---
 
-## 10. What I'll confirm at the end (per your final-output checklist)
+## One question before I start
 
-1. ✅ Sender: `VibTribe <hello@news.vibtribe.in>`
-2. ⏳ SPF/DKIM/DMARC: handled by Resend; verified once you complete §1 steps 2–4
-3. ✅ Unsubscribe: footer link → `/email/unsubscribe?token=...` → flips `email_marketing_opt_in=false` + inserts into `suppressed_emails` (instant, no login required)
-4. ✅ Logs: `email_campaigns` (campaign metadata) + `email_campaign_recipients` (per-recipient outcomes, errors, Resend message IDs)
-5. ✅ DPDP/GDPR/CAN-SPAM compliant (see §8 matrix)
-6. ✅ Signup: unchecked checkbox + IP/timestamp; existing users: 1-time re-consent modal w/ 3-prompt cap then default-off
+**Group E hard-coded master admin pin** — you said your account `9826016419` should always have master admin. I see two safer ways to enforce that:
 
----
+- **(a) DB trigger** that prevents `is_master_admin = false` or role downgrades on the user record matching that phone. Tamper-proof even via SQL.
+- **(b) Application-level** — UI just hides controls for that user, and server fn refuses updates.
 
-## Estimated work
-~90–120 minutes of build time. I'll batch the migration first (needs your approval), then ship the rest in parallel.
+I'll do **both (a)+(b)** unless you say otherwise — belt and suspenders.
 
-**Approve this plan and I'll start with the migration.** The `RESEND_API_KEY` request will come last so you have time to do the DNS setup in parallel.
+If this plan looks good, reply "go" and I'll start with Group A.
