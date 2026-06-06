@@ -5,8 +5,8 @@ import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
 import Underline from '@tiptap/extension-underline'
 import TextAlign from '@tiptap/extension-text-align'
-import TextStyle from '@tiptap/extension-text-style'
-import Color from '@tiptap/extension-color'
+import { TextStyle } from '@tiptap/extension-text-style'
+import { Color } from '@tiptap/extension-color'
 import {
   Bold, Italic, Underline as UnderlineIcon, Strikethrough,
   Heading1, Heading2, Heading3, List, ListOrdered, Quote,
