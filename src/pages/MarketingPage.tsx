@@ -341,22 +341,15 @@ export default function MarketingPage() {
               <div className="glass rounded-2xl border border-border p-4 space-y-2">
                 <div className="flex items-center gap-2"><Users size={14} className="text-primary" />
                   <span className="text-xs font-semibold text-muted-foreground">Audience</span></div>
-                <select value={audience} onChange={e => setAudience(e.target.value as AudienceType)}
-                  className="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm">
-                  {(Object.keys(AUDIENCE_LABELS) as AudienceType[]).map(k =>
-                    <option key={k} value={k}>{AUDIENCE_LABELS[k]}</option>)}
-                </select>
+                <div className="w-full px-3 py-2 bg-input/60 border border-border rounded-lg text-sm text-foreground flex items-center gap-2">
+                  <CheckCircle2 size={14} className="text-vt-green" />
+                  Opted-in users only
+                </div>
                 <p className="text-xs text-muted-foreground">
                   {audienceCount === null
                     ? 'Counting…'
                     : <>This will send to <strong className="text-foreground">{audienceCount.toLocaleString()}</strong> recipients.</>}
                 </p>
-                {audience === 'all' && (
-                  <div className="flex items-start gap-2 p-2 bg-red-500/10 border border-red-500/30 rounded-lg">
-                    <AlertTriangle size={14} className="text-red-400 mt-0.5 flex-shrink-0" />
-                    <p className="text-[11px] text-red-400">"All users" ignores opt-in status. This violates DPDP/GDPR — use only for service-critical announcements.</p>
-                  </div>
-                )}
               </div>
 
               <div className="flex gap-2">
