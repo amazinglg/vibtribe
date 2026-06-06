@@ -182,7 +182,7 @@ const en = {
   'profile.tab.devices': 'Devices',
   'profile.tab.themes': 'Themes',
   'profile.tab.blocked': 'Blocked Users',
-  'profile.tab.more': 'More',
+  'profile.tab.more': 'Language',
 
   // misc
   'app.loading': 'Loading VibTribe...',
@@ -355,7 +355,7 @@ const hi: typeof en = {
   'profile.tab.devices': 'डिवाइसेज़',
   'profile.tab.themes': 'थीम्स',
   'profile.tab.blocked': 'ब्लॉक किए उपयोगकर्ता',
-  'profile.tab.more': 'और',
+  'profile.tab.more': 'भाषा',
 
   'app.loading': 'VibTribe लोड हो रहा है...',
 };

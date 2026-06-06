@@ -19,6 +19,10 @@ import { supabase } from '@/integrations/supabase/client'
 
 type AudienceType = 'opted_in'
 
+const BRAND_LOGO_URL = '/assets/images/app_logo.png'
+const BRAND_SITE_URL = 'https://www.vibtribe.in/'
+const BRAND_HELP_EMAIL = 'help.vibtribe.in@gmail.com'
+
 export default function MarketingPage() {
   const router = useNavigate()
   const { user, profile, loading, isAdmin } = useAuth()
@@ -49,6 +53,7 @@ export default function MarketingPage() {
   const [saving, setSaving] = useState(false)
   const [sending, setSending] = useState(false)
   const [confirmSend, setConfirmSend] = useState(false)
+  const [confirmDeleteCampaign, setConfirmDeleteCampaign] = useState<any | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [uploadingBanner, setUploadingBanner] = useState(false)
 
@@ -189,11 +194,12 @@ export default function MarketingPage() {
   }
 
   async function handleDelete(c: any) {
-    if (!confirm(`Delete campaign "${c.subject}"? This cannot be undone.`)) return
     const prev = campaigns
     setCampaigns(cs => cs.filter(x => x.id !== c.id)) // optimistic
+    setConfirmDeleteCampaign(null)
     try {
-      await deleteFn({ data: { id: c.id } })
+      const r = await deleteFn({ data: { id: c.id } })
+      if (!r?.deleted) throw new Error('Campaign was not deleted. Please refresh and try again.')
       toast.success('Deleted')
       await refresh()
     } catch (e: any) {
@@ -205,10 +211,29 @@ export default function MarketingPage() {
   const previewHtml = useMemo(() => {
     return `<!doctype html><html><body style="margin:0;padding:32px 16px;font-family:-apple-system,sans-serif;background:#f5f0e8;color:#1f1d1a;">
       <div style="max-width:640px;margin:0 auto;">
-        <div style="padding:0 4px 18px 4px;font-family:Georgia,serif;font-size:22px;font-weight:600;color:#1f1d1a;">VibTribe</div>
+        <div style="padding:0 4px 18px 4px;display:flex;align-items:center;gap:10px;">
+          <img src="${BRAND_LOGO_URL}" alt="VibTribe logo" style="width:34px;height:34px;border-radius:10px;display:block;" />
+          <span style="font-family:Georgia,serif;font-size:24px;font-weight:700;color:#1f1d1a;">VibTribe</span>
+        </div>
         <div style="background:#ffffff;border:1px solid #e8e1d5;border-radius:14px;overflow:hidden;">
           ${bannerUrl ? `<img src="${bannerUrl}" style="display:block;width:100%;" />` : ''}
-          <div style="padding:36px;font-size:16px;line-height:1.7;">${contentHtml}</div>
+          <div style="padding:36px;font-size:16px;line-height:1.7;">
+            ${contentHtml}
+            <div style="margin-top:32px;padding-top:24px;border-top:1px solid #efe7dc;">
+              <p style="margin:0 0 14px 0;font-family:Georgia,serif;font-size:22px;line-height:1.25;font-weight:700;color:#1f1d1a;">Thanks,</p>
+              <div style="display:flex;align-items:center;gap:14px;">
+                <img src="${BRAND_LOGO_URL}" alt="VibTribe logo" style="width:46px;height:46px;border-radius:13px;display:block;" />
+                <div>
+                  <p style="margin:0;font-size:18px;line-height:1.2;font-weight:800;color:#1f1d1a;">VibTribe</p>
+                  <p style="margin:4px 0 0 0;font-size:13px;line-height:1.4;color:#7a7468;">Where your vibe finds its tribe</p>
+                </div>
+              </div>
+              <p style="margin:16px 0 0 0;font-size:13px;line-height:1.8;color:#7a7468;">
+                <a href="${BRAND_SITE_URL}" style="color:#1f1d1a;text-decoration:none;font-weight:700;">www.vibtribe.in</a><br />
+                Email - <a href="mailto:${BRAND_HELP_EMAIL}" style="color:#1f1d1a;text-decoration:none;font-weight:700;">${BRAND_HELP_EMAIL}</a>
+              </p>
+            </div>
+          </div>
         </div>
         <div style="padding:22px 8px 0 8px;font-size:12px;line-height:1.7;color:#7a7468;">
           <p style="margin:0 0 6px 0;">You're receiving this because you opted in to product updates from VibTribe.</p>
@@ -280,7 +305,7 @@ export default function MarketingPage() {
                         className="p-2 rounded-lg bg-primary/15 text-primary hover:bg-primary/25" aria-label="Edit draft">
                         <Pencil size={14} />
                       </button>
-                      <button onClick={() => handleDelete(c)} className="p-2 text-muted-foreground hover:text-red-400" aria-label="Delete draft">
+                      <button onClick={() => setConfirmDeleteCampaign(c)} className="p-2 text-muted-foreground hover:text-red-400" aria-label="Delete draft">
                         <Trash2 size={14} />
                       </button>
                     </div>
@@ -335,7 +360,7 @@ export default function MarketingPage() {
                                 <button onClick={() => openReport(c)} className="px-2 py-1 text-xs rounded-lg bg-muted hover:bg-primary/20 hover:text-primary inline-flex items-center gap-1">
                                   <Eye size={12} /> Report
                                 </button>
-                                <button onClick={() => handleDelete(c)} className="p-1.5 ml-1 text-muted-foreground hover:text-red-400 align-middle">
+                                <button onClick={() => setConfirmDeleteCampaign(c)} className="p-1.5 ml-1 text-muted-foreground hover:text-red-400 align-middle">
                                   <Trash2 size={14} />
                                 </button>
                               </td>
@@ -514,6 +539,26 @@ export default function MarketingPage() {
                 <button onClick={() => setConfirmSend(false)} className="flex-1 px-4 py-2 bg-muted rounded-xl text-sm font-semibold">Cancel</button>
                 <button onClick={handleSendAll} disabled={sending} className="flex-1 gradient-primary text-white rounded-xl text-sm font-semibold py-2 glow-primary">
                   {sending ? 'Sending…' : 'Send Now'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {confirmDeleteCampaign && (
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={() => setConfirmDeleteCampaign(null)}>
+            <div className="glass-strong rounded-2xl border border-border p-6 max-w-md w-full" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center gap-3 mb-3">
+                <Trash2 size={24} className="text-vt-red" />
+                <h3 className="font-bold text-lg text-foreground">Delete this campaign?</h3>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">
+                “{confirmDeleteCampaign.subject || '(no subject)'}” will be permanently removed. This cannot be undone.
+              </p>
+              <div className="flex gap-2">
+                <button onClick={() => setConfirmDeleteCampaign(null)} className="flex-1 px-4 py-2 bg-muted rounded-xl text-sm font-semibold">Cancel</button>
+                <button onClick={() => handleDelete(confirmDeleteCampaign)} className="flex-1 bg-vt-red/20 text-vt-red border border-vt-red/40 hover:bg-vt-red/30 rounded-xl text-sm font-semibold py-2">
+                  Delete forever
                 </button>
               </div>
             </div>

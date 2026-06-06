@@ -372,7 +372,7 @@ export default function ProfileContent() {
     { key: 'themes', label: t('profile.tab.themes'), icon: <Palette size={16} /> },
     { key: 'blocked', label: t('profile.tab.blocked'), icon: <Ban size={16} /> },
     { key: 'support', label: 'Support', icon: <Headphones size={16} /> },
-    { key: 'more', label: t('profile.tab.more'), icon: <MoreVertical size={16} /> },
+    { key: 'more', label: t('profile.tab.more'), icon: <Globe size={16} /> },
   ];
 
   const handleSaveProfile = async () => {
