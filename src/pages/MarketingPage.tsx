@@ -53,6 +53,7 @@ export default function MarketingPage() {
   const [saving, setSaving] = useState(false)
   const [sending, setSending] = useState(false)
   const [confirmSend, setConfirmSend] = useState(false)
+  const [confirmDeleteCampaign, setConfirmDeleteCampaign] = useState<any | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [uploadingBanner, setUploadingBanner] = useState(false)
 
@@ -193,9 +194,9 @@ export default function MarketingPage() {
   }
 
   async function handleDelete(c: any) {
-    if (!confirm(`Delete campaign "${c.subject}"? This cannot be undone.`)) return
     const prev = campaigns
     setCampaigns(cs => cs.filter(x => x.id !== c.id)) // optimistic
+    setConfirmDeleteCampaign(null)
     try {
       const r = await deleteFn({ data: { id: c.id } })
       if (!r?.deleted) throw new Error('Campaign was not deleted. Please refresh and try again.')
@@ -538,6 +539,26 @@ export default function MarketingPage() {
                 <button onClick={() => setConfirmSend(false)} className="flex-1 px-4 py-2 bg-muted rounded-xl text-sm font-semibold">Cancel</button>
                 <button onClick={handleSendAll} disabled={sending} className="flex-1 gradient-primary text-white rounded-xl text-sm font-semibold py-2 glow-primary">
                   {sending ? 'Sending…' : 'Send Now'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {confirmDeleteCampaign && (
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={() => setConfirmDeleteCampaign(null)}>
+            <div className="glass-strong rounded-2xl border border-border p-6 max-w-md w-full" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center gap-3 mb-3">
+                <Trash2 size={24} className="text-vt-red" />
+                <h3 className="font-bold text-lg text-foreground">Delete this campaign?</h3>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">
+                “{confirmDeleteCampaign.subject || '(no subject)'}” will be permanently removed. This cannot be undone.
+              </p>
+              <div className="flex gap-2">
+                <button onClick={() => setConfirmDeleteCampaign(null)} className="flex-1 px-4 py-2 bg-muted rounded-xl text-sm font-semibold">Cancel</button>
+                <button onClick={() => handleDelete(confirmDeleteCampaign)} className="flex-1 bg-vt-red/20 text-vt-red border border-vt-red/40 hover:bg-vt-red/30 rounded-xl text-sm font-semibold py-2">
+                  Delete forever
                 </button>
               </div>
             </div>
