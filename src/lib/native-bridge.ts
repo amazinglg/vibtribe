@@ -160,6 +160,44 @@ export async function requestNativeCameraPermission(): Promise<'granted' | 'deni
 }
 
 /**
+ * Request native microphone permission (Android RECORD_AUDIO).
+ * The Capacitor Camera plugin does not cover RECORD_AUDIO, so we trigger
+ * the OS prompt by calling getUserMedia({ audio: true }) which the WebView
+ * forwards via onPermissionRequest (granted by MainActivity).
+ */
+export async function requestNativeMicrophonePermission(): Promise<'granted' | 'denied' | 'prompt'> {
+  if (!isNativeWrapper()) return 'prompt';
+  if (!navigator?.mediaDevices?.getUserMedia) return 'denied';
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    stream.getTracks().forEach((t) => t.stop());
+    return 'granted';
+  } catch (e) {
+    console.warn('[VibTribe] mic permission denied', e);
+    return 'denied';
+  }
+}
+
+/**
+ * Request native storage / photos permission. On Android 13+ this maps to
+ * READ_MEDIA_IMAGES via the Capacitor Camera plugin's `photos` permission;
+ * on older Android it requests READ_EXTERNAL_STORAGE.
+ */
+export async function requestNativeStoragePermission(): Promise<'granted' | 'denied' | 'prompt'> {
+  if (!isNativeWrapper()) return 'prompt';
+  try {
+    const { Camera } = await import('@capacitor/camera');
+    const res = await Camera.requestPermissions({ permissions: ['photos'] });
+    // Plugin returns { photos: 'granted' | 'denied' | 'limited' }
+    const photos = (res as { photos?: string }).photos;
+    return (photos === 'granted' || photos === 'limited') ? 'granted' : 'denied';
+  } catch (e) {
+    console.error('[VibTribe] Storage/photos permission failed', e);
+    return 'denied';
+  }
+}
+
+/**
  * Request native contacts permission via the community Contacts plugin.
  * No-op in browser (web platform has no contacts API).
  */
