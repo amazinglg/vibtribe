@@ -36,3 +36,15 @@ android/app/google-services.json
 
 # Local build artifacts
 android/buildlog.txt
+
+# =========================
+# ANDROID SIGNING (CRITICAL)
+# =========================
+android/keystore.properties
+android/app/build.gradle.signed-backup
+
+# Local signing/build backups
+Stable Builds/
+
+# APK output (only if you don't want APKs in repo)
+public/downloads/*.apk
