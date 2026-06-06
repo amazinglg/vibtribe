@@ -233,3 +233,20 @@ export default function PermissionsPage() {
     </AppLayout>
   )
 }
+
+function ToggleWithLabel({ label, allowed, disabled, onClick }: { label: string; allowed: boolean; disabled: boolean; onClick: () => void }) {
+  return (
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={onClick}
+        className={`relative w-10 h-6 rounded-full transition-all ${allowed ? 'bg-vt-green' : 'bg-muted'} ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:opacity-80'}`}
+        aria-label={`${allowed ? 'Disable' : 'Enable'} ${label}`}
+      >
+        <span className={`absolute top-0.5 ${allowed ? 'right-0.5' : 'left-0.5'} w-5 h-5 bg-white rounded-full shadow transition-all`} />
+      </button>
+      <span className="text-xs text-muted-foreground w-10 text-left">{label}</span>
+    </div>
+  )
+}
