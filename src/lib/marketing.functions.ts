@@ -155,7 +155,7 @@ export const saveCampaign = createServerFn({ method: 'POST' })
 export const previewAudienceSize = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { audienceFilter: AudienceFilter }) =>
-    z.object({ audienceFilter: z.object({ type: z.enum(['opted_in', 'all', 'active_7d', 'active_30d']) }) }).parse(d),
+    z.object({ audienceFilter: z.object({ type: z.literal('opted_in') }) }).parse(d),
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId)
