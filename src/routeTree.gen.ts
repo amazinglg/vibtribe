@@ -24,6 +24,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as BlogVibtribeVsSignalVsTelegramRouteImport } from './routes/blog.vibtribe-vs-signal-vs-telegram'
+import { Route as AdminMarketingRouteImport } from './routes/admin.marketing'
 import { Route as TribeJoinCodeRouteImport } from './routes/tribe.join.$code'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as ApiPublicResendWebhookRouteImport } from './routes/api/public/resend-webhook'
@@ -112,6 +113,11 @@ const BlogVibtribeVsSignalVsTelegramRoute =
     path: '/blog/vibtribe-vs-signal-vs-telegram',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AdminMarketingRoute = AdminMarketingRouteImport.update({
+  id: '/marketing',
+  path: '/marketing',
+  getParentRoute: () => AdminRoute,
+} as any)
 const TribeJoinCodeRoute = TribeJoinCodeRouteImport.update({
   id: '/tribe/join/$code',
   path: '/tribe/join/$code',
@@ -184,6 +190,7 @@ export interface FileRoutesByFullPath {
   '/status-screen': typeof StatusScreenRoute
   '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/admin/marketing': typeof AdminMarketingRoute
   '/blog/vibtribe-vs-signal-vs-telegram': typeof BlogVibtribeVsSignalVsTelegramRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/admin/': typeof AdminIndexRoute
@@ -211,6 +218,7 @@ export interface FileRoutesByTo {
   '/status-screen': typeof StatusScreenRoute
   '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/admin/marketing': typeof AdminMarketingRoute
   '/blog/vibtribe-vs-signal-vs-telegram': typeof BlogVibtribeVsSignalVsTelegramRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/admin': typeof AdminIndexRoute
@@ -240,6 +248,7 @@ export interface FileRoutesById {
   '/status-screen': typeof StatusScreenRoute
   '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/admin/marketing': typeof AdminMarketingRoute
   '/blog/vibtribe-vs-signal-vs-telegram': typeof BlogVibtribeVsSignalVsTelegramRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/admin/': typeof AdminIndexRoute
@@ -270,6 +279,7 @@ export interface FileRouteTypes {
     | '/status-screen'
     | '/terms'
     | '/unsubscribe'
+    | '/admin/marketing'
     | '/blog/vibtribe-vs-signal-vs-telegram'
     | '/email/unsubscribe'
     | '/admin/'
@@ -297,6 +307,7 @@ export interface FileRouteTypes {
     | '/status-screen'
     | '/terms'
     | '/unsubscribe'
+    | '/admin/marketing'
     | '/blog/vibtribe-vs-signal-vs-telegram'
     | '/email/unsubscribe'
     | '/admin'
@@ -325,6 +336,7 @@ export interface FileRouteTypes {
     | '/status-screen'
     | '/terms'
     | '/unsubscribe'
+    | '/admin/marketing'
     | '/blog/vibtribe-vs-signal-vs-telegram'
     | '/email/unsubscribe'
     | '/admin/'
@@ -475,6 +487,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogVibtribeVsSignalVsTelegramRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/marketing': {
+      id: '/admin/marketing'
+      path: '/marketing'
+      fullPath: '/admin/marketing'
+      preLoaderRoute: typeof AdminMarketingRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/tribe/join/$code': {
       id: '/tribe/join/$code'
       path: '/tribe/join/$code'
@@ -556,11 +575,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminMarketingRoute: typeof AdminMarketingRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminUserUserIdRoute: typeof AdminUserUserIdRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminMarketingRoute: AdminMarketingRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminUserUserIdRoute: AdminUserUserIdRoute,
 }
