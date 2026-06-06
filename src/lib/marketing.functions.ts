@@ -316,13 +316,16 @@ export const recordMarketingConsent = createServerFn({ method: 'POST' })
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { getRequestHeader } = await import('@tanstack/react-start/server')
     let ip = 'unknown'
     try {
-      ip = getRequestHeader('x-forwarded-for')?.split(',')[0]?.trim()
-        || getRequestHeader('cf-connecting-ip')
-        || 'unknown'
-    } catch { /* ignore */ }
+      const mod: any = await import('@tanstack/react-start')
+      const getHeader = mod.getRequestHeader
+      if (typeof getHeader === 'function') {
+        ip = (getHeader('x-forwarded-for') as string | undefined)?.split(',')[0]?.trim()
+          || (getHeader('cf-connecting-ip') as string | undefined)
+          || 'unknown'
+      }
+    } catch { /* ignore — IP capture is best-effort */ }
 
     await supabaseAdmin
       .from('user_profiles')
