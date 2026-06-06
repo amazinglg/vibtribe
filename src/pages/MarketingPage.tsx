@@ -74,12 +74,23 @@ export default function MarketingPage() {
   }
 
   async function editDraft(c: any) {
-    setEditingId(c.id)
-    setSubject(c.subject || ''); setPreheader(c.preheader || '')
-    setContentHtml(c.content_html || ''); setBannerUrl(c.banner_image_url || '')
-    setAudience((c.audience_filter?.type as AudienceType) || 'opted_in')
-    setAudienceCount(null)
-    setView('compose')
+    // Always fetch the latest version from the server so we don't open a
+    // stale (already-deleted) draft and then fail on send with "Campaign not found".
+    try {
+      const r = await getFn({ data: { id: c.id } })
+      const fresh = r.campaign
+      setEditingId(fresh.id)
+      setSubject(fresh.subject || '')
+      setPreheader(fresh.preheader || '')
+      setContentHtml(fresh.content_html || '')
+      setBannerUrl(fresh.banner_image_url || '')
+      setAudience((fresh.audience_filter?.type as AudienceType) || 'opted_in')
+      setAudienceCount(null)
+      setView('compose')
+    } catch (e: any) {
+      toast.error(e?.message || 'Could not open draft — it may have been deleted')
+      await refresh()
+    }
   }
 
   async function refreshAudience() {
