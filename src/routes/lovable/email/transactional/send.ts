@@ -59,6 +59,24 @@ export const Route = createFileRoute("/lovable/email/transactional/send")({
           return Response.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
+        // Admin-only gate: only admins / master admin may trigger transactional
+        // emails to caller-supplied recipients via this endpoint. Prevents
+        // abuse of the platform's verified sending domain.
+        const { data: callerProfile, error: profileError } = await supabase
+          .from('user_profiles')
+          .select('role, is_master_admin')
+          .eq('id', user.id)
+          .maybeSingle()
+        if (
+          profileError ||
+          !callerProfile ||
+          (callerProfile.role !== 'admin' &&
+            callerProfile.role !== 'master_admin' &&
+            !callerProfile.is_master_admin)
+        ) {
+          return Response.json({ error: 'Forbidden' }, { status: 403 })
+        }
+
         // Parse request body
         let templateName: string
         let recipientEmail: string
