@@ -19,6 +19,10 @@ import { supabase } from '@/integrations/supabase/client'
 
 type AudienceType = 'opted_in'
 
+const BRAND_LOGO_URL = '/assets/images/app_logo.png'
+const BRAND_SITE_URL = 'https://www.vibtribe.in/'
+const BRAND_HELP_EMAIL = 'help.vibtribe.in@gmail.com'
+
 export default function MarketingPage() {
   const router = useNavigate()
   const { user, profile, loading, isAdmin } = useAuth()
@@ -193,7 +197,8 @@ export default function MarketingPage() {
     const prev = campaigns
     setCampaigns(cs => cs.filter(x => x.id !== c.id)) // optimistic
     try {
-      await deleteFn({ data: { id: c.id } })
+      const r = await deleteFn({ data: { id: c.id } })
+      if (!r?.deleted) throw new Error('Campaign was not deleted. Please refresh and try again.')
       toast.success('Deleted')
       await refresh()
     } catch (e: any) {
@@ -205,10 +210,29 @@ export default function MarketingPage() {
   const previewHtml = useMemo(() => {
     return `<!doctype html><html><body style="margin:0;padding:32px 16px;font-family:-apple-system,sans-serif;background:#f5f0e8;color:#1f1d1a;">
       <div style="max-width:640px;margin:0 auto;">
-        <div style="padding:0 4px 18px 4px;font-family:Georgia,serif;font-size:22px;font-weight:600;color:#1f1d1a;">VibTribe</div>
+        <div style="padding:0 4px 18px 4px;display:flex;align-items:center;gap:10px;">
+          <img src="${BRAND_LOGO_URL}" alt="VibTribe logo" style="width:34px;height:34px;border-radius:10px;display:block;" />
+          <span style="font-family:Georgia,serif;font-size:24px;font-weight:700;color:#1f1d1a;">VibTribe</span>
+        </div>
         <div style="background:#ffffff;border:1px solid #e8e1d5;border-radius:14px;overflow:hidden;">
           ${bannerUrl ? `<img src="${bannerUrl}" style="display:block;width:100%;" />` : ''}
-          <div style="padding:36px;font-size:16px;line-height:1.7;">${contentHtml}</div>
+          <div style="padding:36px;font-size:16px;line-height:1.7;">
+            ${contentHtml}
+            <div style="margin-top:32px;padding-top:24px;border-top:1px solid #efe7dc;">
+              <p style="margin:0 0 14px 0;font-family:Georgia,serif;font-size:22px;line-height:1.25;font-weight:700;color:#1f1d1a;">Thanks,</p>
+              <div style="display:flex;align-items:center;gap:14px;">
+                <img src="${BRAND_LOGO_URL}" alt="VibTribe logo" style="width:46px;height:46px;border-radius:13px;display:block;" />
+                <div>
+                  <p style="margin:0;font-size:18px;line-height:1.2;font-weight:800;color:#1f1d1a;">VibTribe</p>
+                  <p style="margin:4px 0 0 0;font-size:13px;line-height:1.4;color:#7a7468;">Where your vibe finds its tribe</p>
+                </div>
+              </div>
+              <p style="margin:16px 0 0 0;font-size:13px;line-height:1.8;color:#7a7468;">
+                <a href="${BRAND_SITE_URL}" style="color:#1f1d1a;text-decoration:none;font-weight:700;">www.vibtribe.in</a><br />
+                Email - <a href="mailto:${BRAND_HELP_EMAIL}" style="color:#1f1d1a;text-decoration:none;font-weight:700;">${BRAND_HELP_EMAIL}</a>
+              </p>
+            </div>
+          </div>
         </div>
         <div style="padding:22px 8px 0 8px;font-size:12px;line-height:1.7;color:#7a7468;">
           <p style="margin:0 0 6px 0;">You're receiving this because you opted in to product updates from VibTribe.</p>
