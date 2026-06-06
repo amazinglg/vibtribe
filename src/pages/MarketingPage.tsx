@@ -153,10 +153,16 @@ export default function MarketingPage() {
 
   async function handleDelete(c: any) {
     if (!confirm(`Delete campaign "${c.subject}"? This cannot be undone.`)) return
+    const prev = campaigns
+    setCampaigns(cs => cs.filter(x => x.id !== c.id)) // optimistic
     try {
       await deleteFn({ data: { id: c.id } })
-      toast.success('Deleted'); refresh()
-    } catch (e: any) { toast.error(e?.message) }
+      toast.success('Deleted')
+      await refresh()
+    } catch (e: any) {
+      setCampaigns(prev)
+      toast.error(e?.message || 'Delete failed')
+    }
   }
 
   const previewHtml = useMemo(() => {
