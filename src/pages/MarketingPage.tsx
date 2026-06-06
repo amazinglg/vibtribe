@@ -14,6 +14,8 @@ import {
   listCampaigns, saveCampaign, sendTestEmail, sendCampaign,
   previewAudienceSize, deleteCampaign, getCampaign,
 } from '@/lib/marketing.functions'
+import RichTextEditor from '@/components/RichTextEditor'
+import { supabase } from '@/integrations/supabase/client'
 
 type AudienceType = 'opted_in'
 
@@ -48,6 +50,31 @@ export default function MarketingPage() {
   const [sending, setSending] = useState(false)
   const [confirmSend, setConfirmSend] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [uploadingBanner, setUploadingBanner] = useState(false)
+
+  async function handleBannerFile(file: File) {
+    if (!file) return
+    if (!file.type.startsWith('image/')) { toast.error('Please pick an image file'); return }
+    if (file.size > 4 * 1024 * 1024) { toast.error('Image too large (max 4 MB)'); return }
+    setUploadingBanner(true)
+    try {
+      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '')
+      const path = `${user?.id || 'anon'}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
+      const { error: upErr } = await supabase.storage
+        .from('marketing-banners')
+        .upload(path, file, { contentType: file.type, upsert: false })
+      if (upErr) throw upErr
+      // 10-year signed URL (long enough that emails stay valid indefinitely)
+      const { data: signed, error: sErr } = await supabase.storage
+        .from('marketing-banners')
+        .createSignedUrl(path, 60 * 60 * 24 * 365 * 10)
+      if (sErr || !signed?.signedUrl) throw sErr || new Error('Could not generate URL')
+      setBannerUrl(signed.signedUrl)
+      toast.success('Banner uploaded')
+    } catch (e: any) {
+      toast.error(e?.message || 'Upload failed')
+    } finally { setUploadingBanner(false) }
+  }
 
   useEffect(() => {
     if (loading) return
@@ -177,14 +204,17 @@ export default function MarketingPage() {
   }
 
   const previewHtml = useMemo(() => {
-    return `<!doctype html><html><body style="margin:0;font-family:-apple-system,sans-serif;background:#0f172a;color:#e2e8f0;">
-      <div style="max-width:600px;margin:0 auto;background:#1e293b;border-radius:12px;overflow:hidden;">
-        ${bannerUrl ? `<img src="${bannerUrl}" style="display:block;width:100%;" />` : ''}
-        <div style="padding:24px;">${contentHtml}</div>
-        <div style="padding:16px 24px;border-top:1px solid #334155;font-size:12px;color:#94a3b8;">
+    return `<!doctype html><html><body style="margin:0;padding:32px 16px;font-family:-apple-system,sans-serif;background:#f5f0e8;color:#1f1d1a;">
+      <div style="max-width:640px;margin:0 auto;">
+        <div style="padding:0 4px 18px 4px;font-family:Georgia,serif;font-size:22px;font-weight:600;color:#1f1d1a;">VibTribe</div>
+        <div style="background:#ffffff;border:1px solid #e8e1d5;border-radius:14px;overflow:hidden;">
+          ${bannerUrl ? `<img src="${bannerUrl}" style="display:block;width:100%;" />` : ''}
+          <div style="padding:36px;font-size:16px;line-height:1.7;">${contentHtml}</div>
+        </div>
+        <div style="padding:22px 8px 0 8px;font-size:12px;line-height:1.7;color:#7a7468;">
           <p style="margin:0 0 6px 0;">You're receiving this because you opted in to product updates from VibTribe.</p>
-          <p style="margin:0 0 6px 0;">VibTribe · India</p>
-          <p style="margin:0;"><a href="#" style="color:#60a5fa;">Unsubscribe in one click</a> · <a href="#" style="color:#60a5fa;">Privacy</a></p>
+          <p style="margin:0 0 10px 0;">VibTribe · India</p>
+          <p style="margin:0;"><a href="#" style="color:#1f1d1a;text-decoration:underline;">Unsubscribe in one click</a> · <a href="#" style="color:#1f1d1a;text-decoration:underline;">Privacy</a></p>
         </div>
       </div>
     </body></html>`
@@ -340,19 +370,39 @@ export default function MarketingPage() {
                   <input value={preheader} onChange={e => setPreheader(e.target.value)} placeholder="A short summary shown in the inbox"
                     className="w-full mt-1 px-3 py-2 bg-input border border-border rounded-lg text-sm" />
                 </label>
-                <label className="block">
-                  <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                    <ImageIcon size={12} /> Banner image URL (optional)
+                <div className="block">
+                  <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1 mb-1">
+                    <ImageIcon size={12} /> Banner image (optional)
                   </span>
-                  <input value={bannerUrl} onChange={e => setBannerUrl(e.target.value)} placeholder="https://…/banner.jpg"
-                    className="w-full mt-1 px-3 py-2 bg-input border border-border rounded-lg text-sm" />
-                </label>
-                <label className="block">
-                  <span className="text-xs font-semibold text-muted-foreground">Email body (HTML supported)</span>
-                  <textarea value={contentHtml} onChange={e => setContentHtml(e.target.value)} rows={14}
-                    className="w-full mt-1 px-3 py-2 bg-input border border-border rounded-lg text-xs font-mono" />
-                  <span className="text-[10px] text-muted-foreground">Tip: use &lt;p&gt;, &lt;h2&gt;, &lt;a href&gt;, &lt;img&gt;, &lt;ul&gt;&lt;li&gt;. Footer is auto-appended.</span>
-                </label>
+                  {bannerUrl ? (
+                    <div className="relative rounded-lg overflow-hidden border border-border">
+                      <img src={bannerUrl} alt="banner" className="w-full h-32 object-cover" />
+                      <button onClick={() => setBannerUrl('')} type="button"
+                        className="absolute top-2 right-2 px-2 py-1 bg-black/70 text-white text-xs rounded-md hover:bg-black/90 flex items-center gap-1">
+                        <Trash2 size={11} /> Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center gap-1 w-full h-24 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary hover:bg-primary/5 transition">
+                      <ImageIcon size={20} className="text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">
+                        {uploadingBanner ? 'Uploading…' : 'Click to upload from your device (max 4 MB)'}
+                      </span>
+                      <input type="file" accept="image/*" className="hidden"
+                        disabled={uploadingBanner}
+                        onChange={e => { const f = e.target.files?.[0]; if (f) handleBannerFile(f); e.target.value = '' }} />
+                    </label>
+                  )}
+                </div>
+                <div className="block">
+                  <span className="text-xs font-semibold text-muted-foreground">Email body</span>
+                  <div className="mt-1 bg-input border border-border rounded-lg overflow-hidden">
+                    <RichTextEditor value={contentHtml} onChange={setContentHtml} />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground mt-1 block">
+                    Format using the toolbar — bold, italic, headings, lists, links, images, alignment, colors. The branded VibTribe wrapper and footer are added automatically.
+                  </span>
+                </div>
               </div>
 
               <div className="glass rounded-2xl border border-border p-4 space-y-2">

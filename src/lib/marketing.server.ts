@@ -70,7 +70,7 @@ export function wrapCampaignHtml(opts: {
   recipientEmail: string
 }): string {
   const banner = opts.bannerImageUrl
-    ? `<img src="${escapeHtml(opts.bannerImageUrl)}" alt="" style="display:block;width:100%;max-width:600px;height:auto;border:0;outline:none;text-decoration:none;" />`
+    ? `<img src="${escapeHtml(opts.bannerImageUrl)}" alt="" style="display:block;width:100%;max-width:640px;height:auto;border:0;outline:none;text-decoration:none;" />`
     : ''
   const preheader = opts.preheader
     ? `<div style="display:none;max-height:0;overflow:hidden;color:transparent;visibility:hidden;mso-hide:all">${escapeHtml(opts.preheader)}</div>`
@@ -81,20 +81,27 @@ export function wrapCampaignHtml(opts: {
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>${escapeHtml(opts.subject)}</title>
 </head>
-<body style="margin:0;padding:0;background:#0f172a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#e2e8f0;">
+<body style="margin:0;padding:0;background:#f5f0e8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1f1d1a;-webkit-font-smoothing:antialiased;">
 ${preheader}
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#0f172a">
-  <tr><td align="center" style="padding:24px 12px;">
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px;width:100%;background:#1e293b;border-radius:16px;overflow:hidden;">
-      ${banner ? `<tr><td>${banner}</td></tr>` : ''}
-      <tr><td style="padding:32px 28px;font-size:15px;line-height:1.6;color:#e2e8f0;">${opts.bodyHtml}</td></tr>
-      <tr><td style="padding:24px 28px;border-top:1px solid #334155;font-size:12px;line-height:1.6;color:#94a3b8;">
-        <p style="margin:0 0 8px 0;">You're receiving this because you opted in to product updates from VibTribe.</p>
-        <p style="margin:0 0 8px 0;">VibTribe · India</p>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#f5f0e8">
+  <tr><td align="center" style="padding:32px 16px 12px 16px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="640" style="max-width:640px;width:100%;">
+      <tr><td style="padding:0 4px 18px 4px;font-family:Georgia,'Times New Roman',serif;font-size:22px;font-weight:600;letter-spacing:-0.01em;color:#1f1d1a;">
+        VibTribe
+      </td></tr>
+    </table>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="640" style="max-width:640px;width:100%;background:#ffffff;border:1px solid #e8e1d5;border-radius:14px;overflow:hidden;box-shadow:0 1px 0 rgba(31,29,26,0.04);">
+      ${banner ? `<tr><td style="padding:0;">${banner}</td></tr>` : ''}
+      <tr><td style="padding:36px 36px 28px 36px;font-size:16px;line-height:1.7;color:#1f1d1a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">${opts.bodyHtml}</td></tr>
+    </table>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="640" style="max-width:640px;width:100%;">
+      <tr><td style="padding:22px 8px 36px 8px;font-size:12px;line-height:1.7;color:#7a7468;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+        <p style="margin:0 0 6px 0;">You're receiving this because you opted in to product updates from VibTribe.</p>
+        <p style="margin:0 0 10px 0;">VibTribe · India</p>
         <p style="margin:0;">
-          <a href="${escapeHtml(opts.unsubscribeUrl)}" style="color:#60a5fa;text-decoration:underline;">Unsubscribe in one click</a>
+          <a href="${escapeHtml(opts.unsubscribeUrl)}" style="color:#1f1d1a;text-decoration:underline;">Unsubscribe in one click</a>
           &nbsp;·&nbsp;
-          <a href="https://www.vibtribe.in/privacy" style="color:#60a5fa;text-decoration:underline;">Privacy</a>
+          <a href="https://www.vibtribe.in/privacy" style="color:#1f1d1a;text-decoration:underline;">Privacy</a>
         </p>
       </td></tr>
     </table>
