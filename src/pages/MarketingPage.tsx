@@ -14,6 +14,8 @@ import {
   listCampaigns, saveCampaign, sendTestEmail, sendCampaign,
   previewAudienceSize, deleteCampaign, getCampaign,
 } from '@/lib/marketing.functions'
+import RichTextEditor from '@/components/RichTextEditor'
+import { supabase } from '@/integrations/supabase/client'
 
 type AudienceType = 'opted_in'
 
@@ -48,6 +50,31 @@ export default function MarketingPage() {
   const [sending, setSending] = useState(false)
   const [confirmSend, setConfirmSend] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [uploadingBanner, setUploadingBanner] = useState(false)
+
+  async function handleBannerFile(file: File) {
+    if (!file) return
+    if (!file.type.startsWith('image/')) { toast.error('Please pick an image file'); return }
+    if (file.size > 4 * 1024 * 1024) { toast.error('Image too large (max 4 MB)'); return }
+    setUploadingBanner(true)
+    try {
+      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '')
+      const path = `${user?.id || 'anon'}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
+      const { error: upErr } = await supabase.storage
+        .from('marketing-banners')
+        .upload(path, file, { contentType: file.type, upsert: false })
+      if (upErr) throw upErr
+      // 10-year signed URL (long enough that emails stay valid indefinitely)
+      const { data: signed, error: sErr } = await supabase.storage
+        .from('marketing-banners')
+        .createSignedUrl(path, 60 * 60 * 24 * 365 * 10)
+      if (sErr || !signed?.signedUrl) throw sErr || new Error('Could not generate URL')
+      setBannerUrl(signed.signedUrl)
+      toast.success('Banner uploaded')
+    } catch (e: any) {
+      toast.error(e?.message || 'Upload failed')
+    } finally { setUploadingBanner(false) }
+  }
 
   useEffect(() => {
     if (loading) return
