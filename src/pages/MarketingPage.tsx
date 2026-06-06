@@ -367,19 +367,39 @@ export default function MarketingPage() {
                   <input value={preheader} onChange={e => setPreheader(e.target.value)} placeholder="A short summary shown in the inbox"
                     className="w-full mt-1 px-3 py-2 bg-input border border-border rounded-lg text-sm" />
                 </label>
-                <label className="block">
-                  <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                    <ImageIcon size={12} /> Banner image URL (optional)
+                <div className="block">
+                  <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1 mb-1">
+                    <ImageIcon size={12} /> Banner image (optional)
                   </span>
-                  <input value={bannerUrl} onChange={e => setBannerUrl(e.target.value)} placeholder="https://…/banner.jpg"
-                    className="w-full mt-1 px-3 py-2 bg-input border border-border rounded-lg text-sm" />
-                </label>
-                <label className="block">
-                  <span className="text-xs font-semibold text-muted-foreground">Email body (HTML supported)</span>
-                  <textarea value={contentHtml} onChange={e => setContentHtml(e.target.value)} rows={14}
-                    className="w-full mt-1 px-3 py-2 bg-input border border-border rounded-lg text-xs font-mono" />
-                  <span className="text-[10px] text-muted-foreground">Tip: use &lt;p&gt;, &lt;h2&gt;, &lt;a href&gt;, &lt;img&gt;, &lt;ul&gt;&lt;li&gt;. Footer is auto-appended.</span>
-                </label>
+                  {bannerUrl ? (
+                    <div className="relative rounded-lg overflow-hidden border border-border">
+                      <img src={bannerUrl} alt="banner" className="w-full h-32 object-cover" />
+                      <button onClick={() => setBannerUrl('')} type="button"
+                        className="absolute top-2 right-2 px-2 py-1 bg-black/70 text-white text-xs rounded-md hover:bg-black/90 flex items-center gap-1">
+                        <Trash2 size={11} /> Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center gap-1 w-full h-24 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary hover:bg-primary/5 transition">
+                      <ImageIcon size={20} className="text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">
+                        {uploadingBanner ? 'Uploading…' : 'Click to upload from your device (max 4 MB)'}
+                      </span>
+                      <input type="file" accept="image/*" className="hidden"
+                        disabled={uploadingBanner}
+                        onChange={e => { const f = e.target.files?.[0]; if (f) handleBannerFile(f); e.target.value = '' }} />
+                    </label>
+                  )}
+                </div>
+                <div className="block">
+                  <span className="text-xs font-semibold text-muted-foreground">Email body</span>
+                  <div className="mt-1 bg-input border border-border rounded-lg overflow-hidden">
+                    <RichTextEditor value={contentHtml} onChange={setContentHtml} />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground mt-1 block">
+                    Format using the toolbar — bold, italic, headings, lists, links, images, alignment, colors. The branded VibTribe wrapper and footer are added automatically.
+                  </span>
+                </div>
               </div>
 
               <div className="glass rounded-2xl border border-border p-4 space-y-2">
