@@ -320,19 +320,24 @@ export const deleteCampaign = createServerFn({ method: 'POST' })
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId)
-    // Cascade-delete recipients first (FK has ON DELETE CASCADE, but be explicit
-    // in case future constraints change) and then remove the campaign row.
-    const { error: recErr } = await supabaseAdmin
-      .from('email_campaign_recipients').delete().eq('campaign_id', data.id)
-    if (recErr) throw new Error(`Failed to delete recipients: ${recErr.message}`)
-    // Use .select() to reliably get the deleted rows back — `count: 'exact'`
-    // returned 0 in some environments even when the row existed.
+    const { data: campaign, error: fetchError } = await supabaseAdmin
+      .from('email_campaigns')
+      .select('id,status')
+      .eq('id', data.id)
+      .maybeSingle()
+    if (fetchError) throw new Error(`Delete lookup failed: ${fetchError.message}`)
+    if (!campaign) throw new Error('Campaign not found or already deleted')
+    if (campaign.status === 'sending') throw new Error('Cannot delete a campaign while it is sending')
+
+    // The recipients table is owned by the backend. Deleting the campaign row
+    // cascades recipient rows reliably without a separate client-visible delete.
     const { data: deleted, error } = await supabaseAdmin
       .from('email_campaigns')
       .delete()
       .eq('id', data.id)
       .select('id')
     if (error) throw new Error(`Delete failed: ${error.message}`)
+    if (!deleted?.length) throw new Error('Campaign was not deleted')
     return { ok: true, deleted: deleted?.length ?? 0 }
   })
 
