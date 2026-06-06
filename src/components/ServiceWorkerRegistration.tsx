@@ -114,13 +114,25 @@ export default function ServiceWorkerRegistration() {
     const handleSWMessage = (event: MessageEvent) => {
       if (event.data?.type === 'INCOMING_CALL') {
         playRingtone();
+        const payload = event.data?.payload || {};
+        window.dispatchEvent(new CustomEvent('vt-incoming-call', {
+          detail: { callId: payload.callId, chatId: payload.chatId || null },
+        }));
       } else if (
         event.data?.type === 'CALL_DECLINED' ||
         event.data?.type === 'ANSWER_CALL'
       ) {
         stopRingtone();
-        const chatId = event.data?.payload?.chatId;
+        const payload = event.data?.payload || {};
+        const chatId = payload.chatId;
         if (chatId) setSelectedChatId(chatId);
+        if (payload.callId) {
+          const url = new URL(window.location.href);
+          url.searchParams.set('call', payload.callId);
+          if (chatId) url.searchParams.set('chat', chatId);
+          window.history.pushState({}, '', url.toString());
+          window.dispatchEvent(new CustomEvent('vt-call-url'));
+        }
       } else if (event.data?.type === 'OPEN_NOTIFICATION') {
         const chatId = event.data?.payload?.chatId;
         if (chatId) setSelectedChatId(chatId);
