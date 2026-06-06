@@ -99,19 +99,29 @@ ${preheader}
       ${banner ? `<tr><td style="padding:0;">${banner}</td></tr>` : ''}
       <tr><td style="padding:36px 36px 30px 36px;font-size:16px;line-height:1.7;color:#1f1d1a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
         ${opts.bodyHtml}
-        <div style="margin-top:32px;padding-top:24px;border-top:1px solid #efe7dc;">
-          <p style="margin:0 0 14px 0;font-family:Georgia,'Times New Roman',serif;font-size:22px;line-height:1.25;color:#1f1d1a;font-weight:700;">Thanks,</p>
-          <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-            <td style="padding:0 14px 0 0;vertical-align:middle;"><img src="${BRAND_LOGO_URL}" width="46" height="46" alt="VibTribe logo" style="display:block;width:46px;height:46px;border-radius:13px;border:0;" /></td>
-            <td style="vertical-align:middle;">
-              <p style="margin:0;font-size:18px;line-height:1.2;font-weight:800;color:#1f1d1a;letter-spacing:0;">VibTribe</p>
-              <p style="margin:4px 0 0 0;font-size:13px;line-height:1.4;color:#7a7468;">Where your vibe finds its tribe</p>
-            </td>
-          </tr></table>
-          <p style="margin:16px 0 0 0;font-size:13px;line-height:1.8;color:#7a7468;">
-            <a href="${BRAND_SITE_URL}" style="color:#1f1d1a;text-decoration:none;font-weight:700;">www.vibtribe.in</a><br />
-            Email - <a href="mailto:${MARKETING_REPLY_TO}" style="color:#1f1d1a;text-decoration:none;font-weight:700;">${MARKETING_REPLY_TO}</a>
-          </p>
+        <div style="margin-top:36px;padding-top:28px;border-top:1px solid #efe7dc;">
+          <p style="margin:0 0 18px 0;font-family:Georgia,'Times New Roman',serif;font-size:22px;line-height:1;color:#1f1d1a;font-weight:700;letter-spacing:-0.01em;">Thanks,</p>
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+            <tr>
+              <td width="52" style="padding:0;vertical-align:middle;">
+                <img src="${BRAND_LOGO_URL}" width="48" height="48" alt="VibTribe" style="display:block;width:48px;height:48px;border-radius:13px;border:0;" />
+              </td>
+              <td style="padding:0 0 0 14px;vertical-align:middle;line-height:1.25;">
+                <p style="margin:0;font-size:17px;font-weight:800;color:#1f1d1a;letter-spacing:-0.01em;">VibTribe</p>
+                <p style="margin:3px 0 0 0;font-size:13px;color:#7a7468;font-style:italic;">Where your vibe finds its tribe</p>
+              </td>
+            </tr>
+          </table>
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:18px;border-collapse:collapse;font-size:13px;line-height:1.5;color:#7a7468;">
+            <tr>
+              <td style="padding:0 10px 4px 0;color:#a59c8b;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;font-size:11px;">Web</td>
+              <td style="padding:0 0 4px 0;"><a href="${BRAND_SITE_URL}" style="color:#1f1d1a;text-decoration:none;font-weight:700;">www.vibtribe.in</a></td>
+            </tr>
+            <tr>
+              <td style="padding:0 10px 0 0;color:#a59c8b;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;font-size:11px;">Email</td>
+              <td style="padding:0;"><a href="mailto:${MARKETING_REPLY_TO}" style="color:#1f1d1a;text-decoration:none;font-weight:700;">${MARKETING_REPLY_TO}</a></td>
+            </tr>
+          </table>
         </div>
       </td></tr>
     </table>

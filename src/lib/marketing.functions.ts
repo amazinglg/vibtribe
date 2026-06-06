@@ -97,7 +97,9 @@ const CampaignDraft = z.object({
 
 // ---------- server functions ----------
 
-export const listCampaigns = createServerFn({ method: 'GET' })
+// NOTE: POST (not GET) so the browser does not cache responses — otherwise
+// deleted drafts can re-appear from a stale cached payload.
+export const listCampaigns = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.userId)
