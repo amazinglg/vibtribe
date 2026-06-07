@@ -124,7 +124,7 @@ export default function ChatListPanel() {
       loadChats();
       loadSavedContacts();
     }
-  }, [user]);
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user) return;
@@ -214,13 +214,20 @@ export default function ChatListPanel() {
       window.removeEventListener('vt-app-resumed', onResume);
       window.removeEventListener('vt-network-online', onResume);
     };
-  }, [user]);
+  }, [user?.id]);
 
   const loadChats = async () => {
     if (!user) return;
-    // Only show the skeleton on the very first load. Background refreshes
-    // (realtime updates, tab returns) should refresh data silently.
-    if (chats.length === 0) setLoading(true);
+    // Only show the skeleton on the very first load when we have NO cached
+    // data at all. Any background refresh (realtime updates, tab returns,
+    // resume-from-background) must NEVER flash the skeleton, or the chat
+    // list will appear to "blink" every few seconds on slow networks /
+    // Android WebView. We rely on the cached list staying on screen until
+    // fresh data replaces it in-place.
+    const isFirstLoad =
+      chats.length === 0 &&
+      (typeof window === 'undefined' || !sessionStorage.getItem(CHATS_CACHE_KEY));
+    if (isFirstLoad) setLoading(true);
     try {
       // Chats the current user has moved to their Secure Vault — hide entirely
       // from the normal chat list. They only appear after the user unlocks
@@ -368,8 +375,16 @@ export default function ChatListPanel() {
           });
         }
       }
-      setChats(chatList);
-      try { sessionStorage.setItem(CHATS_CACHE_KEY, JSON.stringify(chatList)); } catch {}
+      // Guard against transient empty responses (token refresh races, brief
+      // RLS hiccups on Android WebView resume): if the server returns zero
+      // chats but we already have a populated list, keep the cached list
+      // instead of wiping it. The next debounced refetch will reconcile.
+      if (chatList.length === 0 && chats.length > 0) {
+        // skip overwrite — keep showing previously loaded chats
+      } else {
+        setChats(chatList);
+        try { sessionStorage.setItem(CHATS_CACHE_KEY, JSON.stringify(chatList)); } catch {}
+      }
       // Only auto-open the first chat on desktop side-by-side layout.
       // On mobile/tablet the user should land on the chat list, not a chat.
       if (
@@ -381,7 +396,9 @@ export default function ChatListPanel() {
         setSelectedChatId(chatList[0].id);
       }
     } catch (err) {
-      setChats(getDemoChats());
+      // On error, only fall back to demo chats if we have nothing cached.
+      // Otherwise keep the cached list so we don't blank the UI.
+      if (chats.length === 0) setChats(getDemoChats());
     } finally {
       setLoading(false);
     }
