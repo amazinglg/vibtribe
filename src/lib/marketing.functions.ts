@@ -374,6 +374,31 @@ export const recordMarketingConsent = createServerFn({ method: 'POST' })
         marketing_consent_source: data.source,
       })
       .eq('id', context.userId)
+
+    // Keep the suppression list in sync with the user's explicit choice.
+    // If they opt back IN, remove any prior unsubscribe suppression so future
+    // campaigns include them again. If they opt OUT, add a suppression row so
+    // campaigns skip them even before the profile flag is read.
+    try {
+      const { data: prof } = await supabaseAdmin
+        .from('user_profiles')
+        .select('real_email')
+        .eq('id', context.userId)
+        .maybeSingle()
+      const email = (prof?.real_email || '').trim().toLowerCase()
+      if (email) {
+        if (data.optIn) {
+          await supabaseAdmin.from('suppressed_emails').delete().ilike('email', email)
+        } else {
+          await supabaseAdmin
+            .from('suppressed_emails')
+            .upsert({ email, reason: 'user_opt_out' }, { onConflict: 'email' })
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to sync suppressed_emails with consent', e)
+    }
+
     return { ok: true }
   })
 
