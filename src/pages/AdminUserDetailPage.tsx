@@ -219,6 +219,28 @@ export default function AdminUserDetailPage() {
                 }`}>
                   {target.is_suspended ? 'Suspended' : target.account_status}
                 </span>
+                {(() => {
+                  const hasAnswered = !!target.marketing_consent_at;
+                  const optedIn = !!target.email_marketing_opt_in;
+                  const cls = !hasAnswered
+                    ? 'bg-muted text-muted-foreground'
+                    : optedIn
+                      ? 'bg-vt-green/20 text-vt-green'
+                      : 'bg-red-500/20 text-red-400';
+                  const label = !hasAnswered
+                    ? 'Promo: Pending'
+                    : optedIn
+                      ? 'Promo: Opted in'
+                      : 'Promo: Opted out';
+                  const title = target.marketing_consent_at
+                    ? `Last updated ${new Date(target.marketing_consent_at).toLocaleString()}${target.marketing_consent_source ? ` · via ${target.marketing_consent_source}` : ''}`
+                    : 'User has not made a choice yet';
+                  return (
+                    <span title={title} className={`text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wide ${cls}`}>
+                      {label}
+                    </span>
+                  );
+                })()}
               </div>
               {target.username && <p className="text-xs text-primary truncate mb-1">@{target.username}</p>}
               <div className="space-y-0.5 text-xs text-muted-foreground">
