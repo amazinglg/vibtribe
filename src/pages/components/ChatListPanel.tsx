@@ -214,7 +214,7 @@ export default function ChatListPanel() {
       window.removeEventListener('vt-app-resumed', onResume);
       window.removeEventListener('vt-network-online', onResume);
     };
-  }, [user]);
+  }, [user?.id]);
 
   const loadChats = async () => {
     if (!user) return;
