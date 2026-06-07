@@ -177,12 +177,18 @@ export default function LandingPage() {
               <ul className="space-y-2 text-sm text-foreground/80 mb-5">
                 <li className="flex items-start gap-2"><Check size={14} className="text-primary mt-0.5 flex-shrink-0" /> Full native performance & push notifications</li>
                 <li className="flex items-start gap-2"><Check size={14} className="text-primary mt-0.5 flex-shrink-0" /> Background calls & message delivery</li>
-                <li className="flex items-start gap-2"><Check size={14} className="text-primary mt-0.5 flex-shrink-0" /> Native Android build coming soon</li>
+                <li className="flex items-start gap-2"><Check size={14} className="text-primary mt-0.5 flex-shrink-0" /> Direct APK — guided 5-step install</li>
               </ul>
 
-              <div className="w-full px-4 py-3 rounded-2xl glass border border-border text-muted-foreground text-sm font-semibold flex items-center justify-center gap-2">
-                <Download size={16} /> Android app coming soon
-              </div>
+              <a
+                href="/download/android"
+                className="w-full px-4 py-3 rounded-2xl gradient-primary text-white text-sm font-semibold flex items-center justify-center gap-2 glow-primary hover:opacity-95 transition-all"
+              >
+                <Download size={16} /> Download Android App
+              </a>
+              <p className="text-[11px] text-muted-foreground text-center mt-2">
+                APK · ~38 MB · Step-by-step install guide included
+              </p>
             </div>
           </div>
 

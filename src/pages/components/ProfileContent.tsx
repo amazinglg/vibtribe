@@ -1155,6 +1155,50 @@ export default function ProfileContent() {
                 </div>
               </div>
 
+              {/* Promotional emails (mirrors notification setting; synced with unsubscribe link) */}
+              <div className="glass rounded-2xl border border-border p-5">
+                <h3 className="font-semibold text-base text-foreground mb-1 flex items-center gap-2">
+                  <Mail size={16} className="text-primary" />
+                  Promotional Emails
+                </h3>
+                <p className="text-xs text-muted-foreground mb-4">
+                  Tips, new features and special offers. You can change this anytime — clicking Unsubscribe in any email turns it off automatically.
+                </p>
+                <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+                  <div className="flex-1 pr-4 min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <p className="text-sm font-medium text-foreground">Receive promotional emails</p>
+                      {(() => {
+                        const hasAnswered = !!(profile as any)?.marketing_consent_at;
+                        const cls = !hasAnswered
+                          ? 'bg-muted text-muted-foreground'
+                          : emailMarketingOptIn
+                            ? 'bg-vt-green/20 text-vt-green'
+                            : 'bg-red-500/20 text-red-400';
+                        const label = !hasAnswered
+                          ? 'Pending'
+                          : emailMarketingOptIn ? 'Opted in' : 'Opted out';
+                        return (
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wide ${cls}`}>
+                            {label}
+                          </span>
+                        );
+                      })()}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Security and account emails (verification, password reset) are always sent.
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleToggleEmailMarketing}
+                    aria-label="Toggle promotional emails"
+                    className={`w-10 h-6 rounded-full transition-all relative flex-shrink-0 ${emailMarketingOptIn ? 'gradient-primary' : 'bg-muted'}`}
+                  >
+                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${emailMarketingOptIn ? 'right-1' : 'left-1'}`} />
+                  </button>
+                </div>
+              </div>
+
               {/* Permissions */}
               <div className="glass rounded-2xl border border-border p-5">
                 <h3 className="font-semibold text-base text-foreground mb-1 flex items-center gap-2">
