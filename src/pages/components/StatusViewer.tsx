@@ -273,7 +273,7 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
         {/* Story Content */}
         {story.type === 'image' && story.media_url ? (
           <div className="absolute inset-0 bg-black flex items-center justify-center">
-            <img src={story.media_url} alt="" className="max-h-full max-w-full object-contain" />
+            <StatusMedia value={story.media_url} kind="image" className="max-h-full max-w-full object-contain" />
             {story.content && (
               <div className="absolute bottom-20 left-0 right-0 px-6 text-center">
                 <p className="text-base text-white bg-black/50 inline-block px-3 py-1.5 rounded-lg">{story.content}</p>
@@ -282,7 +282,7 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
           </div>
         ) : story.type === 'video' && story.media_url ? (
           <div className="absolute inset-0 bg-black flex items-center justify-center">
-            <video src={story.media_url} autoPlay playsInline controls className="max-h-full max-w-full" />
+            <StatusMedia value={story.media_url} kind="video" autoPlay playsInline controls className="max-h-full max-w-full" />
             {story.content && (
               <div className="absolute bottom-20 left-0 right-0 px-6 text-center">
                 <p className="text-base text-white bg-black/50 inline-block px-3 py-1.5 rounded-lg">{story.content}</p>
