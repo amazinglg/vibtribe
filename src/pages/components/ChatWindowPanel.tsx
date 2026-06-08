@@ -13,6 +13,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { sendPushNotification } from '@/lib/pushNotifications';
 import AppImage from "@/components/ui/AppImage";
 import { useCall } from '@/components/CallProvider';
+import { isNativeWrapper, pickNativeImage, requestNativeStoragePermission, requestNativeCameraPermission } from '@/lib/native-bridge';
 import { toast } from 'sonner';
 import { EMOJI_CATEGORIES, type EmojiCategoryKey } from '@/lib/emojis';
 import { useT } from '@/contexts/LanguageContext';
@@ -274,6 +275,8 @@ export default function ChatWindowPanel() {
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const audioInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     // Jump straight to the latest message. We use instant scroll (not smooth)
@@ -949,6 +952,66 @@ export default function ChatWindowPanel() {
     }
   };
 
+  // Convert a dataURL returned by Capacitor Camera into a File object so it
+  // can flow through the same handleFileAttach() pipeline as web uploads.
+  const dataUrlToFile = async (dataUrl: string, filename: string): Promise<File | null> => {
+    try {
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      return new File([blob], filename, { type: blob.type || 'image/jpeg' });
+    } catch (e) {
+      console.warn('[VibTribe] dataUrlToFile failed', e);
+      return null;
+    }
+  };
+
+  // Pick from gallery / take a photo. On native we use the Capacitor Camera
+  // plugin (handles READ_MEDIA_IMAGES + CAMERA prompts itself). On web we
+  // trigger the hidden <input type="file"> the same way as before.
+  const handlePickPhotoVideo = async () => {
+    setShowAttachMenu(false);
+    if (isNativeWrapper()) {
+      const perm = await requestNativeStoragePermission();
+      if (perm !== 'granted') {
+        toast.error('Storage and Gallery permission is required to attach photos or videos.');
+        return;
+      }
+      const dataUrl = await pickNativeImage({ source: 'photos' });
+      if (!dataUrl) return;
+      const file = await dataUrlToFile(dataUrl, `photo-${Date.now()}.jpg`);
+      if (file) handleFileAttach(file, 'image');
+      return;
+    }
+    imageInputRef.current?.click();
+  };
+
+  const handlePickCamera = async () => {
+    setShowAttachMenu(false);
+    if (isNativeWrapper()) {
+      const perm = await requestNativeCameraPermission();
+      if (perm !== 'granted') {
+        toast.error('Camera permission is required to take a photo.');
+        return;
+      }
+      const dataUrl = await pickNativeImage({ source: 'camera' });
+      if (!dataUrl) return;
+      const file = await dataUrlToFile(dataUrl, `camera-${Date.now()}.jpg`);
+      if (file) handleFileAttach(file, 'image');
+      return;
+    }
+    cameraInputRef.current?.click();
+  };
+
+  const handlePickFile = async (ref: React.RefObject<HTMLInputElement>) => {
+    setShowAttachMenu(false);
+    if (isNativeWrapper()) {
+      // System file picker handles its own permission grant on Android, but
+      // requesting first ensures the OS dialog shows before the picker opens.
+      await requestNativeStoragePermission().catch(() => {});
+    }
+    ref.current?.click();
+  };
+
   const addReaction = (msgId: string, emoji: string) => {
     setMessages(prev => prev.map(m =>
       m.id === msgId
@@ -1276,7 +1339,7 @@ export default function ChatWindowPanel() {
           permissions={[
             {
               icon: <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>,
-              label: 'Storage',
+              label: 'Storage and Gallery',
               description: 'Access files and media from your device',
               status: permissions.storage,
             },
@@ -1808,7 +1871,7 @@ export default function ChatWindowPanel() {
         <div className="absolute bottom-20 left-16 z-20 glass-strong rounded-2xl border border-border shadow-card p-3 float-up" onClick={e => e.stopPropagation()}>
           <div className="flex flex-col gap-1 min-w-[160px]">
             <button
-              onClick={() => { imageInputRef.current?.click(); setShowAttachMenu(false); requestStorage().catch(() => {}); }}
+              onClick={handlePickPhotoVideo}
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-all text-sm text-foreground"
             >
               <div className="w-8 h-8 bg-blue-500/20 rounded-xl flex items-center justify-center">
@@ -1817,7 +1880,7 @@ export default function ChatWindowPanel() {
               Photo / Video
             </button>
             <button
-              onClick={() => { fileInputRef.current?.click(); setShowAttachMenu(false); requestStorage().catch(() => {}); }}
+              onClick={() => handlePickFile(fileInputRef)}
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-all text-sm text-foreground"
             >
               <div className="w-8 h-8 bg-purple-500/20 rounded-xl flex items-center justify-center">
@@ -1826,7 +1889,7 @@ export default function ChatWindowPanel() {
               Document
             </button>
             <button
-              onClick={() => { imageInputRef.current?.click(); setShowAttachMenu(false); requestCamera().catch(() => {}); }}
+              onClick={handlePickCamera}
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-all text-sm text-foreground"
             >
               <div className="w-8 h-8 bg-green-500/20 rounded-xl flex items-center justify-center">
@@ -1835,7 +1898,7 @@ export default function ChatWindowPanel() {
               Camera
             </button>
             <button
-              onClick={() => { fileInputRef.current?.click(); setShowAttachMenu(false); requestMicrophone().catch(() => {}); }}
+              onClick={() => handlePickFile(audioInputRef)}
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-all text-sm text-foreground"
             >
               <div className="w-8 h-8 bg-pink-500/20 rounded-xl flex items-center justify-center">
@@ -1862,11 +1925,34 @@ export default function ChatWindowPanel() {
       <input
         ref={fileInputRef}
         type="file"
-        accept=".pdf,.doc,.docx,.txt,.zip,.rar,audio/*"
+        accept=".pdf,.doc,.docx,.txt,.zip,.rar"
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0];
           if (file) handleFileAttach(file, 'file');
+          e.target.value = '';
+        }}
+      />
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*,video/*"
+        capture="environment"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleFileAttach(file, 'image');
+          e.target.value = '';
+        }}
+      />
+      <input
+        ref={audioInputRef}
+        type="file"
+        accept="audio/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleFileAttach(file, 'audio');
           e.target.value = '';
         }}
       />
