@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useNavigate } from '@tanstack/react-router';
-import { Phone, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle, User, Calendar, Mail, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { Phone, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle, User, Calendar, Mail, ArrowLeft, ShieldCheck, Check } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLogo from '@/components/ui/AppLogo';
 import { supabase } from '@/integrations/supabase/client';
@@ -275,34 +275,7 @@ export default function SignUpPage() {
             <div>
               <label className="block text-sm font-medium text-foreground mb-1.5">{t('auth.mobile')}</label>
               <div className="flex gap-2">
-                {/* Country Code Selector */}
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setShowCountryDropdown(!showCountryDropdown)}
-                    className="flex items-center gap-1.5 px-3 py-3 bg-input border border-border rounded-xl text-sm text-foreground hover:border-primary transition-all whitespace-nowrap h-full"
-                  >
-                    <span>{selectedCountry.flag}</span>
-                    <span className="font-medium">{selectedCountry.code}</span>
-                    <ChevronDown size={13} className="text-muted-foreground" />
-                  </button>
-                  {showCountryDropdown && (
-                    <div className="absolute top-full left-0 mt-1 w-64 bg-card border border-border rounded-xl shadow-xl z-50 max-h-56 overflow-y-auto">
-                      {COUNTRY_CODES.map(c => (
-                        <button
-                          key={`${c.name}-${c.code}`}
-                          type="button"
-                          onClick={() => { setCountryCode(c.code); setShowCountryDropdown(false); setError(''); }}
-                          className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-muted transition-colors text-left ${countryCode === c.code && selectedCountry.name === c.name ? 'text-primary font-medium' : 'text-foreground'}`}
-                        >
-                          <span>{c.flag}</span>
-                          <span className="flex-1">{c.name}</span>
-                          <span className="text-muted-foreground text-xs">{c.code}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <CountryCodeSelect value={country} onChange={c => { setCountry(c); setError(''); }} />
                 {/* Number Input */}
                 <div className="relative flex-1">
                   <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
