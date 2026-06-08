@@ -1,13 +1,14 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { Shield, Users, Activity, Search, Ban, Trash2, RefreshCw, AlertTriangle, CheckCircle2, ArrowLeft, KeyRound, Pencil, X, Save, Ticket, UserX, UserCheck, Send, LogOut, ChevronRight, Circle, ArrowUpDown, Filter, Lock, Globe, AtSign } from 'lucide-react';
+import { Shield, Users, Activity, Search, Ban, Trash2, RefreshCw, AlertTriangle, CheckCircle2, ArrowLeft, KeyRound, Pencil, X, Save, Ticket, UserX, UserCheck, Send, LogOut, ChevronRight, Circle, ArrowUpDown, Filter, Lock, Globe, AtSign, Rocket } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLayout from '@/components/AppLayout';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import { useServerFn } from '@tanstack/react-start';
 import { replyToTicket, deleteTicket } from '@/lib/support.functions';
+import { publishAppRelease } from '@/lib/app-release.functions';
 import TribeDetailsSheet from '@/components/TribeDetailsSheet';
 
 interface PlatformUser {
