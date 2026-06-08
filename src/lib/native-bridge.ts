@@ -305,6 +305,38 @@ export async function pickNativeImage(opts?: {
 }
 
 /**
+ * Pick one or more files (any MIME) using the native system picker. Returns
+ * an array of { name, mime, dataUrl } objects so the caller can convert each
+ * one into a File via fetch(dataUrl).blob().
+ */
+export async function pickNativeFiles(opts?: {
+  types?: string[];           // MIME filter, e.g. ['application/pdf']
+  multiple?: boolean;
+  readData?: boolean;          // include base64 data (default true)
+}): Promise<Array<{ name: string; mime: string; dataUrl: string }>> {
+  if (!isNativeWrapper()) return [];
+  try {
+    const { FilePicker } = await import('@capawesome/capacitor-file-picker');
+    const res = await FilePicker.pickFiles({
+      types: opts?.types,
+      limit: opts?.multiple ? 0 : 1,
+      readData: opts?.readData ?? true,
+    } as unknown as Parameters<typeof FilePicker.pickFiles>[0]);
+    const files = (res?.files ?? []) as Array<{ name?: string; mimeType?: string; data?: string }>;
+    return files
+      .filter((f) => !!f.data)
+      .map((f) => ({
+        name: f.name || `file-${Date.now()}`,
+        mime: f.mimeType || 'application/octet-stream',
+        dataUrl: `data:${f.mimeType || 'application/octet-stream'};base64,${f.data}`,
+      }));
+  } catch (e) {
+    console.warn('[VibTribe] pickNativeFiles failed', e);
+    return [];
+  }
+}
+
+/**
  * Acquire a wake-lock during an active call so the screen + CPU stay alive.
  * Returns a release function. Uses the standard Web WakeLock API which the
  * Android WebView supports.
