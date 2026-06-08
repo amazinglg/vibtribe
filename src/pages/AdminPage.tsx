@@ -1,13 +1,14 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { Shield, Users, Activity, Search, Ban, Trash2, RefreshCw, AlertTriangle, CheckCircle2, ArrowLeft, KeyRound, Pencil, X, Save, Ticket, UserX, UserCheck, Send, LogOut, ChevronRight, Circle, ArrowUpDown, Filter, Lock, Globe, AtSign } from 'lucide-react';
+import { Shield, Users, Activity, Search, Ban, Trash2, RefreshCw, AlertTriangle, CheckCircle2, ArrowLeft, KeyRound, Pencil, X, Save, Ticket, UserX, UserCheck, Send, LogOut, ChevronRight, Circle, ArrowUpDown, Filter, Lock, Globe, AtSign, Rocket } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLayout from '@/components/AppLayout';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import { useServerFn } from '@tanstack/react-start';
 import { replyToTicket, deleteTicket } from '@/lib/support.functions';
+import { publishAppRelease } from '@/lib/app-release.functions';
 import TribeDetailsSheet from '@/components/TribeDetailsSheet';
 
 interface PlatformUser {
@@ -68,6 +69,9 @@ export default function AdminPage() {
   const { user, profile, isAdmin, loading } = useAuth();
   const supabase = createClient();
   const isMaster = !!profile?.is_master_admin || profile?.role === 'master_admin';
+  const publishReleaseFn = useServerFn(publishAppRelease);
+  const [releasing, setReleasing] = useState(false);
+  const [confirmRelease, setConfirmRelease] = useState(false);
   const [users, setUsers] = useState<PlatformUser[]>([]);
   const [stats, setStats] = useState<Stats>({ totalUsers: 0, activeUsers: 0, onlineNow: 0, apkDownloads: 0 });
   const [loadingData, setLoadingData] = useState(true);
@@ -603,6 +607,31 @@ export default function AdminPage() {
                 ))}
               </div>
             </div>
+
+            {/* Force Update Release — admin & master admin only */}
+            {isAdmin && (
+              <div className="glass rounded-2xl border border-border p-5">
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center flex-shrink-0">
+                    <Rocket size={18} className="text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h2 className="font-bold text-base text-foreground">Force Update Release</h2>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Push a hard reload to every active client (Android, iOS, web). Clears caches and service workers — users stay signed in.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setConfirmRelease(true)}
+                  disabled={releasing}
+                  className="w-full py-3 rounded-xl bg-vt-amber/15 border border-vt-amber/40 text-vt-amber text-sm font-semibold flex items-center justify-center gap-2 hover:bg-vt-amber/25 transition-all disabled:opacity-50"
+                >
+                  <RefreshCw size={14} className={releasing ? 'animate-spin' : ''} />
+                  <span>{releasing ? 'Publishing release…' : 'Force Update Release'}</span>
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -1108,6 +1137,49 @@ export default function AdminPage() {
           isOpen={!!selectedTribeId}
           onClose={() => { setSelectedTribeId(null); loadTribes(); }}
         />
+      )}
+
+      {confirmRelease && (
+        <div className="fixed inset-0 z-[2000] bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-card border border-border rounded-2xl max-w-sm w-full p-6 shadow-card float-up">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full bg-vt-amber/15 flex items-center justify-center">
+                <AlertTriangle size={18} className="text-vt-amber" />
+              </div>
+              <div>
+                <h3 className="font-bold text-foreground">Force update release?</h3>
+                <p className="text-[11px] text-muted-foreground">Every active client will hard-reload and pick up the latest build. Users remain signed in.</p>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={() => setConfirmRelease(false)}
+                disabled={releasing}
+                className="flex-1 py-2.5 rounded-xl glass border border-border text-sm font-semibold text-foreground hover:bg-muted disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  setReleasing(true);
+                  try {
+                    await publishReleaseFn();
+                    toast.success('Release published — all clients will reload');
+                    setConfirmRelease(false);
+                  } catch (e: any) {
+                    toast.error(e?.message || 'Failed to publish release');
+                  } finally {
+                    setReleasing(false);
+                  }
+                }}
+                disabled={releasing}
+                className="flex-1 py-2.5 rounded-xl bg-vt-amber text-black text-sm font-semibold hover:opacity-90 disabled:opacity-50"
+              >
+                {releasing ? 'Publishing…' : 'Yes, publish'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </AppLayout>
   );

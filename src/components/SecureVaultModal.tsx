@@ -1,11 +1,14 @@
 // @ts-nocheck
 import React, { useState, useRef, useEffect } from 'react';
-import { Lock, X, AlertTriangle, Eye, EyeOff, ArrowRight, ShieldAlert, Edit3, Check } from 'lucide-react';
+import { Lock, X, AlertTriangle, Eye, EyeOff, ArrowRight, ShieldAlert, Edit3, Check, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import PatternLock from '@/components/PatternLock';
 import { useChatStore } from '@/store/chatStore';
+import { unlockEncryptionWithPIN } from '@/lib/encryption';
+import { useServerFn } from '@tanstack/react-start';
+import { deleteAllSecuredChats } from '@/lib/secure-chats.functions';
 
 interface SecureVaultModalProps {
   isOpen: boolean;
@@ -58,6 +61,12 @@ export default function SecureVaultModal({ isOpen, onClose }: SecureVaultModalPr
   const [patternSelected, setPatternSelected] = useState<number[]>([]);
   const [attempts, setAttempts] = useState(0);
   const [loading, setLoading] = useState(false);
+
+  // Delete-all flow: 'confirm' | 'pin' | null
+  const [deleteStep, setDeleteStep] = useState<null | 'confirm' | 'pin'>(null);
+  const [deletePin, setDeletePin] = useState('');
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const deleteAllFn = useServerFn(deleteAllSecuredChats);
 
   // Nickname editing state
   const [editingNickname, setEditingNickname] = useState(false);
@@ -230,6 +239,29 @@ export default function SecureVaultModal({ isOpen, onClose }: SecureVaultModalPr
     handleClose();
   };
 
+  const handleConfirmDelete = async () => {
+    if (!user) return;
+    if (!/^\d{6}$/.test(deletePin)) {
+      toast.error('Enter your 6-digit encryption PIN');
+      return;
+    }
+    setDeleteBusy(true);
+    try {
+      // Verify the user's actual E2E encryption PIN
+      await unlockEncryptionWithPIN(user.id, deletePin);
+      const res: any = await deleteAllSecuredChats();
+      toast.success(`Deleted ${res?.deleted ?? 0} secured chat${res?.deleted === 1 ? '' : 's'}`);
+      setDeleteStep(null);
+      setDeletePin('');
+      handleClose();
+    } catch (e: any) {
+      toast.error(e?.message || 'Incorrect encryption PIN');
+      setDeletePin('');
+    } finally {
+      setDeleteBusy(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -385,6 +417,14 @@ export default function SecureVaultModal({ isOpen, onClose }: SecureVaultModalPr
                 )}
                 <span>Unlock Chat</span>
               </button>
+
+              <button
+                onClick={() => { setDeleteStep('confirm'); setDeletePin(''); }}
+                className="w-full mt-2 py-2.5 rounded-xl border border-vt-red/40 text-vt-red text-sm font-semibold flex items-center justify-center gap-2 hover:bg-vt-red/10 transition-all"
+              >
+                <Trash2 size={14} />
+                <span>Delete all Secured Chats</span>
+              </button>
             </div>
           ) : (
             /* Pattern Input */
@@ -458,9 +498,90 @@ export default function SecureVaultModal({ isOpen, onClose }: SecureVaultModalPr
               >
                 Clear Pattern
               </button>
+              <button
+                onClick={() => { setDeleteStep('confirm'); setDeletePin(''); }}
+                className="w-full mt-2 py-2.5 rounded-xl border border-vt-red/40 text-vt-red text-sm font-semibold flex items-center justify-center gap-2 hover:bg-vt-red/10 transition-all"
+              >
+                <Trash2 size={14} />
+                <span>Delete all Secured Chats</span>
+              </button>
             </div>
           )}
         </div>
+
+        {/* Delete-all overlay */}
+        {deleteStep && (
+          <div className="absolute inset-0 z-10 bg-background/85 backdrop-blur-md flex items-center justify-center p-5">
+            <div className="w-full max-w-sm glass-strong rounded-2xl border border-vt-red/30 p-5 float-up">
+              {deleteStep === 'confirm' ? (
+                <>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-full bg-vt-red/15 flex items-center justify-center">
+                      <AlertTriangle size={18} className="text-vt-red" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-foreground">Delete all secured chats?</h3>
+                      <p className="text-[11px] text-muted-foreground">This permanently removes every chat you have marked as secured — from your device and the database. This cannot be undone.</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 mt-4">
+                    <button
+                      onClick={() => { setDeleteStep(null); setDeletePin(''); }}
+                      className="flex-1 py-2.5 rounded-xl glass border border-border text-sm font-semibold text-foreground hover:bg-muted"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => setDeleteStep('pin')}
+                      className="flex-1 py-2.5 rounded-xl bg-vt-red text-white text-sm font-semibold hover:opacity-90"
+                    >
+                      Yes, delete
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center">
+                      <Lock size={18} className="text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-foreground">Enter Encryption PIN</h3>
+                      <p className="text-[11px] text-muted-foreground">Type the 6-digit E2E PIN you created at sign-up to confirm.</p>
+                    </div>
+                  </div>
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={deletePin}
+                    onChange={(e) => setDeletePin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    onKeyDown={(e) => e.key === 'Enter' && handleConfirmDelete()}
+                    placeholder="6-digit PIN"
+                    style={{ WebkitTextSecurity: 'disc' } as React.CSSProperties}
+                    className="w-full bg-input border border-border rounded-xl px-4 py-3 text-center text-xl tracking-[0.4em] font-mono text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                  <div className="flex gap-2 mt-4">
+                    <button
+                      onClick={() => { setDeleteStep(null); setDeletePin(''); }}
+                      disabled={deleteBusy}
+                      className="flex-1 py-2.5 rounded-xl glass border border-border text-sm font-semibold text-foreground hover:bg-muted disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleConfirmDelete}
+                      disabled={deleteBusy || deletePin.length !== 6}
+                      className="flex-1 py-2.5 rounded-xl bg-vt-red text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50"
+                    >
+                      {deleteBusy ? 'Deleting…' : 'Delete all'}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
