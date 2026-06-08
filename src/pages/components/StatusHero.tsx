@@ -157,9 +157,9 @@ export default function StatusHero() {
         upsert: false,
       });
       if (upErr) throw upErr;
-      const { data: pub } = supabase.storage.from('status-media').getPublicUrl(path);
+      // Store the storage path (not a public URL). Renderers create signed URLs on demand.
       await insertStatus({
-        media_url: pub.publicUrl,
+        media_url: path,
         media_type: mediaFile.type.startsWith('video') ? 'video' : 'image',
         content: mediaCaption.trim() || undefined,
       });
