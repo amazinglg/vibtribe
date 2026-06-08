@@ -417,6 +417,14 @@ export default function SecureVaultModal({ isOpen, onClose }: SecureVaultModalPr
                 )}
                 <span>Unlock Chat</span>
               </button>
+
+              <button
+                onClick={() => { setDeleteStep('confirm'); setDeletePin(''); }}
+                className="w-full mt-2 py-2.5 rounded-xl border border-vt-red/40 text-vt-red text-sm font-semibold flex items-center justify-center gap-2 hover:bg-vt-red/10 transition-all"
+              >
+                <Trash2 size={14} />
+                <span>Delete all Secured Chats</span>
+              </button>
             </div>
           ) : (
             /* Pattern Input */
