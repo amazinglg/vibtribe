@@ -827,15 +827,38 @@ export default function ChatWindowPanel() {
 
   const handleFileAttach = async (file: File, type: 'image' | 'file' | 'audio' | 'video') => {
     if (!file || !selectedChatId || !user) return;
-    // Strict E2E: 1:1 chats must encrypt; block if keys are missing.
-    if (chatType !== 'group') {
-      if (!contact?.publicKey) {
-        toast.error(`${contact?.name || 'This user'} hasn't enabled encryption yet.`);
-        return;
-      }
-      const ok = await hasLocalPrivateKey();
-      if (!ok) {
-        toast.error('Set up or unlock your encryption PIN to share files.');
+    // Strict E2E: both 1:1 and group must encrypt; block if keys are missing.
+    const localOk = await hasLocalPrivateKey();
+    if (!localOk) {
+      toast.error('Set up or unlock your encryption PIN to share files.');
+      return;
+    }
+    if (chatType !== 'group' && !contact?.publicKey) {
+      toast.error(`${contact?.name || 'This user'} hasn't enabled encryption yet.`);
+      return;
+    }
+    // For groups, refresh members so the AES key wraps reach everyone with keys.
+    let groupMembers: GroupMember[] = [];
+    if (chatType === 'group') {
+      try {
+        const { data: memberRows } = await supabase
+          .from('chat_members').select('user_id').eq('chat_id', selectedChatId);
+        const memberIds = (memberRows || []).map((r: any) => r.user_id);
+        if (memberIds.length) {
+          const { data: profs } = await supabase
+            .from('user_profiles').select('id, public_key').in('id', memberIds);
+          groupMembers = (profs || [])
+            .filter((p: any) => !!p.public_key)
+            .map((p: any) => ({ userId: p.id, publicKey: p.public_key }));
+          const myPk = senderPubKeyCacheRef.current.get(user.id);
+          if (myPk && !groupMembers.find(m => m.userId === user.id)) {
+            groupMembers.push({ userId: user.id, publicKey: myPk });
+          }
+          tribeMembersRef.current = groupMembers;
+        }
+      } catch {}
+      if (groupMembers.length === 0) {
+        toast.error('No tribe members have set up encryption yet.');
         return;
       }
     }
@@ -860,14 +883,24 @@ export default function ChatWindowPanel() {
     setMessages(prev => [...prev, tempMsg]);
 
     try {
-      const useE2E = e2eEnabled && !!contact?.publicKey;
+      const isGroup = chatType === 'group';
+      const use1to1E2E = !isGroup && e2eEnabled && !!contact?.publicKey;
+      const useGroupE2E = isGroup && groupMembers.length > 0;
+      const useE2E = use1to1E2E || useGroupE2E;
       const mime = file.type || 'application/octet-stream';
       let uploadBody: Blob = file;
       let ext = file.name.includes('.') ? file.name.split('.').pop() : 'bin';
-      if (useE2E) {
+      let groupMediaKey: string | null = null;
+      if (use1to1E2E) {
         const plainBuf = await file.arrayBuffer();
         const cipherBuf = await encryptBytes(plainBuf, contact!.publicKey!);
         uploadBody = new Blob([cipherBuf], { type: 'application/octet-stream' });
+        ext = 'enc';
+      } else if (useGroupE2E) {
+        const plainBuf = await file.arrayBuffer();
+        const { keyB64, cipher } = await encryptBytesWithRandomKey(plainBuf);
+        groupMediaKey = keyB64;
+        uploadBody = new Blob([cipher], { type: 'application/octet-stream' });
         ext = 'enc';
       }
       const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
@@ -881,9 +914,12 @@ export default function ChatWindowPanel() {
       const publicUrl = urlData?.publicUrl || '';
 
       let content: string;
-      if (useE2E) {
+      if (use1to1E2E) {
         const envelope = `__media__:${JSON.stringify({ type, url: publicUrl, mime, name: file.name })}`;
         content = await encryptMessage(envelope, contact!.publicKey!);
+      } else if (useGroupE2E) {
+        const envelope = `__media__:${JSON.stringify({ type, url: publicUrl, mime, name: file.name, k: groupMediaKey, gk: true })}`;
+        content = await encryptGroupMessage(envelope, groupMembers);
       } else {
         content = isImage ? `[IMAGE:${publicUrl}]` : `[FILE:${file.name}:${publicUrl}]`;
       }
