@@ -607,6 +607,31 @@ export default function AdminPage() {
                 ))}
               </div>
             </div>
+
+            {/* Force Update Release — admin & master admin only */}
+            {isAdmin && (
+              <div className="glass rounded-2xl border border-border p-5">
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center flex-shrink-0">
+                    <Rocket size={18} className="text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h2 className="font-bold text-base text-foreground">Force Update Release</h2>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Push a hard reload to every active client (Android, iOS, web). Clears caches and service workers — users stay signed in.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setConfirmRelease(true)}
+                  disabled={releasing}
+                  className="w-full py-3 rounded-xl bg-vt-amber/15 border border-vt-amber/40 text-vt-amber text-sm font-semibold flex items-center justify-center gap-2 hover:bg-vt-amber/25 transition-all disabled:opacity-50"
+                >
+                  <RefreshCw size={14} className={releasing ? 'animate-spin' : ''} />
+                  <span>{releasing ? 'Publishing release…' : 'Force Update Release'}</span>
+                </button>
+              </div>
+            )}
           </div>
         )}
 
