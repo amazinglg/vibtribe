@@ -23,12 +23,14 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
+import { Route as DownloadIosRouteImport } from './routes/download.ios'
 import { Route as DownloadAndroidRouteImport } from './routes/download.android'
 import { Route as BlogVibtribeVsSignalVsTelegramRouteImport } from './routes/blog.vibtribe-vs-signal-vs-telegram'
 import { Route as AdminPermissionsRouteImport } from './routes/admin.permissions'
 import { Route as AdminMarketingRouteImport } from './routes/admin.marketing'
 import { Route as TribeJoinCodeRouteImport } from './routes/tribe.join.$code'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
+import { Route as ApiPublicTrackApkDownloadRouteImport } from './routes/api/public/track-apk-download'
 import { Route as ApiPublicResendWebhookRouteImport } from './routes/api/public/resend-webhook'
 import { Route as ApiPublicAuthOtpRouteImport } from './routes/api/public/auth-otp'
 import { Route as ApiPublicAuthLoginRouteImport } from './routes/api/public/auth-login'
@@ -38,6 +40,7 @@ import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/l
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as ApiPublicHooksCleanupExpiredStatusesRouteImport } from './routes/api/public/hooks/cleanup-expired-statuses'
 
 const UnsubscribeRoute = UnsubscribeRouteImport.update({
   id: '/unsubscribe',
@@ -109,6 +112,11 @@ const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
   path: '/email/unsubscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DownloadIosRoute = DownloadIosRouteImport.update({
+  id: '/download/ios',
+  path: '/download/ios',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DownloadAndroidRoute = DownloadAndroidRouteImport.update({
   id: '/download/android',
   path: '/download/android',
@@ -140,6 +148,12 @@ const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   path: '/lovable/email/suppression',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTrackApkDownloadRoute =
+  ApiPublicTrackApkDownloadRouteImport.update({
+    id: '/api/public/track-apk-download',
+    path: '/api/public/track-apk-download',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicResendWebhookRoute = ApiPublicResendWebhookRouteImport.update({
   id: '/api/public/resend-webhook',
   path: '/api/public/resend-webhook',
@@ -188,6 +202,12 @@ const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
   path: '/lovable/email/auth/preview',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksCleanupExpiredStatusesRoute =
+  ApiPublicHooksCleanupExpiredStatusesRouteImport.update({
+    id: '/api/public/hooks/cleanup-expired-statuses',
+    path: '/api/public/hooks/cleanup-expired-statuses',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -206,14 +226,17 @@ export interface FileRoutesByFullPath {
   '/admin/permissions': typeof AdminPermissionsRoute
   '/blog/vibtribe-vs-signal-vs-telegram': typeof BlogVibtribeVsSignalVsTelegramRoute
   '/download/android': typeof DownloadAndroidRoute
+  '/download/ios': typeof DownloadIosRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
+  '/api/public/track-apk-download': typeof ApiPublicTrackApkDownloadRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/tribe/join/$code': typeof TribeJoinCodeRoute
+  '/api/public/hooks/cleanup-expired-statuses': typeof ApiPublicHooksCleanupExpiredStatusesRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -236,14 +259,17 @@ export interface FileRoutesByTo {
   '/admin/permissions': typeof AdminPermissionsRoute
   '/blog/vibtribe-vs-signal-vs-telegram': typeof BlogVibtribeVsSignalVsTelegramRoute
   '/download/android': typeof DownloadAndroidRoute
+  '/download/ios': typeof DownloadIosRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/admin': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
+  '/api/public/track-apk-download': typeof ApiPublicTrackApkDownloadRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/tribe/join/$code': typeof TribeJoinCodeRoute
+  '/api/public/hooks/cleanup-expired-statuses': typeof ApiPublicHooksCleanupExpiredStatusesRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -268,14 +294,17 @@ export interface FileRoutesById {
   '/admin/permissions': typeof AdminPermissionsRoute
   '/blog/vibtribe-vs-signal-vs-telegram': typeof BlogVibtribeVsSignalVsTelegramRoute
   '/download/android': typeof DownloadAndroidRoute
+  '/download/ios': typeof DownloadIosRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
+  '/api/public/track-apk-download': typeof ApiPublicTrackApkDownloadRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/tribe/join/$code': typeof TribeJoinCodeRoute
+  '/api/public/hooks/cleanup-expired-statuses': typeof ApiPublicHooksCleanupExpiredStatusesRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -301,14 +330,17 @@ export interface FileRouteTypes {
     | '/admin/permissions'
     | '/blog/vibtribe-vs-signal-vs-telegram'
     | '/download/android'
+    | '/download/ios'
     | '/email/unsubscribe'
     | '/admin/'
     | '/admin/user/$userId'
     | '/api/public/auth-login'
     | '/api/public/auth-otp'
     | '/api/public/resend-webhook'
+    | '/api/public/track-apk-download'
     | '/lovable/email/suppression'
     | '/tribe/join/$code'
+    | '/api/public/hooks/cleanup-expired-statuses'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -331,14 +363,17 @@ export interface FileRouteTypes {
     | '/admin/permissions'
     | '/blog/vibtribe-vs-signal-vs-telegram'
     | '/download/android'
+    | '/download/ios'
     | '/email/unsubscribe'
     | '/admin'
     | '/admin/user/$userId'
     | '/api/public/auth-login'
     | '/api/public/auth-otp'
     | '/api/public/resend-webhook'
+    | '/api/public/track-apk-download'
     | '/lovable/email/suppression'
     | '/tribe/join/$code'
+    | '/api/public/hooks/cleanup-expired-statuses'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -362,14 +397,17 @@ export interface FileRouteTypes {
     | '/admin/permissions'
     | '/blog/vibtribe-vs-signal-vs-telegram'
     | '/download/android'
+    | '/download/ios'
     | '/email/unsubscribe'
     | '/admin/'
     | '/admin/user/$userId'
     | '/api/public/auth-login'
     | '/api/public/auth-otp'
     | '/api/public/resend-webhook'
+    | '/api/public/track-apk-download'
     | '/lovable/email/suppression'
     | '/tribe/join/$code'
+    | '/api/public/hooks/cleanup-expired-statuses'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -392,12 +430,15 @@ export interface RootRouteChildren {
   UnsubscribeRoute: typeof UnsubscribeRoute
   BlogVibtribeVsSignalVsTelegramRoute: typeof BlogVibtribeVsSignalVsTelegramRoute
   DownloadAndroidRoute: typeof DownloadAndroidRoute
+  DownloadIosRoute: typeof DownloadIosRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   ApiPublicAuthLoginRoute: typeof ApiPublicAuthLoginRoute
   ApiPublicAuthOtpRoute: typeof ApiPublicAuthOtpRoute
   ApiPublicResendWebhookRoute: typeof ApiPublicResendWebhookRoute
+  ApiPublicTrackApkDownloadRoute: typeof ApiPublicTrackApkDownloadRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   TribeJoinCodeRoute: typeof TribeJoinCodeRoute
+  ApiPublicHooksCleanupExpiredStatusesRoute: typeof ApiPublicHooksCleanupExpiredStatusesRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
@@ -505,6 +546,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmailUnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/download/ios': {
+      id: '/download/ios'
+      path: '/download/ios'
+      fullPath: '/download/ios'
+      preLoaderRoute: typeof DownloadIosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/download/android': {
       id: '/download/android'
       path: '/download/android'
@@ -545,6 +593,13 @@ declare module '@tanstack/react-router' {
       path: '/lovable/email/suppression'
       fullPath: '/lovable/email/suppression'
       preLoaderRoute: typeof LovableEmailSuppressionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/track-apk-download': {
+      id: '/api/public/track-apk-download'
+      path: '/api/public/track-apk-download'
+      fullPath: '/api/public/track-apk-download'
+      preLoaderRoute: typeof ApiPublicTrackApkDownloadRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/resend-webhook': {
@@ -610,6 +665,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/cleanup-expired-statuses': {
+      id: '/api/public/hooks/cleanup-expired-statuses'
+      path: '/api/public/hooks/cleanup-expired-statuses'
+      fullPath: '/api/public/hooks/cleanup-expired-statuses'
+      preLoaderRoute: typeof ApiPublicHooksCleanupExpiredStatusesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -644,12 +706,16 @@ const rootRouteChildren: RootRouteChildren = {
   UnsubscribeRoute: UnsubscribeRoute,
   BlogVibtribeVsSignalVsTelegramRoute: BlogVibtribeVsSignalVsTelegramRoute,
   DownloadAndroidRoute: DownloadAndroidRoute,
+  DownloadIosRoute: DownloadIosRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   ApiPublicAuthLoginRoute: ApiPublicAuthLoginRoute,
   ApiPublicAuthOtpRoute: ApiPublicAuthOtpRoute,
   ApiPublicResendWebhookRoute: ApiPublicResendWebhookRoute,
+  ApiPublicTrackApkDownloadRoute: ApiPublicTrackApkDownloadRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   TribeJoinCodeRoute: TribeJoinCodeRoute,
+  ApiPublicHooksCleanupExpiredStatusesRoute:
+    ApiPublicHooksCleanupExpiredStatusesRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
@@ -659,13 +725,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
