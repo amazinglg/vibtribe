@@ -7,7 +7,6 @@ import {
 
 const APK_HREF = '/VibTribe_v1.1.apk';
 const APK_FILENAME = 'VibTribe_v1.1.apk';
-const APK_VERSION = '1.1';
 
 const TITLE = 'Install VibTribe on Android — Step-by-step guide';
 const DESCRIPTION =
