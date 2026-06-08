@@ -29,7 +29,7 @@ export const publishAppRelease = createServerFn({ method: 'POST' })
     }
 
     const version = data.version || `r-${Date.now()}`
-    const { data: row, error } = await supabaseAdmin
+    const { data: row, error } = await (supabaseAdmin as any)
       .from('app_releases')
       .insert({ version, note: data.note ?? null, released_by: context.userId })
       .select()
