@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      apk_download_events: {
+        Row: {
+          created_at: string
+          id: string
+          ip_hash: string | null
+          referrer: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_hash?: string | null
+          referrer?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_hash?: string | null
+          referrer?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       app_roles: {
         Row: {
           created_at: string
@@ -222,6 +246,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      chat_mutes: {
+        Row: {
+          chat_id: string
+          created_at: string
+          id: string
+          muted_until: string | null
+          user_id: string
+        }
+        Insert: {
+          chat_id: string
+          created_at?: string
+          id?: string
+          muted_until?: string | null
+          user_id: string
+        }
+        Update: {
+          chat_id?: string
+          created_at?: string
+          id?: string
+          muted_until?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       chats: {
         Row: {
@@ -1120,6 +1168,10 @@ export type Database = {
           notif_secure_chats: boolean
           notif_sounds: boolean
           notif_status: boolean
+          pref_camera_enabled: boolean
+          pref_contacts_enabled: boolean
+          pref_mic_enabled: boolean
+          pref_notifications_enabled: boolean
           profile_completed: boolean | null
           profile_photo_visibility: string
           public_key: string | null
@@ -1160,6 +1212,10 @@ export type Database = {
           notif_secure_chats?: boolean
           notif_sounds?: boolean
           notif_status?: boolean
+          pref_camera_enabled?: boolean
+          pref_contacts_enabled?: boolean
+          pref_mic_enabled?: boolean
+          pref_notifications_enabled?: boolean
           profile_completed?: boolean | null
           profile_photo_visibility?: string
           public_key?: string | null
@@ -1200,6 +1256,10 @@ export type Database = {
           notif_secure_chats?: boolean
           notif_sounds?: boolean
           notif_status?: boolean
+          pref_camera_enabled?: boolean
+          pref_contacts_enabled?: boolean
+          pref_mic_enabled?: boolean
+          pref_notifications_enabled?: boolean
           profile_completed?: boolean | null
           profile_photo_visibility?: string
           public_key?: string | null
@@ -1343,6 +1403,10 @@ export type Database = {
           notif_secure_chats: boolean
           notif_sounds: boolean
           notif_status: boolean
+          pref_camera_enabled: boolean
+          pref_contacts_enabled: boolean
+          pref_mic_enabled: boolean
+          pref_notifications_enabled: boolean
           profile_completed: boolean | null
           profile_photo_visibility: string
           public_key: string | null
@@ -1406,6 +1470,10 @@ export type Database = {
           notif_secure_chats: boolean
           notif_sounds: boolean
           notif_status: boolean
+          pref_camera_enabled: boolean
+          pref_contacts_enabled: boolean
+          pref_mic_enabled: boolean
+          pref_notifications_enabled: boolean
           profile_completed: boolean | null
           profile_photo_visibility: string
           public_key: string | null
@@ -1499,6 +1567,10 @@ export type Database = {
           notif_secure_chats: boolean
           notif_sounds: boolean
           notif_status: boolean
+          pref_camera_enabled: boolean
+          pref_contacts_enabled: boolean
+          pref_mic_enabled: boolean
+          pref_notifications_enabled: boolean
           profile_completed: boolean | null
           profile_photo_visibility: string
           public_key: string | null
@@ -1522,6 +1594,10 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_admin_user: { Args: never; Returns: boolean }
+      is_chat_muted: {
+        Args: { _chat_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_chat_participant: { Args: { chat_uuid: string }; Returns: boolean }
       is_contact: {
         Args: { _owner_id: string; _viewer_id: string }
