@@ -289,6 +289,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       clearInterval((window as any).__forceLogoutInterval);
     }
     stopSessionHeartbeat();
+    // Clear per-session encryption unlock so the next login re-prompts for the PIN.
+    try {
+      if (user?.id) {
+        sessionStorage.removeItem(`vt_pin_session_${user.id}`);
+        localStorage.removeItem(`vt_pin_last_verified_${user.id}`);
+      }
+    } catch {}
     // Remove this device's session row so it disappears from the Devices tab.
     try {
       if (user?.id) {

@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useRef, useEffect } from 'react';
-import { Phone, Video, Paperclip, Mic, MicOff, Send, Lock, CheckCheck, Check, ArrowLeft, Info, Trash2, ShieldCheck, Ban, ShieldOff, X, Image, FileText, Camera, VideoOff, PhoneOff, Volume2, VolumeX, Timer, MoreVertical, UserPlus, Smile } from 'lucide-react';
+import { Phone, Video, Paperclip, Mic, MicOff, Send, Lock, CheckCheck, Check, ArrowLeft, Info, Trash2, ShieldCheck, Ban, ShieldOff, X, Image, FileText, Camera, VideoOff, PhoneOff, Volume2, VolumeX, Timer, MoreVertical, UserPlus, Smile, KeyRound } from 'lucide-react';
 import { useChatStore } from '@/store/chatStore';
 import MarkSecureModal from '@/components/MarkSecureModal';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import { EMOJI_CATEGORIES, type EmojiCategoryKey } from '@/lib/emojis';
 import { useT } from '@/contexts/LanguageContext';
 import TribeDetailsSheet from '@/components/TribeDetailsSheet';
+import EncryptionPinModal from '@/components/EncryptionPinModal';
 
 interface Message {
   id: string;
@@ -248,6 +249,7 @@ export default function ChatWindowPanel() {
   const [myChatSecured, setMyChatSecured] = useState(false);
   const [showDisappearMenu, setShowDisappearMenu] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [showUnlockPinModal, setShowUnlockPinModal] = useState(false);
   const [tribeRole, setTribeRole] = useState<'leader' | 'member' | null>(null);
   const [tribeSheetOpen, setTribeSheetOpen] = useState(false);
   const contactPubKeyRef = useRef<string | null>(null);
@@ -1542,6 +1544,13 @@ export default function ChatWindowPanel() {
                     ))}
                   </div>
                 )}
+                <button
+                  onClick={() => { setShowMoreMenu(false); setShowUnlockPinModal(true); }}
+                  className="w-full text-left px-3 py-2.5 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground"
+                >
+                  <KeyRound size={16} className="text-vt-green" />
+                  <span className="flex-1">Unlock Encryption</span>
+                </button>
                 {chatType !== 'group' && contact?.userId && !contact.isContact && (
                   <button
                     onClick={() => { setShowMoreMenu(false); handleAddToContacts(); }}
@@ -2053,6 +2062,23 @@ export default function ChatWindowPanel() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Manual Unlock Encryption modal — accessible from chat menu */}
+      {showUnlockPinModal && user && (
+        <EncryptionPinModal
+          userId={user.id}
+          mode="unlock"
+          onComplete={() => {
+            setShowUnlockPinModal(false);
+            try {
+              sessionStorage.setItem(`vt_pin_session_${user.id}`, '1');
+              localStorage.setItem(`vt_pin_last_verified_${user.id}`, String(Date.now()));
+              window.dispatchEvent(new CustomEvent('vt-encryption-unlocked'));
+            } catch {}
+          }}
+          onSkip={() => setShowUnlockPinModal(false)}
+        />
       )}
 
       {/* Emoji Picker */}
