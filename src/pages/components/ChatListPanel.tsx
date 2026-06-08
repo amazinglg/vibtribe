@@ -100,7 +100,7 @@ export default function ChatListPanel() {
   const handleBlockFromList = async (chatId: string, participantId: string | undefined, name: string) => {
     setContextMenu(null);
     if (!user || !participantId) return;
-    if (!confirm(`Block ${name}? You won\u2019t receive their messages or calls.`)) return;
+    if (!confirm(`Block ${name}? You won’t receive their messages or calls.`)) return;
     try {
       await supabase.from('blocked_users').insert({ blocker_id: user.id, blocked_user_id: participantId });
       // Hide blocked user's chat from list immediately
@@ -875,7 +875,7 @@ export default function ChatListPanel() {
               <BellOff size={16} className="text-primary" />
               <h3 className="font-bold text-base text-foreground">Mute {muteFor.chatName}</h3>
             </div>
-            <p className="text-xs text-muted-foreground mb-4">You won\u2019t get notifications, in-app toasts, or unread badges from this chat.</p>
+            <p className="text-xs text-muted-foreground mb-4">You won’t get notifications, in-app toasts, or unread badges from this chat.</p>
             <div className="space-y-2">
               {([
                 { id: '1h', label: '1 hour' },
