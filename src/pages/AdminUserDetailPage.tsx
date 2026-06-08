@@ -246,7 +246,17 @@ export default function AdminUserDetailPage() {
               {target.username && <p className="text-xs text-primary truncate mb-1">@{target.username}</p>}
               <div className="space-y-0.5 text-xs text-muted-foreground">
                 {target.real_email && <p className="flex items-center gap-1.5 truncate"><Mail size={11} /> {target.real_email}</p>}
-                {target.mobile_number && <p className="flex items-center gap-1.5"><Phone size={11} /> {target.mobile_number}</p>}
+                {target.mobile_number && (
+                  <p className="flex items-center gap-1.5">
+                    <Phone size={11} />
+                    {(() => {
+                      const c = findCountryByDial(target.country_code);
+                      return c ? <span aria-hidden className="text-sm leading-none">{flagFromIso2(c.iso2)}</span> : null;
+                    })()}
+                    <span>{target.mobile_number}</span>
+                    {target.country_code && <span className="text-[10px] text-muted-foreground">({target.country_code})</span>}
+                  </p>
+                )}
               </div>
             </div>
           </div>
