@@ -1,11 +1,20 @@
 package app.vibtribe.app;
 
 import android.Manifest;
+import android.app.DownloadManager;
+import android.content.Context;
 import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Environment;
 import android.os.Bundle;
+import android.util.Base64;
+import android.util.Log;
+import android.webkit.MimeTypeMap;
 import android.webkit.PermissionRequest;
+import android.webkit.URLUtil;
 import android.webkit.WebView;
 import android.webkit.WebChromeClient;
+import android.widget.Toast;
 import android.view.View;
 import androidx.activity.EdgeToEdge;
 import androidx.core.app.ActivityCompat;
@@ -16,6 +25,8 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.WebViewListener;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -75,8 +86,62 @@ public class MainActivity extends BridgeActivity {
                             runOnUiThread(() -> grantWebRtcPermissions(request));
                         }
                     });
+                    // Anchor `download` attribute is a no-op in the WebView
+                    // by default. Intercept downloads here so user-initiated
+                    // file saves from the chat actually land on disk.
+                    webView.setDownloadListener((url, userAgent, contentDisposition, mimeType, contentLength) -> {
+                        try {
+                            String filename = URLUtil.guessFileName(url, contentDisposition, mimeType);
+                            if (url != null && url.startsWith("data:")) {
+                                saveDataUrlToDownloads(url, filename, mimeType);
+                            } else if (url != null && (url.startsWith("http://") || url.startsWith("https://"))) {
+                                DownloadManager.Request req = new DownloadManager.Request(Uri.parse(url));
+                                req.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                                req.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, filename);
+                                req.setMimeType(mimeType);
+                                DownloadManager dm = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
+                                if (dm != null) dm.enqueue(req);
+                            }
+                        } catch (Exception e) {
+                            Log.w("VibTribe", "download failed", e);
+                            runOnUiThread(() -> Toast.makeText(MainActivity.this, "Download failed", Toast.LENGTH_SHORT).show());
+                        }
+                    });
                 }
             });
+        }
+    }
+
+    private void saveDataUrlToDownloads(String dataUrl, String filename, String mimeType) {
+        try {
+            int comma = dataUrl.indexOf(',');
+            if (comma < 0) return;
+            String header = dataUrl.substring(5, comma); // strip "data:"
+            String payload = dataUrl.substring(comma + 1);
+            boolean isBase64 = header.contains(";base64");
+            byte[] bytes = isBase64
+                ? Base64.decode(payload, Base64.DEFAULT)
+                : Uri.decode(payload).getBytes();
+            File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+            if (!dir.exists()) dir.mkdirs();
+            File out = new File(dir, filename);
+            try (FileOutputStream fos = new FileOutputStream(out)) {
+                fos.write(bytes);
+            }
+            DownloadManager dm = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
+            if (dm != null) {
+                String mt = mimeType;
+                if (mt == null || mt.isEmpty()) {
+                    String ext = MimeTypeMap.getFileExtensionFromUrl(out.getName());
+                    mt = MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext);
+                    if (mt == null) mt = "application/octet-stream";
+                }
+                dm.addCompletedDownload(out.getName(), out.getName(), true, mt, out.getAbsolutePath(), out.length(), true);
+            }
+            runOnUiThread(() -> Toast.makeText(MainActivity.this, "Saved to Downloads", Toast.LENGTH_SHORT).show());
+        } catch (Exception e) {
+            Log.w("VibTribe", "saveDataUrlToDownloads failed", e);
+            runOnUiThread(() -> Toast.makeText(MainActivity.this, "Download failed", Toast.LENGTH_SHORT).show());
         }
     }
 

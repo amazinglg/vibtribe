@@ -38,6 +38,30 @@ export type Database = {
         }
         Relationships: []
       }
+      app_releases: {
+        Row: {
+          id: string
+          note: string | null
+          released_at: string
+          released_by: string | null
+          version: string
+        }
+        Insert: {
+          id?: string
+          note?: string | null
+          released_at?: string
+          released_by?: string | null
+          version: string
+        }
+        Update: {
+          id?: string
+          note?: string | null
+          released_at?: string
+          released_by?: string | null
+          version?: string
+        }
+        Relationships: []
+      }
       app_roles: {
         Row: {
           created_at: string

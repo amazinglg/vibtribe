@@ -974,6 +974,21 @@ export default function ChatWindowPanel() {
   // confirm before sending. Replaces the previous fire-and-forget upload.
   const queueAttachment = (file: File, type: 'image' | 'file' | 'audio' | 'video') => {
     if (type === 'image' && file.type?.startsWith('video/')) type = 'video';
+    // Hard cap per file. Documents have a higher 250 MB cap; media
+    // (photos/videos/audio) keep the existing 100 MB ceiling to avoid
+    // multi-minute uploads on flaky mobile networks.
+    const MAX_DOC_BYTES = 250 * 1024 * 1024;
+    const MAX_MEDIA_BYTES = 100 * 1024 * 1024;
+    const limit = type === 'file' ? MAX_DOC_BYTES : MAX_MEDIA_BYTES;
+    if (file.size > limit) {
+      const mb = Math.round(limit / (1024 * 1024));
+      toast.error(
+        type === 'file'
+          ? `Documents can be up to ${mb} MB.`
+          : `File is too large. Max ${mb} MB for ${type}s.`
+      );
+      return;
+    }
     const previewUrl = (type === 'image' || type === 'video' || type === 'audio')
       ? URL.createObjectURL(file) : undefined;
     setPendingAttachment({ file, type, previewUrl });
@@ -1002,10 +1017,20 @@ export default function ChatWindowPanel() {
     if (isNativeWrapper()) {
       setShowAttachMenu(false);
       (async () => {
-        const dataUrl = await pickNativeImage({ source: 'photos' });
-        if (!dataUrl) return;
-        const file = await dataUrlToFile(dataUrl, `photo-${Date.now()}.jpg`);
-        if (file) queueAttachment(file, 'image');
+        // Use the system file picker so users can choose photos OR videos.
+        // Camera.getPhoto() is image-only — videos never appeared in the
+        // gallery sheet before.
+        const picked = await pickNativeFiles({
+          multiple: false,
+          types: ['image/*', 'video/*'],
+        });
+        if (!picked.length) return;
+        const p = picked[0];
+        const file = await dataUrlToFile(p.dataUrl, p.name);
+        if (!file) return;
+        const renamed = new File([file], p.name, { type: p.mime });
+        const kind: 'image' | 'video' = (p.mime || '').startsWith('video/') ? 'video' : 'image';
+        queueAttachment(renamed, kind);
       })();
       return;
     }

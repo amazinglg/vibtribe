@@ -146,7 +146,31 @@ export async function listUserSessions(userId: string): Promise<DeviceSession[]>
     .eq('user_id', userId)
     .order('last_seen_at', { ascending: false });
   if (error) throw error;
-  return data ?? [];
+  const rows = (data ?? []) as DeviceSession[];
+  // Dedupe: collapse rows that represent the same physical device.
+  // Android WebView regenerates the localStorage device_id on app
+  // reinstall / WebView data wipe, so a single phone can show up many times.
+  // Keep only the most-recent row per (platform + device_name + UA hash).
+  const seen = new Map<string, DeviceSession>();
+  const myDeviceId = (typeof window !== 'undefined' && window.localStorage.getItem(DEVICE_ID_KEY)) || '';
+  const mySessionId = getCurrentSessionId();
+  const key = (r: DeviceSession) => {
+    const ua = (r.user_agent || '').slice(0, 80);
+    return `${r.platform}|${r.device_name}|${ua}`;
+  };
+  for (const r of rows) {
+    const k = key(r);
+    const existing = seen.get(k);
+    if (!existing) { seen.set(k, r); continue; }
+    // Always keep the row matching the current device/session so the
+    // "Current" badge stays accurate.
+    if (r.device_id === myDeviceId || r.id === mySessionId) seen.set(k, r);
+  }
+  // Drop rows older than 60 days — those devices haven't checked in for a long time.
+  const CUTOFF = Date.now() - 60 * 24 * 60 * 60 * 1000;
+  return Array.from(seen.values())
+    .filter((r) => new Date(r.last_seen_at).getTime() >= CUTOFF)
+    .sort((a, b) => new Date(b.last_seen_at).getTime() - new Date(a.last_seen_at).getTime());
 }
 
 // Force-logout a single device (or all when sessionId is null).
