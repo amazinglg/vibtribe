@@ -1,43 +1,23 @@
 import React, { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useNavigate } from '@tanstack/react-router';
-import { Phone, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle, User, ChevronDown, Check, Calendar, Mail, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { Phone, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle, User, Calendar, Mail, ArrowLeft, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLogo from '@/components/ui/AppLogo';
 import { supabase } from '@/integrations/supabase/client';
 import LanguageDialogButton from '@/components/LanguageDialogButton';
 import { useT } from '@/contexts/LanguageContext';
 import { recordMarketingConsent } from '@/lib/marketing.functions';
-
-const COUNTRY_CODES = [
-  { name: 'India', code: '+91', flag: '🇮🇳' },
-  { name: 'United States', code: '+1', flag: '🇺🇸' },
-  { name: 'United Kingdom', code: '+44', flag: '🇬🇧' },
-  { name: 'Australia', code: '+61', flag: '🇦🇺' },
-  { name: 'Canada', code: '+1', flag: '🇨🇦' },
-  { name: 'Germany', code: '+49', flag: '🇩🇪' },
-  { name: 'France', code: '+33', flag: '🇫🇷' },
-  { name: 'Japan', code: '+81', flag: '🇯🇵' },
-  { name: 'China', code: '+86', flag: '🇨🇳' },
-  { name: 'Brazil', code: '+55', flag: '🇧🇷' },
-  { name: 'Mexico', code: '+52', flag: '🇲🇽' },
-  { name: 'South Africa', code: '+27', flag: '🇿🇦' },
-  { name: 'UAE', code: '+971', flag: '🇦🇪' },
-  { name: 'Singapore', code: '+65', flag: '🇸🇬' },
-  { name: 'Pakistan', code: '+92', flag: '🇵🇰' },
-  { name: 'Bangladesh', code: '+880', flag: '🇧🇩' },
-  { name: 'Sri Lanka', code: '+94', flag: '🇱🇰' },
-  { name: 'Nepal', code: '+977', flag: '🇳🇵' },
-  { name: 'Indonesia', code: '+62', flag: '🇮🇩' },
-  { name: 'Malaysia', code: '+60', flag: '🇲🇾' },
-];
+import CountryCodeSelect from '@/components/CountryCodeSelect';
+import { useDetectCountry } from '@/hooks/useDetectCountry';
 
 export default function SignUpPage() {
   const router = useNavigate();
   const { t } = useT();
   const [fullName, setFullName] = useState('');
   const [dob, setDob] = useState('');
-  const [countryCode, setCountryCode] = useState('+91');
+  const { country, setCountry } = useDetectCountry();
+  const countryCode = country.dial;
   const [mobile, setMobile] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -45,14 +25,11 @@ export default function SignUpPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [marketingOptIn, setMarketingOptIn] = useState(false);
   const [step, setStep] = useState<'details' | 'verify'>('details');
   const [otp, setOtp] = useState('');
   const [resending, setResending] = useState(false);
-
-  const selectedCountry = COUNTRY_CODES.find(c => c.code === countryCode) || COUNTRY_CODES[0];
 
   // Max DOB = today minus 18 years (used as `max` attribute on the date input)
   const maxDobStr = (() => {
