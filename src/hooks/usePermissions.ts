@@ -33,12 +33,34 @@ async function queryPermission(name: PermissionName): Promise<PermissionStatus> 
 }
 
 export function usePermissions() {
-  const [permissions, setPermissions] = useState<PermissionsState>({
-    microphone: 'idle',
-    camera: 'idle',
-    notifications: 'idle',
-    storage: 'idle',
+  // Hydrate from localStorage so previously-granted permissions don't show
+  // up as "off" on the next app launch / page reload. Android in particular
+  // does not expose a stable mic permission read API, so we cache it here.
+  const readCache = (k: keyof PermissionsState): PermissionStatus => {
+    try {
+      const v = typeof window !== 'undefined' && window.localStorage.getItem(`vt_perm_${k}`);
+      if (v === 'granted' || v === 'denied' || v === 'prompt' || v === 'unsupported') return v;
+    } catch {}
+    return 'idle';
+  };
+  const writeCache = (k: keyof PermissionsState, v: PermissionStatus) => {
+    try { if (typeof window !== 'undefined') window.localStorage.setItem(`vt_perm_${k}`, v); } catch {}
+  };
+  const [permissions, setPermissionsState] = useState<PermissionsState>({
+    microphone: readCache('microphone'),
+    camera: readCache('camera'),
+    notifications: readCache('notifications'),
+    storage: readCache('storage'),
   });
+  const setPermissions = (updater: PermissionsState | ((p: PermissionsState) => PermissionsState)) => {
+    setPermissionsState((prev) => {
+      const next = typeof updater === 'function' ? (updater as any)(prev) : updater;
+      (Object.keys(next) as (keyof PermissionsState)[]).forEach((k) => {
+        if (next[k] !== prev[k]) writeCache(k, next[k]);
+      });
+      return next;
+    });
+  };
 
   const requestMicrophone = useCallback(async (): Promise<PermissionRequestResult> => {
     if (isNativeWrapper()) {
@@ -230,10 +252,14 @@ export function usePermissions() {
       setPermissions(prev => ({
         ...prev,
         notifications: notif,
-        camera: camStatus,
-        storage: storageStatus,
+        // Never downgrade a previously-granted toggle to 'prompt' just
+        // because the OS API reported an indeterminate state — that's what
+        // made the camera/storage switches flip themselves off after the
+        // app resumed from background or the user revisited the screen.
+        camera: camStatus === 'prompt' && prev.camera === 'granted' ? 'granted' : camStatus,
+        storage: storageStatus === 'prompt' && prev.storage === 'granted' ? 'granted' : storageStatus,
         // Microphone has no Capacitor checkPermissions API — preserve the
-        // last value set by requestMicrophone() / a successful getUserMedia.
+        // last cached value (set by requestMicrophone() / getUserMedia).
       }));
       return;
     }
