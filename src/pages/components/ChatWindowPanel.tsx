@@ -1870,7 +1870,7 @@ export default function ChatWindowPanel() {
         <div className="absolute bottom-20 left-16 z-20 glass-strong rounded-2xl border border-border shadow-card p-3 float-up" onClick={e => e.stopPropagation()}>
           <div className="flex flex-col gap-1 min-w-[160px]">
             <button
-              onClick={() => { imageInputRef.current?.click(); setShowAttachMenu(false); requestStorage().catch(() => {}); }}
+              onClick={handlePickPhotoVideo}
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-all text-sm text-foreground"
             >
               <div className="w-8 h-8 bg-blue-500/20 rounded-xl flex items-center justify-center">
@@ -1879,7 +1879,7 @@ export default function ChatWindowPanel() {
               Photo / Video
             </button>
             <button
-              onClick={() => { fileInputRef.current?.click(); setShowAttachMenu(false); requestStorage().catch(() => {}); }}
+              onClick={() => handlePickFile(fileInputRef)}
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-all text-sm text-foreground"
             >
               <div className="w-8 h-8 bg-purple-500/20 rounded-xl flex items-center justify-center">
@@ -1888,7 +1888,7 @@ export default function ChatWindowPanel() {
               Document
             </button>
             <button
-              onClick={() => { imageInputRef.current?.click(); setShowAttachMenu(false); requestCamera().catch(() => {}); }}
+              onClick={handlePickCamera}
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-all text-sm text-foreground"
             >
               <div className="w-8 h-8 bg-green-500/20 rounded-xl flex items-center justify-center">
@@ -1897,7 +1897,7 @@ export default function ChatWindowPanel() {
               Camera
             </button>
             <button
-              onClick={() => { fileInputRef.current?.click(); setShowAttachMenu(false); requestMicrophone().catch(() => {}); }}
+              onClick={() => handlePickFile(audioInputRef)}
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-all text-sm text-foreground"
             >
               <div className="w-8 h-8 bg-pink-500/20 rounded-xl flex items-center justify-center">
