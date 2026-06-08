@@ -12,6 +12,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
+import ForceReleaseListener from "@/components/ForceReleaseListener";
 import { useEffect } from "react";
 import { initNativeBridge } from "@/lib/native-bridge";
 
@@ -176,6 +177,7 @@ function RootComponent() {
               <Outlet />
             </main>
             <ServiceWorkerRegistration />
+            <ForceReleaseListener />
           </AuthProvider>
         </LanguageProvider>
       </ThemeProvider>
