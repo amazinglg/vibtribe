@@ -75,6 +75,26 @@ serve(async (req) => {
     }
     if (!allowed) return json({ error: 'Forbidden' }, 403);
 
+    // Secured-chat notification policy:
+    // If the recipient has marked this chat as Secured AND has the
+    // "Secured Chat Notifications" toggle off, suppress the push entirely.
+    // (The default behavior is "silenced" per the profile setting.)
+    if (chatId && body.type !== 'voice_call' && body.type !== 'video_call') {
+      try {
+        const [{ data: secureMark }, { data: prefProfile }] = await Promise.all([
+          admin.from('user_secure_chats').select('chat_id').eq('user_id', recipientId).eq('chat_id', chatId).maybeSingle(),
+          admin.from('user_profiles').select('notif_secure_chats').eq('id', recipientId).maybeSingle(),
+        ]);
+        const isSecured = !!secureMark;
+        const wantsSecuredNotifs = !!prefProfile?.notif_secure_chats;
+        if (isSecured && !wantsSecuredNotifs) {
+          return json({ sent: 0, skipped: 'secured_chat_silenced' });
+        }
+      } catch (e) {
+        console.warn('[push] secured-chat preference check failed', e);
+      }
+    }
+
     const { data: subscriptions, error: subError } = await admin
       .from('push_subscriptions')
       .select('endpoint,p256dh,auth')
