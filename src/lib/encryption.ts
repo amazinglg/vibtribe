@@ -350,6 +350,47 @@ export function isGroupEncrypted(content: string): boolean {
   return typeof content === 'string' && content.startsWith('g2e:');
 }
 
+// ---------------- Group media (random AES key, wrapped via group text) ----------------
+// Strategy: encrypt the file once with a fresh random AES-256 key K, upload
+// the ciphertext to storage, and ship K inside the per-recipient group text
+// envelope (g2e:) so every member can decrypt the bytes without re-uploading.
+export async function encryptBytesWithRandomKey(
+  bytes: ArrayBuffer,
+): Promise<{ keyB64: string; cipher: ArrayBuffer }> {
+  assertCryptoAvailable();
+  const msgKey = await crypto.subtle.generateKey(
+    { name: 'AES-GCM', length: 256 },
+    true,
+    ['encrypt', 'decrypt'],
+  );
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, msgKey, bytes);
+  const out = new Uint8Array(12 + (ct as ArrayBuffer).byteLength);
+  out.set(iv, 0);
+  out.set(new Uint8Array(ct as ArrayBuffer), 12);
+  const raw = await crypto.subtle.exportKey('raw', msgKey);
+  return { keyB64: bufToB64(raw), cipher: out.buffer };
+}
+
+export async function decryptBytesWithKey(
+  cipherBuf: ArrayBuffer,
+  keyB64: string,
+): Promise<ArrayBuffer> {
+  assertCryptoAvailable();
+  const raw = b64ToBuf(keyB64);
+  const key = await crypto.subtle.importKey(
+    'raw',
+    raw,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['decrypt'],
+  );
+  const all = new Uint8Array(cipherBuf);
+  const iv = all.slice(0, 12);
+  const data = all.slice(12);
+  return crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data);
+}
+
 export async function encryptGroupMessage(
   plaintext: string,
   members: GroupMember[],
