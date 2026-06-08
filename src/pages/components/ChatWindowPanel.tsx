@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useRef, useEffect } from 'react';
-import { Phone, Video, Paperclip, Mic, MicOff, Send, Lock, CheckCheck, Check, ArrowLeft, Info, Trash2, ShieldCheck, Ban, ShieldOff, X, Image, FileText, Camera, Music, VideoOff, PhoneOff, Volume2, VolumeX, Timer, MoreVertical, UserPlus, Smile } from 'lucide-react';
+import { Phone, Video, Paperclip, Mic, MicOff, Send, Lock, CheckCheck, Check, ArrowLeft, Info, Trash2, ShieldCheck, Ban, ShieldOff, X, Image, FileText, Camera, VideoOff, PhoneOff, Volume2, VolumeX, Timer, MoreVertical, UserPlus, Smile } from 'lucide-react';
 import { useChatStore } from '@/store/chatStore';
 import MarkSecureModal from '@/components/MarkSecureModal';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,9 +11,8 @@ import { getPreferredNickname } from '@/components/SecureVaultModal';
 import PermissionPrompt from '@/components/PermissionPrompt';
 import { usePermissions } from '@/hooks/usePermissions';
 import { sendPushNotification } from '@/lib/pushNotifications';
-import AppImage from "@/components/ui/AppImage";
 import { useCall } from '@/components/CallProvider';
-import { isNativeWrapper, pickNativeImage, requestNativeStoragePermission, requestNativeCameraPermission } from '@/lib/native-bridge';
+import { isNativeWrapper, pickNativeImage, pickNativeFiles, requestNativeCameraPermission } from '@/lib/native-bridge';
 import { toast } from 'sonner';
 import { EMOJI_CATEGORIES, type EmojiCategoryKey } from '@/lib/emojis';
 import { useT } from '@/contexts/LanguageContext';
@@ -228,6 +227,11 @@ export default function ChatWindowPanel() {
   const [inputText, setInputText] = useState('');
   const [showInfo, setShowInfo] = useState(false);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
+  const [pendingAttachment, setPendingAttachment] = useState<{
+    file: File;
+    type: 'image' | 'file' | 'audio' | 'video';
+    previewUrl?: string;
+  } | null>(null);
   const [secureModalOpen, setSecureModalOpen] = useState(false);
   const [hoveredMsg, setHoveredMsg] = useState<string | null>(null);
   const [contact, setContact] = useState<{ name: string; avatar: string; avatarUrl?: string | null; online: boolean; lastSeen: string; publicKey?: string; userId?: string; isContact?: boolean } | null>(null);
@@ -276,7 +280,6 @@ export default function ChatWindowPanel() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
-  const audioInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     // Jump straight to the latest message. We use instant scroll (not smooth)
@@ -965,51 +968,86 @@ export default function ChatWindowPanel() {
     }
   };
 
-  // Pick from gallery / take a photo. On native we use the Capacitor Camera
-  // plugin (handles READ_MEDIA_IMAGES + CAMERA prompts itself). On web we
-  // trigger the hidden <input type="file"> the same way as before.
-  const handlePickPhotoVideo = async () => {
-    setShowAttachMenu(false);
+  // Show the captured/selected file in a preview modal so the user can
+  // confirm before sending. Replaces the previous fire-and-forget upload.
+  const queueAttachment = (file: File, type: 'image' | 'file' | 'audio' | 'video') => {
+    if (type === 'image' && file.type?.startsWith('video/')) type = 'video';
+    const previewUrl = (type === 'image' || type === 'video' || type === 'audio')
+      ? URL.createObjectURL(file) : undefined;
+    setPendingAttachment({ file, type, previewUrl });
+  };
+
+  const cancelPendingAttachment = () => {
+    if (pendingAttachment?.previewUrl) URL.revokeObjectURL(pendingAttachment.previewUrl);
+    setPendingAttachment(null);
+  };
+
+  const sendPendingAttachment = async () => {
+    if (!pendingAttachment) return;
+    const { file, type, previewUrl } = pendingAttachment;
+    setPendingAttachment(null);
+    try {
+      await handleFileAttach(file, type);
+    } finally {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    }
+  };
+
+  // Pick from gallery. On native we use the Capacitor Camera plugin (it
+  // prompts for READ_MEDIA_IMAGES itself). On web we synchronously click the
+  // hidden file input — any await before .click() loses gesture context.
+  const handlePickPhotoVideo = () => {
     if (isNativeWrapper()) {
-      const perm = await requestNativeStoragePermission();
-      if (perm !== 'granted') {
-        toast.error('Storage and Gallery permission is required to attach photos or videos.');
-        return;
-      }
-      const dataUrl = await pickNativeImage({ source: 'photos' });
-      if (!dataUrl) return;
-      const file = await dataUrlToFile(dataUrl, `photo-${Date.now()}.jpg`);
-      if (file) handleFileAttach(file, 'image');
+      setShowAttachMenu(false);
+      (async () => {
+        const dataUrl = await pickNativeImage({ source: 'photos' });
+        if (!dataUrl) return;
+        const file = await dataUrlToFile(dataUrl, `photo-${Date.now()}.jpg`);
+        if (file) queueAttachment(file, 'image');
+      })();
       return;
     }
     imageInputRef.current?.click();
+    setShowAttachMenu(false);
   };
 
-  const handlePickCamera = async () => {
-    setShowAttachMenu(false);
+  const handlePickCamera = () => {
     if (isNativeWrapper()) {
-      const perm = await requestNativeCameraPermission();
-      if (perm !== 'granted') {
-        toast.error('Camera permission is required to take a photo.');
-        return;
-      }
-      const dataUrl = await pickNativeImage({ source: 'camera' });
-      if (!dataUrl) return;
-      const file = await dataUrlToFile(dataUrl, `camera-${Date.now()}.jpg`);
-      if (file) handleFileAttach(file, 'image');
+      setShowAttachMenu(false);
+      (async () => {
+        const perm = await requestNativeCameraPermission();
+        if (perm !== 'granted') {
+          toast.error('Camera permission is required to take a photo.');
+          return;
+        }
+        const dataUrl = await pickNativeImage({ source: 'camera' });
+        if (!dataUrl) return;
+        const file = await dataUrlToFile(dataUrl, `camera-${Date.now()}.jpg`);
+        if (file) queueAttachment(file, 'image');
+      })();
       return;
     }
     cameraInputRef.current?.click();
+    setShowAttachMenu(false);
   };
 
-  const handlePickFile = async (ref: React.RefObject<HTMLInputElement>) => {
-    setShowAttachMenu(false);
+  const handlePickDocument = () => {
     if (isNativeWrapper()) {
-      // System file picker handles its own permission grant on Android, but
-      // requesting first ensures the OS dialog shows before the picker opens.
-      await requestNativeStoragePermission().catch(() => {});
+      setShowAttachMenu(false);
+      (async () => {
+        const picked = await pickNativeFiles({ multiple: false });
+        if (!picked.length) return;
+        const p = picked[0];
+        const file = await dataUrlToFile(p.dataUrl, p.name);
+        if (file) {
+          const renamed = new File([file], p.name, { type: p.mime });
+          queueAttachment(renamed, 'file');
+        }
+      })();
+      return;
     }
-    ref.current?.click();
+    fileInputRef.current?.click();
+    setShowAttachMenu(false);
   };
 
   const addReaction = (msgId: string, emoji: string) => {
@@ -1875,12 +1913,12 @@ export default function ChatWindowPanel() {
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-all text-sm text-foreground"
             >
               <div className="w-8 h-8 bg-blue-500/20 rounded-xl flex items-center justify-center">
-                <AppImage size={16} className="text-blue-400" />
+                <Image size={16} className="text-blue-400" />
               </div>
               Photo / Video
             </button>
             <button
-              onClick={() => handlePickFile(fileInputRef)}
+              onClick={handlePickDocument}
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-all text-sm text-foreground"
             >
               <div className="w-8 h-8 bg-purple-500/20 rounded-xl flex items-center justify-center">
@@ -1897,15 +1935,6 @@ export default function ChatWindowPanel() {
               </div>
               Camera
             </button>
-            <button
-              onClick={() => handlePickFile(audioInputRef)}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-all text-sm text-foreground"
-            >
-              <div className="w-8 h-8 bg-pink-500/20 rounded-xl flex items-center justify-center">
-                <Music size={16} className="text-pink-400" />
-              </div>
-              Audio
-            </button>
           </div>
         </div>
       )}
@@ -1918,18 +1947,18 @@ export default function ChatWindowPanel() {
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0];
-          if (file) handleFileAttach(file, 'image');
+          if (file) queueAttachment(file, 'image');
           e.target.value = '';
         }}
       />
       <input
         ref={fileInputRef}
         type="file"
-        accept=".pdf,.doc,.docx,.txt,.zip,.rar"
+        accept="*/*"
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0];
-          if (file) handleFileAttach(file, 'file');
+          if (file) queueAttachment(file, 'file');
           e.target.value = '';
         }}
       />
@@ -1941,21 +1970,90 @@ export default function ChatWindowPanel() {
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0];
-          if (file) handleFileAttach(file, 'image');
+          if (file) queueAttachment(file, 'image');
           e.target.value = '';
         }}
       />
-      <input
-        ref={audioInputRef}
-        type="file"
-        accept="audio/*"
-        className="hidden"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) handleFileAttach(file, 'audio');
-          e.target.value = '';
-        }}
-      />
+
+      {/* Attachment Preview Modal — confirm before upload/send */}
+      {pendingAttachment && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          onClick={cancelPendingAttachment}
+        >
+          <div
+            className="glass-strong rounded-2xl border border-border shadow-card p-4 max-w-md w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-foreground">Send attachment</h3>
+              <button
+                onClick={cancelPendingAttachment}
+                className="p-1 rounded-lg hover:bg-muted text-muted-foreground"
+                aria-label="Cancel"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="flex items-center justify-center bg-muted/30 rounded-xl overflow-hidden mb-3 max-h-[60vh]">
+              {pendingAttachment.type === 'image' && pendingAttachment.previewUrl && (
+                <img
+                  src={pendingAttachment.previewUrl}
+                  alt="Preview"
+                  className="max-h-[60vh] w-auto object-contain"
+                />
+              )}
+              {pendingAttachment.type === 'video' && pendingAttachment.previewUrl && (
+                <video
+                  src={pendingAttachment.previewUrl}
+                  controls
+                  playsInline
+                  className="max-h-[60vh] w-auto"
+                />
+              )}
+              {pendingAttachment.type === 'audio' && pendingAttachment.previewUrl && (
+                <audio src={pendingAttachment.previewUrl} controls className="w-full p-4" />
+              )}
+              {pendingAttachment.type === 'file' && (
+                <div className="flex items-center gap-3 p-6 w-full">
+                  <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <FileText size={24} className="text-purple-400" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium text-foreground truncate">
+                      {pendingAttachment.file.name}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {(pendingAttachment.file.size / 1024).toFixed(1)} KB
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="text-xs text-muted-foreground mb-3 truncate">
+              {pendingAttachment.file.name}
+            </div>
+
+            <div className="flex items-center justify-end gap-2">
+              <button
+                onClick={cancelPendingAttachment}
+                className="px-4 py-2 rounded-xl text-sm text-foreground hover:bg-muted transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={sendPendingAttachment}
+                className="px-4 py-2 rounded-xl text-sm font-medium bg-primary text-primary-foreground hover:opacity-90 transition-all flex items-center gap-2"
+              >
+                <Send size={14} />
+                Send
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Emoji Picker */}
       {showEmoji && (

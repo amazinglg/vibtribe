@@ -16,6 +16,7 @@
         "@capacitor/network": "^8.0.1",
         "@capacitor/push-notifications": "^8.1.1",
         "@capacitor/splash-screen": "^8.0.1",
+        "@capawesome/capacitor-file-picker": "^8.0.2",
         "@cloudflare/vite-plugin": "^1.25.5",
         "@heroicons/react": "^2.2.0",
         "@hookform/resolvers": "^5.2.2",
@@ -176,6 +177,8 @@
     "@capacitor/push-notifications": ["@capacitor/push-notifications@8.1.1", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@capacitor/push-notifications/-/push-notifications-8.1.1.tgz", { "peerDependencies": { "@capacitor/core": ">=8.0.0" } }, "sha512-WqzjPKIbYbARMN+GC0XMAJcxJpUUzqgzS/Ny8RODLrro38pQhm3GXYwX2Mwd+LZlLY39rGImkCkrKyQSNfuikA=="],
 
     "@capacitor/splash-screen": ["@capacitor/splash-screen@8.0.1", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@capacitor/splash-screen/-/splash-screen-8.0.1.tgz", { "peerDependencies": { "@capacitor/core": ">=8.0.0" } }, "sha512-c/ew/Z3eA7z8l06WoRAtzVF16VwYYrExmHmfGq1Cg675pVzaC/yuucB8/1xG1vhEfnW4fZ1KhSf/kzR1RiVYgg=="],
+
+    "@capawesome/capacitor-file-picker": ["@capawesome/capacitor-file-picker@8.0.2", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@capawesome/capacitor-file-picker/-/capacitor-file-picker-8.0.2.tgz", { "peerDependencies": { "@capacitor/core": ">=8.0.0" } }, "sha512-TQstOBrynvQP7t1s7egvf0RkiTR29EUbBMEhus8bb4uPFROfACOxR0s68uuOS6uTN3bSF2tpsz2NcVnVV/XvzA=="],
 
     "@cloudflare/kv-asset-handler": ["@cloudflare/kv-asset-handler@0.4.2", "", {}, "sha512-SIOD2DxrRRwQ+jgzlXCqoEFiKOFqaPjhnNTGKXSRLvp1HiOvapLaFG2kEr9dYQTYe8rKrd9uvDUzmAITeNyaHQ=="],
 
