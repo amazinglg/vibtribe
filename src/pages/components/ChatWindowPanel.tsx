@@ -969,51 +969,86 @@ export default function ChatWindowPanel() {
     }
   };
 
-  // Pick from gallery / take a photo. On native we use the Capacitor Camera
-  // plugin (handles READ_MEDIA_IMAGES + CAMERA prompts itself). On web we
-  // trigger the hidden <input type="file"> the same way as before.
-  const handlePickPhotoVideo = async () => {
-    setShowAttachMenu(false);
+  // Show the captured/selected file in a preview modal so the user can
+  // confirm before sending. Replaces the previous fire-and-forget upload.
+  const queueAttachment = (file: File, type: 'image' | 'file' | 'audio' | 'video') => {
+    if (type === 'image' && file.type?.startsWith('video/')) type = 'video';
+    const previewUrl = (type === 'image' || type === 'video' || type === 'audio')
+      ? URL.createObjectURL(file) : undefined;
+    setPendingAttachment({ file, type, previewUrl });
+  };
+
+  const cancelPendingAttachment = () => {
+    if (pendingAttachment?.previewUrl) URL.revokeObjectURL(pendingAttachment.previewUrl);
+    setPendingAttachment(null);
+  };
+
+  const sendPendingAttachment = async () => {
+    if (!pendingAttachment) return;
+    const { file, type, previewUrl } = pendingAttachment;
+    setPendingAttachment(null);
+    try {
+      await handleFileAttach(file, type);
+    } finally {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    }
+  };
+
+  // Pick from gallery. On native we use the Capacitor Camera plugin (it
+  // prompts for READ_MEDIA_IMAGES itself). On web we synchronously click the
+  // hidden file input — any await before .click() loses gesture context.
+  const handlePickPhotoVideo = () => {
     if (isNativeWrapper()) {
-      const perm = await requestNativeStoragePermission();
-      if (perm !== 'granted') {
-        toast.error('Storage and Gallery permission is required to attach photos or videos.');
-        return;
-      }
-      const dataUrl = await pickNativeImage({ source: 'photos' });
-      if (!dataUrl) return;
-      const file = await dataUrlToFile(dataUrl, `photo-${Date.now()}.jpg`);
-      if (file) handleFileAttach(file, 'image');
+      setShowAttachMenu(false);
+      (async () => {
+        const dataUrl = await pickNativeImage({ source: 'photos' });
+        if (!dataUrl) return;
+        const file = await dataUrlToFile(dataUrl, `photo-${Date.now()}.jpg`);
+        if (file) queueAttachment(file, 'image');
+      })();
       return;
     }
     imageInputRef.current?.click();
+    setShowAttachMenu(false);
   };
 
-  const handlePickCamera = async () => {
-    setShowAttachMenu(false);
+  const handlePickCamera = () => {
     if (isNativeWrapper()) {
-      const perm = await requestNativeCameraPermission();
-      if (perm !== 'granted') {
-        toast.error('Camera permission is required to take a photo.');
-        return;
-      }
-      const dataUrl = await pickNativeImage({ source: 'camera' });
-      if (!dataUrl) return;
-      const file = await dataUrlToFile(dataUrl, `camera-${Date.now()}.jpg`);
-      if (file) handleFileAttach(file, 'image');
+      setShowAttachMenu(false);
+      (async () => {
+        const perm = await requestNativeCameraPermission();
+        if (perm !== 'granted') {
+          toast.error('Camera permission is required to take a photo.');
+          return;
+        }
+        const dataUrl = await pickNativeImage({ source: 'camera' });
+        if (!dataUrl) return;
+        const file = await dataUrlToFile(dataUrl, `camera-${Date.now()}.jpg`);
+        if (file) queueAttachment(file, 'image');
+      })();
       return;
     }
     cameraInputRef.current?.click();
+    setShowAttachMenu(false);
   };
 
-  const handlePickFile = async (ref: React.RefObject<HTMLInputElement>) => {
-    setShowAttachMenu(false);
+  const handlePickDocument = () => {
     if (isNativeWrapper()) {
-      // System file picker handles its own permission grant on Android, but
-      // requesting first ensures the OS dialog shows before the picker opens.
-      await requestNativeStoragePermission().catch(() => {});
+      setShowAttachMenu(false);
+      (async () => {
+        const picked = await pickNativeFiles({ multiple: false });
+        if (!picked.length) return;
+        const p = picked[0];
+        const file = await dataUrlToFile(p.dataUrl, p.name);
+        if (file) {
+          const renamed = new File([file], p.name, { type: p.mime });
+          queueAttachment(renamed, 'file');
+        }
+      })();
+      return;
     }
-    ref.current?.click();
+    fileInputRef.current?.click();
+    setShowAttachMenu(false);
   };
 
   const addReaction = (msgId: string, emoji: string) => {
