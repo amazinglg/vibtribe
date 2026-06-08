@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import AppLayout from '@/components/AppLayout';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
+import { COUNTRIES, findCountryByDial, flagFromIso2 } from '@/lib/countryCodes';
 
 export default function AdminUserDetailPage() {
   const navigate = useNavigate();
@@ -22,7 +23,7 @@ export default function AdminUserDetailPage() {
   const [loadingData, setLoadingData] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
-  const [editForm, setEditForm] = useState({ full_name: '', email: '', mobile_number: '' });
+  const [editForm, setEditForm] = useState({ full_name: '', email: '', mobile_number: '', country_code: '+91' });
   const [secureChatCount, setSecureChatCount] = useState<number | null>(null);
 
   const isMaster = !!profile?.is_master_admin;
