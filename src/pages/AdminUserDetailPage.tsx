@@ -183,7 +183,7 @@ export default function AdminUserDetailPage() {
           </div>
           {!locked && !isSelf && (
             <button
-              onClick={() => { setEditForm({ full_name: target.full_name || '', email: target.email || '', mobile_number: target.mobile_number || '' }); setEditOpen(true); }}
+              onClick={() => { setEditForm({ full_name: target.full_name || '', email: target.email || '', mobile_number: target.mobile_number || '', country_code: target.country_code || '+91' }); setEditOpen(true); }}
               className="px-3 py-2 rounded-xl glass border border-border text-foreground hover:border-primary/40 transition-all flex items-center gap-1.5 text-xs font-semibold"
             >
               <Pencil size={13} /> Edit
