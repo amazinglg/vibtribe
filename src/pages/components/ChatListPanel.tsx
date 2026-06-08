@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Trash2, Lock, Users, UserPlus, MessageSquare, Phone, Check, Pin, PinOff } from 'lucide-react';
+import { Search, Plus, Trash2, Lock, Users, UserPlus, MessageSquare, Phone, Check, Pin, PinOff, Ban, BellOff, Bell, Clock } from 'lucide-react';
 import MarkSecureModal from '@/components/MarkSecureModal';
 import ContactsPanel from '@/components/ContactsPanel';
 import CreateGroupModal from '@/components/CreateGroupModal';
@@ -39,7 +39,77 @@ export default function ChatListPanel() {
   const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'groups' | 'contacts'>('all');
   const [secureModalOpen, setSecureModalOpen] = useState(false);
   const [secureTarget, setSecureTarget] = useState<{ id: string; name: string } | null>(null);
-  const [contextMenu, setContextMenu] = useState<{ chatId: string; x: number; y: number } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{
+    chatId: string;
+    x: number;
+    y: number;
+    placeAbove: boolean;
+    isBroadcast?: boolean;
+    participantId?: string;
+  } | null>(null);
+  const [muteFor, setMuteFor] = useState<{ chatId: string; chatName: string } | null>(null);
+  const [mutedIds, setMutedIds] = useState<Set<string>>(new Set());
+
+  // Load active mutes for the user — used to filter notifications and show
+  // the bell-off badge in the chat list.
+  const refreshMutes = async () => {
+    if (!user) return;
+    try {
+      const { data } = await supabase
+        .from('chat_mutes' as any)
+        .select('chat_id, muted_until')
+        .eq('user_id', user.id);
+      const now = Date.now();
+      const active = new Set<string>();
+      for (const m of (data || []) as any[]) {
+        if (!m.muted_until || new Date(m.muted_until).getTime() > now) active.add(m.chat_id);
+      }
+      setMutedIds(active);
+      try { window.dispatchEvent(new CustomEvent('vt-mutes-updated', { detail: Array.from(active) })); } catch {}
+    } catch {}
+  };
+  useEffect(() => { refreshMutes(); }, [user?.id]);
+
+  const handleMute = async (chatId: string, duration: '1h' | '24h' | '1w' | 'always') => {
+    if (!user) return;
+    setMuteFor(null);
+    setContextMenu(null);
+    let until: string | null = null;
+    const now = Date.now();
+    if (duration === '1h') until = new Date(now + 60 * 60 * 1000).toISOString();
+    else if (duration === '24h') until = new Date(now + 24 * 60 * 60 * 1000).toISOString();
+    else if (duration === '1w') until = new Date(now + 7 * 24 * 60 * 60 * 1000).toISOString();
+    try {
+      await supabase.from('chat_mutes' as any).upsert(
+        { user_id: user.id, chat_id: chatId, muted_until: until },
+        { onConflict: 'user_id,chat_id' },
+      );
+      await refreshMutes();
+    } catch (e) { console.error('mute failed', e); }
+  };
+
+  const handleUnmute = async (chatId: string) => {
+    if (!user) return;
+    setContextMenu(null);
+    try {
+      await supabase.from('chat_mutes' as any).delete().eq('user_id', user.id).eq('chat_id', chatId);
+      await refreshMutes();
+    } catch {}
+  };
+
+  const handleBlockFromList = async (chatId: string, participantId: string | undefined, name: string) => {
+    setContextMenu(null);
+    if (!user || !participantId) return;
+    if (!confirm(`Block ${name}? You won\u2019t receive their messages or calls.`)) return;
+    try {
+      await supabase.from('blocked_users').insert({ blocker_id: user.id, blocked_user_id: participantId });
+      // Hide blocked user's chat from list immediately
+      setChats(prev => prev.filter(c => c.id !== chatId));
+      if (selectedChatId === chatId) setSelectedChatId(null);
+    } catch (e: any) {
+      alert(e?.message || 'Failed to block user');
+    }
+  };
   const CHATS_CACHE_KEY = 'vt_chats_cache_v1';
   const PINS_KEY = 'vt_pinned_chats_v1';
   const [pinnedIds, setPinnedIds] = useState<string[]>(() => {
@@ -704,8 +774,19 @@ export default function ChatListPanel() {
                 }}
                 onContextMenu={(e) => {
                   e.preventDefault();
-                  if (chat.isBroadcast) return;
-                  setContextMenu({ chatId: chat.id, x: e.clientX, y: e.clientY });
+                  // Allow long-press for broadcast too, but only Block+Mute options.
+                  const vh = typeof window !== 'undefined' ? window.innerHeight : 800;
+                  // Estimate menu height: ~280px max with all 6 items, ~140px for broadcast (2 items)
+                  const estHeight = chat.isBroadcast ? 160 : 320;
+                  const placeAbove = (e.clientY + estHeight + 90) > vh; // 90px = bottom nav + safe area
+                  setContextMenu({
+                    chatId: chat.id,
+                    x: e.clientX,
+                    y: e.clientY,
+                    placeAbove,
+                    isBroadcast: !!chat.isBroadcast,
+                    participantId: chat.participantId,
+                  });
                 }}
                 onDelete={() => handleDeleteChat(chat.id)}
                 onMarkSecure={() => handleMarkSecure(chat)}
@@ -719,40 +800,100 @@ export default function ChatListPanel() {
       {/* Context Menu */}
       {contextMenu && (
         <div
-          className="fixed z-50 glass-strong rounded-xl border border-border shadow-card overflow-hidden float-up"
-          style={{ top: contextMenu.y, left: Math.min(contextMenu.x, typeof window !== 'undefined' ? window.innerWidth - 180 : 200) }}
+          className="fixed z-50 glass-strong rounded-xl border border-border shadow-card overflow-hidden float-up min-w-[200px]"
+          style={(() => {
+            const winW = typeof window !== 'undefined' ? window.innerWidth : 400;
+            const winH = typeof window !== 'undefined' ? window.innerHeight : 800;
+            const left = Math.max(8, Math.min(contextMenu.x, winW - 220));
+            if (contextMenu.placeAbove) {
+              // anchor by bottom so the menu floats above the long-press point
+              return { left, bottom: Math.max(90, winH - contextMenu.y + 8) };
+            }
+            return { left, top: Math.min(contextMenu.y, winH - 340) };
+          })()}
+          onClick={(e) => e.stopPropagation()}
         >
-          <button
-            onClick={() => handleMarkAsRead(contextMenu.chatId)}
-            className="flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted w-full text-left transition-colors"
-          >
-            <Check size={14} className="text-vt-green" />
-            Mark as Read
-          </button>
-          <button
-            onClick={() => togglePin(contextMenu.chatId)}
-            className="flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted w-full text-left transition-colors"
-          >
-            {pinnedIds.includes(contextMenu.chatId) ? <PinOff size={14} className="text-primary" /> : <Pin size={14} className="text-primary" />}
-            {pinnedIds.includes(contextMenu.chatId) ? 'Unpin' : 'Pin to top'}
-          </button>
-          <button
-            onClick={() => {
-              const chat = chats.find(c => c.id === contextMenu.chatId);
-              if (chat) handleMarkSecure(chat);
-            }}
-            className="flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted w-full text-left transition-colors"
-          >
-            <Lock size={14} className="text-primary" />
-            Mark as Secure
-          </button>
-          <button
-            onClick={() => handleDeleteChat(contextMenu.chatId)}
-            className="flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 w-full text-left transition-colors"
-          >
-            <Trash2 size={14} />
-            Delete Chat
-          </button>
+          {!contextMenu.isBroadcast && (
+            <>
+              <button onClick={() => handleMarkAsRead(contextMenu.chatId)} className="flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted w-full text-left transition-colors">
+                <Check size={14} className="text-vt-green" /> Mark as Read
+              </button>
+              <button onClick={() => togglePin(contextMenu.chatId)} className="flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted w-full text-left transition-colors">
+                {pinnedIds.includes(contextMenu.chatId) ? <PinOff size={14} className="text-primary" /> : <Pin size={14} className="text-primary" />}
+                {pinnedIds.includes(contextMenu.chatId) ? 'Unpin' : 'Pin to top'}
+              </button>
+              <button onClick={() => { const c = chats.find(c => c.id === contextMenu.chatId); if (c) handleMarkSecure(c); }} className="flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted w-full text-left transition-colors">
+                <Lock size={14} className="text-primary" /> Mark as Secure
+              </button>
+            </>
+          )}
+          {mutedIds.has(contextMenu.chatId) ? (
+            <button onClick={() => handleUnmute(contextMenu.chatId)} className="flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted w-full text-left transition-colors">
+              <Bell size={14} className="text-primary" /> Unmute
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                const c = chats.find(c => c.id === contextMenu.chatId);
+                setMuteFor({ chatId: contextMenu.chatId, chatName: c?.name || 'Chat' });
+                setContextMenu(null);
+              }}
+              className="flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted w-full text-left transition-colors"
+            >
+              <BellOff size={14} className="text-primary" /> Mute notifications
+            </button>
+          )}
+          {!contextMenu.isBroadcast && contextMenu.participantId && (
+            <button
+              onClick={() => {
+                const c = chats.find(c => c.id === contextMenu.chatId);
+                handleBlockFromList(contextMenu.chatId, contextMenu.participantId, c?.name || 'this user');
+              }}
+              className="flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 w-full text-left transition-colors"
+            >
+              <Ban size={14} /> Block user
+            </button>
+          )}
+          {!contextMenu.isBroadcast && (
+            <button onClick={() => handleDeleteChat(contextMenu.chatId)} className="flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 w-full text-left transition-colors">
+              <Trash2 size={14} /> Delete Chat
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Mute timeline picker */}
+      {muteFor && (
+        <div
+          className="fixed inset-0 z-[60] bg-black/70 flex items-end sm:items-center justify-center p-4"
+          onClick={() => setMuteFor(null)}
+        >
+          <div className="glass-strong rounded-2xl border border-border w-full max-w-sm p-5" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-2 mb-1">
+              <BellOff size={16} className="text-primary" />
+              <h3 className="font-bold text-base text-foreground">Mute {muteFor.chatName}</h3>
+            </div>
+            <p className="text-xs text-muted-foreground mb-4">You won\u2019t get notifications, in-app toasts, or unread badges from this chat.</p>
+            <div className="space-y-2">
+              {([
+                { id: '1h', label: '1 hour' },
+                { id: '24h', label: '24 hours' },
+                { id: '1w', label: '1 week' },
+                { id: 'always', label: 'Always (until unmuted)' },
+              ] as const).map(opt => (
+                <button
+                  key={opt.id}
+                  onClick={() => handleMute(muteFor.chatId, opt.id)}
+                  className="w-full flex items-center justify-between gap-2 px-4 py-3 rounded-xl bg-muted/40 hover:bg-muted text-sm font-semibold text-foreground transition-all border border-border hover:border-primary/40"
+                >
+                  <span className="flex items-center gap-2"><Clock size={14} className="text-primary" />{opt.label}</span>
+                </button>
+              ))}
+            </div>
+            <button onClick={() => setMuteFor(null)} className="mt-4 w-full px-4 py-2 rounded-xl bg-muted text-sm font-semibold text-muted-foreground">
+              Cancel
+            </button>
+          </div>
         </div>
       )}
 
