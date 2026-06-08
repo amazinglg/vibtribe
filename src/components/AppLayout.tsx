@@ -66,10 +66,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }, [user?.id]);
 
   // After login: check if user needs to set up, unlock, or re-verify E2E encryption.
-  // Policy:
-  //  - No server key       → 'setup'  (mandatory)
-  //  - Server key, no local→ 'unlock' (new device / cleared browser storage)
-  //  - Server + local key  → 'unlock' only when last verification is older than 7 days
+  // Policy (per user request):
+  //  - No server key                              → 'setup'  (mandatory, once ever)
+  //  - Server key, no local key on this device    → 'unlock' (fresh login / new device)
+  //  - Server + local key, last verified >7 days  → 'unlock' (weekly re-check)
+  //  - Server + local key, verified <7 days       → no prompt
+  // We deliberately do NOT prompt on every app launch / tab open.
   useEffect(() => {
     if (!user) { setPinModal(null); return; }
     let cancelled = false;
@@ -82,25 +84,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         const local = await hasLocalPrivateKey();
         if (!local) { setPinModal('unlock'); return; }
 
-        // Require an unlock once per browser session (per tab/app launch).
-        // sessionStorage is cleared when the user signs out or closes the
-        // tab/app, so a fresh login always re-prompts for the PIN even when
-        // the local key blob is still present from a previous session.
-        let sessionUnlocked = false;
-        try {
-          sessionUnlocked = sessionStorage.getItem(`vt_pin_session_${user.id}`) === '1';
-        } catch {}
-        if (!sessionUnlocked) {
-          setPinModal('unlock');
-          return;
-        }
-
-        // Belt-and-suspenders: also re-prompt at least weekly.
         const lastKey = `vt_pin_last_verified_${user.id}`;
         const lastVerified = parseInt(localStorage.getItem(lastKey) || '0', 10);
         const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
-        const stale = !lastVerified || (Date.now() - lastVerified) > WEEK_MS;
-        if (stale) setPinModal('unlock');
+        if (!lastVerified) {
+          // Seed timestamp so we don't surprise users who already unlocked
+          // before this change shipped — they'll re-verify a week from now.
+          try { localStorage.setItem(lastKey, String(Date.now())); } catch {}
+          return;
+        }
+        if (Date.now() - lastVerified > WEEK_MS) setPinModal('unlock');
       } catch {}
     })();
     return () => { cancelled = true; };
