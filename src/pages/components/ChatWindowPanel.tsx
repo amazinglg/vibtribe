@@ -1667,7 +1667,7 @@ export default function ChatWindowPanel() {
               );
             }
             // Encrypted-media envelope (text after decryption)
-            let encMedia: { type: 'image'|'file'|'audio'|'video'; url: string; mime: string; name?: string } | null = null;
+            let encMedia: { type: 'image'|'file'|'audio'|'video'; url: string; mime: string; name?: string; k?: string; gk?: boolean } | null = null;
             if (typeof safeText === 'string' && safeText.startsWith('__media__:')) {
               try { encMedia = JSON.parse(safeText.slice('__media__:'.length)); } catch {}
             }
@@ -1717,7 +1717,7 @@ export default function ChatWindowPanel() {
                         ? 'gradient-primary text-white rounded-br-sm' : 'glass border border-border text-foreground rounded-bl-sm'
                     }`}
                   >
-                    {encMedia && contactPubKeyRef.current ? (
+                    {encMedia && (encMedia.k || contactPubKeyRef.current) ? (
                       isMe && msg.mediaUrl && msg.mediaUrl.startsWith('blob:') && encMedia.type === 'image' ? (
                         <img
                           src={msg.mediaUrl}
@@ -1731,7 +1731,8 @@ export default function ChatWindowPanel() {
                           mime={encMedia.mime}
                           name={encMedia.name}
                           kind={encMedia.type}
-                          theirPublicKey={contactPubKeyRef.current}
+                          theirPublicKey={contactPubKeyRef.current || undefined}
+                          mediaKey={encMedia.k}
                           onImageClick={(u) => setLightboxUrl(u)}
                         />
                       )
