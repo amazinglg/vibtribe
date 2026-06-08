@@ -177,16 +177,30 @@ export default function AdminPage() {
     }
   }, []);
 
-  // Real-time subscription for new tickets
+  // Real-time subscription for new tickets via admin notifications (support_tickets
+  // is no longer published to realtime for privacy reasons). The `notify_admins_new_ticket`
+  // trigger inserts a 'support_ticket' notification for each admin, which we subscribe to.
   useEffect(() => {
     if (!user || !isAdmin?.()) return;
     const channel = supabase
-      .channel('admin-support-tickets')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'support_tickets' }, (payload) => {
-        setUnreadTickets(prev => prev + 1);
-        setTickets(prev => [payload.new as SupportTicket, ...prev]);
-        toast.info(`🎫 New support ticket: "${(payload.new as SupportTicket).issue_title}"`);
-      })
+      .channel(`admin-ticket-notifs-${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+        async (payload) => {
+          const n = payload.new as any;
+          if (n?.type !== 'support_ticket') return;
+          setUnreadTickets(prev => prev + 1);
+          // Re-fetch latest tickets so the new one appears at the top
+          const { data } = await supabase
+            .from('support_tickets')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(50);
+          if (data) setTickets(data as SupportTicket[]);
+          toast.info(`🎫 ${n?.title || 'New support ticket'}`);
+        }
+      )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [user]);

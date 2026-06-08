@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import StatusViewer from './StatusViewer';
 import { useT } from '@/contexts/LanguageContext';
+import { StatusMedia } from '@/components/StatusMedia';
 
 type VisibilityOption = 'all' | 'contacts' | 'selected';
 
@@ -157,9 +158,9 @@ export default function StatusHero() {
         upsert: false,
       });
       if (upErr) throw upErr;
-      const { data: pub } = supabase.storage.from('status-media').getPublicUrl(path);
+      // Store the storage path (not a public URL). Renderers create signed URLs on demand.
       await insertStatus({
-        media_url: pub.publicUrl,
+        media_url: path,
         media_type: mediaFile.type.startsWith('video') ? 'video' : 'image',
         content: mediaCaption.trim() || undefined,
       });
@@ -401,9 +402,9 @@ export default function StatusHero() {
                 <div key={status.id} className="relative w-20 h-24 flex-shrink-0 overflow-hidden rounded-xl border border-border bg-muted">
                   <button onClick={() => { setMyViewerOpen(true); }} className="absolute inset-0 text-left">
                     {status.media_type === 'image' && status.media_url ? (
-                      <img src={status.media_url} alt="My status" className="w-full h-full object-cover" />
+                      <StatusMedia value={status.media_url} kind="image" alt="My status" className="w-full h-full object-cover" />
                     ) : status.media_type === 'video' && status.media_url ? (
-                      <video src={status.media_url} className="w-full h-full object-cover" muted playsInline />
+                      <StatusMedia value={status.media_url} kind="video" className="w-full h-full object-cover" muted playsInline />
                     ) : (
                       <div className="w-full h-full gradient-primary flex items-center justify-center p-2 text-center text-[11px] font-semibold text-white line-clamp-4">
                         {status.content || 'Text status'}
