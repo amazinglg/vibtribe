@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useEffect, useState } from 'react';
-import { decryptBytes } from '@/lib/encryption';
+import { decryptBytes, decryptBytesWithKey } from '@/lib/encryption';
 import { Download, FileText, Loader2, AlertTriangle } from 'lucide-react';
 
 interface Props {
@@ -8,14 +8,17 @@ interface Props {
   mime: string;
   name?: string;
   kind: 'image' | 'file' | 'audio' | 'video';
-  theirPublicKey: string;
+  /** Sender's ECDH public key (1:1 chats). Required if mediaKey is not set. */
+  theirPublicKey?: string;
+  /** Raw AES key (base64) shipped in the group envelope. Used for group media. */
+  mediaKey?: string;
   onImageClick?: (blobUrl: string) => void;
 }
 
 // Tiny in-memory cache so a re-render doesn't re-fetch & re-decrypt.
 const blobCache = new Map<string, string>();
 
-export default function EncryptedMedia({ url, mime, name, kind, theirPublicKey, onImageClick }: Props) {
+export default function EncryptedMedia({ url, mime, name, kind, theirPublicKey, mediaKey, onImageClick }: Props) {
   const [blobUrl, setBlobUrl] = useState<string | null>(blobCache.get(url) || null);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(!blobCache.has(url));
@@ -33,7 +36,9 @@ export default function EncryptedMedia({ url, mime, name, kind, theirPublicKey, 
         const res = await fetch(url);
         if (!res.ok) throw new Error('fetch failed');
         const cipher = await res.arrayBuffer();
-        const plain = await decryptBytes(cipher, theirPublicKey);
+        const plain = mediaKey
+          ? await decryptBytesWithKey(cipher, mediaKey)
+          : await decryptBytes(cipher, theirPublicKey as string);
         const blob = new Blob([plain], { type: mime || 'application/octet-stream' });
         const u = URL.createObjectURL(blob);
         blobCache.set(url, u);
@@ -45,7 +50,7 @@ export default function EncryptedMedia({ url, mime, name, kind, theirPublicKey, 
       }
     })();
     return () => { cancelled = true; };
-  }, [url, mime, theirPublicKey]);
+  }, [url, mime, theirPublicKey, mediaKey]);
 
   if (error) {
     return (
