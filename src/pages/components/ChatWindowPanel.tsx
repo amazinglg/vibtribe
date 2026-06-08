@@ -1914,12 +1914,12 @@ export default function ChatWindowPanel() {
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-all text-sm text-foreground"
             >
               <div className="w-8 h-8 bg-blue-500/20 rounded-xl flex items-center justify-center">
-                <AppImage size={16} className="text-blue-400" />
+                <Image size={16} className="text-blue-400" />
               </div>
               Photo / Video
             </button>
             <button
-              onClick={() => handlePickFile(fileInputRef)}
+              onClick={handlePickDocument}
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-all text-sm text-foreground"
             >
               <div className="w-8 h-8 bg-purple-500/20 rounded-xl flex items-center justify-center">
@@ -1935,15 +1935,6 @@ export default function ChatWindowPanel() {
                 <Camera size={16} className="text-green-400" />
               </div>
               Camera
-            </button>
-            <button
-              onClick={() => handlePickFile(audioInputRef)}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-all text-sm text-foreground"
-            >
-              <div className="w-8 h-8 bg-pink-500/20 rounded-xl flex items-center justify-center">
-                <Music size={16} className="text-pink-400" />
-              </div>
-              Audio
             </button>
           </div>
         </div>
