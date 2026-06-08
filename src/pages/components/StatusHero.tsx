@@ -382,7 +382,7 @@ export default function StatusHero() {
           <div className="mt-2 p-2.5 rounded-xl bg-vt-amber/10 border border-vt-amber/30 flex gap-2">
             <Sparkles size={12} className="text-vt-amber flex-shrink-0 mt-0.5" />
             <p className="text-[10px] text-vt-amber leading-relaxed">
-              <strong>Heads up:</strong> Statuses are <strong>not end-to-end encrypted</strong> (so anyone visible can view the media). We <strong>auto-delete</strong> the file and entry from our servers <strong>24 hours after posting</strong> \u2014 nothing is kept after that.
+              <strong>Heads up:</strong> Statuses are <strong>not end-to-end encrypted</strong> (so anyone visible can view the media). We <strong>auto-delete</strong> the file and entry from our servers <strong>24 hours after posting</strong> — nothing is kept after that.
             </p>
           </div>
         </div>
