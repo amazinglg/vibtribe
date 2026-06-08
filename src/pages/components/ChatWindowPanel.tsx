@@ -1002,10 +1002,20 @@ export default function ChatWindowPanel() {
     if (isNativeWrapper()) {
       setShowAttachMenu(false);
       (async () => {
-        const dataUrl = await pickNativeImage({ source: 'photos' });
-        if (!dataUrl) return;
-        const file = await dataUrlToFile(dataUrl, `photo-${Date.now()}.jpg`);
-        if (file) queueAttachment(file, 'image');
+        // Use the system file picker so users can choose photos OR videos.
+        // Camera.getPhoto() is image-only — videos never appeared in the
+        // gallery sheet before.
+        const picked = await pickNativeFiles({
+          multiple: false,
+          types: ['image/*', 'video/*'],
+        });
+        if (!picked.length) return;
+        const p = picked[0];
+        const file = await dataUrlToFile(p.dataUrl, p.name);
+        if (!file) return;
+        const renamed = new File([file], p.name, { type: p.mime });
+        const kind: 'image' | 'video' = (p.mime || '').startsWith('video/') ? 'video' : 'image';
+        queueAttachment(renamed, kind);
       })();
       return;
     }
