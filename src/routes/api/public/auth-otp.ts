@@ -101,7 +101,14 @@ async function enqueueOtpEmail(
 const emailSchema = z.string().trim().toLowerCase().email().max(255)
 const codeSchema = z.string().regex(/^\d{6}$/, '6-digit code required')
 const passwordSchema = z.string().min(6).max(72)
-const identifierSchema = z.string().trim().min(3).max(255)
+// Reject characters that have meaning inside PostgREST `.or()` filter strings
+// (commas, parentheses, colons) to prevent filter-clause injection in send_reset.
+const identifierSchema = z
+  .string()
+  .trim()
+  .min(3)
+  .max(255)
+  .regex(/^[^,()\s:]+$/, 'Invalid characters in identifier')
 
 const SendSignup = z.object({
   action: z.literal('send_signup'),

@@ -6,7 +6,21 @@ import { supabaseAdmin } from '@/integrations/supabase/client.server'
 export const Route = createFileRoute('/api/public/hooks/cleanup-expired-statuses')({
   server: {
     handlers: {
-      POST: async () => {
+      POST: async ({ request }) => {
+        // Require the service-role key as a Bearer token (same pattern as
+        // /lovable/email/queue/process). pg_cron sends it; anyone else gets 401.
+        const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+        if (!serviceKey) {
+          return new Response('Server misconfigured', { status: 500 })
+        }
+        const authHeader = request.headers.get('authorization') || request.headers.get('Authorization') || ''
+        if (!authHeader.startsWith('Bearer ')) {
+          return new Response('Unauthorized', { status: 401 })
+        }
+        const token = authHeader.slice('Bearer '.length).trim()
+        if (token !== serviceKey) {
+          return new Response('Forbidden', { status: 403 })
+        }
         let removedFiles = 0
         let removedRows = 0
         try {
