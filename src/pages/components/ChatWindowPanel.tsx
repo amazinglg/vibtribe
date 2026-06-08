@@ -1544,6 +1544,13 @@ export default function ChatWindowPanel() {
                     ))}
                   </div>
                 )}
+                <button
+                  onClick={() => { setShowMoreMenu(false); setShowUnlockPinModal(true); }}
+                  className="w-full text-left px-3 py-2.5 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground"
+                >
+                  <KeyRound size={16} className="text-vt-green" />
+                  <span className="flex-1">Unlock Encryption</span>
+                </button>
                 {chatType !== 'group' && contact?.userId && !contact.isContact && (
                   <button
                     onClick={() => { setShowMoreMenu(false); handleAddToContacts(); }}
