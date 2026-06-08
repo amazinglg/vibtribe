@@ -5,6 +5,7 @@ import { X, Heart, Send, Pause, Play, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { StatusMedia } from '@/components/StatusMedia';
 
 interface Story {
   id: string;
