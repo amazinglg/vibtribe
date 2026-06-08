@@ -419,6 +419,18 @@ export default function AdminUserDetailPage() {
                   />
                 </div>
               ))}
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Country code</label>
+                <select
+                  value={editForm.country_code}
+                  onChange={e => setEditForm(f => ({ ...f, country_code: e.target.value }))}
+                  className="w-full px-3 py-2.5 bg-input border border-border rounded-xl text-sm text-foreground"
+                >
+                  {COUNTRIES.map(c => (
+                    <option key={`${c.iso2}-${c.dial}`} value={c.dial}>{c.name} ({c.dial})</option>
+                  ))}
+                </select>
+              </div>
             </div>
             <div className="flex gap-2 mt-5">
               <button onClick={() => setEditOpen(false)} className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium bg-muted text-muted-foreground">Cancel</button>
