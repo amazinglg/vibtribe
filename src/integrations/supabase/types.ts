@@ -1499,6 +1499,7 @@ export type Database = {
         Args: { new_password: string; target_user_id: string }
         Returns: undefined
       }
+      can_view_status_owner: { Args: { _owner_id: string }; Returns: boolean }
       check_otp_rate_limit: { Args: { _email: string }; Returns: number }
       cleanup_expired_statuses: { Args: never; Returns: undefined }
       cleanup_expired_statuses_for_user: { Args: never; Returns: number }
