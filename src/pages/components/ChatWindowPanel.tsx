@@ -951,6 +951,66 @@ export default function ChatWindowPanel() {
     }
   };
 
+  // Convert a dataURL returned by Capacitor Camera into a File object so it
+  // can flow through the same handleFileAttach() pipeline as web uploads.
+  const dataUrlToFile = async (dataUrl: string, filename: string): Promise<File | null> => {
+    try {
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      return new File([blob], filename, { type: blob.type || 'image/jpeg' });
+    } catch (e) {
+      console.warn('[VibTribe] dataUrlToFile failed', e);
+      return null;
+    }
+  };
+
+  // Pick from gallery / take a photo. On native we use the Capacitor Camera
+  // plugin (handles READ_MEDIA_IMAGES + CAMERA prompts itself). On web we
+  // trigger the hidden <input type="file"> the same way as before.
+  const handlePickPhotoVideo = async () => {
+    setShowAttachMenu(false);
+    if (isNativeWrapper()) {
+      const perm = await requestNativeStoragePermission();
+      if (perm !== 'granted') {
+        toast.error('Storage and Gallery permission is required to attach photos or videos.');
+        return;
+      }
+      const dataUrl = await pickNativeImage({ source: 'photos' });
+      if (!dataUrl) return;
+      const file = await dataUrlToFile(dataUrl, `photo-${Date.now()}.jpg`);
+      if (file) handleFileAttach(file, 'image');
+      return;
+    }
+    imageInputRef.current?.click();
+  };
+
+  const handlePickCamera = async () => {
+    setShowAttachMenu(false);
+    if (isNativeWrapper()) {
+      const perm = await requestNativeCameraPermission();
+      if (perm !== 'granted') {
+        toast.error('Camera permission is required to take a photo.');
+        return;
+      }
+      const dataUrl = await pickNativeImage({ source: 'camera' });
+      if (!dataUrl) return;
+      const file = await dataUrlToFile(dataUrl, `camera-${Date.now()}.jpg`);
+      if (file) handleFileAttach(file, 'image');
+      return;
+    }
+    cameraInputRef.current?.click();
+  };
+
+  const handlePickFile = async (ref: React.RefObject<HTMLInputElement>) => {
+    setShowAttachMenu(false);
+    if (isNativeWrapper()) {
+      // System file picker handles its own permission grant on Android, but
+      // requesting first ensures the OS dialog shows before the picker opens.
+      await requestNativeStoragePermission().catch(() => {});
+    }
+    ref.current?.click();
+  };
+
   const addReaction = (msgId: string, emoji: string) => {
     setMessages(prev => prev.map(m =>
       m.id === msgId
