@@ -281,7 +281,6 @@ export default function ChatWindowPanel() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
-  const audioInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     // Jump straight to the latest message. We use instant scroll (not smooth)
