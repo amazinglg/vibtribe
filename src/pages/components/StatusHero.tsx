@@ -401,9 +401,9 @@ export default function StatusHero() {
                 <div key={status.id} className="relative w-20 h-24 flex-shrink-0 overflow-hidden rounded-xl border border-border bg-muted">
                   <button onClick={() => { setMyViewerOpen(true); }} className="absolute inset-0 text-left">
                     {status.media_type === 'image' && status.media_url ? (
-                      <img src={status.media_url} alt="My status" className="w-full h-full object-cover" />
+                      <StatusMedia value={status.media_url} kind="image" alt="My status" className="w-full h-full object-cover" />
                     ) : status.media_type === 'video' && status.media_url ? (
-                      <video src={status.media_url} className="w-full h-full object-cover" muted playsInline />
+                      <StatusMedia value={status.media_url} kind="video" className="w-full h-full object-cover" muted playsInline />
                     ) : (
                       <div className="w-full h-full gradient-primary flex items-center justify-center p-2 text-center text-[11px] font-semibold text-white line-clamp-4">
                         {status.content || 'Text status'}
