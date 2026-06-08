@@ -1138,6 +1138,49 @@ export default function AdminPage() {
           onClose={() => { setSelectedTribeId(null); loadTribes(); }}
         />
       )}
+
+      {confirmRelease && (
+        <div className="fixed inset-0 z-[2000] bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-card border border-border rounded-2xl max-w-sm w-full p-6 shadow-card float-up">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full bg-vt-amber/15 flex items-center justify-center">
+                <AlertTriangle size={18} className="text-vt-amber" />
+              </div>
+              <div>
+                <h3 className="font-bold text-foreground">Force update release?</h3>
+                <p className="text-[11px] text-muted-foreground">Every active client will hard-reload and pick up the latest build. Users remain signed in.</p>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={() => setConfirmRelease(false)}
+                disabled={releasing}
+                className="flex-1 py-2.5 rounded-xl glass border border-border text-sm font-semibold text-foreground hover:bg-muted disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  setReleasing(true);
+                  try {
+                    await publishReleaseFn();
+                    toast.success('Release published — all clients will reload');
+                    setConfirmRelease(false);
+                  } catch (e: any) {
+                    toast.error(e?.message || 'Failed to publish release');
+                  } finally {
+                    setReleasing(false);
+                  }
+                }}
+                disabled={releasing}
+                className="flex-1 py-2.5 rounded-xl bg-vt-amber text-black text-sm font-semibold hover:opacity-90 disabled:opacity-50"
+              >
+                {releasing ? 'Publishing…' : 'Yes, publish'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppLayout>
   );
 }
