@@ -242,6 +242,20 @@ export const sendMessagePush = createServerFn({ method: 'POST' })
       } catch (e) { /* fail-open: better to deliver than silently drop */ }
     }
 
+    // Respect the recipient's Secured-Chat notification toggle.
+    // If they marked this chat as secured AND have the toggle off, suppress.
+    if (chatId) {
+      try {
+        const [{ data: secureMark }, { data: prefProfile }] = await Promise.all([
+          supabaseAdmin.from('user_secure_chats').select('chat_id').eq('user_id', recipientId).eq('chat_id', chatId).maybeSingle(),
+          supabaseAdmin.from('user_profiles').select('notif_secure_chats').eq('id', recipientId).maybeSingle(),
+        ]);
+        if (secureMark && !prefProfile?.notif_secure_chats) {
+          return { sent: 0, securedSilenced: true };
+        }
+      } catch (e) { /* fail-open */ }
+    }
+
     const { data: tokens } = await supabaseAdmin
       .from('fcm_tokens')
       .select('token')
