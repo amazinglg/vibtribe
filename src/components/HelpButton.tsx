@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState } from 'react';
-import { HelpCircle, X, Send, Loader2, CheckCircle2, AlertCircle, Headphones, Mail } from 'lucide-react';
+import { HelpCircle, X, Send, Loader2, CheckCircle2, AlertCircle, Headphones, Mail, MessageSquare, Bug, ExternalLink, Lightbulb } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -8,10 +8,13 @@ interface HelpButtonProps {
   variant?: 'floating' | 'inline' | 'topbar';
 }
 
+const FEEDBACK_FORM_URL = 'https://forms.gle/iCvnNzAZr6jKhc2G8';
+
 export default function HelpButton({ variant = 'floating' }: HelpButtonProps) {
   const { user, profile } = useAuth();
   const supabase = createClient();
   const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState<'feedback' | 'support'>('feedback');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [title, setTitle] = useState('');
@@ -29,6 +32,7 @@ export default function HelpButton({ variant = 'floating' }: HelpButtonProps) {
       setEmail(displayEmail || '');
     }
     setOpen(true);
+    setTab('feedback');
     setSuccess(false);
     setError('');
   };
@@ -138,7 +142,78 @@ export default function HelpButton({ variant = 'floating' }: HelpButtonProps) {
               </button>
             </div>
 
+            {/* Tabs */}
+            <div className="flex items-center gap-1 px-3 pt-3">
+              <button
+                onClick={() => { setTab('feedback'); setSuccess(false); setError(''); }}
+                className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl transition-all ${
+                  tab === 'feedback'
+                    ? 'gradient-primary text-white shadow'
+                    : 'glass text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Lightbulb size={14} /> Feedback / Bug
+              </button>
+              <button
+                onClick={() => { setTab('support'); setSuccess(false); setError(''); }}
+                className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl transition-all ${
+                  tab === 'support'
+                    ? 'gradient-primary text-white shadow'
+                    : 'glass text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Headphones size={14} /> Contact Support
+              </button>
+            </div>
+
             <div className="p-5">
+              {tab === 'feedback' ? (
+                <div className="space-y-4">
+                  <div className="p-4 rounded-xl bg-gradient-to-br from-primary/10 to-vt-green/10 border border-primary/20">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
+                        <MessageSquare size={18} className="text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-foreground text-sm mb-1">Share your thoughts with us</h3>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          Spotted a bug? Have a feature idea? Want to suggest an improvement? Your feedback shapes VibTribe.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="p-3 rounded-xl glass border border-border text-center">
+                      <Bug size={16} className="text-red-400 mx-auto mb-1" />
+                      <p className="text-[10px] font-semibold text-foreground">Report Bug</p>
+                    </div>
+                    <div className="p-3 rounded-xl glass border border-border text-center">
+                      <Lightbulb size={16} className="text-amber-400 mx-auto mb-1" />
+                      <p className="text-[10px] font-semibold text-foreground">Suggestion</p>
+                    </div>
+                    <div className="p-3 rounded-xl glass border border-border text-center">
+                      <MessageSquare size={16} className="text-primary mx-auto mb-1" />
+                      <p className="text-[10px] font-semibold text-foreground">Feedback</p>
+                    </div>
+                  </div>
+
+                  <a
+                    href={FEEDBACK_FORM_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full gradient-primary text-white font-semibold py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-all"
+                  >
+                    <ExternalLink size={16} />
+                    <span>Open Feedback Form</span>
+                  </a>
+
+                  <p className="text-[11px] text-muted-foreground text-center leading-relaxed">
+                    The form opens in a new tab. Your responses go directly to our product team and help us prioritise fixes and improvements.
+                  </p>
+                </div>
+              ) : (
+                <>
               <a
                 href="mailto:help.vibtribe.in@gmail.com"
                 className="mb-4 flex items-center gap-2 p-3 bg-primary/10 border border-primary/30 rounded-xl text-xs hover:bg-primary/15 transition-all"
@@ -228,6 +303,8 @@ export default function HelpButton({ variant = 'floating' }: HelpButtonProps) {
                     )}
                   </button>
                 </form>
+              )}
+                </>
               )}
             </div>
           </div>
