@@ -5,7 +5,7 @@ import { useChatStore } from '@/store/chatStore';
 import MarkSecureModal from '@/components/MarkSecureModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
-import { getOrCreateKeyPair, encryptMessage, decryptMessage, isEncrypted, encryptBytes, hasLocalPrivateKey, encryptGroupMessage, decryptGroupMessageForMe, isGroupEncrypted, type GroupMember } from '@/lib/encryption';
+import { getOrCreateKeyPair, encryptMessage, decryptMessage, isEncrypted, encryptBytes, encryptBytesWithRandomKey, hasLocalPrivateKey, encryptGroupMessage, decryptGroupMessageForMe, isGroupEncrypted, type GroupMember } from '@/lib/encryption';
 import EncryptedMedia from '@/components/EncryptedMedia';
 import { getPreferredNickname } from '@/components/SecureVaultModal';
 import PermissionPrompt from '@/components/PermissionPrompt';
