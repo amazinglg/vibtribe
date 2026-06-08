@@ -25,6 +25,11 @@ function getAnonClient() {
 const BodySchema = z.object({
   identifier: z.string().trim().min(1).max(255),
   password: z.string().min(1).max(200),
+  // Optional dial code (e.g. "+91"). Sent by the sign-in form when the user
+  // logs in via mobile number. Validated against the profile's stored
+  // country_code so a correct local number under the wrong dial code is
+  // rejected as invalid credentials.
+  countryCode: z.string().trim().regex(/^\+\d{1,4}$/).optional(),
 })
 
 export const Route = createFileRoute('/api/public/auth-login')({
@@ -37,7 +42,7 @@ export const Route = createFileRoute('/api/public/auth-login')({
         } catch {
           return Response.json({ error: 'Invalid request' }, { status: 400 })
         }
-        const { identifier, password } = parsed
+        const { identifier, password, countryCode } = parsed
 
         const admin = getAdminClient()
 
@@ -53,6 +58,24 @@ export const Route = createFileRoute('/api/public/auth-login')({
         // 2. Suspension check
         if (profile.is_suspended || profile.account_status === 'suspended') {
           return Response.json({ error: 'account_suspended' }, { status: 403 })
+        }
+
+        // 2b. If the client supplied a dial code, it must match the profile.
+        // We DO NOT increment the failure counter for this mismatch — a wrong
+        // country pick is a UI mistake, not a password attempt, and we don't
+        // want it to lock out legitimate users via griefing. The response is
+        // still the generic invalid_credentials so we don't leak the real
+        // country code of the account.
+        if (countryCode) {
+          const { data: prof2 } = await admin
+            .from('user_profiles')
+            .select('country_code')
+            .eq('id', profile.id)
+            .maybeSingle()
+          const stored = (prof2?.country_code || '').trim()
+          if (stored && stored !== countryCode) {
+            return Response.json({ error: 'invalid_credentials' }, { status: 401 })
+          }
         }
 
         // 3. Attempt sign-in with the account's actual auth email. Older admin
