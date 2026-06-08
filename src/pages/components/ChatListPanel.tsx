@@ -103,6 +103,53 @@ export default function ChatListPanel() {
   const [broadcastPreview, setBroadcastPreview] = useState<{ content: string; created_at: string } | null>(null);
   const [broadcastUnread, setBroadcastUnread] = useState(0);
 
+  // Load active mutes for the user — used to filter notifications and show
+  // the bell-off badge in the chat list.
+  const refreshMutes = async () => {
+    if (!user) return;
+    try {
+      const { data } = await supabase
+        .from('chat_mutes' as any)
+        .select('chat_id, muted_until')
+        .eq('user_id', user.id);
+      const now = Date.now();
+      const active = new Set<string>();
+      for (const m of (data || []) as any[]) {
+        if (!m.muted_until || new Date(m.muted_until).getTime() > now) active.add(m.chat_id);
+      }
+      setMutedIds(active);
+      try { window.dispatchEvent(new CustomEvent('vt-mutes-updated', { detail: Array.from(active) })); } catch {}
+    } catch {}
+  };
+  useEffect(() => { refreshMutes(); }, [user?.id]);
+
+  const handleMute = async (chatId: string, duration: '1h' | '24h' | '1w' | 'always') => {
+    if (!user) return;
+    setMuteFor(null);
+    setContextMenu(null);
+    let until: string | null = null;
+    const now = Date.now();
+    if (duration === '1h') until = new Date(now + 60 * 60 * 1000).toISOString();
+    else if (duration === '24h') until = new Date(now + 24 * 60 * 60 * 1000).toISOString();
+    else if (duration === '1w') until = new Date(now + 7 * 24 * 60 * 60 * 1000).toISOString();
+    try {
+      await supabase.from('chat_mutes' as any).upsert(
+        { user_id: user.id, chat_id: chatId, muted_until: until },
+        { onConflict: 'user_id,chat_id' },
+      );
+      await refreshMutes();
+    } catch (e) { console.error('mute failed', e); }
+  };
+
+  const handleUnmute = async (chatId: string) => {
+    if (!user) return;
+    setContextMenu(null);
+    try {
+      await supabase.from('chat_mutes' as any).delete().eq('user_id', user.id).eq('chat_id', chatId);
+      await refreshMutes();
+    } catch {}
+  };
+
   const loadBroadcastPreview = async () => {
     if (!user) return;
     const { data: latest } = await supabase
