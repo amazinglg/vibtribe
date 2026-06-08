@@ -1948,18 +1948,18 @@ export default function ChatWindowPanel() {
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0];
-          if (file) handleFileAttach(file, 'image');
+          if (file) queueAttachment(file, 'image');
           e.target.value = '';
         }}
       />
       <input
         ref={fileInputRef}
         type="file"
-        accept=".pdf,.doc,.docx,.txt,.zip,.rar"
+        accept="*/*"
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0];
-          if (file) handleFileAttach(file, 'file');
+          if (file) queueAttachment(file, 'file');
           e.target.value = '';
         }}
       />
@@ -1971,18 +1971,7 @@ export default function ChatWindowPanel() {
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0];
-          if (file) handleFileAttach(file, 'image');
-          e.target.value = '';
-        }}
-      />
-      <input
-        ref={audioInputRef}
-        type="file"
-        accept="audio/*"
-        className="hidden"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) handleFileAttach(file, 'audio');
+          if (file) queueAttachment(file, 'image');
           e.target.value = '';
         }}
       />
