@@ -1210,7 +1210,7 @@ export default function ProfileContent() {
                   {[
                     { label: 'Notifications', status: appPerms.notifications, request: requestNotifications },
                     { label: 'Microphone & Camera', status: appPerms.microphone === 'granted' && appPerms.camera === 'granted' ? 'granted' : appPerms.microphone, request: requestMicAndCamera },
-                    { label: 'Storage', status: appPerms.storage, request: requestStorage },
+                    { label: 'Storage and Gallery', status: appPerms.storage, request: requestStorage },
                   ].map((p) => {
                     const granted = p.status === 'granted';
                     return (
