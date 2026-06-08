@@ -1925,11 +1925,34 @@ export default function ChatWindowPanel() {
       <input
         ref={fileInputRef}
         type="file"
-        accept=".pdf,.doc,.docx,.txt,.zip,.rar,audio/*"
+        accept=".pdf,.doc,.docx,.txt,.zip,.rar"
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0];
           if (file) handleFileAttach(file, 'file');
+          e.target.value = '';
+        }}
+      />
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*,video/*"
+        capture="environment"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleFileAttach(file, 'image');
+          e.target.value = '';
+        }}
+      />
+      <input
+        ref={audioInputRef}
+        type="file"
+        accept="audio/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleFileAttach(file, 'audio');
           e.target.value = '';
         }}
       />
