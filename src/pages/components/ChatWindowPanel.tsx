@@ -2064,6 +2064,23 @@ export default function ChatWindowPanel() {
         </div>
       )}
 
+      {/* Manual Unlock Encryption modal — accessible from chat menu */}
+      {showUnlockPinModal && user && (
+        <EncryptionPinModal
+          userId={user.id}
+          mode="unlock"
+          onComplete={() => {
+            setShowUnlockPinModal(false);
+            try {
+              sessionStorage.setItem(`vt_pin_session_${user.id}`, '1');
+              localStorage.setItem(`vt_pin_last_verified_${user.id}`, String(Date.now()));
+              window.dispatchEvent(new CustomEvent('vt-encryption-unlocked'));
+            } catch {}
+          }}
+          onSkip={() => setShowUnlockPinModal(false)}
+        />
+      )}
+
       {/* Emoji Picker */}
       {showEmoji && (
         <div
