@@ -1976,6 +1976,86 @@ export default function ChatWindowPanel() {
         }}
       />
 
+      {/* Attachment Preview Modal — confirm before upload/send */}
+      {pendingAttachment && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          onClick={cancelPendingAttachment}
+        >
+          <div
+            className="glass-strong rounded-2xl border border-border shadow-card p-4 max-w-md w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-foreground">Send attachment</h3>
+              <button
+                onClick={cancelPendingAttachment}
+                className="p-1 rounded-lg hover:bg-muted text-muted-foreground"
+                aria-label="Cancel"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="flex items-center justify-center bg-muted/30 rounded-xl overflow-hidden mb-3 max-h-[60vh]">
+              {pendingAttachment.type === 'image' && pendingAttachment.previewUrl && (
+                <img
+                  src={pendingAttachment.previewUrl}
+                  alt="Preview"
+                  className="max-h-[60vh] w-auto object-contain"
+                />
+              )}
+              {pendingAttachment.type === 'video' && pendingAttachment.previewUrl && (
+                <video
+                  src={pendingAttachment.previewUrl}
+                  controls
+                  playsInline
+                  className="max-h-[60vh] w-auto"
+                />
+              )}
+              {pendingAttachment.type === 'audio' && pendingAttachment.previewUrl && (
+                <audio src={pendingAttachment.previewUrl} controls className="w-full p-4" />
+              )}
+              {pendingAttachment.type === 'file' && (
+                <div className="flex items-center gap-3 p-6 w-full">
+                  <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <FileText size={24} className="text-purple-400" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium text-foreground truncate">
+                      {pendingAttachment.file.name}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {(pendingAttachment.file.size / 1024).toFixed(1)} KB
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="text-xs text-muted-foreground mb-3 truncate">
+              {pendingAttachment.file.name}
+            </div>
+
+            <div className="flex items-center justify-end gap-2">
+              <button
+                onClick={cancelPendingAttachment}
+                className="px-4 py-2 rounded-xl text-sm text-foreground hover:bg-muted transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={sendPendingAttachment}
+                className="px-4 py-2 rounded-xl text-sm font-medium bg-primary text-primary-foreground hover:opacity-90 transition-all flex items-center gap-2"
+              >
+                <Send size={14} />
+                Send
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Emoji Picker */}
       {showEmoji && (
         <div
