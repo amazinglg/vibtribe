@@ -60,6 +60,11 @@ function DownloadAndroidPage() {
 
   const startDownload = () => {
     setDownloadStarted(true);
+    // Fire-and-forget analytics — never block the download.
+    try {
+      void fetch('/api/public/track-apk-download', { method: 'POST', keepalive: true })
+        .catch(() => {});
+    } catch {}
   };
 
   return (

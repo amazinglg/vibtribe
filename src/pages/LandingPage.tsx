@@ -96,6 +96,17 @@ export default function LandingPage() {
               {t('landing.hero.ctaSecondary')}
             </Link>
           </div>
+          <a
+            href="#download"
+            onClick={(e) => {
+              e.preventDefault();
+              document.getElementById('download')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }}
+            className="mx-auto mb-5 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl gradient-tri text-white text-sm font-semibold glow-primary hover:opacity-95 transition-all"
+          >
+            <Download size={16} /> Download the app now
+            <span className="text-[10px] font-bold uppercase tracking-widest bg-white/20 px-2 py-0.5 rounded-full ml-1">New</span>
+          </a>
           <p className="text-[11px] sm:text-xs text-muted-foreground flex items-center justify-center gap-1.5">
             <Lock size={11} /> {t('landing.hero.trust')}
           </p>
@@ -226,10 +237,10 @@ export default function LandingPage() {
               </ol>
 
               <a
-                href="/"
+                href="/download/ios"
                 className="w-full px-4 py-3 rounded-2xl glass border border-primary/40 text-foreground text-sm font-semibold flex items-center justify-center gap-2 hover:border-primary transition-all"
               >
-                <Apple size={16} /> Open in Safari to install
+                <Apple size={16} /> Open iPhone install guide
               </a>
             </div>
           </div>

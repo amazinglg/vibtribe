@@ -30,6 +30,7 @@ interface Stats {
   totalUsers: number;
   activeUsers: number;
   onlineNow: number;
+  apkDownloads: number;
 }
 
 interface EditForm {
@@ -68,7 +69,7 @@ export default function AdminPage() {
   const supabase = createClient();
   const isMaster = !!profile?.is_master_admin || profile?.role === 'master_admin';
   const [users, setUsers] = useState<PlatformUser[]>([]);
-  const [stats, setStats] = useState<Stats>({ totalUsers: 0, activeUsers: 0, onlineNow: 0 });
+  const [stats, setStats] = useState<Stats>({ totalUsers: 0, activeUsers: 0, onlineNow: 0, apkDownloads: 0 });
   const [loadingData, setLoadingData] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedUser, setSelectedUser] = useState<PlatformUser | null>(null);
@@ -205,7 +206,16 @@ export default function AdminPage() {
         totalUsers: allUsers.length,
         activeUsers: allUsers.filter(u => u.account_status === 'active').length,
         onlineNow: onlineCount,
+        apkDownloads: 0,
       });
+
+      // APK downloads — total clicks since launch
+      try {
+        const { count: dlCount } = await supabase
+          .from('apk_download_events')
+          .select('id', { count: 'exact', head: true });
+        setStats(prev => ({ ...prev, apkDownloads: dlCount || 0 }));
+      } catch {}
 
       // Count unread (open) tickets
       const { count } = await supabase
@@ -533,11 +543,12 @@ export default function AdminPage() {
 
         {activeTab === 'overview' && (
           <div className="space-y-6">
-            <div className="grid grid-cols-3 gap-2 sm:gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
               {[
                 { label: 'Total Users', value: stats.totalUsers, icon: Users, color: 'gradient-primary', glow: 'glow-primary' },
                 { label: 'Active Users', value: stats.activeUsers, icon: CheckCircle2, color: 'gradient-cyan', glow: '' },
                 { label: 'Online Now', value: stats.onlineNow, icon: Activity, color: 'gradient-tri', glow: '' },
+                { label: 'APK Downloads', value: stats.apkDownloads, icon: Globe, color: 'gradient-pink', glow: '' },
               ].map((stat) => (
                 <div key={stat.label} className="glass rounded-xl border border-border p-2.5 sm:p-4 card-3d flex flex-col items-center text-center sm:items-start sm:text-left">
                   <div className={`w-7 h-7 sm:w-9 sm:h-9 ${stat.color} rounded-lg flex items-center justify-center mb-1.5 sm:mb-2 ${stat.glow}`}>
