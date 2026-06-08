@@ -87,13 +87,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         const lastKey = `vt_pin_last_verified_${user.id}`;
         const lastVerified = parseInt(localStorage.getItem(lastKey) || '0', 10);
         const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
-        if (!lastVerified) {
-          // Seed timestamp so we don't surprise users who already unlocked
-          // before this change shipped — they'll re-verify a week from now.
-          try { localStorage.setItem(lastKey, String(Date.now())); } catch {}
-          return;
+        // signOut() wipes lastVerified, so a missing timestamp here means
+        // "this is the first session after a logout" → re-prompt for unlock.
+        // Otherwise only re-prompt once the value is older than 7 days.
+        if (!lastVerified || Date.now() - lastVerified > WEEK_MS) {
+          setPinModal('unlock');
         }
-        if (Date.now() - lastVerified > WEEK_MS) setPinModal('unlock');
       } catch {}
     })();
     return () => { cancelled = true; };
