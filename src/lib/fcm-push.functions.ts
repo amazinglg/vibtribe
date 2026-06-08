@@ -227,6 +227,21 @@ export const sendMessagePush = createServerFn({ method: 'POST' })
     }
     if (!allowed) return { sent: 0, error: 'forbidden' };
 
+    // Respect per-chat mute preferences — never push to a chat the recipient muted.
+    if (chatId) {
+      try {
+        const { data: muted } = await supabaseAdmin
+          .from('chat_mutes')
+          .select('chat_id, muted_until')
+          .eq('user_id', recipientId)
+          .eq('chat_id', chatId)
+          .maybeSingle();
+        if (muted && (!muted.muted_until || new Date(muted.muted_until).getTime() > Date.now())) {
+          return { sent: 0, muted: true };
+        }
+      } catch (e) { /* fail-open: better to deliver than silently drop */ }
+    }
+
     const { data: tokens } = await supabaseAdmin
       .from('fcm_tokens')
       .select('token')

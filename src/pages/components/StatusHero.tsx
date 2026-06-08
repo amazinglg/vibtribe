@@ -370,9 +370,20 @@ export default function StatusHero() {
                       </div>
                     );
                   })}
+                  <p className="px-3 py-2 text-[10px] text-muted-foreground border-t border-border/40 mt-1">
+                    Statuses are <strong className="text-vt-amber">not end-to-end encrypted</strong>. Media is auto-deleted from our servers 24 hours after posting.
+                  </p>
                 </div>
                 </>
               )}
+          </div>
+
+          {/* Always-visible privacy banner about status retention & encryption */}
+          <div className="mt-2 p-2.5 rounded-xl bg-vt-amber/10 border border-vt-amber/30 flex gap-2">
+            <Sparkles size={12} className="text-vt-amber flex-shrink-0 mt-0.5" />
+            <p className="text-[10px] text-vt-amber leading-relaxed">
+              <strong>Heads up:</strong> Statuses are <strong>not end-to-end encrypted</strong> (so anyone visible can view the media). We <strong>auto-delete</strong> the file and entry from our servers <strong>24 hours after posting</strong> \u2014 nothing is kept after that.
+            </p>
           </div>
         </div>
 

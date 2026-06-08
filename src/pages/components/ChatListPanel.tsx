@@ -555,7 +555,9 @@ export default function ChatListPanel() {
 
   const isMaster = !!profile?.is_master_admin || profile?.role === 'master_admin';
 
-  const filtered = chats.filter(chat => {
+  // Apply mute state to the list: muted chats have unread badge suppressed.
+  const chatsWithMute = chats.map(c => mutedIds.has(c.id) ? { ...c, unread: 0, muted: true } : c);
+  const filtered = chatsWithMute.filter(chat => {
     const matchesSearch = chat.name.toLowerCase().includes(search.toLowerCase());
     const matchesTab =
       (activeTab === 'all' && !chat.isGroup) ||
@@ -653,7 +655,7 @@ export default function ChatListPanel() {
               >
                 {t(`chatlist.tab.${tab}` as any)}
                 {tab === 'unread' && (
-                  <span className="ml-1 text-[10px]">({chats.filter(c => c.unread > 0).length})</span>
+                  <span className="ml-1 text-[10px]">({chatsWithMute.filter(c => c.unread > 0).length})</span>
                 )}
               </button>
             ))}
