@@ -1,43 +1,23 @@
 import React, { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useNavigate } from '@tanstack/react-router';
-import { Phone, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle, User, ChevronDown, Check, Calendar, Mail, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { Phone, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle, User, Calendar, Mail, ArrowLeft, ShieldCheck, Check } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLogo from '@/components/ui/AppLogo';
 import { supabase } from '@/integrations/supabase/client';
 import LanguageDialogButton from '@/components/LanguageDialogButton';
 import { useT } from '@/contexts/LanguageContext';
 import { recordMarketingConsent } from '@/lib/marketing.functions';
-
-const COUNTRY_CODES = [
-  { name: 'India', code: '+91', flag: '🇮🇳' },
-  { name: 'United States', code: '+1', flag: '🇺🇸' },
-  { name: 'United Kingdom', code: '+44', flag: '🇬🇧' },
-  { name: 'Australia', code: '+61', flag: '🇦🇺' },
-  { name: 'Canada', code: '+1', flag: '🇨🇦' },
-  { name: 'Germany', code: '+49', flag: '🇩🇪' },
-  { name: 'France', code: '+33', flag: '🇫🇷' },
-  { name: 'Japan', code: '+81', flag: '🇯🇵' },
-  { name: 'China', code: '+86', flag: '🇨🇳' },
-  { name: 'Brazil', code: '+55', flag: '🇧🇷' },
-  { name: 'Mexico', code: '+52', flag: '🇲🇽' },
-  { name: 'South Africa', code: '+27', flag: '🇿🇦' },
-  { name: 'UAE', code: '+971', flag: '🇦🇪' },
-  { name: 'Singapore', code: '+65', flag: '🇸🇬' },
-  { name: 'Pakistan', code: '+92', flag: '🇵🇰' },
-  { name: 'Bangladesh', code: '+880', flag: '🇧🇩' },
-  { name: 'Sri Lanka', code: '+94', flag: '🇱🇰' },
-  { name: 'Nepal', code: '+977', flag: '🇳🇵' },
-  { name: 'Indonesia', code: '+62', flag: '🇮🇩' },
-  { name: 'Malaysia', code: '+60', flag: '🇲🇾' },
-];
+import CountryCodeSelect from '@/components/CountryCodeSelect';
+import { useDetectCountry } from '@/hooks/useDetectCountry';
 
 export default function SignUpPage() {
   const router = useNavigate();
   const { t } = useT();
   const [fullName, setFullName] = useState('');
   const [dob, setDob] = useState('');
-  const [countryCode, setCountryCode] = useState('+91');
+  const { country, setCountry } = useDetectCountry();
+  const countryCode = country.dial;
   const [mobile, setMobile] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -45,14 +25,11 @@ export default function SignUpPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [marketingOptIn, setMarketingOptIn] = useState(false);
   const [step, setStep] = useState<'details' | 'verify'>('details');
   const [otp, setOtp] = useState('');
   const [resending, setResending] = useState(false);
-
-  const selectedCountry = COUNTRY_CODES.find(c => c.code === countryCode) || COUNTRY_CODES[0];
 
   // Max DOB = today minus 18 years (used as `max` attribute on the date input)
   const maxDobStr = (() => {
@@ -298,34 +275,7 @@ export default function SignUpPage() {
             <div>
               <label className="block text-sm font-medium text-foreground mb-1.5">{t('auth.mobile')}</label>
               <div className="flex gap-2">
-                {/* Country Code Selector */}
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setShowCountryDropdown(!showCountryDropdown)}
-                    className="flex items-center gap-1.5 px-3 py-3 bg-input border border-border rounded-xl text-sm text-foreground hover:border-primary transition-all whitespace-nowrap h-full"
-                  >
-                    <span>{selectedCountry.flag}</span>
-                    <span className="font-medium">{selectedCountry.code}</span>
-                    <ChevronDown size={13} className="text-muted-foreground" />
-                  </button>
-                  {showCountryDropdown && (
-                    <div className="absolute top-full left-0 mt-1 w-64 bg-card border border-border rounded-xl shadow-xl z-50 max-h-56 overflow-y-auto">
-                      {COUNTRY_CODES.map(c => (
-                        <button
-                          key={`${c.name}-${c.code}`}
-                          type="button"
-                          onClick={() => { setCountryCode(c.code); setShowCountryDropdown(false); setError(''); }}
-                          className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-muted transition-colors text-left ${countryCode === c.code && selectedCountry.name === c.name ? 'text-primary font-medium' : 'text-foreground'}`}
-                        >
-                          <span>{c.flag}</span>
-                          <span className="flex-1">{c.name}</span>
-                          <span className="text-muted-foreground text-xs">{c.code}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <CountryCodeSelect value={country} onChange={c => { setCountry(c); setError(''); }} />
                 {/* Number Input */}
                 <div className="relative flex-1">
                   <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />

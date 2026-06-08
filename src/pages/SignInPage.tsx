@@ -8,6 +8,8 @@ import HelpButton from '@/components/HelpButton';
 import { createClient } from '@/lib/supabase/client';
 import LanguageDialogButton from '@/components/LanguageDialogButton';
 import { useT } from '@/contexts/LanguageContext';
+import CountryCodeSelect from '@/components/CountryCodeSelect';
+import { useDetectCountry } from '@/hooks/useDetectCountry';
 
 export default function SignInPage() {
   const router = useNavigate();
@@ -21,6 +23,7 @@ export default function SignInPage() {
   const [error, setError] = useState('');
   const [useEmail, setUseEmail] = useState(false);
   const [email, setEmail] = useState('');
+  const { country, setCountry } = useDetectCountry();
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,12 +35,14 @@ export default function SignInPage() {
     setLoading(true);
     try {
       let identifier: string;
+      let countryCode: string | undefined;
       if (useEmail) {
         identifier = email.trim().toLowerCase();
       } else {
         const local10 = mobile.replace(/\D/g, '').slice(-10);
         if (local10.length !== 10) { setError('Please enter a valid 10-digit mobile number'); setLoading(false); return; }
         identifier = `${local10}@vibetribe.app`;
+        countryCode = country.dial;
       }
 
       // Server-side login flow: lookup + suspension check + password attempt
@@ -46,7 +51,7 @@ export default function SignInPage() {
       const res = await fetch('/api/public/auth-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier, password }),
+        body: JSON.stringify({ identifier, password, countryCode }),
       });
       const payload: any = await res.json().catch(() => ({}));
 
@@ -141,19 +146,22 @@ export default function SignInPage() {
             {!useEmail ? (
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">{t('auth.mobile')}</label>
-                <div className="relative">
-                  <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                  <input
-                    type="tel"
-                    value={mobile}
-                  onChange={e => { setMobile(e.target.value.replace(/\D/g, '').slice(0, 10)); setError(''); }}
-                  placeholder="98765 43210"
-                  maxLength={10}
-                    className="w-full pl-9 pr-4 py-3 bg-input border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all text-sm"
-                    autoComplete="tel"
-                  />
+                <div className="flex gap-2">
+                  <CountryCodeSelect value={country} onChange={c => { setCountry(c); setError(''); }} />
+                  <div className="relative flex-1">
+                    <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <input
+                      type="tel"
+                      value={mobile}
+                      onChange={e => { setMobile(e.target.value.replace(/\D/g, '').slice(0, 10)); setError(''); }}
+                      placeholder="98765 43210"
+                      maxLength={10}
+                      className="w-full pl-9 pr-4 py-3 bg-input border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all text-sm"
+                      autoComplete="tel"
+                    />
+                  </div>
                 </div>
-              <p className="text-[11px] text-muted-foreground mt-1">Enter 10-digit number only — no country code</p>
+                <p className="text-[11px] text-muted-foreground mt-1">Pick your country and enter your 10-digit number</p>
               </div>
             ) : (
               <div>

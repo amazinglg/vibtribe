@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import AppLayout from '@/components/AppLayout';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
+import { COUNTRIES, findCountryByDial, flagFromIso2 } from '@/lib/countryCodes';
 
 export default function AdminUserDetailPage() {
   const navigate = useNavigate();
@@ -22,7 +23,7 @@ export default function AdminUserDetailPage() {
   const [loadingData, setLoadingData] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
-  const [editForm, setEditForm] = useState({ full_name: '', email: '', mobile_number: '' });
+  const [editForm, setEditForm] = useState({ full_name: '', email: '', mobile_number: '', country_code: '+91' });
   const [secureChatCount, setSecureChatCount] = useState<number | null>(null);
 
   const isMaster = !!profile?.is_master_admin;
@@ -182,7 +183,7 @@ export default function AdminUserDetailPage() {
           </div>
           {!locked && !isSelf && (
             <button
-              onClick={() => { setEditForm({ full_name: target.full_name || '', email: target.email || '', mobile_number: target.mobile_number || '' }); setEditOpen(true); }}
+              onClick={() => { setEditForm({ full_name: target.full_name || '', email: target.email || '', mobile_number: target.mobile_number || '', country_code: target.country_code || '+91' }); setEditOpen(true); }}
               className="px-3 py-2 rounded-xl glass border border-border text-foreground hover:border-primary/40 transition-all flex items-center gap-1.5 text-xs font-semibold"
             >
               <Pencil size={13} /> Edit
@@ -245,7 +246,17 @@ export default function AdminUserDetailPage() {
               {target.username && <p className="text-xs text-primary truncate mb-1">@{target.username}</p>}
               <div className="space-y-0.5 text-xs text-muted-foreground">
                 {target.real_email && <p className="flex items-center gap-1.5 truncate"><Mail size={11} /> {target.real_email}</p>}
-                {target.mobile_number && <p className="flex items-center gap-1.5"><Phone size={11} /> {target.mobile_number}</p>}
+                {target.mobile_number && (
+                  <p className="flex items-center gap-1.5">
+                    <Phone size={11} />
+                    {(() => {
+                      const c = findCountryByDial(target.country_code);
+                      return c ? <span aria-hidden className="text-sm leading-none">{flagFromIso2(c.iso2)}</span> : null;
+                    })()}
+                    <span>{target.mobile_number}</span>
+                    {target.country_code && <span className="text-[10px] text-muted-foreground">({target.country_code})</span>}
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -408,6 +419,18 @@ export default function AdminUserDetailPage() {
                   />
                 </div>
               ))}
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Country code</label>
+                <select
+                  value={editForm.country_code}
+                  onChange={e => setEditForm(f => ({ ...f, country_code: e.target.value }))}
+                  className="w-full px-3 py-2.5 bg-input border border-border rounded-xl text-sm text-foreground"
+                >
+                  {COUNTRIES.map(c => (
+                    <option key={`${c.iso2}-${c.dial}`} value={c.dial}>{c.name} ({c.dial})</option>
+                  ))}
+                </select>
+              </div>
             </div>
             <div className="flex gap-2 mt-5">
               <button onClick={() => setEditOpen(false)} className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium bg-muted text-muted-foreground">Cancel</button>
