@@ -69,6 +69,9 @@ export default function AdminPage() {
   const { user, profile, isAdmin, loading } = useAuth();
   const supabase = createClient();
   const isMaster = !!profile?.is_master_admin || profile?.role === 'master_admin';
+  const publishReleaseFn = useServerFn(publishAppRelease);
+  const [releasing, setReleasing] = useState(false);
+  const [confirmRelease, setConfirmRelease] = useState(false);
   const [users, setUsers] = useState<PlatformUser[]>([]);
   const [stats, setStats] = useState<Stats>({ totalUsers: 0, activeUsers: 0, onlineNow: 0, apkDownloads: 0 });
   const [loadingData, setLoadingData] = useState(true);
