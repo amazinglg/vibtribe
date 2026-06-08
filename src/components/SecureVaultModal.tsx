@@ -1,11 +1,14 @@
 // @ts-nocheck
 import React, { useState, useRef, useEffect } from 'react';
-import { Lock, X, AlertTriangle, Eye, EyeOff, ArrowRight, ShieldAlert, Edit3, Check } from 'lucide-react';
+import { Lock, X, AlertTriangle, Eye, EyeOff, ArrowRight, ShieldAlert, Edit3, Check, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import PatternLock from '@/components/PatternLock';
 import { useChatStore } from '@/store/chatStore';
+import { unlockEncryptionWithPIN } from '@/lib/encryption';
+import { useServerFn } from '@tanstack/react-start';
+import { deleteAllSecuredChats } from '@/lib/secure-chats.functions';
 
 interface SecureVaultModalProps {
   isOpen: boolean;
@@ -58,6 +61,12 @@ export default function SecureVaultModal({ isOpen, onClose }: SecureVaultModalPr
   const [patternSelected, setPatternSelected] = useState<number[]>([]);
   const [attempts, setAttempts] = useState(0);
   const [loading, setLoading] = useState(false);
+
+  // Delete-all flow: 'confirm' | 'pin' | null
+  const [deleteStep, setDeleteStep] = useState<null | 'confirm' | 'pin'>(null);
+  const [deletePin, setDeletePin] = useState('');
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const deleteAllFn = useServerFn(deleteAllSecuredChats);
 
   // Nickname editing state
   const [editingNickname, setEditingNickname] = useState(false);
@@ -228,6 +237,29 @@ export default function SecureVaultModal({ isOpen, onClose }: SecureVaultModalPr
   const handleOpenSecureChat = () => {
     if (foundChat) setSelectedChatId(foundChat.id);
     handleClose();
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!user) return;
+    if (!/^\d{6}$/.test(deletePin)) {
+      toast.error('Enter your 6-digit encryption PIN');
+      return;
+    }
+    setDeleteBusy(true);
+    try {
+      // Verify the user's actual E2E encryption PIN
+      await unlockEncryptionWithPIN(user.id, deletePin);
+      const res: any = await deleteAllSecuredChats();
+      toast.success(`Deleted ${res?.deleted ?? 0} secured chat${res?.deleted === 1 ? '' : 's'}`);
+      setDeleteStep(null);
+      setDeletePin('');
+      handleClose();
+    } catch (e: any) {
+      toast.error(e?.message || 'Incorrect encryption PIN');
+      setDeletePin('');
+    } finally {
+      setDeleteBusy(false);
+    }
   };
 
   if (!isOpen) return null;
