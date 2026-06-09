@@ -2211,7 +2211,66 @@ export default function ChatWindowPanel() {
           onClose={() => setSecureModalOpen(false)}
           chatId={selectedChatId}
           chatName={contact?.name || 'Chat'}
+          onSecured={() => {
+            setMyChatSecured(true);
+            window.dispatchEvent(new CustomEvent('vt-secure-changed'));
+            setSelectedChatId(null);
+          }}
         />
+      )}
+
+      {/* Themed confirm: move chat back to normal list */}
+      {showUnsecureConfirm && (
+        <div
+          className="fixed inset-0 z-[1700] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setShowUnsecureConfirm(false)}
+        >
+          <div
+            className="bg-card border border-border rounded-2xl w-full max-w-sm p-5 shadow-card float-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full bg-vt-amber/15 flex items-center justify-center">
+                <ShieldOff size={20} className="text-vt-amber" />
+              </div>
+              <h3 className="font-semibold text-sm text-foreground">Move chat back to normal?</h3>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+              This chat will no longer require a PIN or pattern to open from your account.
+              The other person is unaffected.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowUnsecureConfirm(false)}
+                className="flex-1 py-2.5 rounded-xl glass text-sm text-foreground hover:bg-muted"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    const { error: upErr } = await supabase
+                      .from('user_secure_chats')
+                      .delete()
+                      .eq('user_id', user!.id)
+                      .eq('chat_id', selectedChatId);
+                    if (upErr) throw upErr;
+                    setMyChatSecured(false);
+                    setShowUnsecureConfirm(false);
+                    window.dispatchEvent(new CustomEvent('vt-secure-changed'));
+                    toast.success('Chat moved back to your normal chats');
+                    setSelectedChatId(null);
+                  } catch (e: any) {
+                    toast.error(e?.message || 'Could not unsecure this chat');
+                  }
+                }}
+                className="flex-1 py-2.5 rounded-xl gradient-primary text-white text-sm font-semibold"
+              >
+                Move back
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Long-press action sheet for own messages */}
