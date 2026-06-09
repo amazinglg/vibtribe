@@ -35,6 +35,30 @@ interface Message {
   messageType?: string;
 }
 
+/**
+ * Strip media envelope / marker prefixes so long-press message previews show
+ * a human label instead of the raw JSON `__media__:{...}` blob.
+ */
+function formatPreviewText(raw: string | null | undefined): string {
+  if (!raw) return '';
+  if (raw.startsWith('__media__:')) {
+    try {
+      const m = JSON.parse(raw.slice('__media__:'.length));
+      if (m?.type === 'image') return '📷 Photo';
+      if (m?.type === 'video') return '🎥 Video';
+      if (m?.type === 'audio') return '🎵 Audio';
+      return `📎 ${m?.name || 'File'}`;
+    } catch { return 'Media'; }
+  }
+  if (raw.startsWith('[IMAGE:')) return '📷 Image';
+  if (raw.startsWith('[FILE:')) {
+    const m = raw.match(/\[FILE:(.*?):(.*?)\]/);
+    return `📎 ${m?.[1] || 'File'}`;
+  }
+  if (raw.startsWith('[STICKER:')) return 'Sticker';
+  return raw;
+}
+
 // Call Modal Component
 function CallModal({
   type,
