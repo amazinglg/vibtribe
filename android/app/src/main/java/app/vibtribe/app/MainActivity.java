@@ -92,12 +92,13 @@ public class MainActivity extends BridgeActivity {
                     webView.setDownloadListener((url, userAgent, contentDisposition, mimeType, contentLength) -> {
                         try {
                             String filename = URLUtil.guessFileName(url, contentDisposition, mimeType);
+                            String subDir = pickSubDir(mimeType, filename);
                             if (url != null && url.startsWith("data:")) {
                                 saveDataUrlToDownloads(url, filename, mimeType);
                             } else if (url != null && (url.startsWith("http://") || url.startsWith("https://"))) {
                                 DownloadManager.Request req = new DownloadManager.Request(Uri.parse(url));
                                 req.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-                                req.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, filename);
+                                req.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, subDir + "/" + filename);
                                 req.setMimeType(mimeType);
                                 DownloadManager dm = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
                                 if (dm != null) dm.enqueue(req);
@@ -122,7 +123,11 @@ public class MainActivity extends BridgeActivity {
             byte[] bytes = isBase64
                 ? Base64.decode(payload, Base64.DEFAULT)
                 : Uri.decode(payload).getBytes();
-            File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+            String subDir = pickSubDir(mimeType, filename);
+            File dir = new File(
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                subDir
+            );
             if (!dir.exists()) dir.mkdirs();
             File out = new File(dir, filename);
             try (FileOutputStream fos = new FileOutputStream(out)) {
@@ -138,11 +143,23 @@ public class MainActivity extends BridgeActivity {
                 }
                 dm.addCompletedDownload(out.getName(), out.getName(), true, mt, out.getAbsolutePath(), out.length(), true);
             }
-            runOnUiThread(() -> Toast.makeText(MainActivity.this, "Saved to Downloads", Toast.LENGTH_SHORT).show());
+            runOnUiThread(() -> Toast.makeText(MainActivity.this, "Saved to Downloads/" + subDir, Toast.LENGTH_SHORT).show());
         } catch (Exception e) {
             Log.w("VibTribe", "saveDataUrlToDownloads failed", e);
             runOnUiThread(() -> Toast.makeText(MainActivity.this, "Download failed", Toast.LENGTH_SHORT).show());
         }
+    }
+
+    /** Choose a VibTribe subfolder under Downloads/ based on the file's mime type. */
+    private String pickSubDir(String mimeType, String filename) {
+        String mt = mimeType == null ? "" : mimeType.toLowerCase();
+        if (mt.startsWith("image/") || mt.startsWith("video/")) {
+            return "VibTribe/Photos & Videos";
+        }
+        if (mt.startsWith("audio/")) {
+            return "VibTribe/Photos & Videos";
+        }
+        return "VibTribe/Documents";
     }
 
     private void grantWebRtcPermissions(final PermissionRequest request) {

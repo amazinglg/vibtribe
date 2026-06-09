@@ -74,25 +74,57 @@ export default function EncryptedMedia({ url, mime, name, kind, theirPublicKey, 
 
   if (kind === 'image') {
     return (
-      <img
-        src={blobUrl}
-        alt={name || 'Shared image'}
-        className="max-w-[200px] rounded-xl cursor-zoom-in"
-        onClick={() => onImageClick?.(blobUrl)}
-      />
+      <div className="relative inline-block group">
+        <img
+          src={blobUrl}
+          alt={name || 'Shared image'}
+          className="max-w-[200px] rounded-xl cursor-zoom-in"
+          onClick={() => onImageClick?.(blobUrl)}
+        />
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); downloadFile(); }}
+          className="absolute top-2 right-2 p-1.5 rounded-full bg-black/55 text-white opacity-80 hover:opacity-100"
+          aria-label="Download image"
+        >
+          <Download size={14} />
+        </button>
+      </div>
     );
   }
   if (kind === 'audio') {
-    return <audio controls src={blobUrl} className="max-w-[220px]" />;
+    return (
+      <div className="flex items-center gap-2">
+        <audio controls src={blobUrl} className="max-w-[200px]" />
+        <button
+          type="button"
+          onClick={downloadFile}
+          className="p-1.5 rounded-full bg-muted text-foreground"
+          aria-label="Download audio"
+        >
+          <Download size={14} />
+        </button>
+      </div>
+    );
   }
   if (kind === 'video') {
     return (
-      <video
-        controls
-        playsInline
-        src={blobUrl}
-        className="max-w-[240px] rounded-xl"
-      />
+      <div className="relative inline-block">
+        <video
+          controls
+          playsInline
+          src={blobUrl}
+          className="max-w-[240px] rounded-xl"
+        />
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); downloadFile(); }}
+          className="absolute top-2 right-2 p-1.5 rounded-full bg-black/55 text-white opacity-80 hover:opacity-100"
+          aria-label="Download video"
+        >
+          <Download size={14} />
+        </button>
+      </div>
     );
   }
   // File / document: clicking opens a preview modal with a download button.
@@ -131,7 +163,13 @@ export default function EncryptedMedia({ url, mime, name, kind, theirPublicKey, 
     }
   };
 
-  const canIframe = /pdf|image\/|text\/|json|xml/i.test(mime || '');
+  // Android WebView cannot render PDFs from blob: / data: URLs inside an
+  // iframe — it just shows a blank white page. Skip the iframe on native and
+  // surface a clean Download CTA instead.
+  const isPdfLike = /pdf/i.test(mime || '');
+  const isImageDoc = /^image\//i.test(mime || '');
+  const isTextDoc = /text\/|json|xml/i.test(mime || '');
+  const canIframe = !isNativeWrapper() && (isPdfLike || isImageDoc || isTextDoc);
 
   return (
     <>
