@@ -2214,7 +2214,7 @@ export default function ChatWindowPanel() {
           >
             <div className="px-4 py-3 border-b border-border">
               <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Message options</p>
-              <p className="text-sm text-foreground truncate mt-0.5">{actionMsg.text}</p>
+              <p className="text-sm text-foreground truncate mt-0.5">{formatPreviewText(actionMsg.text)}</p>
             </div>
             {actionMsg.senderId === user?.id && (
               <button
