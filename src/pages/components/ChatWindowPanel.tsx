@@ -258,6 +258,7 @@ export default function ChatWindowPanel() {
     previewUrl?: string;
   } | null>(null);
   const [secureModalOpen, setSecureModalOpen] = useState(false);
+  const [showUnsecureConfirm, setShowUnsecureConfirm] = useState(false);
   const [hoveredMsg, setHoveredMsg] = useState<string | null>(null);
   const [contact, setContact] = useState<{ name: string; avatar: string; avatarUrl?: string | null; online: boolean; lastSeen: string; publicKey?: string; userId?: string; isContact?: boolean } | null>(null);
   const [enlargeAvatar, setEnlargeAvatar] = useState(false);
@@ -1541,20 +1542,7 @@ export default function ChatWindowPanel() {
                     onClick={async () => {
                       setShowMoreMenu(false);
                       if (myChatSecured) {
-                        if (!window.confirm('Move this chat back to your normal chat list? It will no longer require a PIN/pattern to access from your account. The other person is unaffected.')) return;
-                        try {
-                          const { error: upErr } = await supabase
-                            .from('user_secure_chats')
-                            .delete()
-                            .eq('user_id', user!.id)
-                            .eq('chat_id', selectedChatId);
-                          if (upErr) throw upErr;
-                          setMyChatSecured(false);
-                          toast.success('Chat moved back to your normal chats');
-                          setSelectedChatId(null);
-                        } catch (e: any) {
-                          toast.error(e?.message || 'Could not unsecure this chat');
-                        }
+                        setShowUnsecureConfirm(true);
                       } else {
                         setSecureModalOpen(true);
                       }
