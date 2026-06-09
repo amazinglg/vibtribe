@@ -278,11 +278,17 @@ export default function ChatListPanel() {
     const onResume = () => { loadChats(); };
     window.addEventListener('vt-app-resumed', onResume);
     window.addEventListener('vt-network-online', onResume);
+    // Immediate refresh when this user marks/unmarks a chat as secure —
+    // realtime can lag a beat on slow networks and we want the chat list
+    // to update without needing to close and reopen the app.
+    const onSecureChanged = () => { loadChats(); };
+    window.addEventListener('vt-secure-changed', onSecureChanged);
     return () => {
       if (timer) clearTimeout(timer);
       supabase.removeChannel(channel);
       window.removeEventListener('vt-app-resumed', onResume);
       window.removeEventListener('vt-network-online', onResume);
+      window.removeEventListener('vt-secure-changed', onSecureChanged);
     };
   }, [user?.id]);
 

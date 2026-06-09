@@ -35,6 +35,30 @@ interface Message {
   messageType?: string;
 }
 
+/**
+ * Strip media envelope / marker prefixes so long-press message previews show
+ * a human label instead of the raw JSON `__media__:{...}` blob.
+ */
+function formatPreviewText(raw: string | null | undefined): string {
+  if (!raw) return '';
+  if (raw.startsWith('__media__:')) {
+    try {
+      const m = JSON.parse(raw.slice('__media__:'.length));
+      if (m?.type === 'image') return '📷 Photo';
+      if (m?.type === 'video') return '🎥 Video';
+      if (m?.type === 'audio') return '🎵 Audio';
+      return `📎 ${m?.name || 'File'}`;
+    } catch { return 'Media'; }
+  }
+  if (raw.startsWith('[IMAGE:')) return '📷 Image';
+  if (raw.startsWith('[FILE:')) {
+    const m = raw.match(/\[FILE:(.*?):(.*?)\]/);
+    return `📎 ${m?.[1] || 'File'}`;
+  }
+  if (raw.startsWith('[STICKER:')) return 'Sticker';
+  return raw;
+}
+
 // Call Modal Component
 function CallModal({
   type,
@@ -234,6 +258,7 @@ export default function ChatWindowPanel() {
     previewUrl?: string;
   } | null>(null);
   const [secureModalOpen, setSecureModalOpen] = useState(false);
+  const [showUnsecureConfirm, setShowUnsecureConfirm] = useState(false);
   const [hoveredMsg, setHoveredMsg] = useState<string | null>(null);
   const [contact, setContact] = useState<{ name: string; avatar: string; avatarUrl?: string | null; online: boolean; lastSeen: string; publicKey?: string; userId?: string; isContact?: boolean } | null>(null);
   const [enlargeAvatar, setEnlargeAvatar] = useState(false);
@@ -1517,20 +1542,7 @@ export default function ChatWindowPanel() {
                     onClick={async () => {
                       setShowMoreMenu(false);
                       if (myChatSecured) {
-                        if (!window.confirm('Move this chat back to your normal chat list? It will no longer require a PIN/pattern to access from your account. The other person is unaffected.')) return;
-                        try {
-                          const { error: upErr } = await supabase
-                            .from('user_secure_chats')
-                            .delete()
-                            .eq('user_id', user!.id)
-                            .eq('chat_id', selectedChatId);
-                          if (upErr) throw upErr;
-                          setMyChatSecured(false);
-                          toast.success('Chat moved back to your normal chats');
-                          setSelectedChatId(null);
-                        } catch (e: any) {
-                          toast.error(e?.message || 'Could not unsecure this chat');
-                        }
+                        setShowUnsecureConfirm(true);
                       } else {
                         setSecureModalOpen(true);
                       }
@@ -2199,7 +2211,66 @@ export default function ChatWindowPanel() {
           onClose={() => setSecureModalOpen(false)}
           chatId={selectedChatId}
           chatName={contact?.name || 'Chat'}
+          onSecured={() => {
+            setMyChatSecured(true);
+            window.dispatchEvent(new CustomEvent('vt-secure-changed'));
+            setSelectedChatId(null);
+          }}
         />
+      )}
+
+      {/* Themed confirm: move chat back to normal list */}
+      {showUnsecureConfirm && (
+        <div
+          className="fixed inset-0 z-[1700] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setShowUnsecureConfirm(false)}
+        >
+          <div
+            className="bg-card border border-border rounded-2xl w-full max-w-sm p-5 shadow-card float-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full bg-vt-amber/15 flex items-center justify-center">
+                <ShieldOff size={20} className="text-vt-amber" />
+              </div>
+              <h3 className="font-semibold text-sm text-foreground">Move chat back to normal?</h3>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+              This chat will no longer require a PIN or pattern to open from your account.
+              The other person is unaffected.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowUnsecureConfirm(false)}
+                className="flex-1 py-2.5 rounded-xl glass text-sm text-foreground hover:bg-muted"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    const { error: upErr } = await supabase
+                      .from('user_secure_chats')
+                      .delete()
+                      .eq('user_id', user!.id)
+                      .eq('chat_id', selectedChatId);
+                    if (upErr) throw upErr;
+                    setMyChatSecured(false);
+                    setShowUnsecureConfirm(false);
+                    window.dispatchEvent(new CustomEvent('vt-secure-changed'));
+                    toast.success('Chat moved back to your normal chats');
+                    setSelectedChatId(null);
+                  } catch (e: any) {
+                    toast.error(e?.message || 'Could not unsecure this chat');
+                  }
+                }}
+                className="flex-1 py-2.5 rounded-xl gradient-primary text-white text-sm font-semibold"
+              >
+                Move back
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Long-press action sheet for own messages */}
@@ -2214,7 +2285,7 @@ export default function ChatWindowPanel() {
           >
             <div className="px-4 py-3 border-b border-border">
               <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Message options</p>
-              <p className="text-sm text-foreground truncate mt-0.5">{actionMsg.text}</p>
+              <p className="text-sm text-foreground truncate mt-0.5">{formatPreviewText(actionMsg.text)}</p>
             </div>
             {actionMsg.senderId === user?.id && (
               <button
