@@ -1923,7 +1923,9 @@ export default function ChatWindowPanel() {
                       />
                     ) : (
                       <>
-                        {displayText}
+                        {typeof displayText === 'string'
+                          ? <Linkified text={displayText} isMe={isMe} />
+                          : displayText}
                         {msg.editedAt && !msg.deletedForEveryone && (
                           <span className={`ml-1 text-[10px] italic ${isMe ? 'text-white/60' : 'text-muted-foreground'}`}>(edited)</span>
                         )}
