@@ -373,8 +373,17 @@ export default function ChatWindowPanel() {
     if (prev && prev !== selectedChatId) {
       // Fire-and-forget; RPC checks mode server-side.
       supabase.rpc('expire_seen_messages', { p_chat_id: prev }).then(() => {});
+      // Save current draft for the previous chat before switching.
+      draftsRef.current[prev] = inputText;
+      persistDrafts();
     }
     previousChatIdRef.current = selectedChatId;
+    // Load draft for the newly selected chat (or empty string if none).
+    if (selectedChatId) {
+      setInputText(draftsRef.current[selectedChatId] ?? '');
+    } else {
+      setInputText('');
+    }
 
     if (selectedChatId && user) {
       loadChatData();
