@@ -866,7 +866,13 @@ export default function ChatWindowPanel() {
       createdAt: new Date().toISOString(),
     };
     setMessages(prev => [...prev, tempMsg]);
-    if (!overrideText) setInputText('');
+    if (!overrideText) {
+      setInputText('');
+      if (selectedChatId) {
+        delete draftsRef.current[selectedChatId];
+        persistDrafts();
+      }
+    }
     setShowEmoji(false);
 
     try {
