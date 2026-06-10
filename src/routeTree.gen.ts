@@ -41,6 +41,7 @@ import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/e
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicHooksCleanupExpiredStatusesRouteImport } from './routes/api/public/hooks/cleanup-expired-statuses'
+import { Route as ApiPublicHooksCleanupExpiredMessagesRouteImport } from './routes/api/public/hooks/cleanup-expired-messages'
 
 const UnsubscribeRoute = UnsubscribeRouteImport.update({
   id: '/unsubscribe',
@@ -208,6 +209,12 @@ const ApiPublicHooksCleanupExpiredStatusesRoute =
     path: '/api/public/hooks/cleanup-expired-statuses',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksCleanupExpiredMessagesRoute =
+  ApiPublicHooksCleanupExpiredMessagesRouteImport.update({
+    id: '/api/public/hooks/cleanup-expired-messages',
+    path: '/api/public/hooks/cleanup-expired-messages',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -236,6 +243,7 @@ export interface FileRoutesByFullPath {
   '/api/public/track-apk-download': typeof ApiPublicTrackApkDownloadRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/tribe/join/$code': typeof TribeJoinCodeRoute
+  '/api/public/hooks/cleanup-expired-messages': typeof ApiPublicHooksCleanupExpiredMessagesRoute
   '/api/public/hooks/cleanup-expired-statuses': typeof ApiPublicHooksCleanupExpiredStatusesRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -269,6 +277,7 @@ export interface FileRoutesByTo {
   '/api/public/track-apk-download': typeof ApiPublicTrackApkDownloadRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/tribe/join/$code': typeof TribeJoinCodeRoute
+  '/api/public/hooks/cleanup-expired-messages': typeof ApiPublicHooksCleanupExpiredMessagesRoute
   '/api/public/hooks/cleanup-expired-statuses': typeof ApiPublicHooksCleanupExpiredStatusesRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -304,6 +313,7 @@ export interface FileRoutesById {
   '/api/public/track-apk-download': typeof ApiPublicTrackApkDownloadRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/tribe/join/$code': typeof TribeJoinCodeRoute
+  '/api/public/hooks/cleanup-expired-messages': typeof ApiPublicHooksCleanupExpiredMessagesRoute
   '/api/public/hooks/cleanup-expired-statuses': typeof ApiPublicHooksCleanupExpiredStatusesRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -340,6 +350,7 @@ export interface FileRouteTypes {
     | '/api/public/track-apk-download'
     | '/lovable/email/suppression'
     | '/tribe/join/$code'
+    | '/api/public/hooks/cleanup-expired-messages'
     | '/api/public/hooks/cleanup-expired-statuses'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -373,6 +384,7 @@ export interface FileRouteTypes {
     | '/api/public/track-apk-download'
     | '/lovable/email/suppression'
     | '/tribe/join/$code'
+    | '/api/public/hooks/cleanup-expired-messages'
     | '/api/public/hooks/cleanup-expired-statuses'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -407,6 +419,7 @@ export interface FileRouteTypes {
     | '/api/public/track-apk-download'
     | '/lovable/email/suppression'
     | '/tribe/join/$code'
+    | '/api/public/hooks/cleanup-expired-messages'
     | '/api/public/hooks/cleanup-expired-statuses'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -438,6 +451,7 @@ export interface RootRouteChildren {
   ApiPublicTrackApkDownloadRoute: typeof ApiPublicTrackApkDownloadRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   TribeJoinCodeRoute: typeof TribeJoinCodeRoute
+  ApiPublicHooksCleanupExpiredMessagesRoute: typeof ApiPublicHooksCleanupExpiredMessagesRoute
   ApiPublicHooksCleanupExpiredStatusesRoute: typeof ApiPublicHooksCleanupExpiredStatusesRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -672,6 +686,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksCleanupExpiredStatusesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/cleanup-expired-messages': {
+      id: '/api/public/hooks/cleanup-expired-messages'
+      path: '/api/public/hooks/cleanup-expired-messages'
+      fullPath: '/api/public/hooks/cleanup-expired-messages'
+      preLoaderRoute: typeof ApiPublicHooksCleanupExpiredMessagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -714,6 +735,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicTrackApkDownloadRoute: ApiPublicTrackApkDownloadRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   TribeJoinCodeRoute: TribeJoinCodeRoute,
+  ApiPublicHooksCleanupExpiredMessagesRoute:
+    ApiPublicHooksCleanupExpiredMessagesRoute,
   ApiPublicHooksCleanupExpiredStatusesRoute:
     ApiPublicHooksCleanupExpiredStatusesRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
