@@ -281,6 +281,20 @@ export default function ChatWindowPanel() {
   const supabase = createClient();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
+  // Per-chat draft persistence: keep typed-but-unsent text per chat until the user
+  // either sends it or clears the box themselves. Survives chat switches and reloads.
+  const draftsRef = useRef<Record<string, string>>({});
+  const draftsHydrated = useRef(false);
+  if (!draftsHydrated.current) {
+    try {
+      const raw = typeof window !== 'undefined' ? window.localStorage.getItem('vt:chat-drafts') : null;
+      if (raw) draftsRef.current = JSON.parse(raw) || {};
+    } catch {}
+    draftsHydrated.current = true;
+  }
+  const persistDrafts = () => {
+    try { window.localStorage.setItem('vt:chat-drafts', JSON.stringify(draftsRef.current)); } catch {}
+  };
   const [showInfo, setShowInfo] = useState(false);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
   const [pendingAttachment, setPendingAttachment] = useState<{
