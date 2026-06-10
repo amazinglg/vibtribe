@@ -59,6 +59,37 @@ function formatPreviewText(raw: string | null | undefined): string {
   return raw;
 }
 
+// Renders plain text with auto-detected URLs as clickable links.
+// Supports http(s)://, www., and bare domain.tld links.
+const URL_RE = /((?:https?:\/\/|www\.)[^\s<>"']+|\b[a-z0-9-]+\.(?:com|net|org|io|ai|co|app|in|dev|me|xyz|gg|so|to|tv|info|app)(?:\/[^\s<>"']*)?)/gi;
+function Linkified({ text, isMe }: { text: string; isMe: boolean }) {
+  const parts = String(text ?? '').split(URL_RE);
+  return (
+    <span className="whitespace-pre-wrap break-words">
+      {parts.map((p, i) => {
+        if (!p) return null;
+        if (URL_RE.test(p)) {
+          URL_RE.lastIndex = 0;
+          const href = /^https?:\/\//i.test(p) ? p : `https://${p}`;
+          return (
+            <a
+              key={i}
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className={`underline underline-offset-2 break-all ${isMe ? 'text-white hover:text-white/80' : 'text-primary hover:text-primary/80'}`}
+            >
+              {p}
+            </a>
+          );
+        }
+        return <React.Fragment key={i}>{p}</React.Fragment>;
+      })}
+    </span>
+  );
+}
+
 // Call Modal Component
 function CallModal({
   type,
@@ -250,6 +281,20 @@ export default function ChatWindowPanel() {
   const supabase = createClient();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
+  // Per-chat draft persistence: keep typed-but-unsent text per chat until the user
+  // either sends it or clears the box themselves. Survives chat switches and reloads.
+  const draftsRef = useRef<Record<string, string>>({});
+  const draftsHydrated = useRef(false);
+  if (!draftsHydrated.current) {
+    try {
+      const raw = typeof window !== 'undefined' ? window.localStorage.getItem('vt:chat-drafts') : null;
+      if (raw) draftsRef.current = JSON.parse(raw) || {};
+    } catch {}
+    draftsHydrated.current = true;
+  }
+  const persistDrafts = () => {
+    try { window.localStorage.setItem('vt:chat-drafts', JSON.stringify(draftsRef.current)); } catch {}
+  };
   const [showInfo, setShowInfo] = useState(false);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
   const [pendingAttachment, setPendingAttachment] = useState<{
@@ -328,8 +373,17 @@ export default function ChatWindowPanel() {
     if (prev && prev !== selectedChatId) {
       // Fire-and-forget; RPC checks mode server-side.
       supabase.rpc('expire_seen_messages', { p_chat_id: prev }).then(() => {});
+      // Save current draft for the previous chat before switching.
+      draftsRef.current[prev] = inputText;
+      persistDrafts();
     }
     previousChatIdRef.current = selectedChatId;
+    // Load draft for the newly selected chat (or empty string if none).
+    if (selectedChatId) {
+      setInputText(draftsRef.current[selectedChatId] ?? '');
+    } else {
+      setInputText('');
+    }
 
     if (selectedChatId && user) {
       loadChatData();
@@ -422,6 +476,18 @@ export default function ChatWindowPanel() {
       };
     }
   }, [selectedChatId, user]);
+
+  // Persist the in-progress draft for the current chat on every keystroke so it
+  // survives page reloads. Cleared only on send or when the user empties the box.
+  useEffect(() => {
+    if (!selectedChatId) return;
+    if (inputText && inputText.length > 0) {
+      draftsRef.current[selectedChatId] = inputText;
+    } else {
+      delete draftsRef.current[selectedChatId];
+    }
+    persistDrafts();
+  }, [inputText, selectedChatId]);
 
   // On unmount, expire seen messages for current chat if mode is 'after_seen'.
   useEffect(() => {
@@ -812,7 +878,13 @@ export default function ChatWindowPanel() {
       createdAt: new Date().toISOString(),
     };
     setMessages(prev => [...prev, tempMsg]);
-    if (!overrideText) setInputText('');
+    if (!overrideText) {
+      setInputText('');
+      if (selectedChatId) {
+        delete draftsRef.current[selectedChatId];
+        persistDrafts();
+      }
+    }
     setShowEmoji(false);
 
     try {
@@ -1892,7 +1964,9 @@ export default function ChatWindowPanel() {
                       />
                     ) : (
                       <>
-                        {displayText}
+                        {typeof displayText === 'string'
+                          ? <Linkified text={displayText} isMe={isMe} />
+                          : displayText}
                         {msg.editedAt && !msg.deletedForEveryone && (
                           <span className={`ml-1 text-[10px] italic ${isMe ? 'text-white/60' : 'text-muted-foreground'}`}>(edited)</span>
                         )}
