@@ -59,6 +59,37 @@ function formatPreviewText(raw: string | null | undefined): string {
   return raw;
 }
 
+// Renders plain text with auto-detected URLs as clickable links.
+// Supports http(s)://, www., and bare domain.tld links.
+const URL_RE = /((?:https?:\/\/|www\.)[^\s<>"']+|\b[a-z0-9-]+\.(?:com|net|org|io|ai|co|app|in|dev|me|xyz|gg|so|to|tv|info|app)(?:\/[^\s<>"']*)?)/gi;
+function Linkified({ text, isMe }: { text: string; isMe: boolean }) {
+  const parts = String(text ?? '').split(URL_RE);
+  return (
+    <span className="whitespace-pre-wrap break-words">
+      {parts.map((p, i) => {
+        if (!p) return null;
+        if (URL_RE.test(p)) {
+          URL_RE.lastIndex = 0;
+          const href = /^https?:\/\//i.test(p) ? p : `https://${p}`;
+          return (
+            <a
+              key={i}
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className={`underline underline-offset-2 break-all ${isMe ? 'text-white hover:text-white/80' : 'text-primary hover:text-primary/80'}`}
+            >
+              {p}
+            </a>
+          );
+        }
+        return <React.Fragment key={i}>{p}</React.Fragment>;
+      })}
+    </span>
+  );
+}
+
 // Call Modal Component
 function CallModal({
   type,
