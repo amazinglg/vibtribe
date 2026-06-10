@@ -477,6 +477,18 @@ export default function ChatWindowPanel() {
     }
   }, [selectedChatId, user]);
 
+  // Persist the in-progress draft for the current chat on every keystroke so it
+  // survives page reloads. Cleared only on send or when the user empties the box.
+  useEffect(() => {
+    if (!selectedChatId) return;
+    if (inputText && inputText.length > 0) {
+      draftsRef.current[selectedChatId] = inputText;
+    } else {
+      delete draftsRef.current[selectedChatId];
+    }
+    persistDrafts();
+  }, [inputText, selectedChatId]);
+
   // On unmount, expire seen messages for current chat if mode is 'after_seen'.
   useEffect(() => {
     return () => {
