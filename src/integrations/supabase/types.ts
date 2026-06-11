@@ -1693,6 +1693,7 @@ export type Database = {
         Args: { _approve: boolean; _request_id: string }
         Returns: undefined
       }
+      tribe_delete: { Args: { _chat_id: string }; Returns: undefined }
       tribe_delete_message_as_leader: {
         Args: { _msg_id: string }
         Returns: undefined
