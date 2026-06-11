@@ -59,27 +59,33 @@ export default function LanguageSwitcher({ variant = 'pill', className = '', onC
   // pill / inline (same compact toggle look)
   return (
     <div
-      className={`inline-flex items-center gap-1 p-1 rounded-full glass border border-border ${className}`}
+      className={`inline-flex items-center p-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl shadow-2xl ring-1 ring-white/5 ${className}`}
       role="group"
       aria-label="Change language"
     >
-      <Globe size={13} className="ml-2 text-muted-foreground" />
-      {LANGS.map(l => {
-        const active = lang === l.code;
-        return (
-          <button
-            key={l.code}
-            type="button"
-            onClick={() => handleSet(l.code)}
-            className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
-              active ? 'gradient-primary text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'
-            }`}
-            aria-pressed={active}
-          >
-            {l.code === 'en' ? 'EN' : 'हिं'}
-          </button>
-        );
-      })}
+      <div className="flex items-center">
+        {LANGS.map((l, idx) => {
+          const active = lang === l.code;
+          const label = l.code === 'en' ? 'EN' : 'हिं';
+          return (
+            <React.Fragment key={l.code}>
+              {idx > 0 && <div className="w-px h-3 bg-white/10 mx-1" aria-hidden="true" />}
+              <button
+                type="button"
+                onClick={() => handleSet(l.code)}
+                aria-pressed={active}
+                className={`px-4 py-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                  active
+                    ? 'bg-gradient-to-r from-[#8b5cf6] via-[#d946ef] to-[#ec4899] text-white shadow-[0_0_15px_rgba(236,72,153,0.3)] text-[13px] font-bold tracking-wide'
+                    : 'text-white/50 hover:text-white hover:bg-white/5 text-[14px] font-medium'
+                }`}
+              >
+                {label}
+              </button>
+            </React.Fragment>
+          );
+        })}
+      </div>
     </div>
   );
 }
