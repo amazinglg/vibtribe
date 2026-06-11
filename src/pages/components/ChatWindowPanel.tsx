@@ -1685,6 +1685,24 @@ export default function ChatWindowPanel() {
                   {isBlocked ? <ShieldOff size={16} /> : <Ban size={16} />}
                   {isBlocked ? `Unblock ${contact?.name || 'user'}` : `Block ${contact?.name || 'user'}`}
                 </button>
+                {chatType === 'group' && tribeIsFounder && (
+                  <button
+                    onClick={() => { setShowMoreMenu(false); setShowDeleteTribeConfirm(true); }}
+                    className="w-full text-left px-3 py-2.5 text-sm hover:bg-red-500/10 transition-colors flex items-center gap-3 text-red-400 border-t border-border"
+                  >
+                    <Trash2 size={16} />
+                    Delete tribe
+                  </button>
+                )}
+                {chatType === 'group' && !tribeIsFounder && (
+                  <button
+                    onClick={() => { setShowMoreMenu(false); setShowLeaveTribeConfirm(true); }}
+                    className="w-full text-left px-3 py-2.5 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-red-400 border-t border-border"
+                  >
+                    <Ban size={16} />
+                    Leave tribe
+                  </button>
+                )}
               </div>
             )}
           </div>
