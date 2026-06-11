@@ -1674,8 +1674,8 @@ export default function ChatWindowPanel() {
                     Add to contacts
                   </button>
                 )}
-                <div className="border-t border-border" />
-                <button
+                {chatType !== 'group' && <div className="border-t border-border" />}
+                {chatType !== 'group' && <button
                   onClick={() => { setShowMoreMenu(false); handleBlockToggle(); }}
                   disabled={blockLoading}
                   className={`w-full text-left px-3 py-2.5 text-sm hover:bg-muted transition-colors flex items-center gap-3 ${
@@ -1684,7 +1684,7 @@ export default function ChatWindowPanel() {
                 >
                   {isBlocked ? <ShieldOff size={16} /> : <Ban size={16} />}
                   {isBlocked ? `Unblock ${contact?.name || 'user'}` : `Block ${contact?.name || 'user'}`}
-                </button>
+                </button>}
                 {chatType === 'group' && tribeIsFounder && (
                   <button
                     onClick={() => { setShowMoreMenu(false); setShowDeleteTribeConfirm(true); }}
