@@ -321,6 +321,10 @@ export default function ChatWindowPanel() {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showUnlockPinModal, setShowUnlockPinModal] = useState(false);
   const [tribeRole, setTribeRole] = useState<'leader' | 'member' | null>(null);
+  const [tribeIsFounder, setTribeIsFounder] = useState(false);
+  const [showDeleteTribeConfirm, setShowDeleteTribeConfirm] = useState(false);
+  const [showLeaveTribeConfirm, setShowLeaveTribeConfirm] = useState(false);
+  const [deletingTribe, setDeletingTribe] = useState(false);
   const [tribeSheetOpen, setTribeSheetOpen] = useState(false);
   const contactPubKeyRef = useRef<string | null>(null);
   const previousChatIdRef = useRef<string | null>(null);
@@ -529,13 +533,14 @@ export default function ChatWindowPanel() {
 
       const { data: chat } = await supabase
         .from('chats')
-        .select('participant_one, participant_two, disappear_mode, chat_type, is_group, name, avatar_url')
+        .select('participant_one, participant_two, disappear_mode, chat_type, is_group, name, avatar_url, created_by')
         .eq('id', selectedChatId)
         .single();
 
       if (chat) {
         setDisappearMode((chat as any).disappear_mode || '24h');
         setChatType(((chat as any).is_group ? 'group' : (chat as any).chat_type) || 'normal');
+        setTribeIsFounder(((chat as any).is_group || (chat as any).chat_type === 'group') && (chat as any).created_by === user.id);
 
         // Per-user secure mark — is THIS user treating this chat as secure?
         try {
