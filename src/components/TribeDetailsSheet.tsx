@@ -407,6 +407,23 @@ export default function TribeDetailsSheet({ chatId, isOpen, onClose, onLeft }: P
             As the founder, you cannot leave. Delete the tribe to disband it.
           </div>
         )}
+        {isFounder && (
+          <div className="px-4 pb-6">
+            <button
+              onClick={async () => {
+                if (!confirm('Delete this tribe permanently? All chats, media, members and history will be lost for everyone. This cannot be undone.')) return;
+                const { error } = await supabase.rpc('tribe_delete' as any, { _chat_id: chatId } as any);
+                if (error) { toast.error(error.message); return; }
+                toast.success('Tribe deleted');
+                onLeft?.();
+                onClose();
+              }}
+              className="w-full flex items-center justify-center gap-2 py-2.5 bg-red-500/15 text-red-400 rounded-xl text-sm font-semibold"
+            >
+              <Trash2 size={14} /> Delete tribe
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
