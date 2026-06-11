@@ -2556,6 +2556,63 @@ export default function ChatWindowPanel() {
           onLeft={() => { setSelectedChatId(null); }}
         />
       )}
+
+      {(showDeleteTribeConfirm || showLeaveTribeConfirm) && (
+        <div className="fixed inset-0 z-[2000] bg-black/70 backdrop-blur-md flex items-center justify-center p-4" onClick={() => { setShowDeleteTribeConfirm(false); setShowLeaveTribeConfirm(false); }}>
+          <div className="bg-card border border-border rounded-2xl max-w-sm w-full p-6 shadow-card float-up" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full bg-red-500/15 flex items-center justify-center">
+                <Trash2 size={18} className="text-red-400" />
+              </div>
+              <div>
+                <h3 className="font-bold text-foreground">{showDeleteTribeConfirm ? 'Delete this tribe?' : 'Leave this tribe?'}</h3>
+                <p className="text-[11px] text-muted-foreground">
+                  {showDeleteTribeConfirm
+                    ? 'All chats, media, members and history of this tribe will be permanently deleted for everyone. This cannot be undone.'
+                    : 'You will no longer receive messages from this tribe. You can be re-invited later.'}
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={() => { setShowDeleteTribeConfirm(false); setShowLeaveTribeConfirm(false); }}
+                disabled={deletingTribe}
+                className="flex-1 px-4 py-2 bg-muted rounded-xl text-sm font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!selectedChatId) return;
+                  setDeletingTribe(true);
+                  try {
+                    if (showDeleteTribeConfirm) {
+                      const { error } = await supabase.rpc('tribe_delete' as any, { _chat_id: selectedChatId } as any);
+                      if (error) throw error;
+                      toast.success('Tribe deleted');
+                    } else {
+                      const { error } = await supabase.rpc('tribe_leave' as any, { _chat_id: selectedChatId } as any);
+                      if (error) throw error;
+                      toast.success('Left tribe');
+                    }
+                    setShowDeleteTribeConfirm(false);
+                    setShowLeaveTribeConfirm(false);
+                    setSelectedChatId(null);
+                  } catch (e: any) {
+                    toast.error(e?.message || 'Action failed');
+                  } finally {
+                    setDeletingTribe(false);
+                  }
+                }}
+                disabled={deletingTribe}
+                className="flex-1 px-4 py-2 bg-red-500 text-white rounded-xl text-sm font-semibold disabled:opacity-60"
+              >
+                {deletingTribe ? 'Working…' : showDeleteTribeConfirm ? 'Yes, delete' : 'Yes, leave'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
