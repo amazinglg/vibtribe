@@ -348,7 +348,7 @@ export default function BroadcastChatPanel() {
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*,video/*"
+              accept="image/*,video/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar,application/*"
               className="hidden"
               onChange={(e) => {
                 const f = e.target.files?.[0];
@@ -356,11 +356,16 @@ export default function BroadcastChatPanel() {
               }}
             />
             <button
-              onClick={() => fileInputRef.current?.click()}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                fileInputRef.current?.click();
+              }}
               disabled={uploading || !!editingId}
               className="p-2.5 rounded-full bg-muted text-muted-foreground hover:text-foreground disabled:opacity-40"
               aria-label="Attach media"
-              title="Attach photo or video"
+              title="Attach photo, video, or document"
             >
               <Paperclip size={16} />
             </button>

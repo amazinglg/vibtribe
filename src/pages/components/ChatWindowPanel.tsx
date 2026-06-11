@@ -321,6 +321,10 @@ export default function ChatWindowPanel() {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showUnlockPinModal, setShowUnlockPinModal] = useState(false);
   const [tribeRole, setTribeRole] = useState<'leader' | 'member' | null>(null);
+  const [tribeIsFounder, setTribeIsFounder] = useState(false);
+  const [showDeleteTribeConfirm, setShowDeleteTribeConfirm] = useState(false);
+  const [showLeaveTribeConfirm, setShowLeaveTribeConfirm] = useState(false);
+  const [deletingTribe, setDeletingTribe] = useState(false);
   const [tribeSheetOpen, setTribeSheetOpen] = useState(false);
   const contactPubKeyRef = useRef<string | null>(null);
   const previousChatIdRef = useRef<string | null>(null);
@@ -529,13 +533,14 @@ export default function ChatWindowPanel() {
 
       const { data: chat } = await supabase
         .from('chats')
-        .select('participant_one, participant_two, disappear_mode, chat_type, is_group, name, avatar_url')
+        .select('participant_one, participant_two, disappear_mode, chat_type, is_group, name, avatar_url, created_by')
         .eq('id', selectedChatId)
         .single();
 
       if (chat) {
         setDisappearMode((chat as any).disappear_mode || '24h');
         setChatType(((chat as any).is_group ? 'group' : (chat as any).chat_type) || 'normal');
+        setTribeIsFounder(((chat as any).is_group || (chat as any).chat_type === 'group') && (chat as any).created_by === user.id);
 
         // Per-user secure mark — is THIS user treating this chat as secure?
         try {
@@ -1669,8 +1674,8 @@ export default function ChatWindowPanel() {
                     Add to contacts
                   </button>
                 )}
-                <div className="border-t border-border" />
-                <button
+                {chatType !== 'group' && <div className="border-t border-border" />}
+                {chatType !== 'group' && <button
                   onClick={() => { setShowMoreMenu(false); handleBlockToggle(); }}
                   disabled={blockLoading}
                   className={`w-full text-left px-3 py-2.5 text-sm hover:bg-muted transition-colors flex items-center gap-3 ${
@@ -1679,7 +1684,25 @@ export default function ChatWindowPanel() {
                 >
                   {isBlocked ? <ShieldOff size={16} /> : <Ban size={16} />}
                   {isBlocked ? `Unblock ${contact?.name || 'user'}` : `Block ${contact?.name || 'user'}`}
-                </button>
+                </button>}
+                {chatType === 'group' && tribeIsFounder && (
+                  <button
+                    onClick={() => { setShowMoreMenu(false); setShowDeleteTribeConfirm(true); }}
+                    className="w-full text-left px-3 py-2.5 text-sm hover:bg-red-500/10 transition-colors flex items-center gap-3 text-red-400 border-t border-border"
+                  >
+                    <Trash2 size={16} />
+                    Delete tribe
+                  </button>
+                )}
+                {chatType === 'group' && !tribeIsFounder && (
+                  <button
+                    onClick={() => { setShowMoreMenu(false); setShowLeaveTribeConfirm(true); }}
+                    className="w-full text-left px-3 py-2.5 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-red-400 border-t border-border"
+                  >
+                    <Ban size={16} />
+                    Leave tribe
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -2532,6 +2555,63 @@ export default function ChatWindowPanel() {
           onClose={() => setTribeSheetOpen(false)}
           onLeft={() => { setSelectedChatId(null); }}
         />
+      )}
+
+      {(showDeleteTribeConfirm || showLeaveTribeConfirm) && (
+        <div className="fixed inset-0 z-[2000] bg-black/70 backdrop-blur-md flex items-center justify-center p-4" onClick={() => { setShowDeleteTribeConfirm(false); setShowLeaveTribeConfirm(false); }}>
+          <div className="bg-card border border-border rounded-2xl max-w-sm w-full p-6 shadow-card float-up" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full bg-red-500/15 flex items-center justify-center">
+                <Trash2 size={18} className="text-red-400" />
+              </div>
+              <div>
+                <h3 className="font-bold text-foreground">{showDeleteTribeConfirm ? 'Delete this tribe?' : 'Leave this tribe?'}</h3>
+                <p className="text-[11px] text-muted-foreground">
+                  {showDeleteTribeConfirm
+                    ? 'All chats, media, members and history of this tribe will be permanently deleted for everyone. This cannot be undone.'
+                    : 'You will no longer receive messages from this tribe. You can be re-invited later.'}
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={() => { setShowDeleteTribeConfirm(false); setShowLeaveTribeConfirm(false); }}
+                disabled={deletingTribe}
+                className="flex-1 px-4 py-2 bg-muted rounded-xl text-sm font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!selectedChatId) return;
+                  setDeletingTribe(true);
+                  try {
+                    if (showDeleteTribeConfirm) {
+                      const { error } = await supabase.rpc('tribe_delete' as any, { _chat_id: selectedChatId } as any);
+                      if (error) throw error;
+                      toast.success('Tribe deleted');
+                    } else {
+                      const { error } = await supabase.rpc('tribe_leave' as any, { _chat_id: selectedChatId } as any);
+                      if (error) throw error;
+                      toast.success('Left tribe');
+                    }
+                    setShowDeleteTribeConfirm(false);
+                    setShowLeaveTribeConfirm(false);
+                    setSelectedChatId(null);
+                  } catch (e: any) {
+                    toast.error(e?.message || 'Action failed');
+                  } finally {
+                    setDeletingTribe(false);
+                  }
+                }}
+                disabled={deletingTribe}
+                className="flex-1 px-4 py-2 bg-red-500 text-white rounded-xl text-sm font-semibold disabled:opacity-60"
+              >
+                {deletingTribe ? 'Working…' : showDeleteTribeConfirm ? 'Yes, delete' : 'Yes, leave'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
