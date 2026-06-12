@@ -291,8 +291,8 @@ export default function PermissionsPage() {
               const allOn = onCount === allKeys.length
               const someOn = onCount > 0 && !allOn
               const isOpen = !!expanded[cat] || !!query
-              const viewAllowed = viewKeys.length > 0 && viewKeys.every(k => assignments[`${r.key}::${k}`])
-              const writeAllowed = writeKeys.length > 0 && writeKeys.every(k => assignments[`${r.key}::${k}`])
+              const viewOn = viewKeys.filter(k => assignments[`${r.key}::${k}`]).length
+              const writeOn = writeKeys.filter(k => assignments[`${r.key}::${k}`]).length
 
               return (
                 <div key={cat} className="glass rounded-2xl border border-border overflow-hidden">
@@ -315,27 +315,10 @@ export default function PermissionsPage() {
                         </span>
                       </div>
                       <div className="text-[11px] text-muted-foreground mt-0.5">
-                        {viewKeys.length} view · {writeKeys.length} write
+                        {viewOn}/{viewKeys.length} view · {writeOn}/{writeKeys.length} write
                       </div>
                     </button>
 
-                    {/* Quick toggles */}
-                    <div className="hidden sm:flex items-center gap-2">
-                      <QuickToggle
-                        icon={<Eye size={12} />}
-                        label="View"
-                        active={viewAllowed}
-                        disabled={!isMaster || viewKeys.length === 0}
-                        onClick={() => toggleGroup(r.key, `__view::${cat}`, viewKeys, !viewAllowed)}
-                      />
-                      <QuickToggle
-                        icon={<Pencil size={12} />}
-                        label="Write"
-                        active={writeAllowed}
-                        disabled={!isMaster || writeKeys.length === 0}
-                        onClick={() => toggleGroup(r.key, `__write::${cat}`, writeKeys, !writeAllowed)}
-                      />
-                    </div>
                     <button
                       onClick={() => setExpanded(s => ({ ...s, [cat]: !s[cat] }))}
                       className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground shrink-0"
@@ -343,24 +326,6 @@ export default function PermissionsPage() {
                     >
                       <ChevronDown size={16} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                     </button>
-                  </div>
-
-                  {/* Mobile quick toggles */}
-                  <div className="sm:hidden flex items-center gap-2 px-4 pb-3 -mt-1">
-                    <QuickToggle
-                      icon={<Eye size={12} />}
-                      label="View"
-                      active={viewAllowed}
-                      disabled={!isMaster || viewKeys.length === 0}
-                      onClick={() => toggleGroup(r.key, `__view::${cat}`, viewKeys, !viewAllowed)}
-                    />
-                    <QuickToggle
-                      icon={<Pencil size={12} />}
-                      label="Write"
-                      active={writeAllowed}
-                      disabled={!isMaster || writeKeys.length === 0}
-                      onClick={() => toggleGroup(r.key, `__write::${cat}`, writeKeys, !writeAllowed)}
-                    />
                   </div>
 
                   {isOpen && (
