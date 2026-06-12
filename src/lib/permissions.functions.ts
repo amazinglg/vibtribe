@@ -110,9 +110,16 @@ export const deleteRole = createServerFn({ method: 'POST' })
   .inputValidator((d: unknown) => z.object({ key: z.string().min(1).max(64) }).parse(d))
   .handler(async ({ data, context }) => {
     await assertMaster(context.userId)
+    if (data.key === 'master_admin') {
+      throw new Error('The master admin role cannot be deleted')
+    }
+    // Revoke all permissions for the role first.
     await supabaseAdmin.from('role_permissions').delete().eq('role_key', data.key)
+    // Demote any users currently holding this role back to the default 'user' role
+    // so they don't keep stale access referencing a deleted role.
+    await supabaseAdmin.from('user_profiles').update({ role: 'user' }).eq('role', data.key)
     const { error } = await supabaseAdmin
-      .from('app_roles').delete().eq('key', data.key).eq('is_system', false)
+      .from('app_roles').delete().eq('key', data.key)
     if (error) throw new Error(error.message)
     return { ok: true }
   })

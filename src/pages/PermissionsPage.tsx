@@ -62,7 +62,11 @@ export default function PermissionsPage() {
     if (!user) { router({ to: '/sign-in', replace: true }); return }
     if (!isMaster && profile?.role !== 'admin') { router({ to: '/admin', replace: true }); return }
     refresh()
-  }, [user, loading, profile])
+    // Only load the matrix once on mount. Subsequent profile updates from
+    // the AuthContext (presence heartbeats, token refresh, etc.) must NOT
+    // silently re-fetch and overwrite in-flight master-admin edits.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading])
 
   async function refresh() {
     setLoadingData(true)
@@ -116,8 +120,13 @@ export default function PermissionsPage() {
   }
 
   async function handleDeleteRole(role: any) {
-    if (role.is_system) { toast.error('System roles cannot be deleted'); return }
-    if (!confirm(`Delete role "${role.label}"? This removes all its permission assignments.`)) return
+    if (role.key === 'master_admin') { toast.error('The master admin role cannot be deleted'); return }
+    const warning =
+      `Delete role "${role.label}"?\n\n` +
+      `This will permanently remove the role, revoke all of its permission ` +
+      `assignments, and any users currently holding this role will be reverted ` +
+      `to the default "user" role. This action cannot be undone.`
+    if (!confirm(warning)) return
     try {
       await deleteFn({ data: { key: role.key } })
       if (activeRole === role.key) setActiveRole(null)
@@ -206,17 +215,7 @@ export default function PermissionsPage() {
                   <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${active ? 'bg-white/15 text-white' : 'bg-muted text-muted-foreground'}`}>
                     {c.on}/{c.total}
                   </span>
-                  {r.is_system ? (
-                    <Lock size={10} className="opacity-60" />
-                  ) : isMaster ? (
-                    <span
-                      role="button"
-                      onClick={(e) => { e.stopPropagation(); handleDeleteRole(r) }}
-                      className="ml-0.5 -mr-1 p-0.5 rounded hover:bg-red-500/20 hover:text-red-300"
-                    >
-                      <Trash2 size={11} />
-                    </span>
-                  ) : null}
+                  {r.is_system && <Lock size={10} className="opacity-60" />}
                 </button>
               )
             })}
@@ -252,23 +251,20 @@ export default function PermissionsPage() {
                     <Lock size={9} /> System
                   </span>
                 )}
+                {isMaster && activeRoleObj.key !== 'master_admin' && (
+                  <button
+                    onClick={() => handleDeleteRole(activeRoleObj)}
+                    title="Delete role"
+                    className="p-1.5 rounded-lg bg-red-500/10 text-red-300 hover:bg-red-500/25 hover:text-red-200 transition-colors"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
               </div>
               {activeRoleObj.description && (
                 <p className="text-xs text-muted-foreground truncate">{activeRoleObj.description}</p>
               )}
             </div>
-            {isMaster && (
-              <div className="flex gap-1.5">
-                <button
-                  onClick={() => toggleGroup(activeRoleObj.key, '__all__', keys.map(k => k.key), true)}
-                  className="text-[11px] px-2.5 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25 font-semibold"
-                >Allow all</button>
-                <button
-                  onClick={() => toggleGroup(activeRoleObj.key, '__all__', keys.map(k => k.key), false)}
-                  className="text-[11px] px-2.5 py-1.5 rounded-lg bg-muted hover:bg-muted/70 text-muted-foreground font-semibold"
-                >Clear</button>
-              </div>
-            )}
           </div>
         )}
 
@@ -295,8 +291,8 @@ export default function PermissionsPage() {
               const allOn = onCount === allKeys.length
               const someOn = onCount > 0 && !allOn
               const isOpen = !!expanded[cat] || !!query
-              const viewAllowed = viewKeys.length > 0 && viewKeys.every(k => assignments[`${r.key}::${k}`])
-              const writeAllowed = writeKeys.length > 0 && writeKeys.every(k => assignments[`${r.key}::${k}`])
+              const viewOn = viewKeys.filter(k => assignments[`${r.key}::${k}`]).length
+              const writeOn = writeKeys.filter(k => assignments[`${r.key}::${k}`]).length
 
               return (
                 <div key={cat} className="glass rounded-2xl border border-border overflow-hidden">
@@ -319,27 +315,10 @@ export default function PermissionsPage() {
                         </span>
                       </div>
                       <div className="text-[11px] text-muted-foreground mt-0.5">
-                        {viewKeys.length} view · {writeKeys.length} write
+                        {viewOn}/{viewKeys.length} view · {writeOn}/{writeKeys.length} write
                       </div>
                     </button>
 
-                    {/* Quick toggles */}
-                    <div className="hidden sm:flex items-center gap-2">
-                      <QuickToggle
-                        icon={<Eye size={12} />}
-                        label="View"
-                        active={viewAllowed}
-                        disabled={!isMaster || viewKeys.length === 0}
-                        onClick={() => toggleGroup(r.key, `__view::${cat}`, viewKeys, !viewAllowed)}
-                      />
-                      <QuickToggle
-                        icon={<Pencil size={12} />}
-                        label="Write"
-                        active={writeAllowed}
-                        disabled={!isMaster || writeKeys.length === 0}
-                        onClick={() => toggleGroup(r.key, `__write::${cat}`, writeKeys, !writeAllowed)}
-                      />
-                    </div>
                     <button
                       onClick={() => setExpanded(s => ({ ...s, [cat]: !s[cat] }))}
                       className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground shrink-0"
@@ -347,24 +326,6 @@ export default function PermissionsPage() {
                     >
                       <ChevronDown size={16} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                     </button>
-                  </div>
-
-                  {/* Mobile quick toggles */}
-                  <div className="sm:hidden flex items-center gap-2 px-4 pb-3 -mt-1">
-                    <QuickToggle
-                      icon={<Eye size={12} />}
-                      label="View"
-                      active={viewAllowed}
-                      disabled={!isMaster || viewKeys.length === 0}
-                      onClick={() => toggleGroup(r.key, `__view::${cat}`, viewKeys, !viewAllowed)}
-                    />
-                    <QuickToggle
-                      icon={<Pencil size={12} />}
-                      label="Write"
-                      active={writeAllowed}
-                      disabled={!isMaster || writeKeys.length === 0}
-                      onClick={() => toggleGroup(r.key, `__write::${cat}`, writeKeys, !writeAllowed)}
-                    />
                   </div>
 
                   {isOpen && (
