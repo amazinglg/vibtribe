@@ -62,7 +62,11 @@ export default function PermissionsPage() {
     if (!user) { router({ to: '/sign-in', replace: true }); return }
     if (!isMaster && profile?.role !== 'admin') { router({ to: '/admin', replace: true }); return }
     refresh()
-  }, [user, loading, profile])
+    // Only load the matrix once on mount. Subsequent profile updates from
+    // the AuthContext (presence heartbeats, token refresh, etc.) must NOT
+    // silently re-fetch and overwrite in-flight master-admin edits.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading])
 
   async function refresh() {
     setLoadingData(true)
@@ -116,8 +120,13 @@ export default function PermissionsPage() {
   }
 
   async function handleDeleteRole(role: any) {
-    if (role.is_system) { toast.error('System roles cannot be deleted'); return }
-    if (!confirm(`Delete role "${role.label}"? This removes all its permission assignments.`)) return
+    if (role.key === 'master_admin') { toast.error('The master admin role cannot be deleted'); return }
+    const warning =
+      `Delete role "${role.label}"?\n\n` +
+      `This will permanently remove the role, revoke all of its permission ` +
+      `assignments, and any users currently holding this role will be reverted ` +
+      `to the default "user" role. This action cannot be undone.`
+    if (!confirm(warning)) return
     try {
       await deleteFn({ data: { key: role.key } })
       if (activeRole === role.key) setActiveRole(null)
