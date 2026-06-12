@@ -215,17 +215,7 @@ export default function PermissionsPage() {
                   <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${active ? 'bg-white/15 text-white' : 'bg-muted text-muted-foreground'}`}>
                     {c.on}/{c.total}
                   </span>
-                  {r.is_system ? (
-                    <Lock size={10} className="opacity-60" />
-                  ) : isMaster ? (
-                    <span
-                      role="button"
-                      onClick={(e) => { e.stopPropagation(); handleDeleteRole(r) }}
-                      className="ml-0.5 -mr-1 p-0.5 rounded hover:bg-red-500/20 hover:text-red-300"
-                    >
-                      <Trash2 size={11} />
-                    </span>
-                  ) : null}
+                  {r.is_system && <Lock size={10} className="opacity-60" />}
                 </button>
               )
             })}
