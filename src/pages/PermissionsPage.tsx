@@ -251,23 +251,20 @@ export default function PermissionsPage() {
                     <Lock size={9} /> System
                   </span>
                 )}
+                {isMaster && activeRoleObj.key !== 'master_admin' && (
+                  <button
+                    onClick={() => handleDeleteRole(activeRoleObj)}
+                    title="Delete role"
+                    className="p-1.5 rounded-lg bg-red-500/10 text-red-300 hover:bg-red-500/25 hover:text-red-200 transition-colors"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
               </div>
               {activeRoleObj.description && (
                 <p className="text-xs text-muted-foreground truncate">{activeRoleObj.description}</p>
               )}
             </div>
-            {isMaster && (
-              <div className="flex gap-1.5">
-                <button
-                  onClick={() => toggleGroup(activeRoleObj.key, '__all__', keys.map(k => k.key), true)}
-                  className="text-[11px] px-2.5 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25 font-semibold"
-                >Allow all</button>
-                <button
-                  onClick={() => toggleGroup(activeRoleObj.key, '__all__', keys.map(k => k.key), false)}
-                  className="text-[11px] px-2.5 py-1.5 rounded-lg bg-muted hover:bg-muted/70 text-muted-foreground font-semibold"
-                >Clear</button>
-              </div>
-            )}
           </div>
         )}
 
