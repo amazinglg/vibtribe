@@ -5,6 +5,7 @@ import { useChatStore } from '@/store/chatStore';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
+import { isNativeWrapper, pickNativeFiles } from '@/lib/native-bridge';
 
 export const BROADCAST_CHAT_ID = '__vibtribe_broadcast__';
 const LOGO_URL = '/assets/images/app_logo.png';
@@ -202,6 +203,39 @@ export default function BroadcastChatPanel() {
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  const formatDateLabel = (s: string) => {
+    const d = new Date(s);
+    const today = new Date();
+    const yest = new Date(); yest.setDate(today.getDate() - 1);
+    const sameDay = (a: Date, b: Date) =>
+      a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+    if (sameDay(d, today)) return 'Today';
+    if (sameDay(d, yest)) return 'Yesterday';
+    return d.toLocaleDateString([], { day: 'numeric', month: 'short', year: d.getFullYear() === today.getFullYear() ? undefined : 'numeric' });
+  };
+  const dayKey = (s: string) => {
+    const d = new Date(s);
+    return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  };
+
+  const handleAttachClick = async () => {
+    if (isNativeWrapper()) {
+      try {
+        const picked = await pickNativeFiles({ multiple: false });
+        if (!picked.length) return;
+        const p = picked[0];
+        const res = await fetch(p.dataUrl);
+        const blob = await res.blob();
+        const file = new File([blob], p.name, { type: p.mime || blob.type || 'application/octet-stream' });
+        await handleAttach(file);
+      } catch (e: any) {
+        toast.error('Could not open file picker: ' + (e?.message || 'unknown'));
+      }
+      return;
+    }
+    fileInputRef.current?.click();
+  };
+
   return (
     <div className="flex-1 flex flex-col h-full min-w-0 gradient-bg-page">
       {/* Header */}
@@ -230,14 +264,24 @@ export default function BroadcastChatPanel() {
             </p>
           </div>
         ) : (
-          messages.map((m) => {
+          messages.map((m, idx) => {
+            const prev = idx > 0 ? messages[idx - 1] : null;
+            const showDate = !prev || dayKey(prev.created_at) !== dayKey(m.created_at);
             const grouped = m.reactions.reduce<Record<string, number>>((acc, r) => {
               acc[r.emoji] = (acc[r.emoji] || 0) + 1;
               return acc;
             }, {});
             const myReactions = new Set(m.reactions.filter((r) => r.user_id === user?.id).map((r) => r.emoji));
             return (
-              <div key={m.id} className="flex flex-col items-start max-w-[85%] group">
+              <React.Fragment key={m.id}>
+              {showDate && (
+                <div className="flex justify-center my-2">
+                  <span className="text-[10px] px-2.5 py-1 rounded-full bg-background/70 border border-border text-muted-foreground">
+                    {formatDateLabel(m.created_at)}
+                  </span>
+                </div>
+              )}
+              <div className="flex flex-col items-start max-w-[85%] group">
                 <div className="relative bg-card border border-border rounded-2xl rounded-tl-sm px-3 py-2 shadow-sm">
                   {m.attachment_url && m.attachment_type === 'image' && (
                     <img src={m.attachment_url} alt="" className="rounded-lg mb-2 max-h-64 object-cover" />
@@ -324,6 +368,7 @@ export default function BroadcastChatPanel() {
                   </div>
                 )}
               </div>
+              </React.Fragment>
             );
           })
         )}
@@ -360,7 +405,7 @@ export default function BroadcastChatPanel() {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                fileInputRef.current?.click();
+                handleAttachClick();
               }}
               disabled={uploading || !!editingId}
               className="p-2.5 rounded-full bg-muted text-muted-foreground hover:text-foreground disabled:opacity-40"

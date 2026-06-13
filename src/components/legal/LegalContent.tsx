@@ -14,7 +14,7 @@ export function TermsContent() {
       <p>By creating an account or using VibTribe ("the App", "we", "us", "our"), you agree to these Terms &amp; Conditions and our Privacy Policy. If you do not agree, you must not use the App.</p>
 
       <h2 className="text-lg font-semibold mt-6">2. Eligibility</h2>
-      <p>You must be at least <strong>18 years of age</strong> to create an account or use VibTribe. By signing up you confirm that you are 18 years or older, that the information you provide (including your date of birth) is accurate, and that you are legally permitted to use the service. Accounts found to belong to users under 18 will be terminated.</p>
+      <p>You must be at least <strong>13 years of age</strong> to create an account or use VibTribe. By signing up you confirm that you are 13 years or older, that the information you provide (including your date of birth) is accurate, and that you are legally permitted to use the service. Accounts found to belong to users under 13 will be terminated. Users under the age of majority in their jurisdiction must have permission from a parent or legal guardian to use the service.</p>
 
       <h2 className="text-lg font-semibold mt-6">3. Your Account</h2>
       <ul className="list-disc pl-5 space-y-1">
@@ -81,7 +81,7 @@ export function TermsContent() {
       <h3 className="text-base font-semibold mt-4">A. Data We Collect</h3>
       <ul className="list-disc pl-5 space-y-1">
         <li><strong>Account data:</strong> mobile number, country code, username, display name, optional avatar, optional email.</li>
-        <li><strong>Date of birth:</strong> collected to verify you are 18 or older. Your date of birth is kept <strong>strictly confidential</strong> — it is visible only to you and to our authorised support / admin team, and is never shown to other users of the App.</li>
+        <li><strong>Date of birth:</strong> collected to verify you are 13 or older. Your date of birth is kept <strong>strictly confidential</strong> — it is visible only to you and to our authorised support / admin team, and is never shown to other users of the App.</li>
         <li><strong>Encryption material:</strong> your ECDH public key, and your private key wrapped (encrypted) with a key derived from your 6-digit PIN. We never store your PIN or the unwrapped private key.</li>
         <li><strong>Messages &amp; media (1:1):</strong> end-to-end encrypted on your device; stored on our servers only in encrypted form.</li>
         <li><strong>Contacts:</strong> contact name entries you create inside the app. We do not upload your phone address book.</li>
@@ -125,7 +125,7 @@ export function TermsContent() {
       </ul>
 
       <h3 className="text-base font-semibold mt-4">G. Children</h3>
-      <p>The App is strictly for users aged 18 and above. We do not knowingly collect data from anyone under 18. If we learn that we have collected data from a user under 18, we will delete that account and associated data promptly.</p>
+      <p>The App is intended for users aged 13 and above. We do not knowingly collect data from anyone under 13. If we learn that we have collected data from a user under 13, we will delete that account and associated data promptly. Minors should use the service only with appropriate parental or guardian consent where required by local law.</p>
 
       <h3 className="text-base font-semibold mt-4">H. Your Rights</h3>
       <p>Subject to applicable law (including India's Digital Personal Data Protection Act, 2023) you may request access, correction, or deletion of your personal data, and may withdraw consent. Contact the Grievance Officer at <strong>Labhansh.garg@outlook.com</strong>.</p>

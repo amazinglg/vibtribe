@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Check, Loader2, ShieldCheck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -59,8 +60,12 @@ export default function TermsAcceptanceGate() {
 
   if (!user || !needsAccept) return null;
 
-  return (
-    <div className="fixed inset-0 z-[100] bg-background/95 backdrop-blur-sm flex items-center justify-center p-4">
+  if (typeof document === 'undefined') return null;
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[2147483000] bg-background/95 backdrop-blur-sm flex items-center justify-center p-4"
+      style={{ paddingBottom: 'max(1rem, calc(var(--safe-bottom-app, 0px) + 1rem))' }}
+    >
       <div className="w-full max-w-2xl max-h-[92vh] flex flex-col bg-card border border-border rounded-2xl shadow-2xl overflow-hidden">
         <div className="px-5 py-4 border-b border-border flex items-center gap-3">
           <ShieldCheck size={20} className="text-primary" />
@@ -112,6 +117,7 @@ export default function TermsAcceptanceGate() {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
