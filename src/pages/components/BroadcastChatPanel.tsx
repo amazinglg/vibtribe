@@ -221,14 +221,25 @@ export default function BroadcastChatPanel() {
   const handleAttachClick = async () => {
     if (isNativeWrapper()) {
       try {
-        const picked = await pickNativeFiles({ multiple: false });
-        if (!picked.length) return;
+        const picked = await pickNativeFiles({
+          multiple: false,
+          types: ['image/*', 'video/*', 'application/pdf'],
+        });
+        if (!picked.length) {
+          toast.message('No file selected');
+          return;
+        }
         const p = picked[0];
+        if (!p.dataUrl) {
+          toast.error('Could not read the selected file. Try a smaller file or pick a photo from your gallery.');
+          return;
+        }
         const res = await fetch(p.dataUrl);
         const blob = await res.blob();
         const file = new File([blob], p.name, { type: p.mime || blob.type || 'application/octet-stream' });
         await handleAttach(file);
       } catch (e: any) {
+        console.error('[VT-Broadcast] native pick failed', e);
         toast.error('Could not open file picker: ' + (e?.message || 'unknown'));
       }
       return;
