@@ -31,14 +31,14 @@ export default function SignUpPage() {
   const [otp, setOtp] = useState('');
   const [resending, setResending] = useState(false);
 
-  // Max DOB = today minus 18 years (used as `max` attribute on the date input)
+  // Max DOB = today minus 13 years (used as `max` attribute on the date input)
   const maxDobStr = (() => {
     const d = new Date();
-    d.setFullYear(d.getFullYear() - 18);
+    d.setFullYear(d.getFullYear() - 13);
     return d.toISOString().split('T')[0];
   })();
 
-  const isAtLeast18 = (isoDate: string) => {
+  const isAtLeastMinAge = (isoDate: string) => {
     if (!isoDate) return false;
     const dobD = new Date(isoDate);
     if (isNaN(dobD.getTime())) return false;
@@ -46,7 +46,7 @@ export default function SignUpPage() {
     let age = today.getFullYear() - dobD.getFullYear();
     const m = today.getMonth() - dobD.getMonth();
     if (m < 0 || (m === 0 && today.getDate() < dobD.getDate())) age--;
-    return age >= 18;
+    return age >= 13;
   };
 
   const handleSendOtp = async (e: React.FormEvent) => {
@@ -54,7 +54,7 @@ export default function SignUpPage() {
     setError('');
     if (!fullName.trim()) { setError('Please enter your full name'); return; }
     if (!dob) { setError('Please enter your date of birth'); return; }
-    if (!isAtLeast18(dob)) { setError('You must be at least 18 years old to sign up on VibTribe'); return; }
+    if (!isAtLeastMinAge(dob)) { setError('You must be at least 13 years old to sign up on VibTribe'); return; }
     if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setError('Please enter a valid email address'); return; }
     if (!mobile.trim()) { setError('Please enter your mobile number'); return; }
     if (mobile.replace(/\D/g, '').length < 7) { setError('Please enter a valid mobile number'); return; }
