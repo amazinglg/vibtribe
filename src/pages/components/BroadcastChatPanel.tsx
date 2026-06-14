@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import { isNativeWrapper, pickNativeFiles } from '@/lib/native-bridge';
+import Wordmark from '@/components/ui/Wordmark';
 
 export const BROADCAST_CHAT_ID = '__vibtribe_broadcast__';
 const LOGO_URL = '/assets/images/app_logo.png';
@@ -257,7 +258,7 @@ export default function BroadcastChatPanel() {
         <img src={LOGO_URL} alt="VibTribe" className="w-10 h-10 rounded-full object-cover border border-border" />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1">
-            <p className="font-bold text-sm text-foreground truncate">VibTribe</p>
+            <Wordmark className="text-sm truncate" />
             <BadgeCheck size={14} className="text-primary fill-primary/20" />
           </div>
           <p className="text-[11px] text-muted-foreground truncate">Official VibTribe Account</p>
