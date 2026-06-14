@@ -8,6 +8,7 @@ import { useChatStore } from '@/store/chatStore';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { decryptMessage, isEncrypted } from '@/lib/encryption';
+import Wordmark from '@/components/ui/Wordmark';
 import { BROADCAST_CHAT_ID } from './BroadcastChatPanel';
 import { useT } from '@/contexts/LanguageContext';
 import { isNativeWrapper, requestNativeContactsPermission } from '@/lib/native-bridge';
@@ -734,7 +735,7 @@ export default function ChatListPanel() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1 min-w-0">
-                      <p className="text-sm font-bold text-foreground truncate">VibTribe</p>
+                      <Wordmark className="text-sm truncate" />
                       <span className="text-primary text-xs">✓</span>
                     </div>
                     <span className="text-[11px] text-muted-foreground flex-shrink-0">{broadcastTime}</span>
