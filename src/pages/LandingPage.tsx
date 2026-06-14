@@ -6,6 +6,7 @@ import {
   Smartphone, Apple, Download, Share2, PlusSquare,
 } from 'lucide-react';
 import AppLogo from '@/components/ui/AppLogo';
+import Wordmark from '@/components/ui/Wordmark';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useT } from '@/contexts/LanguageContext';
 import ContactFormModal from '@/components/ContactFormModal';
@@ -38,7 +39,7 @@ export default function LandingPage() {
         <nav className="max-w-6xl mx-auto px-4 sm:px-6 py-2 sm:py-3 flex items-center justify-between gap-3">
           <Link to="/" className="flex items-center gap-2 group">
             <AppLogo size={32} />
-            <span className="font-bold text-lg sm:text-xl text-gradient-primary tracking-tight">VibTribe</span>
+            <Wordmark className="text-lg sm:text-xl" />
           </Link>
 
           <div className="hidden md:flex items-center gap-7 text-sm text-muted-foreground">
@@ -312,7 +313,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <AppLogo size={24} />
-            <span className="font-bold text-sm text-foreground">VibTribe</span>
+            <Wordmark className="text-sm" />
             <span className="text-xs text-muted-foreground hidden sm:inline ml-2">— {t('landing.footer.tagline')}</span>
           </div>
           <div className="flex items-center gap-5 text-xs text-muted-foreground">

@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowLeft, Check, X, ShieldCheck, Lock, Sparkles } from 'lucide-react';
 import AppLogo from '@/components/ui/AppLogo';
+import Wordmark from '@/components/ui/Wordmark';
 
 const TITLE = 'VibTribe vs Signal vs Telegram: The Most Secure Messaging App in 2026';
 const DESCRIPTION =
@@ -182,7 +183,7 @@ function ComparisonPage() {
               <thead className="bg-muted/40 text-foreground">
                 <tr>
                   <th className="py-3 px-4 font-semibold">Feature</th>
-                  <th className="py-3 px-4 font-semibold text-primary">VibTribe</th>
+                  <th className="py-3 px-4 font-semibold"><Wordmark /></th>
                   <th className="py-3 px-4 font-semibold">Signal</th>
                   <th className="py-3 px-4 font-semibold">Telegram</th>
                 </tr>

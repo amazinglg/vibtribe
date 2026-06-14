@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle, CheckCircle2, ArrowLeft, ShieldCheck } from 'lucide-react';
 import AppLogo from '@/components/ui/AppLogo';
+import Wordmark from '@/components/ui/Wordmark';
 
 export default function ForgotPasswordPage() {
   const navigate = useNavigate();
@@ -78,7 +79,7 @@ export default function ForgotPasswordPage() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-3">
             <AppLogo size={48} />
-            <span className="font-bold text-3xl text-gradient-primary tracking-tight">VibTribe</span>
+            <Wordmark className="text-3xl" />
           </div>
         </div>
 

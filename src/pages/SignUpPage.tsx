@@ -4,6 +4,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { Phone, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle, User, Calendar, Mail, ArrowLeft, ShieldCheck, Check } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLogo from '@/components/ui/AppLogo';
+import Wordmark from '@/components/ui/Wordmark';
 import { supabase } from '@/integrations/supabase/client';
 import LanguageDialogButton from '@/components/LanguageDialogButton';
 import { useT } from '@/contexts/LanguageContext';
@@ -166,7 +167,7 @@ export default function SignUpPage() {
         <div className="text-center mb-3">
           <div className="flex items-center justify-center gap-2.5 mb-1.5">
             <AppLogo size={40} />
-            <span className="font-bold text-2xl text-gradient-primary tracking-tight">VibTribe</span>
+            <Wordmark className="text-2xl" />
           </div>
           <p className="text-muted-foreground text-xs">{t('auth.joinTribe')}</p>
         </div>

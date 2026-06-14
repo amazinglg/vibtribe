@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from '@tanstack/react-router';
 import AppLogo from '@/components/ui/AppLogo';
+import Wordmark from '@/components/ui/Wordmark';
 import { MessageCircle, CircleDot, User, Bell, Shield, Lock, ChevronLeft, ChevronRight, LogOut, Search } from 'lucide-react';
 import SecureVaultModal from './SecureVaultModal';
 import { useAuth } from '@/contexts/AuthContext';
@@ -266,7 +267,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <AppLogo size={36} />
           </div>
           {sidebarExpanded && (
-            <span className="font-bold text-xl text-gradient-primary tracking-tight">VibTribe</span>
+            <Wordmark className="text-xl" />
           )}
         </Link>
 

@@ -4,6 +4,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { Phone, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLogo from '@/components/ui/AppLogo';
+import Wordmark from '@/components/ui/Wordmark';
 import HelpButton from '@/components/HelpButton';
 import { createClient } from '@/lib/supabase/client';
 import LanguageDialogButton from '@/components/LanguageDialogButton';
@@ -114,7 +115,7 @@ export default function SignInPage() {
         <div className="text-center mb-3">
           <div className="flex items-center justify-center gap-2.5 mb-1.5">
             <AppLogo size={40} />
-            <span className="font-bold text-2xl text-gradient-primary tracking-tight">VibTribe</span>
+            <Wordmark className="text-2xl" />
           </div>
           <p className="text-muted-foreground text-xs">{t('auth.tagline')}</p>
         </div>
