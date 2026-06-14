@@ -8,7 +8,7 @@ import { Link } from '@tanstack/react-router';
 export function TermsContent() {
   return (
     <div className="space-y-4 text-sm leading-relaxed text-foreground/90">
-      <p className="text-muted-foreground">Last updated: 6 June 2026</p>
+      <p className="text-muted-foreground">Last updated: 14 June 2026</p>
 
       <h2 className="text-lg font-semibold mt-6">1. Acceptance of Terms</h2>
       <p>By creating an account or using VibTribe ("the App", "we", "us", "our"), you agree to these Terms &amp; Conditions and our Privacy Policy. If you do not agree, you must not use the App.</p>
@@ -37,13 +37,13 @@ export function TermsContent() {
       <h2 className="text-lg font-semibold mt-6">5. Encryption &amp; Privacy</h2>
       <p>VibTribe applies strong end-to-end encryption to one-to-one chat messages and media using keys derived on your device from your PIN. We do not have the ability to read end-to-end encrypted message or media content. However, certain metadata (such as account identifiers, timestamps, delivery status, and message-size information) is necessarily processed on our servers to deliver the service. Group chats, call signalling, presence, status updates, and support tickets are NOT end-to-end encrypted today; they are protected in transit (HTTPS) and at rest by access controls. See our <Link to="/privacy" className="text-primary underline">Privacy Policy</Link> for full details.</p>
 
+      <h2 className="text-lg font-semibold mt-6">5a. Email Address</h2>
+      <p>An email address is <strong>mandatory</strong> at signup. We use it solely to (a) verify your identity with a 6-digit one-time code, (b) recover your password, (c) send account, support, and ticket-related communications, and (d) send service notifications you have not opted out of. Your email address is visible only to you, our administrators, and the master admin — it is never shown to other users. You can opt out of non-essential emails at any time from Profile &rarr; Notifications. Security and authentication emails (OTP codes, password resets) will continue to be sent regardless of opt-out status.</p>
+      <p>If you have explicitly opted in, we may also send <strong>promotional emails</strong> (product updates, tips, and announcements) from <code>promotions@news.vibtribe.in</code>. Every promotional email includes a one-click unsubscribe link that takes effect immediately, and you can also toggle the preference from Profile &rarr; Notifications. Withdrawing consent does not affect security or transactional emails.</p>
+
       <h2 className="text-lg font-semibold mt-6">5b. Status Feature (Stories)</h2>
       <p><strong>Statuses are not end-to-end encrypted.</strong> The Status feature is designed for short-lived sharing (similar to WhatsApp and Instagram Stories) and the underlying photo/video file is stored on a public URL so the people you choose to share with can load it quickly. Anyone who obtains the URL during the 24-hour window can view the media, regardless of who is in your selected audience. Do not post anything truly confidential to your status.</p>
       <p><strong>24-hour auto-deletion.</strong> Every status — including any uploaded photo, video, caption and visibility list — is automatically and permanently deleted from our servers <strong>24 hours after it is posted</strong>. After deletion the file is unrecoverable and cannot be restored, even by us. You can also delete any status manually at any time before the 24-hour window expires.</p>
-
-      <h2 className="text-lg font-semibold mt-6">5a. Email Address</h2>
-      <p>If you provide an email address during signup, we store it securely and use it solely to (a) verify your identity with a 6-digit one-time code, (b) recover your password, (c) send account, support, and ticket-related communications, and (d) send service notifications you have not opted out of. Your email address is visible only to you, our administrators, and the master admin — it is never shown to other users. You can opt out of non-essential emails at any time from Profile &rarr; Notifications. Security and authentication emails (OTP codes, password resets) will continue to be sent regardless of opt-out status.</p>
-      <p>If you have explicitly opted in, we may also send <strong>promotional emails</strong> (product updates, tips, and announcements) from <code>hello@news.vibtribe.in</code>. Every promotional email includes a one-click unsubscribe link that takes effect immediately, and you can also toggle the preference from Profile &rarr; Notifications. Withdrawing consent does not affect security or transactional emails.</p>
 
       <h2 className="text-lg font-semibold mt-6">6. User Content</h2>
       <p>You retain ownership of the content you send. You grant us a limited licence to transmit, store, and display that content solely to operate the App. We do not claim ownership of your messages, media, or status updates.</p>
@@ -80,7 +80,7 @@ export function TermsContent() {
 
       <h3 className="text-base font-semibold mt-4">A. Data We Collect</h3>
       <ul className="list-disc pl-5 space-y-1">
-        <li><strong>Account data:</strong> mobile number, country code, username, display name, optional avatar, optional email.</li>
+        <li><strong>Account data:</strong> mobile number, country code, username, display name, email address (all required at signup), and an optional avatar.</li>
         <li><strong>Date of birth:</strong> collected to verify you are 13 or older. Your date of birth is kept <strong>strictly confidential</strong> — it is visible only to you and to our authorised support / admin team, and is never shown to other users of the App.</li>
         <li><strong>Encryption material:</strong> your ECDH public key, and your private key wrapped (encrypted) with a key derived from your 6-digit PIN. We never store your PIN or the unwrapped private key.</li>
         <li><strong>Messages &amp; media (1:1):</strong> end-to-end encrypted on your device; stored on our servers only in encrypted form.</li>
@@ -134,7 +134,7 @@ export function TermsContent() {
       <p>We send promotional emails (product updates, tips, and announcements) only to users who have <strong>explicitly opted in</strong>. We record the timestamp, source (signup form, re-consent prompt, or profile settings), and IP address of your consent for compliance audit purposes.</p>
       <ul className="list-disc pl-5 space-y-1">
         <li><strong>Legal basis:</strong> your explicit consent — DPDP Act 2023 § 6 (India), GDPR Art. 6(1)(a) (EU/EEA), and CAN-SPAM Act compliance (US).</li>
-        <li><strong>Sender:</strong> VibTribe &lt;hello@news.vibtribe.in&gt;. Reply-to: Labhansh.garg@outlook.com.</li>
+        <li><strong>Sender:</strong> VibTribe &lt;promotions@news.vibtribe.in&gt;. Reply-to: Labhansh.garg@outlook.com.</li>
         <li><strong>Withdrawal:</strong> click the unsubscribe link in any promotional email (no login required, takes effect immediately) or toggle off in Profile &rarr; Notifications.</li>
         <li><strong>Suppression:</strong> hard bounces and spam complaints are automatically suppressed and the user is opted out across the platform.</li>
         <li><strong>Right to complain:</strong> you may lodge a complaint with India's Data Protection Board or your local EU data-protection authority.</li>
