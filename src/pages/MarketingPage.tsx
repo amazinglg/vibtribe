@@ -213,7 +213,7 @@ export default function MarketingPage() {
       <div style="max-width:640px;margin:0 auto;">
         <div style="padding:0 4px 18px 4px;display:flex;align-items:center;gap:10px;">
           <img src="${BRAND_LOGO_URL}" alt="VibTribe logo" style="width:34px;height:34px;border-radius:10px;display:block;" />
-          <span style="font-family:Georgia,serif;font-size:24px;font-weight:700;color:#1f1d1a;">VibTribe</span>
+          <span style="font-family:Georgia,serif;font-size:24px;font-weight:700;color:#1f1d1a;"><span style="color:#1f1d1a;">Vib</span><span style="color:#6366f1;background:linear-gradient(90deg,#a855f7 0%,#8b5cf6 35%,#6366f1 65%,#3b82f6 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;">Tribe</span></span>
         </div>
         <div style="background:#ffffff;border:1px solid #e8e1d5;border-radius:14px;overflow:hidden;">
           ${bannerUrl ? `<img src="${bannerUrl}" style="display:block;width:100%;" />` : ''}
@@ -227,7 +227,7 @@ export default function MarketingPage() {
                     <img src="${BRAND_LOGO_URL}" alt="VibTribe" style="width:48px;height:48px;border-radius:13px;display:block;" />
                   </td>
                   <td style="padding:0 0 0 14px;vertical-align:middle;line-height:1.25;">
-                    <p style="margin:0;font-size:17px;font-weight:800;color:#1f1d1a;letter-spacing:-0.01em;">VibTribe</p>
+                    <p style="margin:0;font-size:17px;font-weight:800;color:#1f1d1a;letter-spacing:-0.01em;"><span style="color:#1f1d1a;">Vib</span><span style="color:#6366f1;background:linear-gradient(90deg,#a855f7 0%,#8b5cf6 35%,#6366f1 65%,#3b82f6 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;">Tribe</span></p>
                     <p style="margin:3px 0 0 0;font-size:13px;color:#7a7468;font-style:italic;">Where your vibe finds its tribe</p>
                   </td>
                 </tr>
@@ -246,8 +246,8 @@ export default function MarketingPage() {
           </div>
         </div>
         <div style="padding:22px 8px 0 8px;font-size:12px;line-height:1.7;color:#7a7468;">
-          <p style="margin:0 0 6px 0;">You're receiving this because you opted in to product updates from VibTribe.</p>
-          <p style="margin:0 0 10px 0;">VibTribe · India</p>
+          <p style="margin:0 0 6px 0;">You're receiving this because you opted in to product updates from <span style="color:#1f1d1a;font-weight:700;">Vib</span><span style="color:#6366f1;background:linear-gradient(90deg,#a855f7 0%,#8b5cf6 35%,#6366f1 65%,#3b82f6 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;font-weight:700;">Tribe</span>.</p>
+          <p style="margin:0 0 10px 0;"><span style="color:#1f1d1a;font-weight:700;">Vib</span><span style="color:#6366f1;background:linear-gradient(90deg,#a855f7 0%,#8b5cf6 35%,#6366f1 65%,#3b82f6 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;font-weight:700;">Tribe</span> · India</p>
           <p style="margin:0;"><a href="#" style="color:#1f1d1a;text-decoration:underline;">Unsubscribe in one click</a> · <a href="#" style="color:#1f1d1a;text-decoration:underline;">Privacy</a></p>
         </div>
       </div>
