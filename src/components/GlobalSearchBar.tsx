@@ -62,9 +62,10 @@ export default function GlobalSearchBar() {
     const trimmed = q.trim();
     if (!trimmed) return false;
     const digits = trimmed.replace(/\D/g, '');
-    // Phone: at least 10 digits
-    if (digits.length >= 10) return true;
-    // Username: starts with @ and has 3+ chars, OR is a clean alphanumeric handle of 3+ chars
+    // Phone: full international number = country code (1-4 digits) + subscriber (min 6 digits)
+    // Accept 7+ digits total to cover all country formats (e.g. +1 555 0100, +91 98260 16419)
+    if (digits.length >= 7) return true;
+    // Username: starts with @ and has 3+ chars
     if (trimmed.startsWith('@') && trimmed.length >= 4) return true;
     return false;
   };
@@ -87,8 +88,8 @@ export default function GlobalSearchBar() {
       const handle = q.startsWith('@') ? q.slice(1) : q;
 
       let filter = '';
-      if (digits.length >= 10) {
-        // Match phone exactly (last 10 digits) or by suffix
+      if (digits.length >= 7) {
+        // Match by digit suffix so users can search with or without the leading country code
         filter = `mobile_number.ilike.%${digits}%`;
       } else {
         // Exact username match (case-insensitive)
@@ -219,7 +220,7 @@ export default function GlobalSearchBar() {
             {!loading && !isCompleteQuery(query) && (
               <div className="py-6 text-center">
                 <Search size={20} className="text-muted-foreground mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">Enter a full 10-digit phone number<br/>or an exact @username</p>
+                <p className="text-sm text-muted-foreground">Enter a full phone number with country code (no "+" needed)<br/>or an exact @username</p>
                 <p className="text-xs text-muted-foreground mt-1">For privacy, partial name searches are disabled</p>
               </div>
             )}
