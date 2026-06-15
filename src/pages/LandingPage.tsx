@@ -10,6 +10,7 @@ import Wordmark from '@/components/ui/Wordmark';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useT } from '@/contexts/LanguageContext';
 import ContactFormModal from '@/components/ContactFormModal';
+import heroPhones from '@/assets/hero-phones.png';
 
 export default function LandingPage() {
   const { t } = useT();
@@ -70,47 +71,75 @@ export default function LandingPage() {
       </header>
 
       {/* Hero */}
-      <section className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pt-3 sm:pt-14 pb-12 sm:pb-20 text-center">
-        <div className="float-up">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass border border-primary/30 mb-6">
-            <ShieldCheck size={13} className="text-primary" />
-            <span className="text-[11px] sm:text-xs font-medium text-foreground/90">{t('landing.hero.badge')}</span>
-          </div>
-          <h1 className="font-extrabold text-4xl sm:text-6xl lg:text-7xl tracking-tight leading-[1.05] mb-5">
-            <span className="text-gradient-primary">VibTribe — Secure Messaging: {t('landing.hero.title')}</span>
-          </h1>
-          <p className="max-w-xl mx-auto text-sm sm:text-base lg:text-lg text-muted-foreground leading-relaxed mb-8">
-            {t('landing.hero.subtitle')}
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6">
-            <Link
-              to="/sign-up"
-              className="w-full sm:w-auto px-7 py-3.5 rounded-2xl gradient-primary text-white text-sm font-semibold glow-primary hover:opacity-90 transition-all flex items-center justify-center gap-2"
+      <section className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pt-4 sm:pt-12 pb-12 sm:pb-20">
+        <div className="grid lg:grid-cols-2 gap-10 lg:gap-8 items-center">
+          {/* Left: copy */}
+          <div className="float-up text-center lg:text-left order-2 lg:order-1">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass border border-primary/30 mb-5">
+              <ShieldCheck size={13} className="text-primary" />
+              <span className="text-[11px] sm:text-xs font-medium text-foreground/90">{t('landing.hero.badge')}</span>
+            </div>
+            <h1 className="font-extrabold text-4xl sm:text-5xl lg:text-6xl xl:text-7xl tracking-tight leading-[1.05] mb-5">
+              <span className="block text-white">Secure Messaging</span>
+              <span className="block text-gradient-primary">for your <Wordmark className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl" /></span>
+            </h1>
+            <p className="max-w-xl mx-auto lg:mx-0 text-sm sm:text-base lg:text-lg text-muted-foreground leading-relaxed mb-7">
+              {t('landing.hero.subtitle')}
+            </p>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-3 mb-5">
+              <Link
+                to="/sign-up"
+                className="px-7 py-3.5 rounded-2xl gradient-primary text-white text-sm font-semibold glow-primary hover:opacity-90 transition-all flex items-center justify-center gap-2"
+              >
+                {t('landing.hero.ctaPrimary')}
+                <ArrowRight size={16} />
+              </Link>
+              <Link
+                to="/sign-in"
+                className="px-7 py-3.5 rounded-2xl glass border border-border text-foreground text-sm font-semibold hover:border-primary/50 transition-all text-center"
+              >
+                {t('landing.hero.ctaSecondary')}
+              </Link>
+            </div>
+            <a
+              href="#download"
+              onClick={(e) => {
+                e.preventDefault();
+                document.getElementById('download')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }}
+              className="mb-4 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl gradient-tri text-white text-sm font-semibold glow-primary hover:opacity-95 transition-all"
             >
-              {t('landing.hero.ctaPrimary')}
-              <ArrowRight size={16} />
-            </Link>
-            <Link
-              to="/sign-in"
-              className="w-full sm:w-auto px-7 py-3.5 rounded-2xl glass border border-border text-foreground text-sm font-semibold hover:border-primary/50 transition-all"
-            >
-              {t('landing.hero.ctaSecondary')}
-            </Link>
+              <Download size={16} /> Download the app now
+              <span className="text-[10px] font-bold uppercase tracking-widest bg-white/20 px-2 py-0.5 rounded-full ml-1">New</span>
+            </a>
+            <p className="text-[11px] sm:text-xs text-muted-foreground flex items-center justify-center lg:justify-start gap-1.5">
+              <Lock size={11} /> {t('landing.hero.trust')}
+            </p>
           </div>
-          <a
-            href="#download"
-            onClick={(e) => {
-              e.preventDefault();
-              document.getElementById('download')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }}
-            className="mx-auto mb-5 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl gradient-tri text-white text-sm font-semibold glow-primary hover:opacity-95 transition-all"
-          >
-            <Download size={16} /> Download the app now
-            <span className="text-[10px] font-bold uppercase tracking-widest bg-white/20 px-2 py-0.5 rounded-full ml-1">New</span>
-          </a>
-          <p className="text-[11px] sm:text-xs text-muted-foreground flex items-center justify-center gap-1.5">
-            <Lock size={11} /> {t('landing.hero.trust')}
-          </p>
+
+          {/* Right: phone showcase */}
+          <div className="relative order-1 lg:order-2">
+            <div className="pointer-events-none absolute inset-0 -z-10">
+              <div className="absolute top-1/4 left-1/4 w-72 h-72 gradient-primary rounded-full blur-3xl opacity-30" />
+              <div className="absolute bottom-1/4 right-1/4 w-72 h-72 gradient-pink rounded-full blur-3xl opacity-20" />
+            </div>
+            <img
+              src={heroPhones}
+              alt="VibTribe encrypted messaging app shown on three smartphones — chat list, end-to-end encrypted conversation, and contact profile"
+              width={1280}
+              height={1280}
+              className="w-full max-w-md sm:max-w-lg lg:max-w-none mx-auto drop-shadow-[0_25px_60px_rgba(139,92,246,0.35)] float-up"
+            />
+            {/* Floating glow badges */}
+            <div className="hidden sm:flex absolute top-6 -left-2 lg:left-4 items-center gap-2 px-3 py-2 rounded-2xl glass border border-primary/40 shadow-lg shadow-primary/20">
+              <ShieldCheck size={14} className="text-primary" />
+              <span className="text-[11px] font-semibold text-foreground">End-to-End Encrypted</span>
+            </div>
+            <div className="hidden sm:flex absolute bottom-10 -right-2 lg:right-4 items-center gap-2 px-3 py-2 rounded-2xl glass border border-vt-pink/40 shadow-lg shadow-vt-pink/20">
+              <Sparkles size={14} className="text-vt-pink" />
+              <span className="text-[11px] font-semibold text-foreground">Disappearing Status</span>
+            </div>
+          </div>
         </div>
       </section>
 
