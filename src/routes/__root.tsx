@@ -178,6 +178,7 @@ function RootComponent() {
             </main>
             <ServiceWorkerRegistration />
             <ForceReleaseListener />
+            <SplashAnimation />
           </AuthProvider>
         </LanguageProvider>
       </ThemeProvider>
