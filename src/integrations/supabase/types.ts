@@ -86,6 +86,27 @@ export type Database = {
         }
         Relationships: []
       }
+      app_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: string | null
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: string | null
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: string | null
+        }
+        Relationships: []
+      }
       blocked_users: {
         Row: {
           blocked_user_id: string
@@ -1178,6 +1199,7 @@ export type Database = {
           is_master_admin: boolean
           is_online: boolean | null
           is_suspended: boolean | null
+          is_verified: boolean
           key_iv: string | null
           key_salt: string | null
           key_setup_completed: boolean
@@ -1203,6 +1225,10 @@ export type Database = {
           role: string
           status_visibility: string
           terms_accepted_at: string | null
+          totp_enabled: boolean
+          totp_enabled_at: string | null
+          totp_pending_secret: string | null
+          totp_secret: string | null
           updated_at: string | null
           username: string | null
         }
@@ -1222,6 +1248,7 @@ export type Database = {
           is_master_admin?: boolean
           is_online?: boolean | null
           is_suspended?: boolean | null
+          is_verified?: boolean
           key_iv?: string | null
           key_salt?: string | null
           key_setup_completed?: boolean
@@ -1247,6 +1274,10 @@ export type Database = {
           role?: string
           status_visibility?: string
           terms_accepted_at?: string | null
+          totp_enabled?: boolean
+          totp_enabled_at?: string | null
+          totp_pending_secret?: string | null
+          totp_secret?: string | null
           updated_at?: string | null
           username?: string | null
         }
@@ -1266,6 +1297,7 @@ export type Database = {
           is_master_admin?: boolean
           is_online?: boolean | null
           is_suspended?: boolean | null
+          is_verified?: boolean
           key_iv?: string | null
           key_salt?: string | null
           key_setup_completed?: boolean
@@ -1291,6 +1323,10 @@ export type Database = {
           role?: string
           status_visibility?: string
           terms_accepted_at?: string | null
+          totp_enabled?: boolean
+          totp_enabled_at?: string | null
+          totp_pending_secret?: string | null
+          totp_secret?: string | null
           updated_at?: string | null
           username?: string | null
         }
@@ -1395,6 +1431,10 @@ export type Database = {
       accept_terms: { Args: never; Returns: undefined }
       admin_delete_ticket: { Args: { _ticket_id: string }; Returns: undefined }
       admin_delete_user: { Args: { _user_id: string }; Returns: undefined }
+      admin_get_totp_secret_by_identifier: {
+        Args: { _identifier: string }
+        Returns: string
+      }
       admin_get_user_profile: {
         Args: { _user_id: string }
         Returns: {
@@ -1413,6 +1453,7 @@ export type Database = {
           is_master_admin: boolean
           is_online: boolean | null
           is_suspended: boolean | null
+          is_verified: boolean
           key_iv: string | null
           key_salt: string | null
           key_setup_completed: boolean
@@ -1438,6 +1479,10 @@ export type Database = {
           role: string
           status_visibility: string
           terms_accepted_at: string | null
+          totp_enabled: boolean
+          totp_enabled_at: string | null
+          totp_pending_secret: string | null
+          totp_secret: string | null
           updated_at: string | null
           username: string | null
         }
@@ -1480,6 +1525,7 @@ export type Database = {
           is_master_admin: boolean
           is_online: boolean | null
           is_suspended: boolean | null
+          is_verified: boolean
           key_iv: string | null
           key_salt: string | null
           key_setup_completed: boolean
@@ -1505,6 +1551,10 @@ export type Database = {
           role: string
           status_visibility: string
           terms_accepted_at: string | null
+          totp_enabled: boolean
+          totp_enabled_at: string | null
+          totp_pending_secret: string | null
+          totp_secret: string | null
           updated_at: string | null
           username: string | null
         }[]
@@ -1523,10 +1573,16 @@ export type Database = {
         Args: { new_password: string; target_user_id: string }
         Returns: undefined
       }
+      admin_set_user_verified: {
+        Args: { _user_id: string; _verified: boolean }
+        Returns: undefined
+      }
       can_view_status_owner: { Args: { _owner_id: string }; Returns: boolean }
+      cancel_totp_enrollment: { Args: never; Returns: undefined }
       check_otp_rate_limit: { Args: { _email: string }; Returns: number }
       cleanup_expired_statuses: { Args: never; Returns: undefined }
       cleanup_expired_statuses_for_user: { Args: never; Returns: number }
+      confirm_totp_enrollment: { Args: never; Returns: undefined }
       consume_email_otp: {
         Args: { _code: string; _email: string; _purpose: string }
         Returns: boolean
@@ -1541,6 +1597,7 @@ export type Database = {
       }
       delete_message_for_me: { Args: { _msg_id: string }; Returns: undefined }
       delete_my_account: { Args: never; Returns: undefined }
+      disable_totp: { Args: never; Returns: undefined }
       edit_my_message: {
         Args: { _msg_id: string; _new_content: string }
         Returns: undefined
@@ -1578,6 +1635,7 @@ export type Database = {
           is_master_admin: boolean
           is_online: boolean | null
           is_suspended: boolean | null
+          is_verified: boolean
           key_iv: string | null
           key_salt: string | null
           key_setup_completed: boolean
@@ -1603,6 +1661,10 @@ export type Database = {
           role: string
           status_visibility: string
           terms_accepted_at: string | null
+          totp_enabled: boolean
+          totp_enabled_at: string | null
+          totp_pending_secret: string | null
+          totp_secret: string | null
           updated_at: string | null
           username: string | null
         }
@@ -1613,6 +1675,8 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      get_my_totp_pending_secret: { Args: never; Returns: string }
+      get_my_totp_secret: { Args: never; Returns: string }
       has_permission: {
         Args: { _permission_key: string; _user_id: string }
         Returns: boolean
@@ -1669,6 +1733,7 @@ export type Database = {
           id: string
           is_suspended: boolean
           login_attempts: number
+          totp_enabled: boolean
         }[]
       }
       read_email_batch: {
@@ -1685,6 +1750,8 @@ export type Database = {
         Args: { _code: string; _identifier: string; _new_password: string }
         Returns: undefined
       }
+      set_broadcast_avatar: { Args: { _url: string }; Returns: undefined }
+      start_totp_enrollment: { Args: { _secret: string }; Returns: undefined }
       tribe_change_privacy: {
         Args: { _chat_id: string; _privacy: string }
         Returns: undefined

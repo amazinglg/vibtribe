@@ -13,6 +13,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 import ForceReleaseListener from "@/components/ForceReleaseListener";
+import SplashAnimation from "@/components/SplashAnimation";
 import { useEffect } from "react";
 import { initNativeBridge } from "@/lib/native-bridge";
 
@@ -178,6 +179,7 @@ function RootComponent() {
             </main>
             <ServiceWorkerRegistration />
             <ForceReleaseListener />
+            <SplashAnimation />
           </AuthProvider>
         </LanguageProvider>
       </ThemeProvider>
