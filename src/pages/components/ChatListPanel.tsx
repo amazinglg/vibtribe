@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Trash2, Lock, Users, UserPlus, MessageSquare, Phone, Check, Pin, PinOff, Ban, BellOff, Bell, Clock } from 'lucide-react';
+import { Search, Plus, Trash2, Lock, Users, UserPlus, MessageSquare, Phone, Check, Pin, PinOff, Ban, BellOff, Bell, Clock, BadgeCheck } from 'lucide-react';
 import MarkSecureModal from '@/components/MarkSecureModal';
 import ContactsPanel from '@/components/ContactsPanel';
 import CreateGroupModal from '@/components/CreateGroupModal';
@@ -32,6 +32,7 @@ interface Chat {
   hasMedia?: boolean;
   participantId?: string;
   isBroadcast?: boolean;
+  isVerified?: boolean;
 }
 
 export default function ChatListPanel() {
@@ -103,6 +104,25 @@ export default function ChatListPanel() {
   const supabase = createClient();
   const [broadcastPreview, setBroadcastPreview] = useState<{ content: string; created_at: string } | null>(null);
   const [broadcastUnread, setBroadcastUnread] = useState(0);
+  const [broadcastAvatar, setBroadcastAvatar] = useState<string>(BROADCAST_LOGO);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchAvatar = async () => {
+      const { data } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'broadcast_avatar_url')
+        .maybeSingle();
+      if (!cancelled && data?.value) setBroadcastAvatar(String(data.value));
+    };
+    fetchAvatar();
+    const ch = supabase
+      .channel('chatlist-broadcast-avatar')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'app_settings' }, () => fetchAvatar())
+      .subscribe();
+    return () => { cancelled = true; supabase.removeChannel(ch); };
+  }, []);
 
   // Load active mutes for the user — used to filter notifications and show
   // the bell-off badge in the chat list.
@@ -363,7 +383,7 @@ export default function ChatListPanel() {
       if (otherIds.length) {
         const { data: profs } = await supabase
           .from('user_profiles')
-          .select('id, full_name, is_online, last_seen, public_key, avatar_url, profile_photo_visibility')
+          .select('id, full_name, is_online, last_seen, public_key, avatar_url, profile_photo_visibility, is_verified')
           .in('id', otherIds);
         for (const p of (profs || [])) otherProfilesMap.set(p.id, p);
       }
@@ -449,6 +469,7 @@ export default function ChatListPanel() {
             pinned: false,
             muted: false,
             participantId: otherUserId,
+            isVerified: !!otherUser.is_verified,
           });
         }
       }
@@ -729,14 +750,14 @@ export default function ChatListPanel() {
                 }`}
               >
                 <div className="relative flex-shrink-0">
-                  <img src={BROADCAST_LOGO} alt="VibTribe" className="w-12 h-12 rounded-full object-cover border border-primary/40" />
+                  <img src={broadcastAvatar} alt="VibTribe" className="w-12 h-12 rounded-full object-cover border border-primary/40" />
                   <span className="absolute -bottom-0.5 -right-0.5 bg-primary text-white text-[8px] font-bold px-1 py-0.5 rounded-full">📌</span>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1 min-w-0">
                       <Wordmark className="text-sm truncate" />
-                      <span className="text-primary text-xs">✓</span>
+                      <BadgeCheck size={14} className="text-primary fill-primary/20 flex-shrink-0" />
                     </div>
                     <span className="text-[11px] text-muted-foreground flex-shrink-0">{broadcastTime}</span>
                   </div>
@@ -992,6 +1013,7 @@ function ChatListItem({ chat, isSelected, onClick, onContextMenu, onDelete, onMa
           <p className={`text-sm truncate flex items-center gap-1 ${hasUnread ? 'font-bold text-foreground' : 'font-semibold text-foreground'}`}>
             {chat.pinned && <Pin size={11} className="text-primary flex-shrink-0" />}
             <span className="truncate">{chat.name}</span>
+            {chat.isVerified && <BadgeCheck size={13} className="text-primary fill-primary/20 flex-shrink-0" />}
           </p>
           <span className={`text-[11px] flex-shrink-0 ${hasUnread ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>
             {chat.time}

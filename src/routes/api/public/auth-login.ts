@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
+import { verifyTotp } from '@/lib/totp'
 
 // Public login route. Wraps the previously client-exposed RPCs
 // (pre_login_lookup, record_login_failure, record_login_success) so
@@ -30,6 +31,8 @@ const BodySchema = z.object({
   // country_code so a correct local number under the wrong dial code is
   // rejected as invalid credentials.
   countryCode: z.string().trim().regex(/^\+\d{1,4}$/).optional(),
+  // Optional 6-digit TOTP code. Required only when the account has 2FA enabled.
+  totp: z.string().trim().regex(/^\d{6}$/).optional(),
 })
 
 export const Route = createFileRoute('/api/public/auth-login')({
@@ -42,7 +45,7 @@ export const Route = createFileRoute('/api/public/auth-login')({
         } catch {
           return Response.json({ error: 'Invalid request' }, { status: 400 })
         }
-        const { identifier, password, countryCode } = parsed
+        const { identifier, password, countryCode, totp } = parsed
 
         const admin = getAdminClient()
 
@@ -75,6 +78,29 @@ export const Route = createFileRoute('/api/public/auth-login')({
           const stored = (prof2?.country_code || '').trim()
           if (stored && stored !== countryCode) {
             return Response.json({ error: 'invalid_credentials' }, { status: 401 })
+          }
+        }
+
+        // 2c. If 2FA is enabled, require a valid TOTP BEFORE the password
+        // attempt — keeps the failure counter accurate and avoids leaking
+        // that the password was correct just because TOTP was wrong.
+        if ((profile as any).totp_enabled) {
+          if (!totp) {
+            return Response.json({ requires_totp: true }, { status: 200 })
+          }
+          const { data: secret } = await admin
+            .from('user_profiles')
+            .select('totp_secret')
+            .eq('id', profile.id)
+            .maybeSingle()
+          const ok = secret?.totp_secret
+            ? await verifyTotp(secret.totp_secret as string, totp)
+            : false
+          if (!ok) {
+            return Response.json(
+              { error: 'invalid_totp', requires_totp: true },
+              { status: 401 },
+            )
           }
         }
 

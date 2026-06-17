@@ -14,6 +14,7 @@ import { useTheme, APP_THEMES, ThemeId } from '@/contexts/ThemeContext';
 import { triggerPwaInstall, isPwaInstallAvailable, isPwaInstalled } from '@/components/PWAInstallBanner';
 import { usePermissions } from '@/hooks/usePermissions';
 import EncryptionPinModal from '@/components/EncryptionPinModal';
+import TotpEnrollDialog from '@/components/TotpEnrollDialog';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useT } from '@/contexts/LanguageContext';
 import { Globe } from 'lucide-react';
@@ -94,6 +95,9 @@ export default function ProfileContent() {
   const [activeTab, setActiveTab] = useState<Tab>('account');
   const [editMode, setEditMode] = useState(false);
   const [changePinOpen, setChangePinOpen] = useState(false);
+  const [totpDialogOpen, setTotpDialogOpen] = useState(false);
+  const [totpBusy, setTotpBusy] = useState(false);
+  const totpEnabled = !!(profile as any)?.totp_enabled;
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
   const [username, setUsername] = useState('');
@@ -1089,6 +1093,50 @@ export default function ProfileContent() {
               </div>
 
               <div className="glass rounded-2xl border border-border p-5">
+                <h3 className="font-semibold text-base text-foreground mb-2 flex items-center gap-2">
+                  <Shield size={16} className="text-primary" />
+                  Two-Factor Authentication
+                  {totpEnabled && (
+                    <span className="ml-1 text-[10px] bg-vt-green/20 text-vt-green px-2 py-0.5 rounded-full font-bold uppercase tracking-wide">On</span>
+                  )}
+                </h3>
+                <p className="text-xs text-muted-foreground mb-4">
+                  {totpEnabled
+                    ? 'Sign-in is protected by a 6-digit code from your Authenticator app. Disable only if you have to.'
+                    : 'Add an extra layer of security. Use Google Authenticator (or any compatible app) to generate a 6-digit code every time you sign in.'}
+                </p>
+                {totpEnabled ? (
+                  <button
+                    disabled={totpBusy}
+                    onClick={async () => {
+                      if (!confirm('Disable 2-step verification? Your account will no longer require a code at sign-in.')) return;
+                      setTotpBusy(true);
+                      try {
+                        const { error } = await supabase.rpc('disable_totp');
+                        if (error) throw error;
+                        toast.success('2-step verification disabled');
+                        if (user) await (typeof (window as any).vtRefreshProfile === 'function' ? (window as any).vtRefreshProfile() : Promise.resolve());
+                        // soft profile refresh via updateProfile no-op
+                        try { await updateProfile({}); } catch {}
+                      } catch (e: any) {
+                        toast.error(e?.message || 'Could not disable 2FA');
+                      } finally { setTotpBusy(false); }
+                    }}
+                    className="px-4 py-2.5 bg-red-500/15 text-red-400 hover:bg-red-500/25 border border-red-500/30 text-sm font-semibold rounded-xl transition-all"
+                  >
+                    {totpBusy ? 'Disabling…' : 'Disable 2-step verification'}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setTotpDialogOpen(true)}
+                    className="px-4 py-2.5 gradient-primary text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-all"
+                  >
+                    Enable 2-step verification
+                  </button>
+                )}
+              </div>
+
+              <div className="glass rounded-2xl border border-border p-5">
                 <h3 className="font-semibold text-base text-foreground mb-4">Privacy Settings</h3>
                 <div className="space-y-4">
                   {/* Last Seen / Read Receipts kept as toggles */}
@@ -1775,6 +1823,14 @@ export default function ProfileContent() {
           onSkip={() => setChangePinOpen(false)}
         />
       )}
+      <TotpEnrollDialog
+        open={totpDialogOpen}
+        onClose={() => setTotpDialogOpen(false)}
+        onEnabled={async () => {
+          setTotpDialogOpen(false);
+          try { await updateProfile({}); } catch {}
+        }}
+      />
       <AlertDialog
         open={updateDialog.open}
         onOpenChange={(o) => { if (!o && updateDialog.open && updateDialog.state !== 'applying') setUpdateDialog({ open: false }); }}

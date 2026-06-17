@@ -4,7 +4,7 @@ import { useNavigate, useParams } from '@tanstack/react-router';
 import {
   ArrowLeft, Shield, Pencil, X, Save, KeyRound, Ban, Trash2,
   UserX, UserCheck, LogOut, AlertTriangle, ShieldCheck, ShieldOff, RotateCcw,
-  Mail, Phone, Clock, Calendar, Activity, Lock,
+  Mail, Phone, Clock, Calendar, Activity, Lock, BadgeCheck,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLayout from '@/components/AppLayout';
@@ -148,6 +148,22 @@ export default function AdminUserDetailPage() {
     const updates: any = { role: newRole };
     if (target.is_master_admin) updates.is_master_admin = false;
     await update(updates, `Role updated to ${newRole}`);
+  };
+
+  const handleToggleVerified = async (next: boolean) => {
+    setActionLoading(true);
+    try {
+      const { error } = await supabase.rpc('admin_set_user_verified', {
+        _user_id: userId, _verified: next,
+      });
+      if (error) throw error;
+      setTarget((t: any) => ({ ...t, is_verified: next }));
+      toast.success(next ? 'Verified badge granted' : 'Verified badge removed');
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to update verified status');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   if (loading || loadingData || !target) {
@@ -315,6 +331,32 @@ export default function AdminUserDetailPage() {
             <p className="text-[10px] text-muted-foreground mt-2">
               Only the master admin can change roles. Promoting a user to Master Admin grants them full unrestricted access.
             </p>
+          </div>
+        )}
+
+        {/* Verified badge toggle — admin-only */}
+        {!isSelf && !locked && (
+          <div className="glass rounded-2xl border border-border p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-foreground mb-1 flex items-center gap-2">
+                  <BadgeCheck size={16} className="text-primary" />
+                  Verified Badge
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Show a blue verified tick next to this user's name across chats and tribes. Reserve for public figures, official accounts, and trusted partners.
+                </p>
+              </div>
+              <button
+                role="switch"
+                aria-checked={!!target.is_verified}
+                disabled={actionLoading}
+                onClick={() => handleToggleVerified(!target.is_verified)}
+                className={`relative w-12 h-7 rounded-full transition-colors flex-shrink-0 ${target.is_verified ? 'gradient-primary' : 'bg-muted'}`}
+              >
+                <span className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-all ${target.is_verified ? 'right-1' : 'left-1'}`} />
+              </button>
+            </div>
           </div>
         )}
 

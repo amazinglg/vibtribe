@@ -9,7 +9,7 @@ import { isNativeWrapper, pickNativeFiles } from '@/lib/native-bridge';
 import Wordmark from '@/components/ui/Wordmark';
 
 export const BROADCAST_CHAT_ID = '__vibtribe_broadcast__';
-const LOGO_URL = '/assets/images/app_logo.png';
+const FALLBACK_LOGO = '/assets/images/app_logo.png';
 const REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏', '🔥', '🎉'];
 
 interface BMessage {
@@ -37,6 +37,45 @@ export default function BroadcastChatPanel() {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  // Broadcast avatar — master admin can change it for everyone. Read from
+  // app_settings.broadcast_avatar_url. Falls back to the bundled logo.
+  const [broadcastAvatar, setBroadcastAvatar] = useState<string>(FALLBACK_LOGO);
+  const avatarUploadRef = useRef<HTMLInputElement>(null);
+  const [avatarBusy, setAvatarBusy] = useState(false);
+
+  const loadBroadcastAvatar = async () => {
+    const { data } = await supabase
+      .from('app_settings')
+      .select('value')
+      .eq('key', 'broadcast_avatar_url')
+      .maybeSingle();
+    if (data?.value) setBroadcastAvatar(String(data.value));
+  };
+
+  const handleAvatarPick = async (file: File) => {
+    if (!isMaster || !user) return;
+    if (!file.type.startsWith('image/')) { toast.error('Please choose an image'); return; }
+    if (file.size > 8 * 1024 * 1024) { toast.error('Image must be under 8MB'); return; }
+    setAvatarBusy(true);
+    try {
+      const path = `broadcast/avatar-${Date.now()}.${(file.name.split('.').pop() || 'jpg').toLowerCase()}`;
+      const { error: upErr } = await supabase.storage.from('profile-photos').upload(path, file, {
+        upsert: true, contentType: file.type || 'image/jpeg', cacheControl: '3600',
+      });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from('profile-photos').getPublicUrl(path);
+      const url = `${pub.publicUrl}?v=${Date.now()}`;
+      const { error: rpcErr } = await supabase.rpc('set_broadcast_avatar', { _url: url });
+      if (rpcErr) throw rpcErr;
+      setBroadcastAvatar(url);
+      toast.success('Broadcast avatar updated');
+    } catch (e: any) {
+      toast.error(e?.message || 'Could not update avatar');
+    } finally {
+      setAvatarBusy(false);
+      if (avatarUploadRef.current) avatarUploadRef.current.value = '';
+    }
+  };
 
   const load = async () => {
     const { data: msgs } = await supabase
@@ -67,10 +106,12 @@ export default function BroadcastChatPanel() {
 
   useEffect(() => {
     load();
+    loadBroadcastAvatar();
     const ch = supabase
       .channel('broadcast-chat')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'broadcast_messages' }, () => load())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'broadcast_reactions' }, () => load())
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'app_settings' }, () => loadBroadcastAvatar())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -255,7 +296,30 @@ export default function BroadcastChatPanel() {
         <button onClick={() => setSelectedChatId(null)} className="lg:hidden p-1.5 hover:bg-muted rounded-lg">
           <ArrowLeft size={18} />
         </button>
-        <img src={LOGO_URL} alt="VibTribe" className="w-10 h-10 rounded-full object-cover border border-border" />
+        <div className="relative">
+          <img
+            src={broadcastAvatar}
+            alt="VibTribe"
+            onClick={() => isMaster && !avatarBusy && avatarUploadRef.current?.click()}
+            className={`w-10 h-10 rounded-full object-cover border border-border ${isMaster ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+            title={isMaster ? 'Tap to change broadcast avatar (everyone sees this)' : undefined}
+          />
+          {isMaster && (
+            <input
+              ref={avatarUploadRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={e => {
+                const f = e.target.files?.[0];
+                if (f) handleAvatarPick(f);
+              }}
+            />
+          )}
+          {avatarBusy && (
+            <span className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full text-[10px] text-white">…</span>
+          )}
+        </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1">
             <Wordmark className="text-sm truncate" />
@@ -269,7 +333,7 @@ export default function BroadcastChatPanel() {
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 py-4 space-y-3">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center gap-2 opacity-60">
-            <img src={LOGO_URL} alt="" className="w-16 h-16 rounded-full opacity-80" />
+            <img src={broadcastAvatar} alt="" className="w-16 h-16 rounded-full opacity-80" />
             <p className="text-sm font-semibold text-foreground">Welcome to VibTribe</p>
             <p className="text-xs text-muted-foreground max-w-xs">
               Official announcements from VibTribe will appear here.
