@@ -334,6 +334,32 @@ export default function AdminUserDetailPage() {
           </div>
         )}
 
+        {/* Verified badge toggle — admin-only */}
+        {!isSelf && !locked && (
+          <div className="glass rounded-2xl border border-border p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-foreground mb-1 flex items-center gap-2">
+                  <BadgeCheck size={16} className="text-primary" />
+                  Verified Badge
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Show a blue verified tick next to this user's name across chats and tribes. Reserve for public figures, official accounts, and trusted partners.
+                </p>
+              </div>
+              <button
+                role="switch"
+                aria-checked={!!target.is_verified}
+                disabled={actionLoading}
+                onClick={() => handleToggleVerified(!target.is_verified)}
+                className={`relative w-12 h-7 rounded-full transition-colors flex-shrink-0 ${target.is_verified ? 'gradient-primary' : 'bg-muted'}`}
+              >
+                <span className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-all ${target.is_verified ? 'right-1' : 'left-1'}`} />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Action sections */}
         {locked ? (
           <div className="glass rounded-2xl border border-vt-amber/30 p-5 flex items-center gap-3">
