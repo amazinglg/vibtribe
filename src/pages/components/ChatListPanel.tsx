@@ -1,7 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
-import { BadgeCheck } from 'lucide-react';
-import { Search, Plus, Trash2, Lock, Users, UserPlus, MessageSquare, Phone, Check, Pin, PinOff, Ban, BellOff, Bell, Clock } from 'lucide-react';
+import { Search, Plus, Trash2, Lock, Users, UserPlus, MessageSquare, Phone, Check, Pin, PinOff, Ban, BellOff, Bell, Clock, BadgeCheck } from 'lucide-react';
 import MarkSecureModal from '@/components/MarkSecureModal';
 import ContactsPanel from '@/components/ContactsPanel';
 import CreateGroupModal from '@/components/CreateGroupModal';
@@ -365,7 +364,7 @@ export default function ChatListPanel() {
       if (otherIds.length) {
         const { data: profs } = await supabase
           .from('user_profiles')
-          .select('id, full_name, is_online, last_seen, public_key, avatar_url, profile_photo_visibility')
+          .select('id, full_name, is_online, last_seen, public_key, avatar_url, profile_photo_visibility, is_verified')
           .in('id', otherIds);
         for (const p of (profs || [])) otherProfilesMap.set(p.id, p);
       }
@@ -451,6 +450,7 @@ export default function ChatListPanel() {
             pinned: false,
             muted: false,
             participantId: otherUserId,
+            isVerified: !!otherUser.is_verified,
           });
         }
       }
@@ -738,7 +738,7 @@ export default function ChatListPanel() {
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1 min-w-0">
                       <Wordmark className="text-sm truncate" />
-                      <span className="text-primary text-xs">✓</span>
+                      <BadgeCheck size={14} className="text-primary fill-primary/20 flex-shrink-0" />
                     </div>
                     <span className="text-[11px] text-muted-foreground flex-shrink-0">{broadcastTime}</span>
                   </div>
@@ -994,6 +994,7 @@ function ChatListItem({ chat, isSelected, onClick, onContextMenu, onDelete, onMa
           <p className={`text-sm truncate flex items-center gap-1 ${hasUnread ? 'font-bold text-foreground' : 'font-semibold text-foreground'}`}>
             {chat.pinned && <Pin size={11} className="text-primary flex-shrink-0" />}
             <span className="truncate">{chat.name}</span>
+            {chat.isVerified && <BadgeCheck size={13} className="text-primary fill-primary/20 flex-shrink-0" />}
           </p>
           <span className={`text-[11px] flex-shrink-0 ${hasUnread ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>
             {chat.time}
