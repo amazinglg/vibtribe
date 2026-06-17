@@ -1,5 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
+import { BadgeCheck } from 'lucide-react';
 import { Search, Plus, Trash2, Lock, Users, UserPlus, MessageSquare, Phone, Check, Pin, PinOff, Ban, BellOff, Bell, Clock } from 'lucide-react';
 import MarkSecureModal from '@/components/MarkSecureModal';
 import ContactsPanel from '@/components/ContactsPanel';
@@ -32,6 +33,7 @@ interface Chat {
   hasMedia?: boolean;
   participantId?: string;
   isBroadcast?: boolean;
+  isVerified?: boolean;
 }
 
 export default function ChatListPanel() {
