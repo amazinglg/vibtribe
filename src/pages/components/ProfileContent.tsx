@@ -1823,6 +1823,14 @@ export default function ProfileContent() {
           onSkip={() => setChangePinOpen(false)}
         />
       )}
+      <TotpEnrollDialog
+        open={totpDialogOpen}
+        onClose={() => setTotpDialogOpen(false)}
+        onEnabled={async () => {
+          setTotpDialogOpen(false);
+          try { await updateProfile({}); } catch {}
+        }}
+      />
       <AlertDialog
         open={updateDialog.open}
         onOpenChange={(o) => { if (!o && updateDialog.open && updateDialog.state !== 'applying') setUpdateDialog({ open: false }); }}
