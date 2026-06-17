@@ -4,7 +4,7 @@ import { useNavigate, useParams } from '@tanstack/react-router';
 import {
   ArrowLeft, Shield, Pencil, X, Save, KeyRound, Ban, Trash2,
   UserX, UserCheck, LogOut, AlertTriangle, ShieldCheck, ShieldOff, RotateCcw,
-  Mail, Phone, Clock, Calendar, Activity, Lock,
+  Mail, Phone, Clock, Calendar, Activity, Lock, BadgeCheck,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLayout from '@/components/AppLayout';
@@ -148,6 +148,22 @@ export default function AdminUserDetailPage() {
     const updates: any = { role: newRole };
     if (target.is_master_admin) updates.is_master_admin = false;
     await update(updates, `Role updated to ${newRole}`);
+  };
+
+  const handleToggleVerified = async (next: boolean) => {
+    setActionLoading(true);
+    try {
+      const { error } = await supabase.rpc('admin_set_user_verified', {
+        _user_id: userId, _verified: next,
+      });
+      if (error) throw error;
+      setTarget((t: any) => ({ ...t, is_verified: next }));
+      toast.success(next ? 'Verified badge granted' : 'Verified badge removed');
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to update verified status');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   if (loading || loadingData || !target) {
