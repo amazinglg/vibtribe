@@ -104,6 +104,25 @@ export default function ChatListPanel() {
   const supabase = createClient();
   const [broadcastPreview, setBroadcastPreview] = useState<{ content: string; created_at: string } | null>(null);
   const [broadcastUnread, setBroadcastUnread] = useState(0);
+  const [broadcastAvatar, setBroadcastAvatar] = useState<string>(BROADCAST_LOGO);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchAvatar = async () => {
+      const { data } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'broadcast_avatar_url')
+        .maybeSingle();
+      if (!cancelled && data?.value) setBroadcastAvatar(String(data.value));
+    };
+    fetchAvatar();
+    const ch = supabase
+      .channel('chatlist-broadcast-avatar')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'app_settings' }, () => fetchAvatar())
+      .subscribe();
+    return () => { cancelled = true; supabase.removeChannel(ch); };
+  }, []);
 
   // Load active mutes for the user — used to filter notifications and show
   // the bell-off badge in the chat list.
