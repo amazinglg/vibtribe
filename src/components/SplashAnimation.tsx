@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import splashVideo from '@/assets/splash.mp4.asset.json';
 
 /**
@@ -10,22 +10,27 @@ import splashVideo from '@/assets/splash.mp4.asset.json';
 const SESSION_KEY = 'vt_splash_shown';
 
 export default function SplashAnimation() {
-  const [visible, setVisible] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
+  // Always render null on SSR / first client render to avoid hydration mismatch.
+  const [visible, setVisible] = useState(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  useEffect(() => {
     try {
-      return !sessionStorage.getItem(SESSION_KEY);
-    } catch {
-      return true;
-    }
-  });
+      if (sessionStorage.getItem(SESSION_KEY)) return;
+    } catch {}
+    setVisible(true);
+  }, []);
+
+  const dismiss = () => {
+    try { sessionStorage.setItem(SESSION_KEY, '1'); } catch {}
+    setVisible(false);
+  };
 
   useEffect(() => {
     if (!visible) return;
-    const t = setTimeout(() => {
-      try { sessionStorage.setItem(SESSION_KEY, '1'); } catch {}
-      setVisible(false);
-    }, 2000);
-    return () => clearTimeout(t);
+    // Hard cap so a broken/slow video never blocks the app forever.
+    const hardCap = setTimeout(dismiss, 6000);
+    return () => clearTimeout(hardCap);
   }, [visible]);
 
   if (!visible) return null;
@@ -36,11 +41,14 @@ export default function SplashAnimation() {
         @keyframes vt-splash-fadeout { 0%,85%{opacity:1} 100%{opacity:0;visibility:hidden} }
       `}</style>
       <video
+        ref={videoRef}
         src={splashVideo.url}
         autoPlay
         muted
         playsInline
         preload="auto"
+        onEnded={dismiss}
+        onError={dismiss}
         className="w-full h-full object-cover"
       />
     </div>
