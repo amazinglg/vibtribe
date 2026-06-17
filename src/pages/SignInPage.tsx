@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useNavigate } from '@tanstack/react-router';
-import { Phone, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { Phone, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle, Shield, KeyRound } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLogo from '@/components/ui/AppLogo';
 import Wordmark from '@/components/ui/Wordmark';
@@ -25,9 +25,13 @@ export default function SignInPage() {
   const [useEmail, setUseEmail] = useState(false);
   const [email, setEmail] = useState('');
   const { country, setCountry } = useDetectCountry();
+  // 2FA challenge state — once the server tells us this account needs TOTP,
+  // flip into a code-entry screen and re-post the same credentials with the
+  // 6-digit code appended.
+  const [needsTotp, setNeedsTotp] = useState(false);
+  const [totp, setTotp] = useState('');
 
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const submitLogin = async (totpCode?: string) => {
     setError('');
     if (!password) { setError('Please enter your password'); return; }
     if (!useEmail && !mobile) { setError('Please enter your mobile number'); return; }
@@ -46,18 +50,27 @@ export default function SignInPage() {
         countryCode = country.dial;
       }
 
-      // Server-side login flow: lookup + suspension check + password attempt
-      // + failure/success recording all happen behind the auth-login route so
-      // the underlying RPCs are not exposed to the public Data API.
       const res = await fetch('/api/public/auth-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier, password, countryCode }),
+        body: JSON.stringify({ identifier, password, countryCode, totp: totpCode }),
       });
       const payload: any = await res.json().catch(() => ({}));
 
+      // Server says this account requires a TOTP code. Switch UI to the
+      // 6-digit entry step. The password is kept in component state so we
+      // re-post the same credentials with the code appended.
+      if (res.ok && payload?.requires_totp && !payload?.session) {
+        setNeedsTotp(true);
+        setLoading(false);
+        return;
+      }
+
       if (!res.ok) {
-        if (payload?.error === 'account_suspended') {
+        if (payload?.error === 'invalid_totp') {
+          setNeedsTotp(true);
+          setError('That code is incorrect. Open Google Authenticator and try the latest 6-digit code.');
+        } else if (payload?.error === 'account_suspended') {
           setError('Your account has been suspended due to too many failed login attempts. Please contact support or wait for admin to unsuspend your account.');
         } else if (payload?.error === 'invalid_credentials') {
           const remaining = typeof payload.remaining === 'number' ? payload.remaining : null;
@@ -92,6 +105,17 @@ export default function SignInPage() {
     }
   };
 
+  const handleSignIn = (e: React.FormEvent) => {
+    e.preventDefault();
+    submitLogin();
+  };
+
+  const handleTotpSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!/^\d{6}$/.test(totp)) { setError('Enter the 6-digit code from your Authenticator app'); return; }
+    submitLogin(totp);
+  };
+
   return (
     <div
       className="gradient-bg-page min-h-screen w-full flex flex-col items-center justify-start relative overflow-x-hidden overflow-y-auto px-4"
@@ -122,6 +146,52 @@ export default function SignInPage() {
 
         {/* Card */}
         <div className="glass-strong rounded-3xl border border-border p-8 shadow-card">
+          {needsTotp ? (
+            <>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-9 h-9 rounded-xl bg-primary/15 text-primary flex items-center justify-center"><Shield size={16} /></div>
+                <h1 className="font-bold text-xl text-foreground">Two-step verification</h1>
+              </div>
+              <p className="text-muted-foreground text-xs mb-5">
+                Enter the current 6-digit code from <strong className="text-foreground">Google Authenticator</strong> for VibTribe.
+              </p>
+              <form onSubmit={handleTotpSubmit} className="space-y-4">
+                <div className="relative">
+                  <KeyRound size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    value={totp}
+                    onChange={e => { setTotp(e.target.value.replace(/\D/g, '').slice(0, 6)); setError(''); }}
+                    inputMode="numeric"
+                    autoFocus
+                    placeholder="123 456"
+                    maxLength={6}
+                    className="w-full pl-10 pr-4 py-3 bg-input border border-border rounded-xl text-foreground text-center tracking-[0.5em] font-mono text-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+                {error && (
+                  <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-xl">
+                    <AlertCircle size={14} className="text-red-400 flex-shrink-0" />
+                    <p className="text-xs text-red-400">{error}</p>
+                  </div>
+                )}
+                <button
+                  type="submit"
+                  disabled={loading || totp.length !== 6}
+                  className="w-full gradient-primary text-white font-semibold py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed glow-primary"
+                >
+                  {loading ? <><Loader2 size={18} className="animate-spin" /><span>Verifying…</span></> : <><span>Verify & sign in</span><ArrowRight size={18} /></>}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setNeedsTotp(false); setTotp(''); setError(''); }}
+                  className="w-full text-xs text-muted-foreground hover:text-foreground"
+                >
+                  ← Use a different account
+                </button>
+              </form>
+            </>
+          ) : (
+          <>
           <h1 className="font-bold text-2xl text-foreground mb-1">{t('auth.welcomeBack')}</h1>
           <p className="text-muted-foreground text-sm mb-6">{t('auth.signInSubtitle')}</p>
 
@@ -224,6 +294,8 @@ export default function SignInPage() {
               )}
             </button>
           </form>
+          </>
+          )}
 
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
