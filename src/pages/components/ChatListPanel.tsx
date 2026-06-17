@@ -750,7 +750,7 @@ export default function ChatListPanel() {
                 }`}
               >
                 <div className="relative flex-shrink-0">
-                  <img src={BROADCAST_LOGO} alt="VibTribe" className="w-12 h-12 rounded-full object-cover border border-primary/40" />
+                  <img src={broadcastAvatar} alt="VibTribe" className="w-12 h-12 rounded-full object-cover border border-primary/40" />
                   <span className="absolute -bottom-0.5 -right-0.5 bg-primary text-white text-[8px] font-bold px-1 py-0.5 rounded-full">📌</span>
                 </div>
                 <div className="flex-1 min-w-0">
