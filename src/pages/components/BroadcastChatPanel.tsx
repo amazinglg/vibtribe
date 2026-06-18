@@ -84,6 +84,30 @@ export default function BroadcastChatPanel() {
     setAvatarCropFile(file);
   };
 
+  const handleAvatarClick = async () => {
+    if (!isMaster || avatarBusy) return;
+    if (isNativeWrapper()) {
+      try {
+        const picked = await pickNativeFiles({ multiple: false, types: ['image/*'] });
+        if (!picked.length) return;
+        const p = picked[0];
+        if (!p.dataUrl) {
+          toast.error('Could not read the selected image. Try a smaller file.');
+          return;
+        }
+        const res = await fetch(p.dataUrl);
+        const blob = await res.blob();
+        const file = new File([blob], p.name || 'avatar.jpg', { type: p.mime || blob.type || 'image/jpeg' });
+        handleAvatarPick(file);
+      } catch (e: any) {
+        console.error('[VT-Broadcast] native avatar pick failed', e);
+        toast.error('Could not open picker: ' + (e?.message || 'unknown'));
+      }
+      return;
+    }
+    avatarUploadRef.current?.click();
+  };
+
   const load = async () => {
     const { data: msgs } = await supabase
       .from('broadcast_messages')
@@ -308,7 +332,7 @@ export default function BroadcastChatPanel() {
           <img
             src={broadcastAvatar}
             alt="VibTribe"
-            onClick={() => isMaster && !avatarBusy && avatarUploadRef.current?.click()}
+            onClick={handleAvatarClick}
             className={`w-10 h-10 rounded-full object-cover border border-border ${isMaster ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
             title={isMaster ? 'Tap to change broadcast avatar (everyone sees this)' : undefined}
           />
@@ -326,7 +350,7 @@ export default function BroadcastChatPanel() {
               />
               <button
                 type="button"
-                onClick={() => !avatarBusy && avatarUploadRef.current?.click()}
+                onClick={handleAvatarClick}
                 aria-label="Change broadcast avatar"
                 title="Change broadcast avatar"
                 className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-primary text-primary-foreground shadow-md border border-background flex items-center justify-center hover:scale-110 transition-transform"
