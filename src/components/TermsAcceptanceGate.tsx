@@ -25,11 +25,10 @@ export default function TermsAcceptanceGate() {
     if (!user) return;
     let cancelled = false;
     (async () => {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('terms_accepted_at, privacy_accepted_at, terms_warning_sent_at')
-        .eq('id', user.id)
-        .maybeSingle();
+      // Owner-only fields are no longer readable via direct SELECT;
+      // fetch the full row through the secure RPC.
+      const { data: rpcData, error } = await supabase.rpc('get_my_full_profile');
+      const data: any = Array.isArray(rpcData) ? rpcData[0] : rpcData;
       if (cancelled) return;
       if (error) {
         console.warn('[VT-TERMS] failed to read terms_accepted_at', error);
