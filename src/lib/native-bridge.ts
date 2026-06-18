@@ -382,3 +382,26 @@ export async function nativeHaptic(style: 'light' | 'medium' | 'heavy' = 'light'
     await Haptics.impact({ style: map[style] });
   } catch {}
 }
+
+/**
+ * Apply / remove Android FLAG_SECURE so the OS blocks screenshots, screen
+ * recording and the recent-apps preview thumbnail. Implemented in
+ * MainActivity via an `addJavascriptInterface` bridge named `VtTrustLock`.
+ *
+ * No-op on web / iOS / PWA — those platforms cannot block screenshots from
+ * userland, so we rely on the in-app UI restrictions (hidden download/share)
+ * for protection on those targets.
+ */
+export function setAndroidSecureFlag(secure: boolean): void {
+  if (typeof window === 'undefined') return;
+  const bridge = (window as unknown as {
+    VtTrustLock?: { enable: () => void; disable: () => void };
+  }).VtTrustLock;
+  if (!bridge) return;
+  try {
+    if (secure) bridge.enable();
+    else bridge.disable();
+  } catch (e) {
+    console.warn('[VibTribe] setAndroidSecureFlag failed', e);
+  }
+}
