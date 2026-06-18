@@ -430,15 +430,33 @@ export default function ChatListPanel() {
         }
 
         const otherUserId = chat.participant_one === user.id ? chat.participant_two : chat.participant_one;
-        const otherUser = otherProfilesMap.get(otherUserId);
+        let otherUser = otherProfilesMap.get(otherUserId);
+        // FALLBACK: if the batched profile fetch missed this user (RLS hiccup,
+        // token race on Android WebView/iOS PWA, etc.), try a direct fetch so
+        // the chat still appears in the list. Never silently drop a chat the
+        // current user is a participant of.
+        if (!otherUser && otherUserId) {
+          try {
+            const { data: p } = await supabase
+              .from('user_profiles')
+              .select('id, full_name, is_online, last_seen, public_key, avatar_url, profile_photo_visibility, is_verified')
+              .eq('id', otherUserId)
+              .maybeSingle();
+            if (p) {
+              otherUser = p;
+              otherProfilesMap.set(otherUserId, p);
+            }
+          } catch {}
+        }
 
-        if (otherUser) {
+        {
+          const ou = otherUser || { full_name: 'VibTribe user', is_online: false, last_seen: null, public_key: null, avatar_url: null, profile_photo_visibility: 'all', is_verified: false };
           // Decrypt the last message preview so sender/receiver see plaintext.
           let preview = lastMsg?.content || 'Start a conversation...';
           if (lastMsg?.content && isEncrypted(lastMsg.content)) {
-            if (otherUser.public_key) {
+            if (ou.public_key) {
               try {
-                preview = await decryptMessage(lastMsg.content, otherUser.public_key);
+                preview = await decryptMessage(lastMsg.content, ou.public_key);
               } catch {
                 preview = '🔒 New message';
               }
@@ -468,20 +486,20 @@ export default function ChatListPanel() {
           }
           chatList.push({
             id: chat.id,
-            name: otherUser.full_name || 'Unknown',
-            avatar: (otherUser.full_name || 'U')[0].toUpperCase(),
+            name: ou.full_name || 'VibTribe user',
+            avatar: (ou.full_name || 'V')[0].toUpperCase(),
             avatarColor: avatarColors[chatList.length % avatarColors.length],
-            avatarUrl: (otherUser.profile_photo_visibility ?? 'all') === 'all' ? (otherUser.avatar_url || null) : null,
+            avatarUrl: (ou.profile_photo_visibility ?? 'all') === 'all' ? (ou.avatar_url || null) : null,
             lastMessage: preview,
             time: lastMsg ? formatTime(lastMsg.created_at) : '',
             rawTime: lastMsg?.created_at || (chat as any).updated_at,
             unread: unreadCount,
-            online: !!(otherUser.is_online && otherUser.last_seen && (Date.now() - new Date(otherUser.last_seen).getTime()) < 2 * 60 * 1000),
+            online: !!(ou.is_online && ou.last_seen && (Date.now() - new Date(ou.last_seen).getTime()) < 2 * 60 * 1000),
             typing: false,
             pinned: false,
             muted: false,
             participantId: otherUserId,
-            isVerified: !!otherUser.is_verified,
+            isVerified: !!ou.is_verified,
           });
         }
       }
