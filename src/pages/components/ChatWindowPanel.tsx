@@ -2426,16 +2426,33 @@ export default function ChatWindowPanel() {
             ))}
           </div>
           <div className="grid grid-cols-8 gap-1 max-h-72 overflow-y-auto">
-            {(EMOJI_CATEGORIES.find(c => c.key === emojiTab)?.emojis || []).map((emoji, i) => (
-              <button
-                key={`${emoji}-${i}`}
-                onClick={() => insertEmoji(emoji)}
-                className="aspect-square flex items-center justify-center text-2xl rounded-lg hover:bg-muted active:scale-90 transition-all"
-                type="button"
-              >
-                {emoji}
-              </button>
-            ))}
+            {(EMOJI_CATEGORIES.find(c => c.key === emojiTab)?.emojis || []).map((emoji, i) => {
+              const vtMatch = /^:vt:([a-z0-9_-]+):$/.exec(emoji);
+              const vt = vtMatch ? VIBTRIBE_EMOJI_MAP[vtMatch[1]] : null;
+              return (
+                <button
+                  key={`${emoji}-${i}`}
+                  onClick={() => insertEmoji(emoji)}
+                  className="aspect-square flex items-center justify-center text-2xl rounded-lg hover:bg-muted active:scale-90 transition-all p-1"
+                  type="button"
+                  aria-label={vt?.name || emoji}
+                  title={vt?.name || emoji}
+                >
+                  {vt ? (
+                    <img
+                      src={vt.url}
+                      alt={vt.name}
+                      draggable={false}
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-contain select-none"
+                    />
+                  ) : (
+                    emoji
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
