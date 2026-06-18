@@ -439,10 +439,8 @@ export default function AdminUserDetailPage() {
             </div>
           </>
         )}
-      </div>
 
         {/* Consent & Compliance — always visible to admins, including for self/master */}
-        <div className="mt-4">
           <SectionCard
             title="Consent & compliance"
             subtitle="Audit log of what this user accepted, and when. Used for DPDP / GDPR / CAN-SPAM compliance."
@@ -480,10 +478,7 @@ export default function AdminUserDetailPage() {
               />
             </div>
           </SectionCard>
-        </div>
       </div>
-      {/* close outer container div opened earlier (was already closed above) — wrapper closed below */}
-      <>
 
       {/* Edit Modal */}
       {editOpen && (
