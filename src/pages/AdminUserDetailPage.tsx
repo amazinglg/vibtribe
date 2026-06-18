@@ -441,6 +441,50 @@ export default function AdminUserDetailPage() {
         )}
       </div>
 
+        {/* Consent & Compliance — always visible to admins, including for self/master */}
+        <div className="mt-4">
+          <SectionCard
+            title="Consent & compliance"
+            subtitle="Audit log of what this user accepted, and when. Used for DPDP / GDPR / CAN-SPAM compliance."
+            icon={FileText}
+          >
+            <div className="grid grid-cols-1 gap-2">
+              <ConsentRow
+                icon={FileText}
+                label="Terms & Conditions"
+                acceptedAt={target.terms_accepted_at}
+                pendingText="Not yet accepted"
+              />
+              <ConsentRow
+                icon={ShieldCheck}
+                label="Privacy Policy"
+                acceptedAt={target.privacy_accepted_at}
+                pendingText="Not yet accepted"
+              />
+              <ConsentRow
+                icon={Megaphone}
+                label="Promotional emails"
+                acceptedAt={target.marketing_consent_at}
+                pendingText="No choice recorded yet"
+                stateText={
+                  target.marketing_consent_at
+                    ? (target.email_marketing_opt_in ? 'Opted IN' : 'Opted OUT')
+                    : null
+                }
+                positive={!!target.email_marketing_opt_in}
+                extra={
+                  target.marketing_consent_source
+                    ? `Source: ${target.marketing_consent_source}${target.marketing_consent_ip ? ` · IP ${target.marketing_consent_ip}` : ''}`
+                    : null
+                }
+              />
+            </div>
+          </SectionCard>
+        </div>
+      </div>
+      {/* close outer container div opened earlier (was already closed above) — wrapper closed below */}
+      <>
+
       {/* Edit Modal */}
       {editOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
