@@ -34,6 +34,7 @@ import { Route as ApiPublicTrackApkDownloadRouteImport } from './routes/api/publ
 import { Route as ApiPublicResendWebhookRouteImport } from './routes/api/public/resend-webhook'
 import { Route as ApiPublicAuthOtpRouteImport } from './routes/api/public/auth-otp'
 import { Route as ApiPublicAuthLoginRouteImport } from './routes/api/public/auth-login'
+import { Route as ApiPublicFirePolicyReminderOnceRouteImport } from './routes/api/public/_fire-policy-reminder-once'
 import { Route as AdminUserUserIdRouteImport } from './routes/admin.user.$userId'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
@@ -170,6 +171,12 @@ const ApiPublicAuthLoginRoute = ApiPublicAuthLoginRouteImport.update({
   path: '/api/public/auth-login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicFirePolicyReminderOnceRoute =
+  ApiPublicFirePolicyReminderOnceRouteImport.update({
+    id: '/api/public/_fire-policy-reminder-once',
+    path: '/api/public',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AdminUserUserIdRoute = AdminUserUserIdRouteImport.update({
   id: '/user/$userId',
   path: '/user/$userId',
@@ -237,6 +244,7 @@ export interface FileRoutesByFullPath {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
+  '/api/public': typeof ApiPublicFirePolicyReminderOnceRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
@@ -271,6 +279,7 @@ export interface FileRoutesByTo {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/admin': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
+  '/api/public': typeof ApiPublicFirePolicyReminderOnceRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
@@ -307,6 +316,7 @@ export interface FileRoutesById {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
+  '/api/public/_fire-policy-reminder-once': typeof ApiPublicFirePolicyReminderOnceRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
@@ -344,6 +354,7 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/admin/'
     | '/admin/user/$userId'
+    | '/api/public'
     | '/api/public/auth-login'
     | '/api/public/auth-otp'
     | '/api/public/resend-webhook'
@@ -378,6 +389,7 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/admin'
     | '/admin/user/$userId'
+    | '/api/public'
     | '/api/public/auth-login'
     | '/api/public/auth-otp'
     | '/api/public/resend-webhook'
@@ -413,6 +425,7 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/admin/'
     | '/admin/user/$userId'
+    | '/api/public/_fire-policy-reminder-once'
     | '/api/public/auth-login'
     | '/api/public/auth-otp'
     | '/api/public/resend-webhook'
@@ -445,6 +458,7 @@ export interface RootRouteChildren {
   DownloadAndroidRoute: typeof DownloadAndroidRoute
   DownloadIosRoute: typeof DownloadIosRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
+  ApiPublicFirePolicyReminderOnceRoute: typeof ApiPublicFirePolicyReminderOnceRoute
   ApiPublicAuthLoginRoute: typeof ApiPublicAuthLoginRoute
   ApiPublicAuthOtpRoute: typeof ApiPublicAuthOtpRoute
   ApiPublicResendWebhookRoute: typeof ApiPublicResendWebhookRoute
@@ -637,6 +651,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAuthLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/_fire-policy-reminder-once': {
+      id: '/api/public/_fire-policy-reminder-once'
+      path: '/api/public'
+      fullPath: '/api/public'
+      preLoaderRoute: typeof ApiPublicFirePolicyReminderOnceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/user/$userId': {
       id: '/admin/user/$userId'
       path: '/user/$userId'
@@ -729,6 +750,7 @@ const rootRouteChildren: RootRouteChildren = {
   DownloadAndroidRoute: DownloadAndroidRoute,
   DownloadIosRoute: DownloadIosRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
+  ApiPublicFirePolicyReminderOnceRoute: ApiPublicFirePolicyReminderOnceRoute,
   ApiPublicAuthLoginRoute: ApiPublicAuthLoginRoute,
   ApiPublicAuthOtpRoute: ApiPublicAuthOtpRoute,
   ApiPublicResendWebhookRoute: ApiPublicResendWebhookRoute,
