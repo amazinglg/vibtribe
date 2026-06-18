@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useRef, useEffect } from 'react';
-import { Phone, Video, Paperclip, Mic, MicOff, Send, Lock, CheckCheck, Check, ArrowLeft, Info, Trash2, ShieldCheck, Ban, ShieldOff, X, Image, FileText, Camera, VideoOff, PhoneOff, Volume2, VolumeX, Timer, MoreVertical, UserPlus, Smile, KeyRound } from 'lucide-react';
+import { Phone, Video, Paperclip, Mic, MicOff, Send, Lock, CheckCheck, Check, ArrowLeft, Info, Trash2, ShieldCheck, Ban, ShieldOff, X, Image, FileText, Camera, VideoOff, PhoneOff, Volume2, VolumeX, Timer, MoreVertical, UserPlus, Smile, KeyRound, Shield, ShieldAlert } from 'lucide-react';
 import { useChatStore } from '@/store/chatStore';
 import MarkSecureModal from '@/components/MarkSecureModal';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,12 +12,13 @@ import PermissionPrompt from '@/components/PermissionPrompt';
 import { usePermissions } from '@/hooks/usePermissions';
 import { sendPushNotification } from '@/lib/pushNotifications';
 import { useCall } from '@/components/CallProvider';
-import { isNativeWrapper, pickNativeImage, pickNativeFiles, requestNativeCameraPermission } from '@/lib/native-bridge';
+import { isNativeWrapper, pickNativeImage, pickNativeFiles, requestNativeCameraPermission, setAndroidSecureFlag } from '@/lib/native-bridge';
 import { toast } from 'sonner';
 import { EMOJI_CATEGORIES, type EmojiCategoryKey } from '@/lib/emojis';
 import { useT } from '@/contexts/LanguageContext';
 import TribeDetailsSheet from '@/components/TribeDetailsSheet';
 import EncryptionPinModal from '@/components/EncryptionPinModal';
+import { TrustLockProvider } from '@/contexts/TrustLockContext';
 
 interface Message {
   id: string;
