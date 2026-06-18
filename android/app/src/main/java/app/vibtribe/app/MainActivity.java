@@ -14,6 +14,8 @@ import android.webkit.PermissionRequest;
 import android.webkit.URLUtil;
 import android.webkit.WebView;
 import android.webkit.WebChromeClient;
+import android.webkit.JavascriptInterface;
+import android.view.WindowManager;
 import android.widget.Toast;
 import android.view.View;
 import androidx.activity.EdgeToEdge;
@@ -108,6 +110,43 @@ public class MainActivity extends BridgeActivity {
                             runOnUiThread(() -> Toast.makeText(MainActivity.this, "Download failed", Toast.LENGTH_SHORT).show());
                         }
                     });
+                    // Trust Lock bridge — JS calls `window.VtTrustLock.enable()`
+                    // / `disable()` to toggle Android FLAG_SECURE so the OS
+                    // blocks screenshots, screen recording and the recent-apps
+                    // preview. Only the active chat panel controls this; all
+                    // other chats leave the flag cleared.
+                    webView.addJavascriptInterface(new TrustLockBridge(MainActivity.this), "VtTrustLock");
+                }
+            });
+        }
+    }
+
+    /** JS-callable bridge that flips Android's FLAG_SECURE on the host window. */
+    public static class TrustLockBridge {
+        private final MainActivity activity;
+        TrustLockBridge(MainActivity a) { this.activity = a; }
+
+        @JavascriptInterface
+        public void enable() {
+            activity.runOnUiThread(() -> {
+                try {
+                    activity.getWindow().setFlags(
+                        WindowManager.LayoutParams.FLAG_SECURE,
+                        WindowManager.LayoutParams.FLAG_SECURE
+                    );
+                } catch (Exception e) {
+                    Log.w("VibTribe", "TrustLock.enable failed", e);
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void disable() {
+            activity.runOnUiThread(() -> {
+                try {
+                    activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
+                } catch (Exception e) {
+                    Log.w("VibTribe", "TrustLock.disable failed", e);
                 }
             });
         }
