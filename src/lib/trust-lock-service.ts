@@ -76,6 +76,16 @@ export function detectTrustLockPlatform(): TrustLockPlatform {
   return 'web';
 }
 
+/** True for iOS native app AND iOS PWA. False for Android, desktop web, Android PWA. */
+export function isIOS(): boolean {
+  const platform = detectTrustLockPlatform();
+  if (platform === 'ios') return true;
+  if (platform === 'pwa' && typeof navigator !== 'undefined') {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent);
+  }
+  return false;
+}
+
 async function getIosPlugin(): Promise<IosTrustLockPlugin | null> {
   if (detectTrustLockPlatform() !== 'ios') return null;
   const plugin = getCapacitor()?.Plugins?.VtTrustLock;

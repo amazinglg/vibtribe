@@ -13,7 +13,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { sendPushNotification } from '@/lib/pushNotifications';
 import { useCall } from '@/components/CallProvider';
 import { isNativeWrapper, pickNativeImage, pickNativeFiles, requestNativeCameraPermission } from '@/lib/native-bridge';
-import { TrustLockService, onTrustLockScreenshot } from '@/lib/trust-lock-service';
+import { TrustLockService, onTrustLockScreenshot, isIOS } from '@/lib/trust-lock-service';
 import { toast } from 'sonner';
 import { EMOJI_CATEGORIES, type EmojiCategoryKey } from '@/lib/emojis';
 import { useT } from '@/contexts/LanguageContext';
