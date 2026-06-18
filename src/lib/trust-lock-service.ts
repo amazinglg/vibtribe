@@ -4,8 +4,8 @@
  * `disableProtection()` without caring about the host platform; this module
  * routes the call to the strongest protections that platform allows:
  *
- *   Android  →  WindowManager.LayoutParams.FLAG_SECURE via the
- *               `VtTrustLock` JS interface installed by MainActivity.
+ *   Android  →  WindowManager.LayoutParams.FLAG_SECURE via the native
+ *               `VtTrustLock` Capacitor plugin.
  *               Blocks screenshots, screen recording and the recent-apps
  *               preview thumbnail at the OS level.
  *
