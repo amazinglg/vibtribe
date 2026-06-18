@@ -2175,9 +2175,6 @@ export default function ChatWindowPanel() {
                     if (canOpen) { e.preventDefault(); setActionMsg(msg); }
                   }}
                 >
-                  {(() => null)()}
-                  {(() => null)()}
-                  {(() => null)()}
                   <div
                     className={(() => {
                       const solo = typeof displayText === 'string' && !encMedia && !imageUrl && !msg.deletedForEveryone && isSoloEmojiText(displayText);
