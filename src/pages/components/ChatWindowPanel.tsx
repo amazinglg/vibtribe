@@ -13,7 +13,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { sendPushNotification } from '@/lib/pushNotifications';
 import { useCall } from '@/components/CallProvider';
 import { isNativeWrapper, pickNativeImage, pickNativeFiles, requestNativeCameraPermission } from '@/lib/native-bridge';
-import { TrustLockService, onTrustLockScreenshot } from '@/lib/trust-lock-service';
+import { TrustLockService, onTrustLockScreenshot, isIOS } from '@/lib/trust-lock-service';
 import { toast } from 'sonner';
 import { EMOJI_CATEGORIES, type EmojiCategoryKey } from '@/lib/emojis';
 import { useT } from '@/contexts/LanguageContext';
@@ -2743,6 +2743,12 @@ export default function ChatWindowPanel() {
               <p className="flex items-start gap-2"><ShieldAlert size={13} className="text-primary mt-0.5" /> The strongest privacy protection allowed by your device is active.</p>
               <p className="flex items-start gap-2"><ShieldAlert size={13} className="text-primary mt-0.5" /> Android blocks screenshots & recording. iOS detects screenshots and blurs recordings.</p>
               <p className="flex items-start gap-2"><ShieldAlert size={13} className="text-primary mt-0.5" /> Media download, sharing and export are disabled on every platform.</p>
+              {isIOS() && (
+                <p className="flex items-start gap-2 mt-2 pt-2 border-t border-primary/10 text-muted-foreground">
+                  <span className="flex-shrink-0 mt-0.5">ℹ️</span>
+                  <span>Due to Apple platform limitations, screenshots cannot always be fully prevented on iOS devices. Trust Lock applies the strongest protections available, including screenshot detection, screen-recording protection, media restrictions and privacy safeguards.</span>
+                </p>
+              )}
             </div>
             <button
               onClick={() => setShowTrustLockInfo(false)}
