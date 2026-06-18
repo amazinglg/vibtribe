@@ -1834,6 +1834,11 @@ export default function ChatWindowPanel() {
               <p className="font-bold text-foreground">{contact.name}</p>
               <p className={`text-xs ${contact.online ? 'text-vt-green' : 'text-muted-foreground'}`}>{contact.lastSeen}</p>
               {e2eEnabled && <p className="text-xs text-vt-green mt-0.5">🔒 End-to-end encrypted</p>}
+              {trustLock.enabled && (
+                <p className="text-xs text-primary mt-0.5 flex items-center gap-1">
+                  <Shield size={11} className="text-primary" /> Trust Lock enabled
+                </p>
+              )}
             </div>
             <button onClick={() => setShowInfo(false)} className="ml-auto p-1.5 rounded-lg hover:bg-muted text-muted-foreground">
               <X size={16} />
