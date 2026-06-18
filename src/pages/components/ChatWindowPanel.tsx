@@ -1347,6 +1347,15 @@ export default function ChatWindowPanel() {
   };
 
   const insertEmoji = (emoji: string) => {
+    // VibTribe image emojis are sticker-style: send instantly as their
+    // own message so the composer never shows the raw `:vt:id:` shortcode
+    // (which looks like a debug string to the user). Standard unicode
+    // emojis still get appended to the text input as before.
+    if (/^:vt:[a-z0-9_-]+:$/.test(emoji)) {
+      setShowEmoji(false);
+      void sendMessage(emoji);
+      return;
+    }
     setInputText(prev => prev + emoji);
     inputRef.current?.focus();
   };
