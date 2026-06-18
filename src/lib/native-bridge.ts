@@ -410,6 +410,12 @@ async function withNativeTimeout<T>(promise: Promise<T>, timeoutMs = TRUST_LOCK_
 async function getAndroidTrustLockPlugin(): Promise<AndroidTrustLockPlugin | null> {
   if (typeof window === 'undefined') return null;
   if (androidTrustLockPlugin !== undefined) return androidTrustLockPlugin;
+  const cap = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean; getPlatform?: () => string } }).Capacitor;
+  const isNativeAndroid = !!cap && (cap.isNativePlatform?.() ?? true) && cap.getPlatform?.() === 'android';
+  if (!isNativeAndroid) {
+    androidTrustLockPlugin = null;
+    return androidTrustLockPlugin;
+  }
   try {
     const { registerPlugin } = await import('@capacitor/core');
     androidTrustLockPlugin = registerPlugin<AndroidTrustLockPlugin>('VtTrustLock');
