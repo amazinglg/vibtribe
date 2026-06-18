@@ -27,6 +27,7 @@ export default function SignUpPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const [marketingOptIn, setMarketingOptIn] = useState(false);
   const [step, setStep] = useState<'details' | 'verify'>('details');
   const [otp, setOtp] = useState('');
@@ -62,7 +63,8 @@ export default function SignUpPage() {
     if (!password) { setError('Please enter a password'); return; }
     if (password.length < 6) { setError('Password must be at least 6 characters'); return; }
     if (password !== confirmPassword) { setError('Passwords do not match'); return; }
-    if (!acceptedTerms) { setError('Please accept the Terms & Conditions and Privacy Policy to continue'); return; }
+    if (!acceptedTerms) { setError('Please accept the Terms & Conditions to continue'); return; }
+    if (!acceptedPrivacy) { setError('Please accept the Privacy Policy to continue'); return; }
 
     setLoading(true);
     try {
@@ -365,10 +367,23 @@ export default function SignUpPage() {
                 {acceptedTerms && <Check size={13} className="text-white" />}
               </button>
               <span className="text-xs text-muted-foreground leading-relaxed">
-                {t('auth.agreeTerms')}{' '}
-                <Link to="/terms" className="text-primary hover:underline" target="_blank">{t('auth.terms')}</Link>
-                {' '}{t('auth.and')}{' '}
-                <Link to="/privacy" className="text-primary hover:underline" target="_blank">{t('auth.privacy')}</Link>.
+                I have read and accept VibTribe's{' '}
+                <Link to="/terms" className="text-primary hover:underline" target="_blank">Terms &amp; Conditions</Link>.
+              </span>
+            </label>
+
+            <label className="flex items-start gap-2.5 cursor-pointer select-none">
+              <button
+                type="button"
+                onClick={() => { setAcceptedPrivacy(v => !v); setError(''); }}
+                aria-pressed={acceptedPrivacy}
+                className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-md border flex items-center justify-center transition-all ${acceptedPrivacy ? 'bg-primary border-primary' : 'bg-input border-border hover:border-primary'}`}
+              >
+                {acceptedPrivacy && <Check size={13} className="text-white" />}
+              </button>
+              <span className="text-xs text-muted-foreground leading-relaxed">
+                I have read and accept VibTribe's{' '}
+                <Link to="/privacy" className="text-primary hover:underline" target="_blank">Privacy Policy</Link>.
               </span>
             </label>
 
@@ -388,7 +403,7 @@ export default function SignUpPage() {
 
             <button
               type="submit"
-              disabled={loading || !acceptedTerms}
+              disabled={loading || !acceptedTerms || !acceptedPrivacy}
               className="w-full gradient-primary text-white font-semibold py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed glow-primary mt-2"
             >
               {loading ? (
