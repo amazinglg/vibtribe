@@ -2,54 +2,90 @@ import React, { useEffect, useRef, useState } from 'react';
 import splashVideo from '@/assets/splash.mp4.asset.json';
 
 /**
- * Brief 2-second animated splash shown once per browser session on first
- * load. Four overlapping coloured circles rotate around a centre while the
- * VibTribe wordmark fades / scales up. After ~2s it removes itself from
- * the DOM and reveals the real app underneath (loaded in parallel).
+ * Full-bleed intro splash shown once per browser session.
+ *
+ * UX rules (per product feedback):
+ * - Background is the same near-black as the video letterbox so the video
+ *   blends in with no visible borders, even on desktop / tablet where the
+ *   720x1570 portrait clip doesn't fill the viewport.
+ * - Use `object-contain` so the user always sees the FULL animation
+ *   uncropped — never a zoomed-in fragment.
+ * - Hold the splash on a black frame until the video has buffered enough
+ *   to play through (`canplaythrough`) so we don't show the WebView's
+ *   "tap to play" / pause glyph while the file is still loading.
+ * - Dismiss only when the video naturally ends (or via a generous safety
+ *   cap if the network fails). Fade out smoothly into the app underneath.
  */
 const SESSION_KEY = 'vt_splash_shown';
+const SAFETY_CAP_MS = 20000; // generous; real dismiss happens on `ended`
+const FADE_MS = 450;
 
 export default function SplashAnimation() {
-  // Always render null on SSR / first client render to avoid hydration mismatch.
-  const [visible, setVisible] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [ready, setReady] = useState(false);
+  const [fading, setFading] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
+  // Decide on the client whether to show the splash this session.
   useEffect(() => {
     try {
       if (sessionStorage.getItem(SESSION_KEY)) return;
     } catch {}
-    setVisible(true);
+    setMounted(true);
   }, []);
 
-  const dismiss = () => {
+  const dismiss = React.useCallback(() => {
     try { sessionStorage.setItem(SESSION_KEY, '1'); } catch {}
-    setVisible(false);
-  };
+    setFading(true);
+    window.setTimeout(() => setMounted(false), FADE_MS);
+  }, []);
 
+  // Kick playback as soon as the element exists; some WebViews need an
+  // explicit play() call even with autoPlay.
   useEffect(() => {
-    if (!visible) return;
-    // Hard cap so a broken/slow video never blocks the app forever.
-    const hardCap = setTimeout(dismiss, 6000);
-    return () => clearTimeout(hardCap);
-  }, [visible]);
+    if (!mounted) return;
+    const v = videoRef.current;
+    if (!v) return;
+    const tryPlay = () => {
+      const p = v.play();
+      if (p && typeof p.catch === 'function') p.catch(() => {/* ignored */});
+    };
+    tryPlay();
+    const safety = window.setTimeout(dismiss, SAFETY_CAP_MS);
+    return () => window.clearTimeout(safety);
+  }, [mounted, dismiss]);
 
-  if (!visible) return null;
+  if (!mounted) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black overflow-hidden animate-vt-splash-fadeout">
-      <style>{`
-        @keyframes vt-splash-fadeout { 0%,85%{opacity:1} 100%{opacity:0;visibility:hidden} }
-      `}</style>
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden"
+      style={{
+        background: '#000',
+        opacity: fading ? 0 : 1,
+        transition: `opacity ${FADE_MS}ms ease-out`,
+      }}
+      aria-hidden="true"
+    >
       <video
         ref={videoRef}
         src={splashVideo.url}
         autoPlay
         muted
         playsInline
+        {...({ 'webkit-playsinline': 'true' } as any)}
         preload="auto"
+        controls={false}
+        disablePictureInPicture
+        {...({ disableRemotePlayback: true } as any)}
+        onCanPlayThrough={() => setReady(true)}
         onEnded={dismiss}
         onError={dismiss}
-        className="w-full h-full object-cover"
+        className="max-w-full max-h-full w-auto h-auto object-contain pointer-events-none select-none"
+        style={{
+          opacity: ready ? 1 : 0,
+          transition: 'opacity 250ms ease-out',
+        }}
       />
     </div>
   );

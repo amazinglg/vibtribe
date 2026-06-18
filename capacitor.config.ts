@@ -38,8 +38,11 @@ const config: CapacitorConfig = {
   plugins: {
     SplashScreen: {
       backgroundColor: '#070a1b',
-      launchAutoHide: false,
-      launchShowDuration: 2500,
+      // Hide the native launch logo immediately so the in-app video splash
+      // (SplashAnimation.tsx) is the first thing the user sees instead of
+      // the static logo flashing first.
+      launchAutoHide: true,
+      launchShowDuration: 0,
       androidScaleType: 'CENTER_CROP',
       showSpinner: false,
       splashFullScreen: true,
