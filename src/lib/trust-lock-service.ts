@@ -4,8 +4,8 @@
  * `disableProtection()` without caring about the host platform; this module
  * routes the call to the strongest protections that platform allows:
  *
- *   Android  →  WindowManager.LayoutParams.FLAG_SECURE via the
- *               `VtTrustLock` JS interface installed by MainActivity.
+ *   Android  →  WindowManager.LayoutParams.FLAG_SECURE via the native
+ *               `VtTrustLock` Capacitor plugin.
  *               Blocks screenshots, screen recording and the recent-apps
  *               preview thumbnail at the OS level.
  *
@@ -64,6 +64,10 @@ function getCapacitor(): CapacitorHandle | null {
 
 export function detectTrustLockPlatform(): TrustLockPlatform {
   if (typeof window === 'undefined') return 'web';
+  // Legacy Android bridge source of truth. This covers older wrappers where
+  // Capacitor platform metadata may not be present but MainActivity injected
+  // the screenshot-blocking interface.
+  if ((window as unknown as { VtTrustLock?: unknown }).VtTrustLock) return 'android';
   const cap = getCapacitor();
   if (cap?.isNativePlatform?.() && cap.getPlatform) {
     const p = cap.getPlatform();
@@ -119,13 +123,18 @@ export const TrustLockService = {
   getPlatform: detectTrustLockPlatform,
   isProtectionActive: () => isActive,
 
-  async enableProtection(): Promise<void> {
-    if (isActive) return;
+  async enableProtection(): Promise<boolean> {
+    if (isActive) return true;
     isActive = true;
     const platform = detectTrustLockPlatform();
 
     if (platform === 'android') {
-      setAndroidSecureFlag(true);
+      const enabled = await setAndroidSecureFlag(true);
+      if (!enabled) {
+        isActive = false;
+        console.warn('[TrustLock] Android native secure flag was not applied.');
+        return false;
+      }
     } else if (platform === 'ios') {
       const plugin = await getIosPlugin();
       if (plugin) {
@@ -165,13 +174,14 @@ export const TrustLockService = {
       document.documentElement.setAttribute('data-trust-lock', 'active');
       document.documentElement.setAttribute('data-trust-lock-platform', platform);
     }
+    return true;
   },
 
   async disableProtection(): Promise<void> {
     if (!isActive) return;
     isActive = false;
     const platform = detectTrustLockPlatform();
-    if (platform === 'android') setAndroidSecureFlag(false);
+    if (platform === 'android') await setAndroidSecureFlag(false);
     if (platform === 'ios') {
       const plugin = await getIosPlugin();
       if (plugin) {
