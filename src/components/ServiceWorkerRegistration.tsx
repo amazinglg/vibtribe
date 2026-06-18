@@ -140,8 +140,17 @@ export default function ServiceWorkerRegistration() {
     };
 
     navigator.serviceWorker.addEventListener('message', handleSWMessage);
+    // Native (Capacitor) push-tap dispatches this event — same handler as
+    // the SW `OPEN_NOTIFICATION` postMessage so deep-linking works on
+    // Android too. See src/lib/fcmRegister.ts.
+    const handleOpenChat = (e: Event) => {
+      const chatId = (e as CustomEvent).detail?.chatId;
+      if (chatId) setSelectedChatId(chatId);
+    };
+    window.addEventListener('vt-open-chat', handleOpenChat as EventListener);
     return () => {
       navigator.serviceWorker.removeEventListener('message', handleSWMessage);
+      window.removeEventListener('vt-open-chat', handleOpenChat as EventListener);
       stopRingtone();
     };
   }, [setSelectedChatId]);

@@ -304,12 +304,24 @@ export default function ChatListPanel() {
     // to update without needing to close and reopen the app.
     const onSecureChanged = () => { loadChats(); };
     window.addEventListener('vt-secure-changed', onSecureChanged);
+    // iOS PWA + Android WebView: realtime websockets can silently disconnect
+    // when the app goes to background. Use visibility/focus + a 30s polling
+    // fallback to keep the list fresh even when realtime is wedged.
+    const onVisibility = () => { if (document.visibilityState === 'visible') loadChats(); };
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('focus', onVisibility);
+    const poll = setInterval(() => {
+      if (typeof document === 'undefined' || document.visibilityState === 'visible') loadChats();
+    }, 30000);
     return () => {
       if (timer) clearTimeout(timer);
       supabase.removeChannel(channel);
       window.removeEventListener('vt-app-resumed', onResume);
       window.removeEventListener('vt-network-online', onResume);
       window.removeEventListener('vt-secure-changed', onSecureChanged);
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('focus', onVisibility);
+      clearInterval(poll);
     };
   }, [user?.id]);
 

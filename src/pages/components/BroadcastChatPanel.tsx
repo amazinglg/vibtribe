@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import { isNativeWrapper, pickNativeFiles } from '@/lib/native-bridge';
 import Wordmark from '@/components/ui/Wordmark';
+import ImageCropModal from '@/components/ImageCropModal';
 
 export const BROADCAST_CHAT_ID = '__vibtribe_broadcast__';
 const FALLBACK_LOGO = '/assets/images/app_logo.png';
@@ -42,6 +43,7 @@ export default function BroadcastChatPanel() {
   const [broadcastAvatar, setBroadcastAvatar] = useState<string>(FALLBACK_LOGO);
   const avatarUploadRef = useRef<HTMLInputElement>(null);
   const [avatarBusy, setAvatarBusy] = useState(false);
+  const [avatarCropFile, setAvatarCropFile] = useState<File | null>(null);
 
   const loadBroadcastAvatar = async () => {
     const { data } = await supabase
@@ -52,15 +54,13 @@ export default function BroadcastChatPanel() {
     if (data?.value) setBroadcastAvatar(String(data.value));
   };
 
-  const handleAvatarPick = async (file: File) => {
+  const uploadAvatarBlob = async (blob: Blob) => {
     if (!isMaster || !user) return;
-    if (!file.type.startsWith('image/')) { toast.error('Please choose an image'); return; }
-    if (file.size > 8 * 1024 * 1024) { toast.error('Image must be under 8MB'); return; }
     setAvatarBusy(true);
     try {
-      const path = `broadcast/avatar-${Date.now()}.${(file.name.split('.').pop() || 'jpg').toLowerCase()}`;
-      const { error: upErr } = await supabase.storage.from('profile-photos').upload(path, file, {
-        upsert: true, contentType: file.type || 'image/jpeg', cacheControl: '3600',
+      const path = `broadcast/avatar-${Date.now()}.jpg`;
+      const { error: upErr } = await supabase.storage.from('profile-photos').upload(path, blob, {
+        upsert: true, contentType: 'image/jpeg', cacheControl: '3600',
       });
       if (upErr) throw upErr;
       const { data: pub } = supabase.storage.from('profile-photos').getPublicUrl(path);
@@ -75,6 +75,13 @@ export default function BroadcastChatPanel() {
       setAvatarBusy(false);
       if (avatarUploadRef.current) avatarUploadRef.current.value = '';
     }
+  };
+
+  const handleAvatarPick = (file: File) => {
+    if (!isMaster || !user) return;
+    if (!file.type.startsWith('image/')) { toast.error('Please choose an image'); return; }
+    if (file.size > 8 * 1024 * 1024) { toast.error('Image must be under 8MB'); return; }
+    setAvatarCropFile(file);
   };
 
   const load = async () => {
@@ -290,6 +297,7 @@ export default function BroadcastChatPanel() {
   };
 
   return (
+    <>
     <div className="flex-1 flex flex-col h-full min-w-0 gradient-bg-page">
       {/* Header */}
       <div className="flex items-center gap-3 px-3 py-3 border-b border-border glass-strong">
@@ -305,16 +313,27 @@ export default function BroadcastChatPanel() {
             title={isMaster ? 'Tap to change broadcast avatar (everyone sees this)' : undefined}
           />
           {isMaster && (
-            <input
-              ref={avatarUploadRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={e => {
-                const f = e.target.files?.[0];
-                if (f) handleAvatarPick(f);
-              }}
-            />
+            <>
+              <input
+                ref={avatarUploadRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={e => {
+                  const f = e.target.files?.[0];
+                  if (f) handleAvatarPick(f);
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => !avatarBusy && avatarUploadRef.current?.click()}
+                aria-label="Change broadcast avatar"
+                title="Change broadcast avatar"
+                className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-primary text-primary-foreground shadow-md border border-background flex items-center justify-center hover:scale-110 transition-transform"
+              >
+                <Pencil size={10} />
+              </button>
+            </>
           )}
           {avatarBusy && (
             <span className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full text-[10px] text-white">…</span>
@@ -327,6 +346,17 @@ export default function BroadcastChatPanel() {
           </div>
           <p className="text-[11px] text-muted-foreground truncate">Official VibTribe Account</p>
         </div>
+        {isMaster && (
+          <button
+            type="button"
+            onClick={() => !avatarBusy && avatarUploadRef.current?.click()}
+            aria-label="Change broadcast avatar"
+            title="Change broadcast avatar"
+            className="p-2 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Pencil size={16} />
+          </button>
+        )}
       </div>
 
       {/* Messages */}
@@ -518,5 +548,15 @@ export default function BroadcastChatPanel() {
         </div>
       )}
     </div>
+      <ImageCropModal
+        isOpen={!!avatarCropFile}
+        file={avatarCropFile}
+        onClose={() => setAvatarCropFile(null)}
+        onCropped={async (blob) => { setAvatarCropFile(null); await uploadAvatarBlob(blob); }}
+        aspect={1}
+        title="Crop Broadcast Avatar"
+        output={{ width: 512, height: 512, mime: 'image/jpeg', quality: 0.9 }}
+      />
+    </>
   );
 }
