@@ -1737,6 +1737,48 @@ export default function ChatWindowPanel() {
                   <KeyRound size={16} className="text-vt-green" />
                   <span className="flex-1">Unlock Encryption</span>
                 </button>
+                {chatType !== 'group' && (
+                  <button
+                    onClick={async () => {
+                      setShowMoreMenu(false);
+                      if (!user || !selectedChatId) return;
+                      if (trustLock.enabled) {
+                        // Disable — only the owner is allowed
+                        if (trustLock.ownerUserId !== user.id) {
+                          toast.error('Only the user who enabled Trust Lock can turn it off');
+                          return;
+                        }
+                        setTrustLockBusy(true);
+                        try {
+                          const { error } = await supabase
+                            .from('trust_locks' as any)
+                            .update({ enabled: false, enabled_at: null, owner_user_id: user.id } as any)
+                            .eq('chat_id', selectedChatId);
+                          if (error) throw error;
+                          setTrustLock({ enabled: false, ownerUserId: user.id });
+                          toast.success('Trust Lock disabled');
+                        } catch (e: any) {
+                          toast.error(e?.message || 'Could not disable Trust Lock');
+                        } finally {
+                          setTrustLockBusy(false);
+                        }
+                      } else {
+                        // Enable — show confirmation first
+                        setShowTrustLockConfirm(true);
+                      }
+                    }}
+                    disabled={trustLockBusy || (trustLock.enabled && trustLock.ownerUserId !== user?.id)}
+                    className="w-full text-left px-3 py-2.5 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground disabled:opacity-60"
+                  >
+                    <Shield size={16} className={trustLock.enabled ? 'text-primary' : 'text-muted-foreground'} />
+                    <span className="flex-1">Trust Lock</span>
+                    <span className={`text-[10px] font-semibold ${trustLock.enabled ? 'text-primary' : 'text-muted-foreground'}`}>
+                      {trustLock.enabled
+                        ? (trustLock.ownerUserId === user?.id ? 'On · You' : 'On · Locked')
+                        : 'Off'}
+                    </span>
+                  </button>
+                )}
                 {chatType !== 'group' && contact?.userId && !contact.isContact && (
                   <button
                     onClick={() => { setShowMoreMenu(false); handleAddToContacts(); }}
