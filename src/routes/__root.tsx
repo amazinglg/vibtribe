@@ -18,6 +18,7 @@ import { useEffect } from "react";
 import { initNativeBridge } from "@/lib/native-bridge";
 
 import appCss from "../styles.css?url";
+import splashVideo from "@/assets/splash.mp4.asset.json";
 
 function NotFoundComponent() {
   return (
@@ -115,6 +116,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "apple-touch-icon", sizes: "152x152", href: "/icons/apple-touch-icon-152.png" },
       { rel: "icon", type: "image/png", sizes: "192x192", href: "/icons/icon-192x192.png" },
       { rel: "icon", type: "image/png", sizes: "512x512", href: "/icons/icon-512x512.png" },
+      // Preload the intro splash video at top priority so it's ready to play
+      // immediately on first paint, avoiding initial buffering stutter.
+      { rel: "preload", as: "video", href: splashVideo.url, type: "video/mp4", fetchpriority: "high" } as any,
       // iOS PWA splash screens — eliminates the long white screen on launch
       { rel: "apple-touch-startup-image", href: "/splash/splash-1290x2796.png", media: "(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" },
       { rel: "apple-touch-startup-image", href: "/splash/splash-1179x2556.png", media: "(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" },
