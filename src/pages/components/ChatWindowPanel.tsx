@@ -2619,6 +2619,109 @@ export default function ChatWindowPanel() {
         </div>
       )}
 
+      {/* Trust Lock — enable confirmation */}
+      {showTrustLockConfirm && (
+        <div className="fixed inset-0 z-[1700] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => !trustLockBusy && setShowTrustLockConfirm(false)}>
+          <div className="bg-card border border-border rounded-2xl max-w-md w-full p-5 shadow-card float-up" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center">
+                <Shield size={20} className="text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-foreground text-sm">Turn on Trust Lock?</h3>
+                <p className="text-[11px] text-muted-foreground">Extra privacy for this chat</p>
+              </div>
+              <button onClick={() => !trustLockBusy && setShowTrustLockConfirm(false)} className="p-1.5 text-muted-foreground hover:text-foreground"><X size={16} /></button>
+            </div>
+            <div className="space-y-2 text-xs text-foreground/90 leading-relaxed mb-4">
+              <p>While Trust Lock is on in this chat:</p>
+              <div className="rounded-lg bg-primary/5 border border-primary/15 p-3 space-y-1.5">
+                <p className="flex items-start gap-2"><ShieldAlert size={13} className="text-primary mt-0.5" /> Screenshots will be blocked (Android).</p>
+                <p className="flex items-start gap-2"><ShieldAlert size={13} className="text-primary mt-0.5" /> Screen recording will be blocked (Android).</p>
+                <p className="flex items-start gap-2"><ShieldAlert size={13} className="text-primary mt-0.5" /> Media download will be disabled.</p>
+                <p className="flex items-start gap-2"><ShieldAlert size={13} className="text-primary mt-0.5" /> Media sharing / export will be disabled.</p>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                You will become the owner. <strong>Only you</strong> will be able to turn Trust Lock back off.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => !trustLockBusy && setShowTrustLockConfirm(false)}
+                disabled={trustLockBusy}
+                className="flex-1 py-2.5 rounded-lg glass text-sm text-foreground hover:bg-muted"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!user || !selectedChatId) return;
+                  setTrustLockBusy(true);
+                  try {
+                    const { error } = await supabase
+                      .from('trust_locks' as any)
+                      .upsert(
+                        {
+                          chat_id: selectedChatId,
+                          enabled: true,
+                          owner_user_id: user.id,
+                          enabled_at: new Date().toISOString(),
+                        } as any,
+                        { onConflict: 'chat_id' } as any,
+                      );
+                    if (error) throw error;
+                    setTrustLock({ enabled: true, ownerUserId: user.id });
+                    setShowTrustLockConfirm(false);
+                    toast.success('Trust Lock enabled');
+                  } catch (e: any) {
+                    toast.error(e?.message || 'Could not enable Trust Lock');
+                  } finally {
+                    setTrustLockBusy(false);
+                  }
+                }}
+                disabled={trustLockBusy}
+                className="flex-1 py-2.5 rounded-lg gradient-primary text-white text-sm font-semibold disabled:opacity-60"
+              >
+                {trustLockBusy ? 'Enabling…' : 'Enable Trust Lock'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Trust Lock — info popover (tap badge) */}
+      {showTrustLockInfo && (
+        <div className="fixed inset-0 z-[1700] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowTrustLockInfo(false)}>
+          <div className="bg-card border border-border rounded-2xl max-w-md w-full p-5 shadow-card float-up" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center">
+                <Shield size={20} className="text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-foreground text-sm">Trust Lock is on</h3>
+                <p className="text-[11px] text-muted-foreground">
+                  {trustLock.ownerUserId === user?.id
+                    ? 'You enabled Trust Lock. Only you can disable it.'
+                    : `${contact?.name || 'The other user'} enabled Trust Lock. Only they can disable it.`}
+                </p>
+              </div>
+              <button onClick={() => setShowTrustLockInfo(false)} className="p-1.5 text-muted-foreground hover:text-foreground"><X size={16} /></button>
+            </div>
+            <div className="rounded-lg bg-primary/5 border border-primary/15 p-3 space-y-1.5 text-xs text-foreground/90">
+              <p className="flex items-start gap-2"><ShieldAlert size={13} className="text-primary mt-0.5" /> Screenshots and screen recording are blocked on Android.</p>
+              <p className="flex items-start gap-2"><ShieldAlert size={13} className="text-primary mt-0.5" /> Media download, sharing and export are disabled.</p>
+              <p className="flex items-start gap-2"><ShieldAlert size={13} className="text-primary mt-0.5" /> Existing media in this chat follows the same restrictions.</p>
+            </div>
+            <button
+              onClick={() => setShowTrustLockInfo(false)}
+              className="mt-4 w-full py-2.5 rounded-lg gradient-primary text-white text-sm font-semibold"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Enlarged profile picture viewer */}
       {enlargeAvatar && contact?.avatarUrl && (
         <div
