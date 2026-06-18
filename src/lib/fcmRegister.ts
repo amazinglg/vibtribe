@@ -36,6 +36,33 @@ export async function registerFcmToken(userId: string): Promise<void> {
     await PushNotifications.addListener('registrationError', (err) => {
       console.warn('[FCM] registration error', err);
     });
+    // When the user taps an FCM notification (background/killed-state),
+    // route them to the right chat/call. The notification payload includes
+    // either { url, chatId, callId } in `data`.
+    await PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
+      try {
+        const data: any = action?.notification?.data || {};
+        const chatId = data.chatId || data.chat_id || null;
+        const callId = data.callId || data.call_id || null;
+        const url = (data.url as string) || (chatId ? `/?chat=${encodeURIComponent(chatId)}${callId ? `&call=${encodeURIComponent(callId)}` : ''}` : '/');
+        // Update the URL so deep-link handlers in the app pick it up.
+        try {
+          window.history.pushState({}, '', url);
+          window.dispatchEvent(new PopStateEvent('popstate'));
+        } catch {}
+        // Fire a custom event the chat store listens for — this works even
+        // when the SPA is already on `/` and history.pushState alone would
+        // not re-render the chat panel.
+        if (chatId) {
+          window.dispatchEvent(new CustomEvent('vt-open-chat', { detail: { chatId, callId } }));
+        }
+        if (callId) {
+          window.dispatchEvent(new CustomEvent('vt-incoming-call', { detail: { callId, chatId } }));
+        }
+      } catch (e) {
+        console.warn('[FCM] action handler failed', e);
+      }
+    });
 
     await PushNotifications.register();
   } catch (e) {
