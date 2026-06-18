@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, Loader2, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, Check, Loader2, ShieldCheck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { TermsContent } from '@/components/legal/LegalContent';
 import { toast } from 'sonner';
+
+const OFFBOARD_DAYS = 15;
 
 /**
  * Blocking modal shown on app entry to any signed-in user who hasn't yet
@@ -16,6 +18,7 @@ export default function TermsAcceptanceGate() {
   const [scrolledToEnd, setScrolledToEnd] = useState(false);
   const [checked, setChecked] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [warningSentAt, setWarningSentAt] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -24,7 +27,7 @@ export default function TermsAcceptanceGate() {
     (async () => {
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('terms_accepted_at')
+        .select('terms_accepted_at, privacy_accepted_at, terms_warning_sent_at')
         .eq('id', user.id)
         .maybeSingle();
       if (cancelled) return;
@@ -32,7 +35,10 @@ export default function TermsAcceptanceGate() {
         console.warn('[VT-TERMS] failed to read terms_accepted_at', error);
         return;
       }
-      if (!data?.terms_accepted_at) setNeedsAccept(true);
+      if (!data?.terms_accepted_at || !(data as any)?.privacy_accepted_at) {
+        setNeedsAccept(true);
+        setWarningSentAt(((data as any)?.terms_warning_sent_at as string | null) ?? null);
+      }
     })();
     return () => { cancelled = true; };
   }, [user]);
@@ -60,6 +66,16 @@ export default function TermsAcceptanceGate() {
 
   if (!user || !needsAccept) return null;
 
+  let deadlineText: string | null = null;
+  let daysLeft: number | null = null;
+  if (warningSentAt) {
+    const deadline = new Date(new Date(warningSentAt).getTime() + OFFBOARD_DAYS * 86400_000);
+    daysLeft = Math.max(0, Math.ceil((deadline.getTime() - Date.now()) / 86400_000));
+    deadlineText = deadline.toLocaleDateString('en-IN', {
+      day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata',
+    });
+  }
+
   if (typeof document === 'undefined') return null;
   return createPortal(
     <div
@@ -74,6 +90,19 @@ export default function TermsAcceptanceGate() {
             <p className="text-xs text-muted-foreground">Please review and accept to continue using VibTribe.</p>
           </div>
         </div>
+
+        {deadlineText && (
+          <div className="mx-5 mt-4 px-3 py-2.5 rounded-lg border border-amber-400/60 bg-amber-50 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 flex items-start gap-2">
+            <AlertTriangle size={16} className="mt-0.5 flex-shrink-0" />
+            <p className="text-xs leading-relaxed">
+              <strong>Action required by {deadlineText}</strong>
+              {typeof daysLeft === 'number' && (
+                <> · {daysLeft === 0 ? 'final day' : `${daysLeft} day${daysLeft === 1 ? '' : 's'} left`}</>
+              )}.
+              If you don't accept within this window, your VibTribe account will be offboarded from the platform.
+            </p>
+          </div>
+        )}
 
         <div
           ref={scrollRef}

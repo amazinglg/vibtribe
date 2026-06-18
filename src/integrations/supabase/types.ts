@@ -1226,6 +1226,7 @@ export type Database = {
           role: string
           status_visibility: string
           terms_accepted_at: string | null
+          terms_warning_sent_at: string | null
           totp_enabled: boolean
           totp_enabled_at: string | null
           totp_pending_secret: string | null
@@ -1276,6 +1277,7 @@ export type Database = {
           role?: string
           status_visibility?: string
           terms_accepted_at?: string | null
+          terms_warning_sent_at?: string | null
           totp_enabled?: boolean
           totp_enabled_at?: string | null
           totp_pending_secret?: string | null
@@ -1326,6 +1328,7 @@ export type Database = {
           role?: string
           status_visibility?: string
           terms_accepted_at?: string | null
+          terms_warning_sent_at?: string | null
           totp_enabled?: boolean
           totp_enabled_at?: string | null
           totp_pending_secret?: string | null
@@ -1484,6 +1487,7 @@ export type Database = {
           role: string
           status_visibility: string
           terms_accepted_at: string | null
+          terms_warning_sent_at: string | null
           totp_enabled: boolean
           totp_enabled_at: string | null
           totp_pending_secret: string | null
@@ -1557,6 +1561,7 @@ export type Database = {
           role: string
           status_visibility: string
           terms_accepted_at: string | null
+          terms_warning_sent_at: string | null
           totp_enabled: boolean
           totp_enabled_at: string | null
           totp_pending_secret: string | null
@@ -1668,6 +1673,7 @@ export type Database = {
           role: string
           status_visibility: string
           terms_accepted_at: string | null
+          terms_warning_sent_at: string | null
           totp_enabled: boolean
           totp_enabled_at: string | null
           totp_pending_secret: string | null
