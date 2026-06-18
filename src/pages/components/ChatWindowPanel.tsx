@@ -393,6 +393,7 @@ export default function ChatWindowPanel() {
   // user who turned it on; only they can turn it back off.
   const [trustLock, setTrustLock] = useState<{ enabled: boolean; ownerUserId: string | null }>({ enabled: false, ownerUserId: null });
   const [trustLockBusy, setTrustLockBusy] = useState(false);
+  const [trustLockProtected, setTrustLockProtected] = useState(false);
   const [showTrustLockConfirm, setShowTrustLockConfirm] = useState(false);
   const [showTrustLockInfo, setShowTrustLockInfo] = useState(false);
   const [tribeRole, setTribeRole] = useState<'leader' | 'member' | null>(null);
@@ -914,11 +915,14 @@ export default function ChatWindowPanel() {
     (async () => {
       if (active) {
         const protectedNow = await TrustLockService.enableProtection();
+        if (!cancelled) setTrustLockProtected(protectedNow);
         if (!protectedNow && !cancelled) {
           toast.error('Trust Lock could not confirm screenshot blocking on this device. Please use the updated Android app.');
         }
+      } else {
+        setTrustLockProtected(false);
+        await TrustLockService.disableProtection();
       }
-      else { await TrustLockService.disableProtection(); }
     })().catch(() => {});
     // iOS: when the OS reports a screenshot was taken, insert a system
     // event into the conversation so both participants see it. Android
@@ -944,6 +948,7 @@ export default function ChatWindowPanel() {
     return () => {
       cancelled = true;
       if (unsub) unsub();
+      setTrustLockProtected(false);
       if (active) TrustLockService.disableProtection().catch(() => {});
     };
   }, [selectedChatId, trustLock.enabled, user?.id]);
