@@ -791,6 +791,59 @@ export default function ChatWindowPanel() {
     return () => window.removeEventListener('vt-encryption-unlocked', handleUnlocked);
   }, [selectedChatId, user?.id]);
 
+  // Trust Lock: load current state when chat changes and subscribe to
+  // realtime updates so both participants stay in sync. Cleared between
+  // chats so other (non-Trust-Lock) chats keep their default behaviour.
+  useEffect(() => {
+    setTrustLock({ enabled: false, ownerUserId: null });
+    if (!selectedChatId || !user || chatType !== 'normal') return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('trust_locks' as any)
+          .select('enabled, owner_user_id')
+          .eq('chat_id', selectedChatId)
+          .maybeSingle();
+        if (!cancelled && data) {
+          setTrustLock({
+            enabled: !!(data as any).enabled,
+            ownerUserId: (data as any).owner_user_id || null,
+          });
+        }
+      } catch {}
+    })();
+    const ch = supabase
+      .channel(`trust-lock-${selectedChatId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'trust_locks', filter: `chat_id=eq.${selectedChatId}` },
+        (payload) => {
+          const row = (payload.new || payload.old) as any;
+          if (!row) return;
+          if (payload.eventType === 'DELETE') {
+            setTrustLock({ enabled: false, ownerUserId: null });
+          } else {
+            setTrustLock({
+              enabled: !!row.enabled,
+              ownerUserId: row.owner_user_id || null,
+            });
+          }
+        },
+      )
+      .subscribe();
+    return () => { cancelled = true; supabase.removeChannel(ch); };
+  }, [selectedChatId, user?.id, chatType]);
+
+  // Apply / clear Android FLAG_SECURE whenever the active chat's Trust Lock
+  // state changes. Always clear on unmount or chat switch so other chats
+  // (and the rest of the app) remain unrestricted.
+  useEffect(() => {
+    const active = !!selectedChatId && trustLock.enabled;
+    setAndroidSecureFlag(active);
+    return () => { setAndroidSecureFlag(false); };
+  }, [selectedChatId, trustLock.enabled]);
+
   useEffect(() => {
     if (user) {
       supabase
