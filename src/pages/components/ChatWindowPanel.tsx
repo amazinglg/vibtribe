@@ -12,7 +12,8 @@ import PermissionPrompt from '@/components/PermissionPrompt';
 import { usePermissions } from '@/hooks/usePermissions';
 import { sendPushNotification } from '@/lib/pushNotifications';
 import { useCall } from '@/components/CallProvider';
-import { isNativeWrapper, pickNativeImage, pickNativeFiles, requestNativeCameraPermission, setAndroidSecureFlag } from '@/lib/native-bridge';
+import { isNativeWrapper, pickNativeImage, pickNativeFiles, requestNativeCameraPermission } from '@/lib/native-bridge';
+import { TrustLockService, onTrustLockScreenshot } from '@/lib/trust-lock-service';
 import { toast } from 'sonner';
 import { EMOJI_CATEGORIES, type EmojiCategoryKey } from '@/lib/emojis';
 import { useT } from '@/contexts/LanguageContext';
@@ -835,14 +836,45 @@ export default function ChatWindowPanel() {
     return () => { cancelled = true; supabase.removeChannel(ch); };
   }, [selectedChatId, user?.id, chatType]);
 
-  // Apply / clear Android FLAG_SECURE whenever the active chat's Trust Lock
-  // state changes. Always clear on unmount or chat switch so other chats
-  // (and the rest of the app) remain unrestricted.
+  // Apply / clear Trust Lock protection whenever the active chat's state
+  // changes. The TrustLockService routes to the strongest protections per
+  // platform (Android FLAG_SECURE, iOS blur + screenshot detection, web
+  // backgrounding blur). Always disabled on unmount / chat switch so other
+  // chats and the rest of the app stay unrestricted.
   useEffect(() => {
     const active = !!selectedChatId && trustLock.enabled;
-    setAndroidSecureFlag(active);
-    return () => { setAndroidSecureFlag(false); };
-  }, [selectedChatId, trustLock.enabled]);
+    let cancelled = false;
+    (async () => {
+      if (active) { await TrustLockService.enableProtection(); }
+      else { await TrustLockService.disableProtection(); }
+    })().catch(() => {});
+    // iOS: when the OS reports a screenshot was taken, insert a system
+    // event into the conversation so both participants see it. Android
+    // never fires this listener because FLAG_SECURE prevents the
+    // screenshot from happening in the first place.
+    let unsub: (() => void) | null = null;
+    if (active) {
+      let lastTs = 0;
+      unsub = onTrustLockScreenshot(() => {
+        // Debounce: iOS occasionally fires the notification twice.
+        const now = Date.now();
+        if (now - lastTs < 1500) return;
+        lastTs = now;
+        if (cancelled || !selectedChatId || !user?.id) return;
+        supabase.from('messages').insert({
+          chat_id: selectedChatId,
+          sender_id: user.id,
+          content: '🛡️ Screenshot detected on this device.',
+          message_status: 'sent',
+        }).then(() => {}, () => {});
+      });
+    }
+    return () => {
+      cancelled = true;
+      if (unsub) unsub();
+      TrustLockService.disableProtection().catch(() => {});
+    };
+  }, [selectedChatId, trustLock.enabled, user?.id]);
 
   useEffect(() => {
     if (user) {
@@ -2636,10 +2668,10 @@ export default function ChatWindowPanel() {
             <div className="space-y-2 text-xs text-foreground/90 leading-relaxed mb-4">
               <p>While Trust Lock is on in this chat:</p>
               <div className="rounded-lg bg-primary/5 border border-primary/15 p-3 space-y-1.5">
-                <p className="flex items-start gap-2"><ShieldAlert size={13} className="text-primary mt-0.5" /> Screenshots will be blocked (Android).</p>
-                <p className="flex items-start gap-2"><ShieldAlert size={13} className="text-primary mt-0.5" /> Screen recording will be blocked (Android).</p>
-                <p className="flex items-start gap-2"><ShieldAlert size={13} className="text-primary mt-0.5" /> Media download will be disabled.</p>
-                <p className="flex items-start gap-2"><ShieldAlert size={13} className="text-primary mt-0.5" /> Media sharing / export will be disabled.</p>
+                <p className="flex items-start gap-2"><ShieldAlert size={13} className="text-primary mt-0.5" /> Screenshots & screen recording blocked on Android.</p>
+                <p className="flex items-start gap-2"><ShieldAlert size={13} className="text-primary mt-0.5" /> Screenshots detected & recordings obscured on iOS.</p>
+                <p className="flex items-start gap-2"><ShieldAlert size={13} className="text-primary mt-0.5" /> App-switcher preview is blurred on all platforms.</p>
+                <p className="flex items-start gap-2"><ShieldAlert size={13} className="text-primary mt-0.5" /> Media download, sharing & export are disabled.</p>
               </div>
               <p className="text-[11px] text-muted-foreground">
                 You will become the owner. <strong>Only you</strong> will be able to turn Trust Lock back off.
@@ -2708,9 +2740,9 @@ export default function ChatWindowPanel() {
               <button onClick={() => setShowTrustLockInfo(false)} className="p-1.5 text-muted-foreground hover:text-foreground"><X size={16} /></button>
             </div>
             <div className="rounded-lg bg-primary/5 border border-primary/15 p-3 space-y-1.5 text-xs text-foreground/90">
-              <p className="flex items-start gap-2"><ShieldAlert size={13} className="text-primary mt-0.5" /> Screenshots and screen recording are blocked on Android.</p>
-              <p className="flex items-start gap-2"><ShieldAlert size={13} className="text-primary mt-0.5" /> Media download, sharing and export are disabled.</p>
-              <p className="flex items-start gap-2"><ShieldAlert size={13} className="text-primary mt-0.5" /> Existing media in this chat follows the same restrictions.</p>
+              <p className="flex items-start gap-2"><ShieldAlert size={13} className="text-primary mt-0.5" /> The strongest privacy protection allowed by your device is active.</p>
+              <p className="flex items-start gap-2"><ShieldAlert size={13} className="text-primary mt-0.5" /> Android blocks screenshots & recording. iOS detects screenshots and blurs recordings.</p>
+              <p className="flex items-start gap-2"><ShieldAlert size={13} className="text-primary mt-0.5" /> Media download, sharing and export are disabled on every platform.</p>
             </div>
             <button
               onClick={() => setShowTrustLockInfo(false)}

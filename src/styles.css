@@ -213,3 +213,19 @@ input, textarea, [contenteditable="true"], .selectable {
     font-size: 16px;
   }
 }
+
+/* ---------- Trust Lock — web/PWA defence-in-depth visuals ----------
+ * Native platforms handle their own protection:
+ *   Android → FLAG_SECURE (OS-level)
+ *   iOS     → UIBlurEffect overlay painted by VtTrustLockPlugin
+ * The rules below are the best-effort fallback for browsers / installed
+ * PWAs so the app-switcher snapshot and screen-recording stream tend to
+ * capture a blurred frame instead of protected content.
+ */
+html[data-trust-lock-bg="true"] body {
+  filter: blur(28px) saturate(120%);
+  transition: filter 120ms ease-out;
+}
+html[data-trust-lock-recording="true"] body {
+  filter: blur(20px) saturate(110%);
+}
