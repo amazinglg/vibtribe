@@ -347,15 +347,7 @@ export default function BroadcastChatPanel() {
           <p className="text-[11px] text-muted-foreground truncate">Official VibTribe Account</p>
         </div>
         {isMaster && (
-          <button
-            type="button"
-            onClick={() => !avatarBusy && avatarUploadRef.current?.click()}
-            aria-label="Change broadcast avatar"
-            title="Change broadcast avatar"
-            className="p-2 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <Pencil size={16} />
-          </button>
+          null
         )}
       </div>
 

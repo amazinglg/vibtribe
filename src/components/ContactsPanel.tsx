@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
-import { Users, Phone, UserPlus, MessageSquare, X, Share2, Check } from 'lucide-react';
+import { Users, Phone, UserPlus, MessageSquare, X, Share2, Check, BadgeCheck } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useT } from '@/contexts/LanguageContext';
@@ -13,6 +13,7 @@ interface Contact {
   userId?: string;
   avatar?: string;
   avatarUrl?: string | null;
+  isVerified?: boolean;
 }
 
 interface ContactsPanelProps {
@@ -112,7 +113,7 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
         if (ids.length > 0) {
           const { data: profiles } = await supabase
             .from('user_profiles')
-            .select('id, full_name, mobile_number, avatar_url, profile_photo_visibility')
+            .select('id, full_name, mobile_number, avatar_url, profile_photo_visibility, is_verified')
             .in('id', ids);
           for (const p of (profiles || [])) profileMap.set(p.id, p);
         }
@@ -123,6 +124,7 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
           userId: s.contact_id,
           avatar: (s.contact_name || profileMap.get(s.contact_id)?.full_name || '?')[0]?.toUpperCase(),
           avatarUrl: (profileMap.get(s.contact_id)?.profile_photo_visibility ?? 'all') === 'all' ? (profileMap.get(s.contact_id)?.avatar_url || null) : null,
+          isVerified: !!profileMap.get(s.contact_id)?.is_verified,
         }));
         if (savedContacts.length > 0) {
           setPermissionState('granted');
@@ -165,7 +167,7 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
       const chunk = allPhones.slice(i, i + 50);
       const { data } = await supabase
         .from('user_profiles')
-        .select('id, full_name, mobile_number, avatar_url, profile_photo_visibility')
+        .select('id, full_name, mobile_number, avatar_url, profile_photo_visibility, is_verified')
         .or(chunk.length ? chunk.map(p => `mobile_number.ilike.%${p}%`).join(',') : 'id.eq.00000000-0000-0000-0000-000000000000');
       platformUsers.push(...(data || []));
     }
@@ -192,6 +194,7 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
           userId: match.id,
           avatar: match.full_name?.[0]?.toUpperCase(),
           avatarUrl: (match.profile_photo_visibility ?? 'all') === 'all' ? (match.avatar_url || null) : null,
+          isVerified: !!match.is_verified,
         });
       } else {
         if (phoneSeen.has(c.phone)) continue;
@@ -209,7 +212,7 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
     // Load actual platform users as "contacts"
     const { data: users } = await supabase
       .from('user_profiles')
-      .select('id, full_name, mobile_number, avatar_url, profile_photo_visibility')
+      .select('id, full_name, mobile_number, avatar_url, profile_photo_visibility, is_verified')
       .neq('id', user?.id || '')
       .limit(20);
 
@@ -220,6 +223,7 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
       userId: u.id,
       avatar: u.full_name?.[0]?.toUpperCase(),
       avatarUrl: (u.profile_photo_visibility ?? 'all') === 'all' ? (u.avatar_url || null) : null,
+      isVerified: !!u.is_verified,
     }));
 
     // Add some demo non-platform contacts
@@ -404,7 +408,12 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
                               </div>
                             )}
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold text-foreground truncate">{c.name}</p>
+                              <p className="text-sm font-semibold text-foreground truncate inline-flex items-center gap-1">
+                                <span className="truncate">{c.name}</span>
+                                {c.isVerified && (
+                                  <BadgeCheck size={13} className="text-primary fill-primary/20 flex-shrink-0" aria-label="Verified" />
+                                )}
+                              </p>
                               <div className="flex items-center gap-1 mt-0.5">
                                 <Check size={10} className="text-vt-green" />
                                 <span className="text-[11px] text-vt-green font-medium">{t('contacts.onVibtribe')}</span>
