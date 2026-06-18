@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';
-import { TermsContent } from '@/components/legal/LegalContent';
+import { TermsConditionsContent } from '@/components/legal/LegalContent';
 
 export const Route = createFileRoute('/terms')({
   head: () => ({
@@ -30,7 +30,7 @@ function TermsPage() {
       </header>
 
       <main className="max-w-3xl mx-auto px-4 py-8">
-        <TermsContent />
+        <TermsConditionsContent />
         <div className="mt-10 text-xs text-muted-foreground">
           If you're already signed in and haven't accepted yet, you'll be prompted to do so the next time you open the app.
         </div>

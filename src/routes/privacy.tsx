@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';
-import { TermsContent } from '@/components/legal/LegalContent';
+import { PrivacyPolicyContent } from '@/components/legal/LegalContent';
 
 export const Route = createFileRoute('/privacy')({
   head: () => ({
@@ -30,7 +30,7 @@ function PrivacyPage() {
       </header>
 
       <main className="max-w-3xl mx-auto px-4 py-8">
-        <TermsContent />
+        <PrivacyPolicyContent />
         <div className="mt-10">
           <Link to="/sign-up" className="text-primary underline">← Back to Sign Up</Link>
         </div>
