@@ -1182,6 +1182,48 @@ export type Database = {
         }
         Relationships: []
       }
+      trust_locks: {
+        Row: {
+          chat_id: string
+          created_at: string
+          enabled: boolean
+          enabled_at: string | null
+          owner_user_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          chat_id: string
+          created_at?: string
+          enabled?: boolean
+          enabled_at?: string | null
+          owner_user_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          chat_id?: string
+          created_at?: string
+          enabled?: boolean
+          enabled_at?: string | null
+          owner_user_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trust_locks_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: true
+            referencedRelation: "chats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_locks_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: true
+            referencedRelation: "tribe_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_profiles: {
         Row: {
           account_status: Database["public"]["Enums"]["user_status"] | null
@@ -1700,7 +1742,9 @@ export type Database = {
         Args: { _chat_id: string; _user_id: string }
         Returns: boolean
       }
-      is_chat_participant: { Args: { chat_uuid: string }; Returns: boolean }
+      is_chat_participant:
+        | { Args: { _chat_id: string; _user_id: string }; Returns: boolean }
+        | { Args: { chat_uuid: string }; Returns: boolean }
       is_contact: {
         Args: { _owner_id: string; _viewer_id: string }
         Returns: boolean

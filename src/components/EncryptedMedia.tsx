@@ -4,6 +4,7 @@ import { decryptBytes, decryptBytesWithKey } from '@/lib/encryption';
 import { Download, FileText, Loader2, AlertTriangle, X, Eye } from 'lucide-react';
 import { isNativeWrapper } from '@/lib/native-bridge';
 import { toast } from 'sonner';
+import { useTrustLock } from '@/contexts/TrustLockContext';
 
 interface Props {
   url: string;
@@ -25,6 +26,12 @@ export default function EncryptedMedia({ url, mime, name, kind, theirPublicKey, 
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(!blobCache.has(url));
   const [showPreview, setShowPreview] = useState(false);
+  // Trust Lock hides download / share affordances. Audio/video native
+  // controls still expose system download menus on some platforms — we
+  // disable the `controls` attribute's download item via
+  // controlsList="nodownload" below.
+  const trustLock = useTrustLock();
+  const hideDownload = trustLock.enabled;
 
   useEffect(() => {
     let cancelled = false;
@@ -78,32 +85,44 @@ export default function EncryptedMedia({ url, mime, name, kind, theirPublicKey, 
         <img
           src={blobUrl}
           alt={name || 'Shared image'}
-          className="max-w-[200px] rounded-xl cursor-zoom-in"
+          className={`max-w-[200px] rounded-xl cursor-zoom-in ${hideDownload ? 'select-none pointer-events-auto' : ''}`}
           onClick={() => onImageClick?.(blobUrl)}
+          onContextMenu={hideDownload ? (e) => e.preventDefault() : undefined}
+          draggable={hideDownload ? false : undefined}
         />
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); downloadFile(); }}
-          className="absolute top-2 right-2 p-1.5 rounded-full bg-black/55 text-white opacity-80 hover:opacity-100"
-          aria-label="Download image"
-        >
-          <Download size={14} />
-        </button>
+        {!hideDownload && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); downloadFile(); }}
+            className="absolute top-2 right-2 p-1.5 rounded-full bg-black/55 text-white opacity-80 hover:opacity-100"
+            aria-label="Download image"
+          >
+            <Download size={14} />
+          </button>
+        )}
       </div>
     );
   }
   if (kind === 'audio') {
     return (
       <div className="flex items-center gap-2">
-        <audio controls src={blobUrl} className="max-w-[200px]" />
-        <button
-          type="button"
-          onClick={downloadFile}
-          className="p-1.5 rounded-full bg-muted text-foreground"
-          aria-label="Download audio"
-        >
-          <Download size={14} />
-        </button>
+        <audio
+          controls
+          src={blobUrl}
+          className="max-w-[200px]"
+          controlsList={hideDownload ? 'nodownload noplaybackrate' : undefined}
+          onContextMenu={hideDownload ? (e) => e.preventDefault() : undefined}
+        />
+        {!hideDownload && (
+          <button
+            type="button"
+            onClick={downloadFile}
+            className="p-1.5 rounded-full bg-muted text-foreground"
+            aria-label="Download audio"
+          >
+            <Download size={14} />
+          </button>
+        )}
       </div>
     );
   }
@@ -115,20 +134,29 @@ export default function EncryptedMedia({ url, mime, name, kind, theirPublicKey, 
           playsInline
           src={blobUrl}
           className="max-w-[240px] rounded-xl"
+          controlsList={hideDownload ? 'nodownload noplaybackrate' : undefined}
+          onContextMenu={hideDownload ? (e) => e.preventDefault() : undefined}
+          disablePictureInPicture={hideDownload ? true : undefined}
         />
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); downloadFile(); }}
-          className="absolute top-2 right-2 p-1.5 rounded-full bg-black/55 text-white opacity-80 hover:opacity-100"
-          aria-label="Download video"
-        >
-          <Download size={14} />
-        </button>
+        {!hideDownload && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); downloadFile(); }}
+            className="absolute top-2 right-2 p-1.5 rounded-full bg-black/55 text-white opacity-80 hover:opacity-100"
+            aria-label="Download video"
+          >
+            <Download size={14} />
+          </button>
+        )}
       </div>
     );
   }
   // File / document: clicking opens a preview modal with a download button.
   const downloadFile = async () => {
+    if (hideDownload) {
+      toast.error('Trust Lock is on — downloads are disabled in this chat');
+      return;
+    }
     try {
       const res = await fetch(blobUrl!);
       const blob = await res.blob();
@@ -191,12 +219,14 @@ export default function EncryptedMedia({ url, mime, name, kind, theirPublicKey, 
               <span className="truncate text-sm">{name || 'file'}</span>
             </div>
             <div className="flex items-center gap-2">
-              <button
-                onClick={(e) => { e.stopPropagation(); downloadFile(); }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold"
-              >
-                <Download size={14} /> Download
-              </button>
+              {!hideDownload && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); downloadFile(); }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold"
+                >
+                  <Download size={14} /> Download
+                </button>
+              )}
               <button
                 onClick={(e) => { e.stopPropagation(); setShowPreview(false); }}
                 className="p-1.5 rounded-lg bg-white/10 text-white"
@@ -213,13 +243,19 @@ export default function EncryptedMedia({ url, mime, name, kind, theirPublicKey, 
               <div className="w-full h-full flex flex-col items-center justify-center text-center p-6 text-foreground">
                 <FileText size={48} className="text-muted-foreground mb-3" />
                 <p className="text-sm font-medium mb-1 break-all">{name || 'file'}</p>
-                <p className="text-xs text-muted-foreground mb-4">Preview is not available for this file type. Tap Download to save it to your device.</p>
-                <button
-                  onClick={downloadFile}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold"
-                >
-                  <Download size={16} /> Download
-                </button>
+                <p className="text-xs text-muted-foreground mb-4">
+                  {hideDownload
+                    ? '🛡️ Trust Lock is enabled — downloads are disabled in this chat.'
+                    : 'Preview is not available for this file type. Tap Download to save it to your device.'}
+                </p>
+                {!hideDownload && (
+                  <button
+                    onClick={downloadFile}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold"
+                  >
+                    <Download size={16} /> Download
+                  </button>
+                )}
               </div>
             )}
           </div>
