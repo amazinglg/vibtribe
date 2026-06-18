@@ -64,6 +64,10 @@ function getCapacitor(): CapacitorHandle | null {
 
 export function detectTrustLockPlatform(): TrustLockPlatform {
   if (typeof window === 'undefined') return 'web';
+  // Legacy Android bridge source of truth. This covers older wrappers where
+  // Capacitor platform metadata may not be present but MainActivity injected
+  // the screenshot-blocking interface.
+  if ((window as unknown as { VtTrustLock?: unknown }).VtTrustLock) return 'android';
   const cap = getCapacitor();
   if (cap?.isNativePlatform?.() && cap.getPlatform) {
     const p = cap.getPlatform();
