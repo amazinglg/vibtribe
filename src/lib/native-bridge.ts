@@ -394,7 +394,7 @@ let androidTrustLockPlugin: AndroidTrustLockPlugin | null | undefined;
 const TRUST_LOCK_NATIVE_TIMEOUT_MS = 1200;
 
 async function withNativeTimeout<T>(promise: Promise<T>, timeoutMs = TRUST_LOCK_NATIVE_TIMEOUT_MS): Promise<T | null> {
-  let timer: ReturnType<typeof window.setTimeout> | undefined;
+  let timer: number | undefined;
   try {
     return await Promise.race([
       promise,
