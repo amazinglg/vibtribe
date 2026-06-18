@@ -14,6 +14,7 @@ import {
   listCampaigns, saveCampaign, sendTestEmail, sendCampaign,
   previewAudienceSize, deleteCampaign, getCampaign,
 } from '@/lib/marketing.functions'
+import { sendMissingTermsReminder } from '@/lib/legal-notify.functions'
 import RichTextEditor from '@/components/RichTextEditor'
 import { supabase } from '@/integrations/supabase/client'
 
@@ -35,6 +36,8 @@ export default function MarketingPage() {
   const audienceFn = useServerFn(previewAudienceSize)
   const deleteFn = useServerFn(deleteCampaign)
   const getFn = useServerFn(getCampaign)
+  const sendPolicyReminderFn = useServerFn(sendMissingTermsReminder)
+  const [sendingPolicyReminder, setSendingPolicyReminder] = useState(false)
 
   const [campaigns, setCampaigns] = useState<any[]>([])
   const [loadingList, setLoadingList] = useState(true)
@@ -286,6 +289,27 @@ export default function MarketingPage() {
           return (
             <div className="space-y-6">
               <div className="flex items-center justify-end gap-2">
+                <button
+                  onClick={async () => {
+                    if (sendingPolicyReminder) return
+                    if (!confirm('Send a Terms & Privacy acceptance reminder (in-app + email) to every user who has NOT yet accepted? They will have 15 days to accept before offboarding.')) return
+                    setSendingPolicyReminder(true)
+                    try {
+                      const r: any = await sendPolicyReminderFn()
+                      toast.success(`Reminded ${r.total} user(s) — emailed ${r.emailed}, notified ${r.notified}${r.emailFailed ? `, ${r.emailFailed} email failures` : ''}.`)
+                    } catch (e: any) {
+                      toast.error(e?.message || 'Failed to send reminder')
+                    } finally {
+                      setSendingPolicyReminder(false)
+                    }
+                  }}
+                  disabled={sendingPolicyReminder}
+                  className="px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 bg-amber-500/15 text-amber-600 border border-amber-500/40 hover:bg-amber-500/25 disabled:opacity-60"
+                  title="Email + in-app notify every user who hasn't accepted Terms & Privacy"
+                >
+                  {sendingPolicyReminder ? <Loader2 size={16} className="animate-spin" /> : <AlertTriangle size={16} />}
+                  Send T&amp;C / Privacy Reminder
+                </button>
                 <button onClick={startNew} className="gradient-primary text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 glow-primary">
                   <Plus size={16} /> New Campaign
                 </button>
