@@ -97,6 +97,8 @@ async function getIosPlugin(): Promise<IosTrustLockPlugin | null> {
 }
 
 let isActive = false;
+let desiredProtection = false;
+let operationSeq = 0;
 let cleanupFns: Array<() => void | Promise<void>> = [];
 
 function setupWebBackgroundBlur(): () => void {
@@ -124,12 +126,16 @@ export const TrustLockService = {
   isProtectionActive: () => isActive,
 
   async enableProtection(): Promise<boolean> {
-    if (isActive) return true;
-    isActive = true;
+    const seq = ++operationSeq;
+    desiredProtection = true;
     const platform = detectTrustLockPlatform();
 
     if (platform === 'android') {
       const enabled = await setAndroidSecureFlag(true);
+      if (seq !== operationSeq && !desiredProtection) {
+        await setAndroidSecureFlag(false).catch(() => false);
+        return false;
+      }
       if (!enabled) {
         isActive = false;
         console.warn('[TrustLock] Android native secure flag was not applied.');
@@ -168,17 +174,23 @@ export const TrustLockService = {
     // the native plugin paints a real UIBlurEffect for the snapshot. The CSS
     // path is a best-effort fallback for PWA / web and adds no harm where
     // native protection already exists.
-    cleanupFns.push(setupWebBackgroundBlur());
+    if (!isActive) cleanupFns.push(setupWebBackgroundBlur());
+    isActive = true;
 
     if (typeof document !== 'undefined') {
       document.documentElement.setAttribute('data-trust-lock', 'active');
       document.documentElement.setAttribute('data-trust-lock-platform', platform);
     }
+    if (platform !== 'android') {
+      console.warn('[TrustLock] Screenshot blocking is only enforceable in the native Android app.');
+      return false;
+    }
     return true;
   },
 
   async disableProtection(): Promise<void> {
-    if (!isActive) return;
+    const seq = ++operationSeq;
+    desiredProtection = false;
     isActive = false;
     const platform = detectTrustLockPlatform();
     if (platform === 'android') await setAndroidSecureFlag(false);
@@ -195,6 +207,9 @@ export const TrustLockService = {
       document.documentElement.removeAttribute('data-trust-lock-platform');
       document.documentElement.removeAttribute('data-trust-lock-recording');
       document.documentElement.removeAttribute('data-trust-lock-bg');
+    }
+    if (desiredProtection && seq !== operationSeq) {
+      await TrustLockService.enableProtection();
     }
   },
 };

@@ -39,6 +39,7 @@ public class MainActivity extends BridgeActivity {
     private int safeLeft = 0;
     private int safeRight = 0;
     private PermissionRequest pendingMediaRequest = null;
+    private volatile boolean trustLockEnabled = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +52,14 @@ public class MainActivity extends BridgeActivity {
         EdgeToEdge.enable(this);
         installSafeAreaInsetsBridge();
         installTrustLockBridge();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (trustLockEnabled) {
+            applyTrustLockFlag(true);
+        }
     }
 
     /**
@@ -146,10 +155,8 @@ public class MainActivity extends BridgeActivity {
         public void enable() {
             activity.runOnUiThread(() -> {
                 try {
-                    activity.getWindow().setFlags(
-                        WindowManager.LayoutParams.FLAG_SECURE,
-                        WindowManager.LayoutParams.FLAG_SECURE
-                    );
+                    activity.trustLockEnabled = true;
+                    activity.applyTrustLockFlag(true);
                 } catch (Exception e) {
                     Log.w("VibTribe", "TrustLock.enable failed", e);
                 }
@@ -160,12 +167,33 @@ public class MainActivity extends BridgeActivity {
         public void disable() {
             activity.runOnUiThread(() -> {
                 try {
-                    activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
+                    activity.trustLockEnabled = false;
+                    activity.applyTrustLockFlag(false);
                 } catch (Exception e) {
                     Log.w("VibTribe", "TrustLock.disable failed", e);
                 }
             });
         }
+
+        @JavascriptInterface
+        public boolean isActive() {
+            return activity.isTrustLockFlagActive();
+        }
+    }
+
+    private void applyTrustLockFlag(boolean enabled) {
+        if (enabled) {
+            getWindow().setFlags(
+                WindowManager.LayoutParams.FLAG_SECURE,
+                WindowManager.LayoutParams.FLAG_SECURE
+            );
+        } else {
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
+        }
+    }
+
+    private boolean isTrustLockFlagActive() {
+        return (getWindow().getAttributes().flags & WindowManager.LayoutParams.FLAG_SECURE) != 0;
     }
 
     private void saveDataUrlToDownloads(String dataUrl, String filename, String mimeType) {

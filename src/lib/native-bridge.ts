@@ -420,20 +420,24 @@ export async function setAndroidSecureFlag(secure: boolean): Promise<boolean> {
   const plugin = await getAndroidTrustLockPlugin();
   if (plugin) {
     try {
-      const result = secure ? await plugin.enable() : await plugin.disable();
-      return secure ? !!result?.enabled : result?.enabled === false;
+      await (secure ? plugin.enable() : plugin.disable());
+      const status = await plugin.isActive();
+      return secure ? !!status?.active : !status?.active;
     } catch (e) {
       console.warn('[VibTribe] VtTrustLock plugin call failed', e);
     }
   }
   const bridge = (window as unknown as {
-    VtTrustLock?: { enable: () => void; disable: () => void };
+    VtTrustLock?: { enable: () => void; disable: () => void; isActive?: () => boolean };
   }).VtTrustLock;
   if (!bridge) return false;
   try {
     if (secure) bridge.enable();
     else bridge.disable();
-    return true;
+    await new Promise((resolve) => window.setTimeout(resolve, 100));
+    if (typeof bridge.isActive !== 'function') return false;
+    const active = !!bridge.isActive();
+    return secure ? active : !active;
   } catch (e) {
     console.warn('[VibTribe] setAndroidSecureFlag failed', e);
     return false;
