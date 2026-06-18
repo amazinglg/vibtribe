@@ -16,6 +16,7 @@ import { isNativeWrapper, pickNativeImage, pickNativeFiles, requestNativeCameraP
 import { TrustLockService, onTrustLockScreenshot, isIOS } from '@/lib/trust-lock-service';
 import { toast } from 'sonner';
 import { EMOJI_CATEGORIES, type EmojiCategoryKey } from '@/lib/emojis';
+import { VIBTRIBE_EMOJI_MAP, VIBTRIBE_SHORTCODE_RE } from '@/lib/vibtribe-emojis';
 import { useT } from '@/contexts/LanguageContext';
 import TribeDetailsSheet from '@/components/TribeDetailsSheet';
 import EncryptionPinModal from '@/components/EncryptionPinModal';
@@ -65,28 +66,66 @@ function formatPreviewText(raw: string | null | undefined): string {
 // Supports http(s)://, www., and bare domain.tld links.
 const URL_RE = /((?:https?:\/\/|www\.)[^\s<>"']+|\b[a-z0-9-]+\.(?:com|net|org|io|ai|co|app|in|dev|me|xyz|gg|so|to|tv|info|app)(?:\/[^\s<>"']*)?)/gi;
 function Linkified({ text, isMe }: { text: string; isMe: boolean }) {
-  const parts = String(text ?? '').split(URL_RE);
+  // First split by VibTribe image-emoji shortcodes, then linkify the
+  // remaining text segments. This keeps custom emojis rendering inline
+  // alongside auto-linked URLs without breaking either pipeline.
+  const src = String(text ?? '');
+  const nodes: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  const re = new RegExp(VIBTRIBE_SHORTCODE_RE.source, 'g');
+  while ((match = re.exec(src)) !== null) {
+    if (match.index > lastIndex) nodes.push(src.slice(lastIndex, match.index));
+    const emoji = VIBTRIBE_EMOJI_MAP[match[1]];
+    if (emoji) {
+      nodes.push(
+        <img
+          key={`vt-${match.index}`}
+          src={emoji.url}
+          alt={emoji.name}
+          draggable={false}
+          className="inline-block align-[-0.25em] w-[1.5em] h-[1.5em] mx-[1px] select-none"
+          loading="lazy"
+          decoding="async"
+        />
+      );
+    } else {
+      nodes.push(match[0]);
+    }
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < src.length) nodes.push(src.slice(lastIndex));
+
+  const linkColor = isMe ? 'text-white hover:text-white/80' : 'text-primary hover:text-primary/80';
   return (
     <span className="whitespace-pre-wrap break-words">
-      {parts.map((p, i) => {
-        if (!p) return null;
-        if (URL_RE.test(p)) {
-          URL_RE.lastIndex = 0;
-          const href = /^https?:\/\//i.test(p) ? p : `https://${p}`;
-          return (
-            <a
-              key={i}
-              href={href}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className={`underline underline-offset-2 break-all ${isMe ? 'text-white hover:text-white/80' : 'text-primary hover:text-primary/80'}`}
-            >
-              {p}
-            </a>
-          );
-        }
-        return <React.Fragment key={i}>{p}</React.Fragment>;
+      {nodes.map((node, ni) => {
+        if (typeof node !== 'string') return <React.Fragment key={`n-${ni}`}>{node}</React.Fragment>;
+        const parts = node.split(URL_RE);
+        return (
+          <React.Fragment key={`s-${ni}`}>
+            {parts.map((p, i) => {
+              if (!p) return null;
+              if (URL_RE.test(p)) {
+                URL_RE.lastIndex = 0;
+                const href = /^https?:\/\//i.test(p) ? p : `https://${p}`;
+                return (
+                  <a
+                    key={i}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className={`underline underline-offset-2 break-all ${linkColor}`}
+                  >
+                    {p}
+                  </a>
+                );
+              }
+              return <React.Fragment key={i}>{p}</React.Fragment>;
+            })}
+          </React.Fragment>
+        );
       })}
     </span>
   );
@@ -2387,16 +2426,33 @@ export default function ChatWindowPanel() {
             ))}
           </div>
           <div className="grid grid-cols-8 gap-1 max-h-72 overflow-y-auto">
-            {(EMOJI_CATEGORIES.find(c => c.key === emojiTab)?.emojis || []).map((emoji, i) => (
-              <button
-                key={`${emoji}-${i}`}
-                onClick={() => insertEmoji(emoji)}
-                className="aspect-square flex items-center justify-center text-2xl rounded-lg hover:bg-muted active:scale-90 transition-all"
-                type="button"
-              >
-                {emoji}
-              </button>
-            ))}
+            {(EMOJI_CATEGORIES.find(c => c.key === emojiTab)?.emojis || []).map((emoji, i) => {
+              const vtMatch = /^:vt:([a-z0-9_-]+):$/.exec(emoji);
+              const vt = vtMatch ? VIBTRIBE_EMOJI_MAP[vtMatch[1]] : null;
+              return (
+                <button
+                  key={`${emoji}-${i}`}
+                  onClick={() => insertEmoji(emoji)}
+                  className="aspect-square flex items-center justify-center text-2xl rounded-lg hover:bg-muted active:scale-90 transition-all p-1"
+                  type="button"
+                  aria-label={vt?.name || emoji}
+                  title={vt?.name || emoji}
+                >
+                  {vt ? (
+                    <img
+                      src={vt.url}
+                      alt={vt.name}
+                      draggable={false}
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-contain select-none"
+                    />
+                  ) : (
+                    emoji
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
