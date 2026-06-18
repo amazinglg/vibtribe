@@ -73,13 +73,11 @@ export default function SplashAnimation() {
         autoPlay
         muted
         playsInline
-        // @ts-expect-error - non-standard but respected by iOS/Android WebView
-        webkit-playsinline="true"
+        {...({ 'webkit-playsinline': 'true' } as any)}
         preload="auto"
         controls={false}
         disablePictureInPicture
-        // @ts-expect-error - vendor attribute
-        disableRemotePlayback
+        {...({ disableRemotePlayback: true } as any)}
         onCanPlayThrough={() => setReady(true)}
         onEnded={dismiss}
         onError={dismiss}
