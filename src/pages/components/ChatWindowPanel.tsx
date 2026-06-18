@@ -396,6 +396,7 @@ export default function ChatWindowPanel() {
   const [trustLockProtected, setTrustLockProtected] = useState<boolean | null>(false);
   const [showTrustLockConfirm, setShowTrustLockConfirm] = useState(false);
   const [showTrustLockInfo, setShowTrustLockInfo] = useState(false);
+  const trustLockAttemptRef = useRef(0);
   const [tribeRole, setTribeRole] = useState<'leader' | 'member' | null>(null);
   const [tribeIsFounder, setTribeIsFounder] = useState(false);
   const [showDeleteTribeConfirm, setShowDeleteTribeConfirm] = useState(false);
@@ -912,11 +913,26 @@ export default function ChatWindowPanel() {
   useEffect(() => {
     const active = !!selectedChatId && trustLock.enabled;
     let cancelled = false;
+    const attemptId = ++trustLockAttemptRef.current;
+    const confirmWithTimeout = async () => {
+      const timeoutMs = 2500;
+      let timer: number | undefined;
+      try {
+        return await Promise.race([
+          TrustLockService.enableProtection(),
+          new Promise<boolean>((resolve) => {
+            timer = window.setTimeout(() => resolve(false), timeoutMs);
+          }),
+        ]);
+      } finally {
+        if (timer) window.clearTimeout(timer);
+      }
+    };
     (async () => {
       if (active) {
         setTrustLockProtected(null);
-        const protectedNow = await TrustLockService.enableProtection();
-        if (!cancelled) setTrustLockProtected(protectedNow);
+        const protectedNow = await confirmWithTimeout();
+        if (!cancelled && attemptId === trustLockAttemptRef.current) setTrustLockProtected(protectedNow);
         if (!protectedNow && !cancelled) {
           toast.error('Trust Lock could not confirm screenshot blocking on this device. Please use the updated Android app.');
         }
@@ -948,6 +964,7 @@ export default function ChatWindowPanel() {
     }
     return () => {
       cancelled = true;
+      trustLockAttemptRef.current += 1;
       if (unsub) unsub();
       setTrustLockProtected(false);
       if (active) TrustLockService.disableProtection().catch(() => {});
