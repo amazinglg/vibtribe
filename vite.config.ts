@@ -12,6 +12,12 @@ import { loadEnv } from "vite";
 const serverEnv = loadEnv(process.env.NODE_ENV || "development", process.cwd(), "");
 Object.assign(process.env, serverEnv);
 
+// Inject build timestamp so the running bundle can detect when it is
+// stale relative to the latest published release (used by OldVersionBanner
+// for PWA / installed-app users whose cached bundle is older than the
+// most recent release on the server).
+process.env.VITE_BUILD_TIME = new Date().toISOString();
+
 // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
 // @cloudflare/vite-plugin builds from this — wrangler.jsonc main alone is insufficient.
 export default defineConfig({
