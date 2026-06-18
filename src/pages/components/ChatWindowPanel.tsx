@@ -65,7 +65,32 @@ function formatPreviewText(raw: string | null | undefined): string {
 // Renders plain text with auto-detected URLs as clickable links.
 // Supports http(s)://, www., and bare domain.tld links.
 const URL_RE = /((?:https?:\/\/|www\.)[^\s<>"']+|\b[a-z0-9-]+\.(?:com|net|org|io|ai|co|app|in|dev|me|xyz|gg|so|to|tv|info|app)(?:\/[^\s<>"']*)?)/gi;
-function Linkified({ text, isMe }: { text: string; isMe: boolean }) {
+
+/**
+ * Detect "solo emoji" messages — a single emoji and nothing else (no text,
+ * no whitespace, no second emoji). Used to render that single emoji larger
+ * (sticker-style), the same way iMessage / WhatsApp / Telegram boost
+ * lone-emoji messages.
+ */
+function isSoloEmojiText(s: string): boolean {
+  const t = (s ?? '').trim();
+  if (!t) return false;
+  // Single VibTribe shortcode only — no surrounding chars.
+  if (/^:vt:[a-z0-9_-]+:$/.test(t)) return true;
+  // Single unicode emoji (allow variation selectors + ZWJ sequences,
+  // but reject if any non-emoji text characters remain).
+  const stripped = t.replace(/[\uFE0F\u200D\s]/g, '');
+  try {
+    const matches = stripped.match(/\p{Extended_Pictographic}/gu);
+    if (!matches || matches.length !== 1) return false;
+    const nonEmoji = stripped.replace(/\p{Extended_Pictographic}/gu, '');
+    return nonEmoji.length === 0;
+  } catch {
+    return false;
+  }
+}
+
+function Linkified({ text, isMe, boost = false }: { text: string; isMe: boolean; boost?: boolean }) {
   // First split by VibTribe image-emoji shortcodes, then linkify the
   // remaining text segments. This keeps custom emojis rendering inline
   // alongside auto-linked URLs without breaking either pipeline.
@@ -74,6 +99,9 @@ function Linkified({ text, isMe }: { text: string; isMe: boolean }) {
   let lastIndex = 0;
   let match: RegExpExecArray | null;
   const re = new RegExp(VIBTRIBE_SHORTCODE_RE.source, 'g');
+  const imgClass = boost
+    ? 'inline-block align-middle w-[3em] h-[3em] mx-[1px] select-none'
+    : 'inline-block align-[-0.25em] w-[1.5em] h-[1.5em] mx-[1px] select-none';
   while ((match = re.exec(src)) !== null) {
     if (match.index > lastIndex) nodes.push(src.slice(lastIndex, match.index));
     const emoji = VIBTRIBE_EMOJI_MAP[match[1]];
@@ -84,7 +112,7 @@ function Linkified({ text, isMe }: { text: string; isMe: boolean }) {
           src={emoji.url}
           alt={emoji.name}
           draggable={false}
-          className="inline-block align-[-0.25em] w-[1.5em] h-[1.5em] mx-[1px] select-none"
+          className={imgClass}
           loading="lazy"
           decoding="async"
         />
@@ -98,7 +126,7 @@ function Linkified({ text, isMe }: { text: string; isMe: boolean }) {
 
   const linkColor = isMe ? 'text-white hover:text-white/80' : 'text-primary hover:text-primary/80';
   return (
-    <span className="whitespace-pre-wrap break-words">
+    <span className={`whitespace-pre-wrap break-words ${boost ? 'text-5xl leading-tight' : ''}`}>
       {nodes.map((node, ni) => {
         if (typeof node !== 'string') return <React.Fragment key={`n-${ni}`}>{node}</React.Fragment>;
         const parts = node.split(URL_RE);
@@ -1319,6 +1347,15 @@ export default function ChatWindowPanel() {
   };
 
   const insertEmoji = (emoji: string) => {
+    // VibTribe image emojis are sticker-style: send instantly as their
+    // own message so the composer never shows the raw `:vt:id:` shortcode
+    // (which looks like a debug string to the user). Standard unicode
+    // emojis still get appended to the text input as before.
+    if (/^:vt:[a-z0-9_-]+:$/.test(emoji)) {
+      setShowEmoji(false);
+      void sendMessage(emoji);
+      return;
+    }
     setInputText(prev => prev + emoji);
     inputRef.current?.focus();
   };
@@ -2148,12 +2185,20 @@ export default function ChatWindowPanel() {
                   }}
                 >
                   <div
-                    className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                      msg.deletedForEveryone
-                        ? 'glass border border-dashed border-border text-muted-foreground italic'
-                      : isMe
-                        ? 'gradient-primary text-white rounded-br-sm' : 'glass border border-border text-foreground rounded-bl-sm'
-                    }`}
+                    className={(() => {
+                      const solo = typeof displayText === 'string' && !encMedia && !imageUrl && !msg.deletedForEveryone && isSoloEmojiText(displayText);
+                      if (solo) {
+                        // Sticker-style: no bubble, just the big emoji.
+                        return 'px-1 py-1 text-sm leading-relaxed bg-transparent';
+                      }
+                      return `px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                        msg.deletedForEveryone
+                          ? 'glass border border-dashed border-border text-muted-foreground italic'
+                          : isMe
+                            ? 'gradient-primary text-white rounded-br-sm'
+                            : 'glass border border-border text-foreground rounded-bl-sm'
+                      }`;
+                    })()}
                   >
                     {encMedia && (encMedia.k || contactPubKeyRef.current) ? (
                       isMe && msg.mediaUrl && msg.mediaUrl.startsWith('blob:') && encMedia.type === 'image' ? (
@@ -2184,7 +2229,11 @@ export default function ChatWindowPanel() {
                     ) : (
                       <>
                         {typeof displayText === 'string'
-                          ? <Linkified text={displayText} isMe={isMe} />
+                          ? <Linkified
+                              text={displayText}
+                              isMe={isMe}
+                              boost={!msg.deletedForEveryone && isSoloEmojiText(displayText)}
+                            />
                           : displayText}
                         {msg.editedAt && !msg.deletedForEveryone && (
                           <span className={`ml-1 text-[10px] italic ${isMe ? 'text-white/60' : 'text-muted-foreground'}`}>(edited)</span>
