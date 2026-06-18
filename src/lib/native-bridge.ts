@@ -391,6 +391,22 @@ type AndroidTrustLockPlugin = {
 
 let androidTrustLockPlugin: AndroidTrustLockPlugin | null | undefined;
 
+const TRUST_LOCK_NATIVE_TIMEOUT_MS = 1200;
+
+async function withNativeTimeout<T>(promise: Promise<T>, timeoutMs = TRUST_LOCK_NATIVE_TIMEOUT_MS): Promise<T | null> {
+  let timer: number | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<null>((resolve) => {
+        timer = window.setTimeout(() => resolve(null), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer) window.clearTimeout(timer);
+  }
+}
+
 async function getAndroidTrustLockPlugin(): Promise<AndroidTrustLockPlugin | null> {
   if (typeof window === 'undefined') return null;
   if (androidTrustLockPlugin !== undefined) return androidTrustLockPlugin;
@@ -417,27 +433,37 @@ async function getAndroidTrustLockPlugin(): Promise<AndroidTrustLockPlugin | nul
  */
 export async function setAndroidSecureFlag(secure: boolean): Promise<boolean> {
   if (typeof window === 'undefined') return false;
+  const bridge = (window as unknown as {
+    VtTrustLock?: { enable: () => void; disable: () => void; isActive?: () => boolean };
+  }).VtTrustLock;
   const plugin = await getAndroidTrustLockPlugin();
   if (plugin) {
     try {
-      await (secure ? plugin.enable() : plugin.disable());
-      const status = await plugin.isActive();
-      return secure ? !!status?.active : !status?.active;
+      const result = await withNativeTimeout(secure ? plugin.enable() : plugin.disable());
+      if (typeof result?.enabled === 'boolean' && (secure ? result.enabled : !result.enabled)) {
+        return true;
+      }
+      const status = await withNativeTimeout(plugin.isActive(), 700);
+      if (status && (secure ? !!status.active : !status.active)) {
+        return true;
+      }
     } catch (e) {
       console.warn('[VibTribe] VtTrustLock plugin call failed', e);
     }
   }
-  const bridge = (window as unknown as {
-    VtTrustLock?: { enable: () => void; disable: () => void; isActive?: () => boolean };
-  }).VtTrustLock;
   if (!bridge) return false;
   try {
     if (secure) bridge.enable();
     else bridge.disable();
-    await new Promise((resolve) => window.setTimeout(resolve, 100));
-    if (typeof bridge.isActive !== 'function') return false;
-    const active = !!bridge.isActive();
-    return secure ? active : !active;
+    for (let i = 0; i < 8; i += 1) {
+      await new Promise((resolve) => window.setTimeout(resolve, 100));
+      if (typeof bridge.isActive !== 'function') {
+        return secure;
+      }
+      const active = !!bridge.isActive();
+      if (secure ? active : !active) return true;
+    }
+    return false;
   } catch (e) {
     console.warn('[VibTribe] setAndroidSecureFlag failed', e);
     return false;
