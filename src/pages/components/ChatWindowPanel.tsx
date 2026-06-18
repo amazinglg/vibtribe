@@ -1628,6 +1628,17 @@ export default function ChatWindowPanel() {
                 <span className="text-[9px] text-vt-green font-medium">E2E</span>
               </div>
             )}
+            {trustLock.enabled && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setShowTrustLockInfo(true); }}
+                className="flex items-center gap-1 px-1.5 py-0.5 bg-primary/15 rounded-full flex-shrink-0"
+                title="Trust Lock is enabled in this chat"
+              >
+                <Shield size={10} className="text-primary" />
+                <span className="text-[9px] text-primary font-medium">Trust Lock</span>
+              </button>
+            )}
           </div>
           <p className={`text-xs truncate ${contact?.online ? 'text-vt-green' : 'text-muted-foreground'}`}>
             {contact?.lastSeen || ''}
