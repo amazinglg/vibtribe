@@ -915,7 +915,7 @@ export default function ChatWindowPanel() {
       if (active) {
         const protectedNow = await TrustLockService.enableProtection();
         if (!protectedNow && !cancelled) {
-          toast.error('Trust Lock could not block screenshots on this Android app. Please update the app.');
+          toast.error('Trust Lock could not confirm screenshot blocking on this device. Please use the updated Android app.');
         }
       }
       else { await TrustLockService.disableProtection(); }
@@ -944,7 +944,7 @@ export default function ChatWindowPanel() {
     return () => {
       cancelled = true;
       if (unsub) unsub();
-      TrustLockService.disableProtection().catch(() => {});
+      if (active) TrustLockService.disableProtection().catch(() => {});
     };
   }, [selectedChatId, trustLock.enabled, user?.id]);
 
@@ -2808,7 +2808,7 @@ export default function ChatWindowPanel() {
                   try {
                     const protectedNow = await TrustLockService.enableProtection();
                     if (!protectedNow) {
-                      throw new Error('Trust Lock could not activate screenshot blocking. Please update the Android app.');
+                      throw new Error('Trust Lock could not confirm screenshot blocking on this device. Please use the updated Android app.');
                     }
                     const { error } = await supabase
                       .from('trust_locks' as any)

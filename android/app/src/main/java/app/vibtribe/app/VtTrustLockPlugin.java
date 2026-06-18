@@ -21,8 +21,10 @@ public class VtTrustLockPlugin extends Plugin {
                     WindowManager.LayoutParams.FLAG_SECURE,
                     WindowManager.LayoutParams.FLAG_SECURE
                 );
+                boolean active = isWindowSecure();
+                if (!active) secureEnabled = false;
                 JSObject ret = new JSObject();
-                ret.put("enabled", true);
+                ret.put("enabled", active);
                 call.resolve(ret);
             } catch (Exception e) {
                 Log.w("VibTribe", "VtTrustLock.enable failed", e);
@@ -38,7 +40,7 @@ public class VtTrustLockPlugin extends Plugin {
                 secureEnabled = false;
                 getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
                 JSObject ret = new JSObject();
-                ret.put("enabled", false);
+                ret.put("enabled", isWindowSecure());
                 call.resolve(ret);
             } catch (Exception e) {
                 Log.w("VibTribe", "VtTrustLock.disable failed", e);
@@ -49,9 +51,11 @@ public class VtTrustLockPlugin extends Plugin {
 
     @PluginMethod
     public void isActive(PluginCall call) {
-        JSObject ret = new JSObject();
-        ret.put("active", isWindowSecure());
-        call.resolve(ret);
+        getBridge().executeOnMainThread(() -> {
+            JSObject ret = new JSObject();
+            ret.put("active", isWindowSecure());
+            call.resolve(ret);
+        });
     }
 
     @Override
