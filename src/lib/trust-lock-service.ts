@@ -119,13 +119,18 @@ export const TrustLockService = {
   getPlatform: detectTrustLockPlatform,
   isProtectionActive: () => isActive,
 
-  async enableProtection(): Promise<void> {
-    if (isActive) return;
+  async enableProtection(): Promise<boolean> {
+    if (isActive) return true;
     isActive = true;
     const platform = detectTrustLockPlatform();
 
     if (platform === 'android') {
-      setAndroidSecureFlag(true);
+      const enabled = await setAndroidSecureFlag(true);
+      if (!enabled) {
+        isActive = false;
+        console.warn('[TrustLock] Android native secure flag was not applied.');
+        return false;
+      }
     } else if (platform === 'ios') {
       const plugin = await getIosPlugin();
       if (plugin) {
@@ -165,13 +170,14 @@ export const TrustLockService = {
       document.documentElement.setAttribute('data-trust-lock', 'active');
       document.documentElement.setAttribute('data-trust-lock-platform', platform);
     }
+    return true;
   },
 
   async disableProtection(): Promise<void> {
     if (!isActive) return;
     isActive = false;
     const platform = detectTrustLockPlatform();
-    if (platform === 'android') setAndroidSecureFlag(false);
+    if (platform === 'android') await setAndroidSecureFlag(false);
     if (platform === 'ios') {
       const plugin = await getIosPlugin();
       if (plugin) {

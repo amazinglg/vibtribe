@@ -1,6 +1,4 @@
-// Classic WhatsApp-style Unicode emoji set grouped by category,
-// plus the custom "VibTribe" image-emoji collection.
-import { VIBTRIBE_EMOJIS, vibtribeShortcode } from './vibtribe-emojis';
+// Classic WhatsApp-style Unicode emoji set grouped by category.
 
 export type EmojiCategoryKey =
   | 'smileys'
@@ -11,8 +9,7 @@ export type EmojiCategoryKey =
   | 'activities'
   | 'travel'
   | 'objects'
-  | 'symbols'
-  | 'vibtribe';
+  | 'symbols';
 
 export interface EmojiCategory {
   key: EmojiCategoryKey;
@@ -57,12 +54,5 @@ export const EMOJI_CATEGORIES: EmojiCategory[] = [
   {
     key: 'symbols', label: 'Symbols', icon: '✅',
     emojis: ['❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖','💘','💝','💟','☮️','✝️','☪️','🕉️','☸️','✡️','🔯','🕎','☯️','☦️','🛐','⛎','♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓','🆔','⚛️','🉑','☢️','☣️','📴','📳','🈶','🈚','🈸','🈺','🈷️','✴️','🆚','💮','🉐','㊙️','㊗️','🈴','🈵','🈹','🈲','🅰️','🅱️','🆎','🆑','🅾️','🆘','❌','⭕','🛑','⛔','📛','🚫','💯','💢','♨️','🚷','🚯','🚳','🚱','🔞','📵','🚭','❗','❕','❓','❔','‼️','⁉️','🔅','🔆','〽️','⚠️','🚸','🔱','⚜️','🔰','♻️','✅','🈯','💹','❇️','✳️','❎','🌐','💠','Ⓜ️','🌀','💤','🏧','🚾','♿','🅿️','🈳','🈂️','🛂','🛃','🛄','🛅','🚹','🚺','🚼','🚻','🚮','🎦','📶','🈁','🔣','ℹ️','🔤','🔡','🔠','🆖','🆗','🆙','🆒','🆕','🆓','0️⃣','1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟','🔢','#️⃣','*️⃣','▶️','⏸️','⏯️','⏹️','⏺️','⏭️','⏮️','⏩','⏪','⏫','⏬','◀️','🔼','🔽','➡️','⬅️','⬆️','⬇️','↗️','↘️','↙️','↖️','↕️','↔️','↪️','↩️','⤴️','⤵️','🔀','🔁','🔂','🔄','🔃','🎵','🎶','➕','➖','➗','✖️','♾️','💲','💱','™️','©️','®️','〰️','➰','➿','🔚','🔙','🔛','🔝','🔜','✔️','☑️','🔘','🔴','🟠','🟡','🟢','🔵','🟣','⚫','⚪','🟤','🔺','🔻','🔸','🔹','🔶','🔷','🔳','🔲','▪️','▫️','◾','◽','◼️','◻️','⬛','⬜','🟧','🟨','🟩','🟦','🟪','🟫','🔈','🔇','🔉','🔊','🔔','🔕','📣','📢','💬','💭','🗯️','♠️','♣️','♥️','♦️','🃏','🎴','🀄'],
-  },
-  {
-    key: 'vibtribe', label: 'VibTribe Emojis', icon: '✨',
-    // Entries are shortcode tokens (`:vt:<id>:`) so they flow through the
-    // existing text-based send/store/notify pipeline. The chat renderer
-    // swaps tokens for the actual image at display time.
-    emojis: VIBTRIBE_EMOJIS.map(e => vibtribeShortcode(e.id)),
   },
 ];

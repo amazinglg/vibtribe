@@ -912,7 +912,12 @@ export default function ChatWindowPanel() {
     const active = !!selectedChatId && trustLock.enabled;
     let cancelled = false;
     (async () => {
-      if (active) { await TrustLockService.enableProtection(); }
+      if (active) {
+        const protectedNow = await TrustLockService.enableProtection();
+        if (!protectedNow && !cancelled) {
+          toast.error('Trust Lock could not block screenshots on this Android app. Please update the app.');
+        }
+      }
       else { await TrustLockService.disableProtection(); }
     })().catch(() => {});
     // iOS: when the OS reports a screenshot was taken, insert a system
@@ -2801,6 +2806,10 @@ export default function ChatWindowPanel() {
                   if (!user || !selectedChatId) return;
                   setTrustLockBusy(true);
                   try {
+                    const protectedNow = await TrustLockService.enableProtection();
+                    if (!protectedNow) {
+                      throw new Error('Trust Lock could not activate screenshot blocking. Please update the Android app.');
+                    }
                     const { error } = await supabase
                       .from('trust_locks' as any)
                       .upsert(
@@ -2817,6 +2826,7 @@ export default function ChatWindowPanel() {
                     setShowTrustLockConfirm(false);
                     toast.success('Trust Lock enabled');
                   } catch (e: any) {
+                    await TrustLockService.disableProtection().catch(() => {});
                     toast.error(e?.message || 'Could not enable Trust Lock');
                   } finally {
                     setTrustLockBusy(false);

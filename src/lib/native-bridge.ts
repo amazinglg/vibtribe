@@ -383,25 +383,59 @@ export async function nativeHaptic(style: 'light' | 'medium' | 'heavy' = 'light'
   } catch {}
 }
 
+type AndroidTrustLockPlugin = {
+  enable: () => Promise<{ enabled: boolean }>;
+  disable: () => Promise<{ enabled: boolean }>;
+  isActive: () => Promise<{ active: boolean }>;
+};
+
+let androidTrustLockPlugin: AndroidTrustLockPlugin | null | undefined;
+
+async function getAndroidTrustLockPlugin(): Promise<AndroidTrustLockPlugin | null> {
+  if (typeof window === 'undefined') return null;
+  if (androidTrustLockPlugin !== undefined) return androidTrustLockPlugin;
+  try {
+    const { registerPlugin } = await import('@capacitor/core');
+    androidTrustLockPlugin = registerPlugin<AndroidTrustLockPlugin>('VtTrustLock');
+  } catch {
+    androidTrustLockPlugin = null;
+  }
+  return androidTrustLockPlugin;
+}
+
 /**
  * Apply / remove Android FLAG_SECURE so the OS blocks screenshots, screen
  * recording and the recent-apps preview thumbnail. Implemented in
- * MainActivity via an `addJavascriptInterface` bridge named `VtTrustLock`.
+ * the native Android `VtTrustLock` Capacitor plugin. The legacy
+ * `addJavascriptInterface` bridge is kept as a fallback for already-built
+ * wrappers, but the plugin path is the reliable path because Capacitor
+ * registers it before the page loads.
  *
  * No-op on web / iOS / PWA — those platforms cannot block screenshots from
  * userland, so we rely on the in-app UI restrictions (hidden download/share)
  * for protection on those targets.
  */
-export function setAndroidSecureFlag(secure: boolean): void {
-  if (typeof window === 'undefined') return;
+export async function setAndroidSecureFlag(secure: boolean): Promise<boolean> {
+  if (typeof window === 'undefined') return false;
+  const plugin = await getAndroidTrustLockPlugin();
+  if (plugin) {
+    try {
+      const result = secure ? await plugin.enable() : await plugin.disable();
+      return secure ? !!result?.enabled : result?.enabled === false;
+    } catch (e) {
+      console.warn('[VibTribe] VtTrustLock plugin call failed', e);
+    }
+  }
   const bridge = (window as unknown as {
     VtTrustLock?: { enable: () => void; disable: () => void };
   }).VtTrustLock;
-  if (!bridge) return;
+  if (!bridge) return false;
   try {
     if (secure) bridge.enable();
     else bridge.disable();
+    return true;
   } catch (e) {
     console.warn('[VibTribe] setAndroidSecureFlag failed', e);
+    return false;
   }
 }
