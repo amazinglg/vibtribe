@@ -2675,5 +2675,6 @@ export default function ChatWindowPanel() {
         </div>
       )}
     </div>
+    </TrustLockProvider>
   );
 }
