@@ -354,6 +354,9 @@ export default function CallProvider({ children }: { children: React.ReactNode }
           if (newRow.status === 'accepted' && pcRef.current === null) {
             // Callee accepted — create offer
             setCallState('connecting');
+            // CRITICAL: clear the ring timeout so it doesn't fire mid-call
+            // and force-end an active call after 30s.
+            if (ringTimerRef.current) { clearTimeout(ringTimerRef.current); ringTimerRef.current = null; }
             if (ringtoneRef.current) { try { ringtoneRef.current.pause(); } catch {} ringtoneRef.current = null; }
             const pc = setupPeerConnection(callRow, true);
             const stream = localStreamRef.current || await acquireMedia(opts.type);
@@ -379,6 +382,11 @@ export default function CallProvider({ children }: { children: React.ReactNode }
 
       // Ringing timeout → missed
       ringTimerRef.current = setTimeout(() => {
+        // Defensive: only mark missed if the call is still ringing.
+        // Prevents accidental termination of an already-connected call.
+        const current = activeCallRef.current;
+        if (!current) return;
+        if (pcRef.current) return; // already negotiating/connected
         endCall('missed');
       }, RING_TIMEOUT_MS);
       return callRow;
