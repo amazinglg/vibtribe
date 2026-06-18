@@ -578,3 +578,51 @@ function ActionBtn({ icon: Icon, label, hint, onClick, className }: any) {
     </button>
   );
 }
+
+function ConsentRow({
+  icon: Icon,
+  label,
+  acceptedAt,
+  pendingText,
+  stateText,
+  positive,
+  extra,
+}: {
+  icon: any;
+  label: string;
+  acceptedAt: string | null | undefined;
+  pendingText: string;
+  stateText?: string | null;
+  positive?: boolean;
+  extra?: string | null;
+}) {
+  const has = !!acceptedAt;
+  const when = acceptedAt
+    ? new Date(acceptedAt).toLocaleString('en-IN', {
+        day: '2-digit', month: 'short', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+      })
+    : null;
+  return (
+    <div className="flex items-start gap-3 px-3.5 py-3 rounded-xl border border-border bg-muted/30">
+      <Icon size={16} className="mt-0.5 text-primary flex-shrink-0" />
+      <div className="flex-1 min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm font-semibold text-foreground">{label}</span>
+          {stateText && (
+            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide ${
+              positive ? 'bg-vt-green/20 text-vt-green' : 'bg-red-500/20 text-red-400'
+            }`}>{stateText}</span>
+          )}
+          {!has && !stateText && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide bg-muted text-muted-foreground">Pending</span>
+          )}
+        </div>
+        <p className={`text-xs mt-0.5 ${has ? 'text-foreground/80' : 'text-muted-foreground'}`}>
+          {has ? when : pendingText}
+        </p>
+        {extra && <p className="text-[11px] text-muted-foreground mt-0.5">{extra}</p>}
+      </div>
+    </div>
+  );
+}
