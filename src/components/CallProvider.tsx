@@ -382,6 +382,11 @@ export default function CallProvider({ children }: { children: React.ReactNode }
 
       // Ringing timeout → missed
       ringTimerRef.current = setTimeout(() => {
+        // Defensive: only mark missed if the call is still ringing.
+        // Prevents accidental termination of an already-connected call.
+        const current = activeCallRef.current;
+        if (!current) return;
+        if (pcRef.current) return; // already negotiating/connected
         endCall('missed');
       }, RING_TIMEOUT_MS);
       return callRow;
