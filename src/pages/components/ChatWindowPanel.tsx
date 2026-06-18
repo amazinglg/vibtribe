@@ -66,28 +66,66 @@ function formatPreviewText(raw: string | null | undefined): string {
 // Supports http(s)://, www., and bare domain.tld links.
 const URL_RE = /((?:https?:\/\/|www\.)[^\s<>"']+|\b[a-z0-9-]+\.(?:com|net|org|io|ai|co|app|in|dev|me|xyz|gg|so|to|tv|info|app)(?:\/[^\s<>"']*)?)/gi;
 function Linkified({ text, isMe }: { text: string; isMe: boolean }) {
-  const parts = String(text ?? '').split(URL_RE);
+  // First split by VibTribe image-emoji shortcodes, then linkify the
+  // remaining text segments. This keeps custom emojis rendering inline
+  // alongside auto-linked URLs without breaking either pipeline.
+  const src = String(text ?? '');
+  const nodes: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  const re = new RegExp(VIBTRIBE_SHORTCODE_RE.source, 'g');
+  while ((match = re.exec(src)) !== null) {
+    if (match.index > lastIndex) nodes.push(src.slice(lastIndex, match.index));
+    const emoji = VIBTRIBE_EMOJI_MAP[match[1]];
+    if (emoji) {
+      nodes.push(
+        <img
+          key={`vt-${match.index}`}
+          src={emoji.url}
+          alt={emoji.name}
+          draggable={false}
+          className="inline-block align-[-0.25em] w-[1.5em] h-[1.5em] mx-[1px] select-none"
+          loading="lazy"
+          decoding="async"
+        />
+      );
+    } else {
+      nodes.push(match[0]);
+    }
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < src.length) nodes.push(src.slice(lastIndex));
+
+  const linkColor = isMe ? 'text-white hover:text-white/80' : 'text-primary hover:text-primary/80';
   return (
     <span className="whitespace-pre-wrap break-words">
-      {parts.map((p, i) => {
-        if (!p) return null;
-        if (URL_RE.test(p)) {
-          URL_RE.lastIndex = 0;
-          const href = /^https?:\/\//i.test(p) ? p : `https://${p}`;
-          return (
-            <a
-              key={i}
-              href={href}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className={`underline underline-offset-2 break-all ${isMe ? 'text-white hover:text-white/80' : 'text-primary hover:text-primary/80'}`}
-            >
-              {p}
-            </a>
-          );
-        }
-        return <React.Fragment key={i}>{p}</React.Fragment>;
+      {nodes.map((node, ni) => {
+        if (typeof node !== 'string') return <React.Fragment key={`n-${ni}`}>{node}</React.Fragment>;
+        const parts = node.split(URL_RE);
+        return (
+          <React.Fragment key={`s-${ni}`}>
+            {parts.map((p, i) => {
+              if (!p) return null;
+              if (URL_RE.test(p)) {
+                URL_RE.lastIndex = 0;
+                const href = /^https?:\/\//i.test(p) ? p : `https://${p}`;
+                return (
+                  <a
+                    key={i}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className={`underline underline-offset-2 break-all ${linkColor}`}
+                  >
+                    {p}
+                  </a>
+                );
+              }
+              return <React.Fragment key={i}>{p}</React.Fragment>;
+            })}
+          </React.Fragment>
+        );
       })}
     </span>
   );
