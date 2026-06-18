@@ -181,8 +181,8 @@ export const TrustLockService = {
       document.documentElement.setAttribute('data-trust-lock', 'active');
       document.documentElement.setAttribute('data-trust-lock-platform', platform);
     }
-    if (platform === 'web' || platform === 'pwa') {
-      console.warn('[TrustLock] Screenshot blocking is unavailable outside the native app.');
+    if (platform !== 'android') {
+      console.warn('[TrustLock] Screenshot blocking is only enforceable in the native Android app.');
       return false;
     }
     return true;
