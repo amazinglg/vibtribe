@@ -1218,6 +1218,7 @@ export type Database = {
           pref_contacts_enabled: boolean
           pref_mic_enabled: boolean
           pref_notifications_enabled: boolean
+          privacy_accepted_at: string | null
           profile_completed: boolean | null
           profile_photo_visibility: string
           public_key: string | null
@@ -1267,6 +1268,7 @@ export type Database = {
           pref_contacts_enabled?: boolean
           pref_mic_enabled?: boolean
           pref_notifications_enabled?: boolean
+          privacy_accepted_at?: string | null
           profile_completed?: boolean | null
           profile_photo_visibility?: string
           public_key?: string | null
@@ -1316,6 +1318,7 @@ export type Database = {
           pref_contacts_enabled?: boolean
           pref_mic_enabled?: boolean
           pref_notifications_enabled?: boolean
+          privacy_accepted_at?: string | null
           profile_completed?: boolean | null
           profile_photo_visibility?: string
           public_key?: string | null
@@ -1428,6 +1431,7 @@ export type Database = {
         Args: { _chat_id: string; _content: string }
         Returns: undefined
       }
+      accept_privacy_and_terms: { Args: never; Returns: undefined }
       accept_terms: { Args: never; Returns: undefined }
       admin_delete_ticket: { Args: { _ticket_id: string }; Returns: undefined }
       admin_delete_user: { Args: { _user_id: string }; Returns: undefined }
@@ -1472,6 +1476,7 @@ export type Database = {
           pref_contacts_enabled: boolean
           pref_mic_enabled: boolean
           pref_notifications_enabled: boolean
+          privacy_accepted_at: string | null
           profile_completed: boolean | null
           profile_photo_visibility: string
           public_key: string | null
@@ -1544,6 +1549,7 @@ export type Database = {
           pref_contacts_enabled: boolean
           pref_mic_enabled: boolean
           pref_notifications_enabled: boolean
+          privacy_accepted_at: string | null
           profile_completed: boolean | null
           profile_photo_visibility: string
           public_key: string | null
@@ -1654,6 +1660,7 @@ export type Database = {
           pref_contacts_enabled: boolean
           pref_mic_enabled: boolean
           pref_notifications_enabled: boolean
+          privacy_accepted_at: string | null
           profile_completed: boolean | null
           profile_photo_visibility: string
           public_key: string | null

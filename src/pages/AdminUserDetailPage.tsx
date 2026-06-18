@@ -4,7 +4,7 @@ import { useNavigate, useParams } from '@tanstack/react-router';
 import {
   ArrowLeft, Shield, Pencil, X, Save, KeyRound, Ban, Trash2,
   UserX, UserCheck, LogOut, AlertTriangle, ShieldCheck, ShieldOff, RotateCcw,
-  Mail, Phone, Clock, Calendar, Activity, Lock, BadgeCheck,
+  Mail, Phone, Clock, Calendar, Activity, Lock, BadgeCheck, FileText, Megaphone,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLayout from '@/components/AppLayout';
@@ -439,6 +439,45 @@ export default function AdminUserDetailPage() {
             </div>
           </>
         )}
+
+        {/* Consent & Compliance — always visible to admins, including for self/master */}
+          <SectionCard
+            title="Consent & compliance"
+            subtitle="Audit log of what this user accepted, and when. Used for DPDP / GDPR / CAN-SPAM compliance."
+            icon={FileText}
+          >
+            <div className="grid grid-cols-1 gap-2">
+              <ConsentRow
+                icon={FileText}
+                label="Terms & Conditions"
+                acceptedAt={target.terms_accepted_at}
+                pendingText="Not yet accepted"
+              />
+              <ConsentRow
+                icon={ShieldCheck}
+                label="Privacy Policy"
+                acceptedAt={target.privacy_accepted_at}
+                pendingText="Not yet accepted"
+              />
+              <ConsentRow
+                icon={Megaphone}
+                label="Promotional emails"
+                acceptedAt={target.marketing_consent_at}
+                pendingText="No choice recorded yet"
+                stateText={
+                  target.marketing_consent_at
+                    ? (target.email_marketing_opt_in ? 'Opted IN' : 'Opted OUT')
+                    : null
+                }
+                positive={!!target.email_marketing_opt_in}
+                extra={
+                  target.marketing_consent_source
+                    ? `Source: ${target.marketing_consent_source}${target.marketing_consent_ip ? ` · IP ${target.marketing_consent_ip}` : ''}`
+                    : null
+                }
+              />
+            </div>
+          </SectionCard>
       </div>
 
       {/* Edit Modal */}
@@ -537,5 +576,53 @@ function ActionBtn({ icon: Icon, label, hint, onClick, className }: any) {
         {hint && <span className="block text-[10px] font-normal opacity-70 mt-0.5">{hint}</span>}
       </span>
     </button>
+  );
+}
+
+function ConsentRow({
+  icon: Icon,
+  label,
+  acceptedAt,
+  pendingText,
+  stateText,
+  positive,
+  extra,
+}: {
+  icon: any;
+  label: string;
+  acceptedAt: string | null | undefined;
+  pendingText: string;
+  stateText?: string | null;
+  positive?: boolean;
+  extra?: string | null;
+}) {
+  const has = !!acceptedAt;
+  const when = acceptedAt
+    ? new Date(acceptedAt).toLocaleString('en-IN', {
+        day: '2-digit', month: 'short', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+      })
+    : null;
+  return (
+    <div className="flex items-start gap-3 px-3.5 py-3 rounded-xl border border-border bg-muted/30">
+      <Icon size={16} className="mt-0.5 text-primary flex-shrink-0" />
+      <div className="flex-1 min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm font-semibold text-foreground">{label}</span>
+          {stateText && (
+            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide ${
+              positive ? 'bg-vt-green/20 text-vt-green' : 'bg-red-500/20 text-red-400'
+            }`}>{stateText}</span>
+          )}
+          {!has && !stateText && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide bg-muted text-muted-foreground">Pending</span>
+          )}
+        </div>
+        <p className={`text-xs mt-0.5 ${has ? 'text-foreground/80' : 'text-muted-foreground'}`}>
+          {has ? when : pendingText}
+        </p>
+        {extra && <p className="text-[11px] text-muted-foreground mt-0.5">{extra}</p>}
+      </div>
+    </div>
   );
 }
