@@ -1,5 +1,23 @@
 # VibTribe — Native Android Build (Play Store)
 
+## iOS Trust Lock — required plugin install
+
+VibTribe's cross-platform Trust Lock feature ships its iOS native layer as
+two local Capacitor plugin files under `native/ios/` (`TrustLockPlugin.swift`
+and `TrustLockPlugin.m`). After running `npx cap add ios` in your iOS
+wrapper repo, copy both files into `ios/App/App/Plugins/TrustLock/` and add
+them to the **App** target in Xcode — full step-by-step instructions live in
+[`native/ios/README.md`](native/ios/README.md). The plugin registers under
+the Capacitor name `VtTrustLock`, matching the Android JS interface, so the
+web layer (`src/lib/trust-lock-service.ts`) talks to both platforms with the
+same API.
+
+The plugin enables the strongest privacy protections iOS allows:
+screenshot detection (system event posted in chat), screen-recording
+detection with a `UIBlurEffect` overlay while recording is active, and an
+app-switcher snapshot blur on `willResignActive`. Apple does not permit
+blocking screenshots, so detection is the maximum allowed behaviour.
+
 ## Capacitor wrapper — required manual steps after pulling
 
 The web project now ships full Capacitor support (push, deep links, back
