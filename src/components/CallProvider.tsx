@@ -354,6 +354,9 @@ export default function CallProvider({ children }: { children: React.ReactNode }
           if (newRow.status === 'accepted' && pcRef.current === null) {
             // Callee accepted — create offer
             setCallState('connecting');
+            // CRITICAL: clear the ring timeout so it doesn't fire mid-call
+            // and force-end an active call after 30s.
+            if (ringTimerRef.current) { clearTimeout(ringTimerRef.current); ringTimerRef.current = null; }
             if (ringtoneRef.current) { try { ringtoneRef.current.pause(); } catch {} ringtoneRef.current = null; }
             const pc = setupPeerConnection(callRow, true);
             const stream = localStreamRef.current || await acquireMedia(opts.type);
