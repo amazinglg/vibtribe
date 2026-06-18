@@ -547,5 +547,15 @@ export default function BroadcastChatPanel() {
         </div>
       )}
     </div>
+      <ImageCropModal
+        isOpen={!!avatarCropFile}
+        file={avatarCropFile}
+        onClose={() => setAvatarCropFile(null)}
+        onCropped={async (blob) => { setAvatarCropFile(null); await uploadAvatarBlob(blob); }}
+        aspect={1}
+        title="Crop Broadcast Avatar"
+        output={{ width: 512, height: 512, mime: 'image/jpeg', quality: 0.9 }}
+      />
+    </>
   );
 }
