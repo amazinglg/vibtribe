@@ -4,7 +4,7 @@ import { useNavigate, useParams } from '@tanstack/react-router';
 import {
   ArrowLeft, Shield, Pencil, X, Save, KeyRound, Ban, Trash2,
   UserX, UserCheck, LogOut, AlertTriangle, ShieldCheck, ShieldOff, RotateCcw,
-  Mail, Phone, Clock, Calendar, Activity, Lock, BadgeCheck,
+  Mail, Phone, Clock, Calendar, Activity, Lock, BadgeCheck, FileText, Megaphone,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLayout from '@/components/AppLayout';
