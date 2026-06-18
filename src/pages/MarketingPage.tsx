@@ -27,7 +27,7 @@ const BRAND_HELP_EMAIL = 'help.vibtribe.in@gmail.com'
 export default function MarketingPage() {
   const router = useNavigate()
   const { user, profile, loading, isAdmin } = useAuth()
-  const canAccess = !!profile?.is_master_admin || profile?.role === 'admin' || !!isAdmin
+  const canAccess = !!profile?.is_master_admin || profile?.role === 'admin' || (typeof isAdmin === 'function' ? isAdmin() : !!isAdmin)
 
   const listFn = useServerFn(listCampaigns)
   const saveFn = useServerFn(saveCampaign)
