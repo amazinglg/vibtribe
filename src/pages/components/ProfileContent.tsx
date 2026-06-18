@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Camera, Edit3, Shield, Bell, Lock, Smartphone, LogOut, Key, AlertTriangle, UserCheck, AtSign, Phone, Mail, ChevronDown, Ban, Monitor, RefreshCw, HelpCircle, Palette, Check, Download, Share, X, Copy, ExternalLink, MoreVertical, Trash2, Headphones } from 'lucide-react';
+import { Camera, Edit3, Shield, Bell, Lock, Smartphone, LogOut, Key, AlertTriangle, UserCheck, AtSign, Phone, Mail, ChevronDown, Ban, Monitor, RefreshCw, HelpCircle, Palette, Check, Download, Share, X, Copy, ExternalLink, MoreVertical, Trash2, Headphones, BadgeCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import ImageCropModal from '@/components/ImageCropModal';
 import { useAuth } from '@/contexts/AuthContext';
@@ -816,7 +816,12 @@ export default function ProfileContent() {
             ) : (
               <>
                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-1">
-                  <h2 className="font-bold text-xl text-foreground">{profile?.full_name || 'Your Name'}</h2>
+                  <h2 className="font-bold text-xl text-foreground inline-flex items-center gap-1.5">
+                    {profile?.full_name || 'Your Name'}
+                    {profile?.is_verified && (
+                      <BadgeCheck size={18} className="text-primary fill-primary/20 shrink-0" aria-label="Verified" />
+                    )}
+                  </h2>
                 </div>
                 {profile?.username && (
                   <p className="text-sm text-primary mb-1">@{profile.username}</p>
