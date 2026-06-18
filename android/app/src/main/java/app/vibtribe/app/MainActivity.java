@@ -49,6 +49,27 @@ public class MainActivity extends BridgeActivity {
         // The web layer no longer depends on Android WebView env() support.
         EdgeToEdge.enable(this);
         installSafeAreaInsetsBridge();
+        installTrustLockBridge();
+    }
+
+    /**
+     * Register the Trust Lock JS bridge IMMEDIATELY after the Capacitor
+     * WebView is created (in onCreate, before the page loads). Android's
+     * {@code addJavascriptInterface} only becomes visible to the JS
+     * context on the NEXT page load — if we register it inside
+     * {@code onPageLoaded}, the first (and in a SPA, only) page never
+     * sees {@code window.VtTrustLock}, so FLAG_SECURE is never applied
+     * and screenshots succeed even with Trust Lock enabled.
+     */
+    private void installTrustLockBridge() {
+        try {
+            if (getBridge() != null && getBridge().getWebView() != null) {
+                getBridge().getWebView().addJavascriptInterface(
+                    new TrustLockBridge(MainActivity.this), "VtTrustLock");
+            }
+        } catch (Exception e) {
+            Log.w("VibTribe", "TrustLock bridge install failed", e);
+        }
     }
 
     private void installSafeAreaInsetsBridge() {
@@ -110,12 +131,6 @@ public class MainActivity extends BridgeActivity {
                             runOnUiThread(() -> Toast.makeText(MainActivity.this, "Download failed", Toast.LENGTH_SHORT).show());
                         }
                     });
-                    // Trust Lock bridge — JS calls `window.VtTrustLock.enable()`
-                    // / `disable()` to toggle Android FLAG_SECURE so the OS
-                    // blocks screenshots, screen recording and the recent-apps
-                    // preview. Only the active chat panel controls this; all
-                    // other chats leave the flag cleared.
-                    webView.addJavascriptInterface(new TrustLockBridge(MainActivity.this), "VtTrustLock");
                 }
             });
         }

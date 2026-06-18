@@ -1691,29 +1691,35 @@ export default function ChatWindowPanel() {
           className={`flex-1 min-w-0 text-left ${chatType === 'group' ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
           aria-label={chatType === 'group' ? 'Open tribe info' : undefined}
         >
-          <div className="flex items-center gap-1.5 min-w-0">
-            <h3 className="font-semibold text-sm text-foreground truncate min-w-0">{contact?.name || 'Loading...'}</h3>
-            {e2eEnabled && (
-              <div className="flex items-center gap-1 px-1.5 py-0.5 bg-vt-green/10 rounded-full flex-shrink-0" title="End-to-end encrypted">
-                <ShieldCheck size={10} className="text-vt-green" />
-                <span className="text-[9px] text-vt-green font-medium">E2E</span>
-              </div>
-            )}
-            {trustLock.enabled && (
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); setShowTrustLockInfo(true); }}
-                className="flex items-center gap-1 px-1.5 py-0.5 bg-primary/15 rounded-full flex-shrink-0"
-                title="Trust Lock is enabled in this chat"
-              >
-                <Shield size={10} className="text-primary" />
-                <span className="text-[9px] text-primary font-medium">Trust Lock</span>
-              </button>
-            )}
-          </div>
-          <p className={`text-xs truncate ${contact?.online ? 'text-vt-green' : 'text-muted-foreground'}`}>
-            {contact?.lastSeen || ''}
-          </p>
+          <h3 className="font-semibold text-sm text-foreground truncate min-w-0">{contact?.name || 'Loading...'}</h3>
+          {(e2eEnabled || trustLock.enabled) ? (
+            <div className="flex items-center gap-1 mt-0.5 min-w-0">
+              {e2eEnabled && (
+                <div className="flex items-center gap-1 px-1.5 py-0.5 bg-vt-green/10 rounded-full flex-shrink-0" title="End-to-end encrypted">
+                  <ShieldCheck size={9} className="text-vt-green" />
+                  <span className="text-[9px] text-vt-green font-medium leading-none">E2E</span>
+                </div>
+              )}
+              {trustLock.enabled && (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setShowTrustLockInfo(true); }}
+                  className="flex items-center gap-1 px-1.5 py-0.5 bg-primary/15 rounded-full flex-shrink-0"
+                  title="Trust Lock is enabled in this chat"
+                >
+                  <Shield size={9} className="text-primary" />
+                  <span className="text-[9px] text-primary font-medium leading-none">Trust Lock</span>
+                </button>
+              )}
+              {contact?.online && (
+                <span className="text-[10px] text-vt-green truncate ml-1">online</span>
+              )}
+            </div>
+          ) : (
+            <p className={`text-xs truncate ${contact?.online ? 'text-vt-green' : 'text-muted-foreground'}`}>
+              {contact?.lastSeen || ''}
+            </p>
+          )}
         </button>
 
         <div className="flex items-center gap-0.5 flex-shrink-0">
