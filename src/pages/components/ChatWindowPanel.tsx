@@ -2175,13 +2175,24 @@ export default function ChatWindowPanel() {
                     if (canOpen) { e.preventDefault(); setActionMsg(msg); }
                   }}
                 >
+                  {(() => null)()}
+                  {(() => null)()}
+                  {(() => null)()}
                   <div
-                    className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                      msg.deletedForEveryone
-                        ? 'glass border border-dashed border-border text-muted-foreground italic'
-                      : isMe
-                        ? 'gradient-primary text-white rounded-br-sm' : 'glass border border-border text-foreground rounded-bl-sm'
-                    }`}
+                    className={(() => {
+                      const solo = typeof displayText === 'string' && !encMedia && !imageUrl && !msg.deletedForEveryone && isSoloEmojiText(displayText);
+                      if (solo) {
+                        // Sticker-style: no bubble, just the big emoji.
+                        return 'px-1 py-1 text-sm leading-relaxed bg-transparent';
+                      }
+                      return `px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                        msg.deletedForEveryone
+                          ? 'glass border border-dashed border-border text-muted-foreground italic'
+                          : isMe
+                            ? 'gradient-primary text-white rounded-br-sm'
+                            : 'glass border border-border text-foreground rounded-bl-sm'
+                      }`;
+                    })()}
                   >
                     {encMedia && (encMedia.k || contactPubKeyRef.current) ? (
                       isMe && msg.mediaUrl && msg.mediaUrl.startsWith('blob:') && encMedia.type === 'image' ? (
@@ -2212,7 +2223,11 @@ export default function ChatWindowPanel() {
                     ) : (
                       <>
                         {typeof displayText === 'string'
-                          ? <Linkified text={displayText} isMe={isMe} />
+                          ? <Linkified
+                              text={displayText}
+                              isMe={isMe}
+                              boost={!msg.deletedForEveryone && isSoloEmojiText(displayText)}
+                            />
                           : displayText}
                         {msg.editedAt && !msg.deletedForEveryone && (
                           <span className={`ml-1 text-[10px] italic ${isMe ? 'text-white/60' : 'text-muted-foreground'}`}>(edited)</span>
