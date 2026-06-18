@@ -321,6 +321,12 @@ export default function ChatWindowPanel() {
   const [showDisappearMenu, setShowDisappearMenu] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showUnlockPinModal, setShowUnlockPinModal] = useState(false);
+  // Trust Lock — per-chat privacy toggle (1:1 only). Owner_user_id is the
+  // user who turned it on; only they can turn it back off.
+  const [trustLock, setTrustLock] = useState<{ enabled: boolean; ownerUserId: string | null }>({ enabled: false, ownerUserId: null });
+  const [trustLockBusy, setTrustLockBusy] = useState(false);
+  const [showTrustLockConfirm, setShowTrustLockConfirm] = useState(false);
+  const [showTrustLockInfo, setShowTrustLockInfo] = useState(false);
   const [tribeRole, setTribeRole] = useState<'leader' | 'member' | null>(null);
   const [tribeIsFounder, setTribeIsFounder] = useState(false);
   const [showDeleteTribeConfirm, setShowDeleteTribeConfirm] = useState(false);
