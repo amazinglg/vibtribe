@@ -393,7 +393,7 @@ export default function ChatWindowPanel() {
   // user who turned it on; only they can turn it back off.
   const [trustLock, setTrustLock] = useState<{ enabled: boolean; ownerUserId: string | null }>({ enabled: false, ownerUserId: null });
   const [trustLockBusy, setTrustLockBusy] = useState(false);
-  const [trustLockProtected, setTrustLockProtected] = useState(false);
+  const [trustLockProtected, setTrustLockProtected] = useState<boolean | null>(false);
   const [showTrustLockConfirm, setShowTrustLockConfirm] = useState(false);
   const [showTrustLockInfo, setShowTrustLockInfo] = useState(false);
   const [tribeRole, setTribeRole] = useState<'leader' | 'member' | null>(null);
@@ -914,6 +914,7 @@ export default function ChatWindowPanel() {
     let cancelled = false;
     (async () => {
       if (active) {
+        setTrustLockProtected(null);
         const protectedNow = await TrustLockService.enableProtection();
         if (!cancelled) setTrustLockProtected(protectedNow);
         if (!protectedNow && !cancelled) {
@@ -2045,18 +2046,20 @@ export default function ChatWindowPanel() {
         </div>
       )}
 
-      {trustLock.enabled && !trustLockProtected && (
+      {trustLock.enabled && trustLockProtected !== true && (
         <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-6 py-10 text-center bg-background">
           <ShieldAlert size={42} className="text-primary mb-4" />
-          <h3 className="text-base font-semibold text-foreground mb-2">Trust Lock needs the Android app</h3>
+          <h3 className="text-base font-semibold text-foreground mb-2">{trustLockProtected === null ? 'Confirming Trust Lock…' : 'Trust Lock needs the Android app'}</h3>
           <p className="text-sm text-muted-foreground max-w-sm">
-            This chat is hidden here because screenshot blocking could not be confirmed on this device. Open it in the updated VibTribe Android app.
+            {trustLockProtected === null
+              ? 'Your messages are hidden until screenshot blocking is confirmed.'
+              : 'This chat is hidden here because screenshot blocking could not be confirmed on this device. Open it in the updated VibTribe Android app.'}
           </p>
         </div>
       )}
 
       {/* Messages Area */}
-      {(!trustLock.enabled || trustLockProtected) && <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
+      {(!trustLock.enabled || trustLockProtected === true) && <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
         {loading ? (
           <div className="flex flex-col gap-3">
             {[1, 2, 3].map(i => (
@@ -2533,7 +2536,7 @@ export default function ChatWindowPanel() {
       )}
 
       {/* Input Area */}
-      {(!trustLock.enabled || trustLockProtected) && <div className="glass border-t border-border px-2 py-2 flex items-center gap-1 flex-shrink-0 w-full max-w-full overflow-hidden">
+      {(!trustLock.enabled || trustLockProtected === true) && <div className="glass border-t border-border px-2 py-2 flex items-center gap-1 flex-shrink-0 w-full max-w-full overflow-hidden">
         <button
           onClick={(e) => { e.stopPropagation(); setShowAttachMenu(!showAttachMenu); }}
           className={`p-2 rounded-xl transition-all flex-shrink-0 ${showAttachMenu ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
