@@ -48,7 +48,7 @@ function buildBodyHtml(name: string, deadline: Date): string {
   `
 }
 
-export const Route = createFileRoute('/api/public/_fire-policy-reminder-once')({
+export const Route = createFileRoute('/api/public/fire-policy-reminder-once')({
   server: {
     handlers: {
       POST: async () => {
