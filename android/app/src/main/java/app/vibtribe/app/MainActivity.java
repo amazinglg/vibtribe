@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends BridgeActivity {
+    private static final String TRUST_LOCK_TAG = "VibTribeTrustLock";
     private static final int MEDIA_PERMISSION_REQUEST = 8101;
     private int safeTop = 0;
     private int safeBottom = 0;
@@ -76,9 +77,10 @@ public class MainActivity extends BridgeActivity {
             if (getBridge() != null && getBridge().getWebView() != null) {
                 getBridge().getWebView().addJavascriptInterface(
                     new TrustLockBridge(MainActivity.this), "VtTrustLock");
+                Log.i(TRUST_LOCK_TAG, "window.VtTrustLock JavascriptInterface installed");
             }
         } catch (Exception e) {
-            Log.w("VibTribe", "TrustLock bridge install failed", e);
+            Log.w(TRUST_LOCK_TAG, "window.VtTrustLock JavascriptInterface install failed", e);
         }
     }
 
@@ -155,10 +157,12 @@ public class MainActivity extends BridgeActivity {
         public void enable() {
             activity.runOnUiThread(() -> {
                 try {
+                    Log.i(TRUST_LOCK_TAG, "window.VtTrustLock.enable() fallback bridge called");
                     activity.trustLockEnabled = true;
                     activity.applyTrustLockFlag(true);
+                    Log.i(TRUST_LOCK_TAG, "window.VtTrustLock.enable() fallback active=" + activity.isTrustLockFlagActive());
                 } catch (Exception e) {
-                    Log.w("VibTribe", "TrustLock.enable failed", e);
+                    Log.w(TRUST_LOCK_TAG, "window.VtTrustLock.enable() fallback failed", e);
                 }
             });
         }
@@ -167,21 +171,26 @@ public class MainActivity extends BridgeActivity {
         public void disable() {
             activity.runOnUiThread(() -> {
                 try {
+                    Log.i(TRUST_LOCK_TAG, "window.VtTrustLock.disable() fallback bridge called");
                     activity.trustLockEnabled = false;
                     activity.applyTrustLockFlag(false);
+                    Log.i(TRUST_LOCK_TAG, "window.VtTrustLock.disable() fallback active=" + activity.isTrustLockFlagActive());
                 } catch (Exception e) {
-                    Log.w("VibTribe", "TrustLock.disable failed", e);
+                    Log.w(TRUST_LOCK_TAG, "window.VtTrustLock.disable() fallback failed", e);
                 }
             });
         }
 
         @JavascriptInterface
         public boolean isActive() {
-            return activity.isTrustLockFlagActive();
+            boolean active = activity.isTrustLockFlagActive();
+            Log.i(TRUST_LOCK_TAG, "window.VtTrustLock.isActive() fallback returning " + active);
+            return active;
         }
     }
 
     private void applyTrustLockFlag(boolean enabled) {
+        Log.i(TRUST_LOCK_TAG, "MainActivity.applyTrustLockFlag(" + enabled + ")");
         if (enabled) {
             getWindow().setFlags(
                 WindowManager.LayoutParams.FLAG_SECURE,
@@ -193,7 +202,10 @@ public class MainActivity extends BridgeActivity {
     }
 
     private boolean isTrustLockFlagActive() {
-        return (getWindow().getAttributes().flags & WindowManager.LayoutParams.FLAG_SECURE) != 0;
+        int flags = getWindow().getAttributes().flags;
+        boolean active = (flags & WindowManager.LayoutParams.FLAG_SECURE) != 0;
+        Log.i(TRUST_LOCK_TAG, "MainActivity.isTrustLockFlagActive(): flags=" + flags + ", FLAG_SECURE active=" + active);
+        return active;
     }
 
     private void saveDataUrlToDownloads(String dataUrl, String filename, String mimeType) {
