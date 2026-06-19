@@ -412,14 +412,27 @@ async function getAndroidTrustLockPlugin(): Promise<AndroidTrustLockPlugin | nul
   if (androidTrustLockPlugin !== undefined) return androidTrustLockPlugin;
   const cap = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean; getPlatform?: () => string } }).Capacitor;
   const isNativeAndroid = !!cap && (cap.isNativePlatform?.() ?? true) && cap.getPlatform?.() === 'android';
+  console.info('[VibTribe][TrustLock] Android plugin detection', {
+    hasCapacitor: !!cap,
+    platform: cap?.getPlatform?.(),
+    isNativePlatform: cap?.isNativePlatform?.(),
+    isNativeAndroid,
+  });
   if (!isNativeAndroid) {
+    console.info('[VibTribe][TrustLock] registerPlugin("VtTrustLock") skipped: not native Android');
     androidTrustLockPlugin = null;
     return androidTrustLockPlugin;
   }
   try {
     const { registerPlugin } = await import('@capacitor/core');
     androidTrustLockPlugin = registerPlugin<AndroidTrustLockPlugin>('VtTrustLock');
+    console.info('[VibTribe][TrustLock] registerPlugin("VtTrustLock") resolved', {
+      hasEnable: typeof androidTrustLockPlugin.enable === 'function',
+      hasDisable: typeof androidTrustLockPlugin.disable === 'function',
+      hasIsActive: typeof androidTrustLockPlugin.isActive === 'function',
+    });
   } catch {
+    console.warn('[VibTribe][TrustLock] registerPlugin("VtTrustLock") failed');
     androidTrustLockPlugin = null;
   }
   return androidTrustLockPlugin;
@@ -445,28 +458,40 @@ export async function setAndroidSecureFlag(secure: boolean): Promise<boolean> {
   const plugin = await getAndroidTrustLockPlugin();
   if (plugin) {
     try {
+      console.info('[VibTribe][TrustLock] Calling Capacitor VtTrustLock.' + (secure ? 'enable()' : 'disable()'));
       const result = await withNativeTimeout(secure ? plugin.enable() : plugin.disable());
+      console.info('[VibTribe][TrustLock] Capacitor VtTrustLock.' + (secure ? 'enable()' : 'disable()') + ' returned', result);
       if (typeof result?.enabled === 'boolean' && (secure ? result.enabled : !result.enabled)) {
+        console.info('[VibTribe][TrustLock] Confirmed through Capacitor plugin result.enabled');
         return true;
       }
+      console.info('[VibTribe][TrustLock] Calling Capacitor VtTrustLock.isActive() for confirmation');
       const status = await withNativeTimeout(plugin.isActive(), 700);
+      console.info('[VibTribe][TrustLock] Capacitor VtTrustLock.isActive() returned', status);
       if (status && (secure ? !!status.active : !status.active)) {
+        console.info('[VibTribe][TrustLock] Confirmed through Capacitor plugin status.active');
         return true;
       }
     } catch (e) {
       console.warn('[VibTribe] VtTrustLock plugin call failed', e);
     }
   }
-  if (!bridge) return false;
+  if (!bridge) {
+    console.warn('[VibTribe][TrustLock] No Capacitor plugin confirmation and no window.VtTrustLock fallback bridge');
+    return false;
+  }
   try {
+    console.warn('[VibTribe][TrustLock] Falling back to window.VtTrustLock.' + (secure ? 'enable()' : 'disable()'));
     if (secure) bridge.enable();
     else bridge.disable();
     for (let i = 0; i < 8; i += 1) {
       await new Promise((resolve) => window.setTimeout(resolve, 100));
       if (typeof bridge.isActive !== 'function') {
+        console.warn('[VibTribe][TrustLock] window.VtTrustLock.isActive missing; assuming fallback call was accepted');
         return secure;
       }
       const active = !!bridge.isActive();
+      console.info('[VibTribe][TrustLock] window.VtTrustLock.isActive() returned', active);
       if (secure ? active : !active) return true;
     }
     return false;
