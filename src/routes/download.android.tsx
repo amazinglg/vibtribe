@@ -5,8 +5,8 @@ import {
   CheckCircle2, ArrowLeft, ExternalLink, Settings as SettingsIcon, AlertTriangle,
 } from 'lucide-react';
 
-const APK_HREF = '/VibTribe_v1.2.apk';
-const APK_FILENAME = 'VibTribe_v1.2.apk';
+const APK_HREF = '/api/public/download-apk';
+const APK_FILENAME = 'VibTribe_v1.2.2.apk';
 
 const TITLE = 'Install VibTribe on Android — Step-by-step guide';
 const DESCRIPTION =
@@ -39,7 +39,7 @@ type StepDef = {
 };
 
 const STEPS: StepDef[] = [
-  { id: 1, title: 'Download APK', subtitle: 'Save VibTribe_v1.2.apk', icon: Download },
+  { id: 1, title: 'Download APK', subtitle: 'Save VibTribe_v1.2.2.apk', icon: Download },
   { id: 2, title: 'Allow install', subtitle: 'Enable “Install unknown apps”', icon: ShieldAlert },
   { id: 3, title: 'Install app', subtitle: 'Tap the APK and Install', icon: Smartphone },
   { id: 4, title: 'First open', subtitle: 'Sign up & permissions', icon: UserPlus },
