@@ -111,6 +111,26 @@ export default function ServiceWorkerRegistration() {
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
 
+    // Deep-link from notification tap: read ?chat= from the URL (set by
+    // either the web-push SW redirect or the native FCM action handler
+    // in src/lib/fcmRegister.ts) and open that conversation. Runs on mount
+    // and again on history changes so background/foreground taps both work.
+    const openChatFromUrl = () => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const chatId = params.get('chat');
+        if (chatId) {
+          setSelectedChatId(chatId);
+          // Clean the param so a later refresh doesn't keep re-opening it.
+          const url = new URL(window.location.href);
+          url.searchParams.delete('chat');
+          window.history.replaceState({}, '', url.toString());
+        }
+      } catch {}
+    };
+    openChatFromUrl();
+    window.addEventListener('popstate', openChatFromUrl);
+
     const handleSWMessage = (event: MessageEvent) => {
       if (event.data?.type === 'INCOMING_CALL') {
         playRingtone();
@@ -151,6 +171,7 @@ export default function ServiceWorkerRegistration() {
     return () => {
       navigator.serviceWorker.removeEventListener('message', handleSWMessage);
       window.removeEventListener('vt-open-chat', handleOpenChat as EventListener);
+      window.removeEventListener('popstate', openChatFromUrl);
       stopRingtone();
     };
   }, [setSelectedChatId]);
