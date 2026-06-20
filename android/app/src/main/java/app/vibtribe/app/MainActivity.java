@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.Bundle;
+import android.os.Looper;
 import android.util.Base64;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
@@ -29,6 +30,9 @@ import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.WebViewListener;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,6 +45,7 @@ public class MainActivity extends BridgeActivity {
     private int safeRight = 0;
     private PermissionRequest pendingMediaRequest = null;
     private volatile boolean trustLockEnabled = false;
+    private volatile boolean trustLockBridgeInstalled = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,7 +57,13 @@ public class MainActivity extends BridgeActivity {
         // The web layer no longer depends on Android WebView env() support.
         EdgeToEdge.enable(this);
         installSafeAreaInsetsBridge();
-        installTrustLockBridge();
+    }
+
+    @Override
+    protected void load() {
+        WebView webView = findViewById(com.getcapacitor.android.R.id.webview);
+        installTrustLockBridge(webView);
+        super.load();
     }
 
     @Override
@@ -65,18 +76,18 @@ public class MainActivity extends BridgeActivity {
 
     /**
      * Register the Trust Lock JS bridge IMMEDIATELY after the Capacitor
-     * WebView is created (in onCreate, before the page loads). Android's
+     * WebView is created (inside load(), before Capacitor calls loadUrl()). Android's
      * {@code addJavascriptInterface} only becomes visible to the JS
      * context on the NEXT page load — if we register it inside
      * {@code onPageLoaded}, the first (and in a SPA, only) page never
      * sees {@code window.VtTrustLock}, so FLAG_SECURE is never applied
      * and screenshots succeed even with Trust Lock enabled.
      */
-    private void installTrustLockBridge() {
+    private void installTrustLockBridge(WebView webView) {
         try {
-            if (getBridge() != null && getBridge().getWebView() != null) {
-                getBridge().getWebView().addJavascriptInterface(
-                    new TrustLockBridge(MainActivity.this), "VtTrustLock");
+            if (!trustLockBridgeInstalled && webView != null) {
+                webView.addJavascriptInterface(new TrustLockBridge(MainActivity.this), "VtTrustLock");
+                trustLockBridgeInstalled = true;
                 Log.i(TRUST_LOCK_TAG, "window.VtTrustLock JavascriptInterface installed");
             }
         } catch (Exception e) {
@@ -154,31 +165,13 @@ public class MainActivity extends BridgeActivity {
         TrustLockBridge(MainActivity a) { this.activity = a; }
 
         @JavascriptInterface
-        public void enable() {
-            activity.runOnUiThread(() -> {
-                try {
-                    Log.i(TRUST_LOCK_TAG, "window.VtTrustLock.enable() fallback bridge called");
-                    activity.trustLockEnabled = true;
-                    activity.applyTrustLockFlag(true);
-                    Log.i(TRUST_LOCK_TAG, "window.VtTrustLock.enable() fallback active=" + activity.isTrustLockFlagActive());
-                } catch (Exception e) {
-                    Log.w(TRUST_LOCK_TAG, "window.VtTrustLock.enable() fallback failed", e);
-                }
-            });
+        public boolean enable() {
+            return activity.applyTrustLockFlagAndRead(true, "window.VtTrustLock.enable() fallback");
         }
 
         @JavascriptInterface
-        public void disable() {
-            activity.runOnUiThread(() -> {
-                try {
-                    Log.i(TRUST_LOCK_TAG, "window.VtTrustLock.disable() fallback bridge called");
-                    activity.trustLockEnabled = false;
-                    activity.applyTrustLockFlag(false);
-                    Log.i(TRUST_LOCK_TAG, "window.VtTrustLock.disable() fallback active=" + activity.isTrustLockFlagActive());
-                } catch (Exception e) {
-                    Log.w(TRUST_LOCK_TAG, "window.VtTrustLock.disable() fallback failed", e);
-                }
-            });
+        public boolean disable() {
+            return activity.applyTrustLockFlagAndRead(false, "window.VtTrustLock.disable() fallback");
         }
 
         @JavascriptInterface
@@ -187,6 +180,42 @@ public class MainActivity extends BridgeActivity {
             Log.i(TRUST_LOCK_TAG, "window.VtTrustLock.isActive() fallback returning " + active);
             return active;
         }
+    }
+
+    private boolean applyTrustLockFlagAndRead(boolean enabled, String source) {
+        AtomicBoolean active = new AtomicBoolean(isTrustLockFlagActive());
+        CountDownLatch latch = new CountDownLatch(1);
+        Runnable action = () -> {
+            try {
+                Log.i(TRUST_LOCK_TAG, source + " called");
+                trustLockEnabled = enabled;
+                applyTrustLockFlag(enabled);
+                active.set(isTrustLockFlagActive());
+                Log.i(TRUST_LOCK_TAG, source + " active=" + active.get());
+            } catch (Exception e) {
+                Log.w(TRUST_LOCK_TAG, source + " failed", e);
+            } finally {
+                latch.countDown();
+            }
+        };
+
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            action.run();
+        } else {
+            runOnUiThread(action);
+            try {
+                if (!latch.await(800, TimeUnit.MILLISECONDS)) {
+                    Log.w(TRUST_LOCK_TAG, source + " timed out waiting for UI thread");
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                Log.w(TRUST_LOCK_TAG, source + " interrupted while waiting for UI thread", e);
+            }
+        }
+
+        boolean currentActive = active.get();
+        Log.i(TRUST_LOCK_TAG, source + " returning active=" + currentActive);
+        return currentActive;
     }
 
     private void applyTrustLockFlag(boolean enabled) {

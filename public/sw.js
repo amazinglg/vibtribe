@@ -1,6 +1,6 @@
 // Bump on every release so installed PWAs pick up the latest build
 // (auth/email branding, OTP throttling, profile + admin redesign, etc.).
-const CACHE_NAME = 'vibtribe-v17';
+const CACHE_NAME = 'vibtribe-v18';
 const IMG_CACHE = 'vibtribe-images-v5';
 const STATIC_ASSETS = ['/', '/manifest.json', '/favicon.ico'];
 
