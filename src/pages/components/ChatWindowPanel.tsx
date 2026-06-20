@@ -2315,6 +2315,14 @@ export default function ChatWindowPanel() {
                           {emoji}
                         </button>
                       ))}
+                      <button
+                        onClick={() => setReactionPickerMsg(msg)}
+                        className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-muted hover:bg-muted/80 transition-colors"
+                        type="button"
+                        aria-label="More reactions"
+                      >
+                        <Plus size={12} />
+                      </button>
                       {isMe && (
                         <button
                           onClick={() => deleteMessage(msg.id)}
@@ -2733,6 +2741,65 @@ export default function ChatWindowPanel() {
             >
               Cancel
             </button>
+          </div>
+        </div>
+      )}
+
+      {reactionPickerMsg && (
+        <div
+          className="fixed inset-0 z-[1550] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 pb-24 sm:pb-4"
+          onClick={() => setReactionPickerMsg(null)}
+        >
+          <div
+            className="bg-card border border-border rounded-2xl w-full max-w-sm overflow-hidden shadow-card float-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-4 py-3 border-b border-border">
+              <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Choose reaction</p>
+            </div>
+            <div className="flex gap-1 p-2 bg-muted/40 overflow-x-auto no-scrollbar">
+              {EMOJI_CATEGORIES.map(cat => (
+                <button
+                  key={cat.key}
+                  onClick={() => setEmojiTab(cat.key)}
+                  className={`flex-shrink-0 px-2.5 py-1.5 rounded-lg text-base transition-all ${emojiTab === cat.key ? 'bg-primary/15 text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                  aria-label={cat.label}
+                  title={cat.label}
+                  type="button"
+                >
+                  {cat.icon}
+                </button>
+              ))}
+            </div>
+            <div className="grid grid-cols-7 gap-1 p-3 max-h-72 overflow-y-auto">
+              {(EMOJI_CATEGORIES.find(c => c.key === emojiTab)?.emojis || []).map((emoji, i) => {
+                const vtMatch = /^:vt:([a-z0-9_-]+):$/.exec(emoji);
+                const vt = vtMatch ? VIBTRIBE_EMOJI_MAP[vtMatch[1]] : null;
+                return (
+                  <button
+                    key={`${emoji}-${i}`}
+                    onClick={() => addReaction(reactionPickerMsg.id, emoji)}
+                    className="aspect-square flex items-center justify-center text-2xl rounded-lg hover:bg-muted active:scale-90 transition-all p-1"
+                    type="button"
+                    aria-label={vt?.name || emoji}
+                    title={vt?.name || emoji}
+                  >
+                    {vt ? (
+                      <img
+                        src={vt.url}
+                        alt={vt.name}
+                        draggable={false}
+                        loading="lazy"
+                        decoding="async"
+                        className="w-full h-full object-contain select-none"
+                      />
+                    ) : (
+                      emoji
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}
