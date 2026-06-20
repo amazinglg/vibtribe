@@ -166,18 +166,18 @@ public class MainActivity extends BridgeActivity {
 
         @JavascriptInterface
         public boolean enable() {
-            return activity.applyTrustLockFlagAndRead(true, "window.VtTrustLock.enable() fallback");
+            return activity.applyTrustLockFlagAndRead(true, "window.VtTrustLock.enable() primary");
         }
 
         @JavascriptInterface
         public boolean disable() {
-            return activity.applyTrustLockFlagAndRead(false, "window.VtTrustLock.disable() fallback");
+            return activity.applyTrustLockFlagAndRead(false, "window.VtTrustLock.disable() primary");
         }
 
         @JavascriptInterface
         public boolean isActive() {
             boolean active = activity.isTrustLockFlagActive();
-            Log.i(TRUST_LOCK_TAG, "window.VtTrustLock.isActive() fallback returning " + active);
+            Log.i(TRUST_LOCK_TAG, "window.VtTrustLock.isActive() primary returning " + active);
             return active;
         }
     }
