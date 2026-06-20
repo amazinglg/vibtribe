@@ -1661,7 +1661,7 @@ export default function ChatWindowPanel() {
 
   return (
     <TrustLockProvider value={{ enabled: trustLock.enabled, ownerUserId: trustLock.ownerUserId, isOwner: !!user && trustLock.ownerUserId === user.id }}>
-    <div className="flex-1 flex flex-col h-full relative min-w-0 w-full max-w-full overflow-hidden" onClick={() => { setShowAttachMenu(false); setShowMoreMenu(false); setShowDisappearMenu(false); }}>
+    <div className="flex-1 flex flex-col h-full relative min-w-0 w-full max-w-full overflow-hidden" onClick={() => { setShowAttachMenu(false); setShowMoreMenu(false); setShowDisappearMenu(false); setShowEmoji(false); }}>
       {/* Voice Call Permission Prompt */}
       {showCallPermPrompt && (
         <PermissionPrompt
@@ -2555,14 +2555,14 @@ export default function ChatWindowPanel() {
       {/* Input Area */}
       {(!trustLock.enabled || trustLockProtected === true) && <div className="glass border-t border-border px-2 py-2 flex items-center gap-1 flex-shrink-0 w-full max-w-full overflow-hidden">
         <button
-          onClick={(e) => { e.stopPropagation(); setShowAttachMenu(!showAttachMenu); }}
+          onClick={(e) => { e.stopPropagation(); setShowAttachMenu(v => { const next = !v; if (next) { setShowEmoji(false); setShowMoreMenu(false); setShowDisappearMenu(false); } return next; }); }}
           className={`p-2 rounded-xl transition-all flex-shrink-0 ${showAttachMenu ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
           aria-label="Attach"
         >
           <Paperclip size={20} />
         </button>
         <button
-          onClick={(e) => { e.stopPropagation(); setShowEmoji(v => !v); }}
+          onClick={(e) => { e.stopPropagation(); setShowEmoji(v => { const next = !v; if (next) { setShowAttachMenu(false); setShowMoreMenu(false); setShowDisappearMenu(false); } return next; }); }}
           className={`p-2 rounded-xl transition-all flex-shrink-0 ${showEmoji ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
           aria-label="Emoji"
         >
