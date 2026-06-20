@@ -722,7 +722,14 @@ export default function CallProvider({ children }: { children: React.ReactNode }
                       {videoOff ? <VideoOff size={20} /> : <Video size={20} />}
                     </button>
                   )}
-                  <button onClick={() => endCall('ended')}
+                  {activeCall.call_type === 'video' && !videoOff && (
+                    <button onClick={switchCamera}
+                      aria-label="Switch camera"
+                      className="w-12 h-12 rounded-full flex items-center justify-center bg-white/10 text-white hover:bg-white/20 transition-all">
+                      <SwitchCamera size={20} />
+                    </button>
+                  )}
+                  <button onClick={() => { playEndCallClick(); endCall('ended'); }}
                     className="w-14 h-14 bg-red-500 rounded-full flex items-center justify-center text-white hover:bg-red-600 shadow-lg">
                     <PhoneOff size={22} />
                   </button>
