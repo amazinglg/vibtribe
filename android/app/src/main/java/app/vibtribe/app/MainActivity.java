@@ -211,43 +211,6 @@ public class MainActivity extends BridgeActivity {
         return currentActive;
     }
 
-    /*
-        public void enable() {
-            activity.runOnUiThread(() -> {
-                try {
-                    Log.i(TRUST_LOCK_TAG, "window.VtTrustLock.enable() fallback bridge called");
-                    activity.trustLockEnabled = true;
-                    activity.applyTrustLockFlag(true);
-                    Log.i(TRUST_LOCK_TAG, "window.VtTrustLock.enable() fallback active=" + activity.isTrustLockFlagActive());
-                } catch (Exception e) {
-                    Log.w(TRUST_LOCK_TAG, "window.VtTrustLock.enable() fallback failed", e);
-                }
-            });
-        }
-
-        @JavascriptInterface
-        public void disable() {
-            activity.runOnUiThread(() -> {
-                try {
-                    Log.i(TRUST_LOCK_TAG, "window.VtTrustLock.disable() fallback bridge called");
-                    activity.trustLockEnabled = false;
-                    activity.applyTrustLockFlag(false);
-                    Log.i(TRUST_LOCK_TAG, "window.VtTrustLock.disable() fallback active=" + activity.isTrustLockFlagActive());
-                } catch (Exception e) {
-                    Log.w(TRUST_LOCK_TAG, "window.VtTrustLock.disable() fallback failed", e);
-                }
-            });
-        }
-
-        @JavascriptInterface
-        public boolean isActive() {
-            boolean active = activity.isTrustLockFlagActive();
-            Log.i(TRUST_LOCK_TAG, "window.VtTrustLock.isActive() fallback returning " + active);
-            return active;
-        }
-    }
-    */
-
     private void applyTrustLockFlag(boolean enabled) {
         Log.i(TRUST_LOCK_TAG, "MainActivity.applyTrustLockFlag(" + enabled + ")");
         if (enabled) {
