@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useRef, useState, useCallb
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
+import { SwitchCamera } from 'lucide-react';
 import { acquireCallWakeLock, setCallAudioRoute } from '@/lib/native-bridge';
 import { sendCallPush } from '@/lib/fcm-push.functions';
 
@@ -75,6 +76,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   const [micMuted, setMicMuted] = useState(false);
   const [speakerOff, setSpeakerOff] = useState(false);
   const [videoOff, setVideoOff] = useState(false);
+  const [cameraFacing, setCameraFacing] = useState<'user' | 'environment'>('user');
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const activeCallRef = useRef<CallRow | null>(null);
@@ -103,6 +105,21 @@ export default function CallProvider({ children }: { children: React.ReactNode }
       localVideoRef.current.srcObject = stream;
     }
   }, [activeCall]);
+
+  // Re-attach the local stream every time the self-preview element re-mounts
+  // (e.g. after the user toggles camera off and back on). The <video> ref
+  // becomes a brand-new node, so its srcObject must be rebound or the
+  // preview stays black even though the camera/track is live.
+  useEffect(() => {
+    if (!activeCall || activeCall.call_type !== 'video') return;
+    if (videoOff) return;
+    const stream = localStreamRef.current;
+    const el = localVideoRef.current;
+    if (stream && el && el.srcObject !== stream) {
+      el.srcObject = stream;
+      el.play?.().catch(() => {});
+    }
+  }, [videoOff, activeCall]);
 
   const cleanup = useCallback(() => {
     try { pcRef.current?.close(); } catch {}
@@ -245,7 +262,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     }
     const mediaPromise = navigator.mediaDevices.getUserMedia({
       audio: true,
-      video: type === 'video' ? { facingMode: 'user' } : false,
+      video: type === 'video' ? { facingMode: cameraFacing } : false,
     });
     const timeoutPromise = new Promise<never>((_, reject) => {
       window.setTimeout(() => reject(new Error('Media permission request timed out.')), 8000);
@@ -256,6 +273,66 @@ export default function CallProvider({ children }: { children: React.ReactNode }
       localVideoRef.current.srcObject = stream;
     }
     return stream;
+  };
+
+  // Switch between front and back camera mid-call without dropping
+  // the peer connection. We acquire a new video track with the opposite
+  // facingMode, replace the existing sender's track, and swap the local
+  // self-preview source so the user sees the new feed instantly.
+  const switchCamera = useCallback(async () => {
+    if (!activeCall || activeCall.call_type !== 'video') return;
+    const next: 'user' | 'environment' = cameraFacing === 'user' ? 'environment' : 'user';
+    try {
+      const newStream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: { facingMode: { ideal: next } },
+      });
+      const newTrack = newStream.getVideoTracks()[0];
+      if (!newTrack) return;
+      // Replace the outgoing track so the remote peer sees the new camera
+      // without renegotiation.
+      const sender = sendersRef.current.video;
+      if (sender) {
+        try { await sender.replaceTrack(newTrack); } catch {}
+      }
+      // Update the local MediaStream: stop the old video track and add the
+      // new one so the self-preview reflects the swap.
+      const localStream = localStreamRef.current;
+      if (localStream) {
+        localStream.getVideoTracks().forEach((t) => { try { t.stop(); } catch {} localStream.removeTrack(t); });
+        localStream.addTrack(newTrack);
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = localStream;
+          localVideoRef.current.play?.().catch(() => {});
+        }
+      }
+      setCameraFacing(next);
+    } catch (e) {
+      console.warn('[Call] camera switch failed', e);
+    }
+  }, [activeCall, cameraFacing]);
+
+  // Short local UI sound played when the user taps End Call. Plays only on
+  // this device (Web Audio → local speaker), never sent over the PeerConnection.
+  const playEndCallClick = () => {
+    try {
+      const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = 'sine';
+      const t = ctx.currentTime;
+      osc.frequency.setValueAtTime(520, t);
+      osc.frequency.exponentialRampToValueAtTime(180, t + 0.18);
+      gain.gain.setValueAtTime(0.001, t);
+      gain.gain.exponentialRampToValueAtTime(0.35, t + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+      osc.start(t);
+      osc.stop(t + 0.24);
+      setTimeout(() => { try { ctx.close(); } catch {} }, 400);
+    } catch {}
   };
 
   // Add tracks to peer, tracking senders so we can replaceTrack later
@@ -617,7 +694,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
               {role === 'callee' && callState === 'ringing' ? (
                 <>
                   <button
-                    onClick={declineCall}
+                    onClick={() => { playEndCallClick(); declineCall(); }}
                     className="w-14 h-14 bg-red-500 rounded-full flex items-center justify-center text-white hover:bg-red-600 shadow-lg"
                     aria-label="Decline">
                     <PhoneOff size={22} />
@@ -645,7 +722,14 @@ export default function CallProvider({ children }: { children: React.ReactNode }
                       {videoOff ? <VideoOff size={20} /> : <Video size={20} />}
                     </button>
                   )}
-                  <button onClick={() => endCall('ended')}
+                  {activeCall.call_type === 'video' && !videoOff && (
+                    <button onClick={switchCamera}
+                      aria-label="Switch camera"
+                      className="w-12 h-12 rounded-full flex items-center justify-center bg-white/10 text-white hover:bg-white/20 transition-all">
+                      <SwitchCamera size={20} />
+                    </button>
+                  )}
+                  <button onClick={() => { playEndCallClick(); endCall('ended'); }}
                     className="w-14 h-14 bg-red-500 rounded-full flex items-center justify-center text-white hover:bg-red-600 shadow-lg">
                     <PhoneOff size={22} />
                   </button>
