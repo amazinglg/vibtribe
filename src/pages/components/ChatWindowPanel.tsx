@@ -2841,7 +2841,15 @@ export default function ChatWindowPanel() {
                   if (!user || !selectedChatId) return;
                   setTrustLockBusy(true);
                   try {
-                    const protectedNow = await TrustLockService.enableProtection();
+                    let trustLockTimer: number | undefined;
+                    const protectedNow = await Promise.race([
+                      TrustLockService.enableProtection(),
+                      new Promise<boolean>((resolve) => {
+                        trustLockTimer = window.setTimeout(() => resolve(false), 3500);
+                      }),
+                    ]).finally(() => {
+                      if (trustLockTimer) window.clearTimeout(trustLockTimer);
+                    });
                     if (!protectedNow) {
                       throw new Error('Trust Lock could not confirm screenshot blocking on this device. Please use the updated Android app.');
                     }
