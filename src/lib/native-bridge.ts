@@ -446,11 +446,10 @@ async function getAndroidTrustLockPlugin(): Promise<AndroidTrustLockPlugin | nul
 
 /**
  * Apply / remove Android FLAG_SECURE so the OS blocks screenshots, screen
- * recording and the recent-apps preview thumbnail. Implemented in
- * the native Android `VtTrustLock` Capacitor plugin. The legacy
- * `addJavascriptInterface` bridge is kept as a fallback for already-built
- * wrappers, but the plugin path is the reliable path because Capacitor
- * registers it before the page loads.
+ * recording and the recent-apps preview thumbnail. Prefer the Android
+ * `window.VtTrustLock` JavascriptInterface because VibTribe loads the live
+ * site; the Capacitor plugin remains as a secondary path when native plugin
+ * metadata is present in the WebView.
  *
  * No-op on web / iOS / PWA — those platforms cannot block screenshots from
  * userland, so we rely on the in-app UI restrictions (hidden download/share)
