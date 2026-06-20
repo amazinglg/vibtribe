@@ -126,8 +126,8 @@ function DownloadAndroidPage() {
             <StepCard
               eyebrow="Step 1 of 5"
               icon={Download}
-              title="Download the VibTribe APK (v1.2)"
-              body="Tap the button below. The file will save to your phone as VibTribe_v1.2.apk (about 38 MB). Use Wi-Fi for the fastest download. This is the latest official Android release — version 1.2."
+              title="Download the VibTribe APK (v1.2.2)"
+              body="Tap the button below. The file will save to your phone as VibTribe_v1.2.2.apk (about 38 MB). Use Wi-Fi for the fastest download. This is the latest official Android release — version 1.2.2."
             >
               <a
                 href={APK_HREF}
@@ -135,7 +135,7 @@ function DownloadAndroidPage() {
                 onClick={startDownload}
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 gradient-primary text-white font-semibold rounded-2xl glow-primary hover:opacity-95 transition-all"
               >
-                <Download size={16} /> Download VibTribe_v1.2.apk
+                <Download size={16} /> Download VibTribe_v1.2.2.apk
               </a>
               {downloadStarted && (
                 <p className="mt-3 text-xs text-vt-green flex items-center gap-1.5">
