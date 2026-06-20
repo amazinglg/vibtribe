@@ -1,6 +1,9 @@
 // Classic WhatsApp-style Unicode emoji set grouped by category.
 
+import { VIBTRIBE_EMOJIS } from './vibtribe-emojis';
+
 export type EmojiCategoryKey =
+  | 'vibtribe'
   | 'smileys'
   | 'gestures'
   | 'hearts'
@@ -19,6 +22,10 @@ export interface EmojiCategory {
 }
 
 export const EMOJI_CATEGORIES: EmojiCategory[] = [
+  {
+    key: 'vibtribe', label: 'VibTribe Exclusive', icon: '✨',
+    emojis: VIBTRIBE_EMOJIS.map(e => `:vt:${e.id}:`),
+  },
   {
     key: 'smileys', label: 'Smileys & People', icon: '😀',
     emojis: ['😀','😃','😄','😁','😆','😅','🤣','😂','🙂','🙃','😉','😊','😇','🥰','😍','🤩','😘','😗','😚','😙','🥲','😋','😛','😜','🤪','😝','🤑','🤗','🤭','🤫','🤔','🤐','🤨','😐','😑','😶','😏','😒','🙄','😬','🤥','😌','😔','😪','🤤','😴','😷','🤒','🤕','🤧','🥵','🥶','🥴','😵','🤯','🤠','🥳','😎','🤓','🧐','😕','😟','🙁','☹️','😮','😯','😲','😳','🥺','😦','😧','😨','😰','😥','😢','😭','😱','😖','😣','😞','😓','😩','😫','🥱','😤','😡','😠','🤬','😈','👿','💀','☠️','💩','🤡','👹','👺','👻','👽','👾','🤖'],
