@@ -45,6 +45,7 @@ public class MainActivity extends BridgeActivity {
     private int safeRight = 0;
     private PermissionRequest pendingMediaRequest = null;
     private volatile boolean trustLockEnabled = false;
+    private volatile boolean trustLockBridgeInstalled = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,7 +57,13 @@ public class MainActivity extends BridgeActivity {
         // The web layer no longer depends on Android WebView env() support.
         EdgeToEdge.enable(this);
         installSafeAreaInsetsBridge();
-        installTrustLockBridge();
+    }
+
+    @Override
+    protected void load() {
+        WebView webView = findViewById(com.getcapacitor.android.R.id.webview);
+        installTrustLockBridge(webView);
+        super.load();
     }
 
     @Override
@@ -69,18 +76,18 @@ public class MainActivity extends BridgeActivity {
 
     /**
      * Register the Trust Lock JS bridge IMMEDIATELY after the Capacitor
-     * WebView is created (in onCreate, before the page loads). Android's
+     * WebView is created (inside load(), before Capacitor calls loadUrl()). Android's
      * {@code addJavascriptInterface} only becomes visible to the JS
      * context on the NEXT page load — if we register it inside
      * {@code onPageLoaded}, the first (and in a SPA, only) page never
      * sees {@code window.VtTrustLock}, so FLAG_SECURE is never applied
      * and screenshots succeed even with Trust Lock enabled.
      */
-    private void installTrustLockBridge() {
+    private void installTrustLockBridge(WebView webView) {
         try {
-            if (getBridge() != null && getBridge().getWebView() != null) {
-                getBridge().getWebView().addJavascriptInterface(
-                    new TrustLockBridge(MainActivity.this), "VtTrustLock");
+            if (!trustLockBridgeInstalled && webView != null) {
+                webView.addJavascriptInterface(new TrustLockBridge(MainActivity.this), "VtTrustLock");
+                trustLockBridgeInstalled = true;
                 Log.i(TRUST_LOCK_TAG, "window.VtTrustLock JavascriptInterface installed");
             }
         } catch (Exception e) {
