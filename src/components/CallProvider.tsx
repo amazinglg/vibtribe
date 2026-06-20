@@ -694,7 +694,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
               {role === 'callee' && callState === 'ringing' ? (
                 <>
                   <button
-                    onClick={declineCall}
+                    onClick={() => { playEndCallClick(); declineCall(); }}
                     className="w-14 h-14 bg-red-500 rounded-full flex items-center justify-center text-white hover:bg-red-600 shadow-lg"
                     aria-label="Decline">
                     <PhoneOff size={22} />
