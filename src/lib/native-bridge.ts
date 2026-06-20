@@ -398,6 +398,7 @@ type AndroidTrustLockJavascriptBridge = {
 let androidTrustLockPlugin: AndroidTrustLockPlugin | null | undefined;
 
 const TRUST_LOCK_NATIVE_TIMEOUT_MS = 1200;
+const TRUST_LOCK_BRIDGE_CONFIRM_TIMEOUT_MS = 900;
 
 async function withNativeTimeout<T>(promise: Promise<T>, timeoutMs = TRUST_LOCK_NATIVE_TIMEOUT_MS): Promise<T | null> {
   let timer: number | undefined;
@@ -471,16 +472,27 @@ export async function setAndroidSecureFlag(secure: boolean): Promise<boolean> {
       const result = secure ? bridge.enable() : bridge.disable();
       console.info('[VibTribe][TrustLock] window.VtTrustLock.' + (secure ? 'enable()' : 'disable()') + ' returned', result);
       if (typeof result === 'boolean' && (secure ? result : !result)) return true;
-      for (let i = 0; i < 8; i += 1) {
-        await new Promise((resolve) => window.setTimeout(resolve, 100));
+      const deadline = Date.now() + TRUST_LOCK_BRIDGE_CONFIRM_TIMEOUT_MS;
+      while (Date.now() < deadline) {
+        await new Promise((resolve) => window.setTimeout(resolve, 75));
         if (typeof bridge.isActive !== 'function') {
-          console.warn('[VibTribe][TrustLock] window.VtTrustLock.isActive missing; assuming fallback call was accepted');
+          console.warn('[VibTribe][TrustLock] window.VtTrustLock.isActive missing; cannot confirm Android FLAG_SECURE');
+          break;
+        }
+        let active = false;
+        try {
+          active = !!bridge.isActive();
+        } catch (e) {
+          console.warn('[VibTribe][TrustLock] window.VtTrustLock.isActive() failed', e);
+          break;
+        }
+        console.info('[VibTribe][TrustLock] window.VtTrustLock.isActive() returned', active);
+        if (secure ? active : !active) {
+          console.info('[VibTribe][TrustLock] Confirmed through window.VtTrustLock.isActive()');
           return secure;
         }
-        const active = !!bridge.isActive();
-        console.info('[VibTribe][TrustLock] window.VtTrustLock.isActive() returned', active);
-        if (secure ? active : !active) return true;
       }
+      console.warn('[VibTribe][TrustLock] window.VtTrustLock did not confirm within ' + TRUST_LOCK_BRIDGE_CONFIRM_TIMEOUT_MS + 'ms; trying Capacitor fallback');
     } catch (e) {
       console.warn('[VibTribe] window.VtTrustLock bridge call failed', e);
     }
