@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useRef, useEffect } from 'react';
-import { Phone, Video, Paperclip, Mic, MicOff, Send, Lock, CheckCheck, Check, ArrowLeft, Info, Trash2, ShieldCheck, Ban, ShieldOff, X, Image, FileText, Camera, VideoOff, PhoneOff, Volume2, VolumeX, Timer, MoreVertical, UserPlus, Smile, KeyRound, Shield, ShieldAlert } from 'lucide-react';
+import { Phone, Video, Paperclip, Mic, MicOff, Send, Lock, CheckCheck, Check, ArrowLeft, Info, Trash2, ShieldCheck, Ban, ShieldOff, X, Image, FileText, Camera, VideoOff, PhoneOff, Volume2, VolumeX, Timer, MoreVertical, UserPlus, Smile, KeyRound, Shield, ShieldAlert, Plus } from 'lucide-react';
 import { useChatStore } from '@/store/chatStore';
 import MarkSecureModal from '@/components/MarkSecureModal';
 import { useAuth } from '@/contexts/AuthContext';
@@ -415,6 +415,7 @@ export default function ChatWindowPanel() {
   const [tribeMissingKeyCount, setTribeMissingKeyCount] = useState(0);
   const [tribeTotalMembers, setTribeTotalMembers] = useState(0);
   const [actionMsg, setActionMsg] = useState<Message | null>(null);
+  const [reactionPickerMsg, setReactionPickerMsg] = useState<Message | null>(null);
   const [editingMsg, setEditingMsg] = useState<Message | null>(null);
   const [editText, setEditText] = useState('');
   const longPressTimerRef = useRef<any>(null);
@@ -1372,6 +1373,7 @@ export default function ChatWindowPanel() {
         ? { ...m, reactions: m.reactions.includes(emoji) ? m.reactions.filter(r => r !== emoji) : [...m.reactions, emoji] }
         : m
     ));
+    setReactionPickerMsg(null);
   };
 
   const insertEmoji = (emoji: string) => {
