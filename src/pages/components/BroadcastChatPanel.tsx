@@ -1,6 +1,6 @@
 // @ts-nocheck
-import React, { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, Send, Trash2, Smile, BadgeCheck, Paperclip, Pencil, Copy, Share2, X, MoreVertical } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowLeft, Send, Trash2, Smile, BadgeCheck, Paperclip, Pencil, Copy, Share2, X, MoreVertical, Plus } from 'lucide-react';
 import { useChatStore } from '@/store/chatStore';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
@@ -8,6 +8,8 @@ import { toast } from 'sonner';
 import { isNativeWrapper, pickNativeFiles } from '@/lib/native-bridge';
 import Wordmark from '@/components/ui/Wordmark';
 import ImageCropModal from '@/components/ImageCropModal';
+import { EMOJI_CATEGORIES, type EmojiCategoryKey } from '@/lib/emojis';
+import { VIBTRIBE_EMOJI_MAP } from '@/lib/vibtribe-emojis';
 
 export const BROADCAST_CHAT_ID = '__vibtribe_broadcast__';
 const FALLBACK_LOGO = '/assets/images/app_logo.png';
@@ -33,6 +35,7 @@ export default function BroadcastChatPanel() {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [pickerFor, setPickerFor] = useState<string | null>(null);
+  const [fullPickerFor, setFullPickerFor] = useState<string | null>(null);
   const [menuFor, setMenuFor] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -44,6 +47,9 @@ export default function BroadcastChatPanel() {
   const avatarUploadRef = useRef<HTMLInputElement>(null);
   const [avatarBusy, setAvatarBusy] = useState(false);
   const [avatarCropFile, setAvatarCropFile] = useState<File | null>(null);
+  const [emojiTab, setEmojiTab] = useState<EmojiCategoryKey>('vibtribe');
+
+  const allReactionEmojis = useMemo(() => EMOJI_CATEGORIES.find((c) => c.key === emojiTab)?.emojis || [], [emojiTab]);
 
   const loadBroadcastAvatar = async () => {
     const { data } = await supabase
@@ -227,10 +233,11 @@ export default function BroadcastChatPanel() {
     setUploading(true);
     try {
       const ext = file.name.split('.').pop() || 'bin';
-      const path = `broadcast/${user.id}/${Date.now()}.${ext}`;
+      const path = `${user.id}/broadcast-${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage.from('chat-media').upload(path, file, {
         contentType: file.type,
-        upsert: false,
+         upsert: false,
+         cacheControl: '3600',
       });
       if (upErr) throw upErr;
       const { data: pub } = supabase.storage.from('chat-media').getPublicUrl(path);
@@ -238,7 +245,7 @@ export default function BroadcastChatPanel() {
       const { error: insErr } = await supabase.from('broadcast_messages').insert({
         sender_id: user.id,
         content: input.trim() || '',
-        attachment_url: pub.publicUrl,
+        attachment_url: `${pub.publicUrl}?v=${Date.now()}`,
         attachment_type: type,
       });
       if (insErr) throw insErr;
@@ -423,14 +430,14 @@ export default function BroadcastChatPanel() {
                   {/* Action bar — always visible on mobile */}
                   <div className="absolute -top-3 right-1 flex items-center gap-1">
                     <button
-                      onClick={() => { setPickerFor(pickerFor === m.id ? null : m.id); setMenuFor(null); }}
+                      onClick={() => { setPickerFor(pickerFor === m.id ? null : m.id); setFullPickerFor(null); setMenuFor(null); }}
                       className="p-1 bg-background border border-border rounded-full shadow"
                       aria-label="React"
                     >
                       <Smile size={12} />
                     </button>
                     <button
-                      onClick={() => { setMenuFor(menuFor === m.id ? null : m.id); setPickerFor(null); }}
+                      onClick={() => { setMenuFor(menuFor === m.id ? null : m.id); setPickerFor(null); setFullPickerFor(null); }}
                       className="p-1 bg-background border border-border rounded-full shadow"
                       aria-label="More"
                     >
@@ -469,6 +476,61 @@ export default function BroadcastChatPanel() {
                         {e}
                       </button>
                     ))}
+                    <button
+                      onClick={() => { setFullPickerFor(m.id); setPickerFor(null); }}
+                      className="inline-flex items-center justify-center h-8 w-8 rounded-full border border-border bg-card hover:bg-muted transition-colors"
+                      type="button"
+                      aria-label="More reactions"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
+                )}
+                {fullPickerFor === m.id && (
+                  <div className="mt-2 p-2 bg-background border border-border rounded-2xl shadow space-y-2 max-w-[17rem]">
+                    <div className="flex gap-1 p-1 bg-muted/50 rounded-xl overflow-x-auto no-scrollbar">
+                      {EMOJI_CATEGORIES.map(cat => (
+                        <button
+                          key={cat.key}
+                          onClick={() => setEmojiTab(cat.key)}
+                          className={`flex-shrink-0 px-2 py-1 rounded-lg text-sm transition-all ${emojiTab === cat.key ? 'bg-primary/15 text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                          aria-label={cat.label}
+                          title={cat.label}
+                          type="button"
+                        >
+                          {cat.icon}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-6 gap-1 max-h-48 overflow-y-auto">
+                      {allReactionEmojis.map((emoji, i) => {
+                        const vtMatch = /^:vt:([a-z0-9_-]+):$/.exec(emoji);
+                        const vt = vtMatch ? VIBTRIBE_EMOJI_MAP[vtMatch[1]] : null;
+                        return (
+                          <button
+                            key={`${emoji}-${i}`}
+                            onClick={() => toggleReaction(m.id, emoji)}
+                            className="aspect-square flex items-center justify-center text-xl rounded-lg hover:bg-muted active:scale-90 transition-all p-1"
+                            type="button"
+                            aria-label={vt?.name || emoji}
+                            title={vt?.name || emoji}
+                          >
+                            {vt ? (
+                              <img
+                                src={vt.url}
+                                alt={vt.name}
+                                draggable={false}
+                                loading="lazy"
+                                decoding="async"
+                                className="w-full h-full object-contain select-none"
+                              />
+                            ) : (
+                              emoji
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
                 {Object.keys(grouped).length > 0 && (
