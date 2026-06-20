@@ -489,7 +489,7 @@ export async function setAndroidSecureFlag(secure: boolean): Promise<boolean> {
         console.info('[VibTribe][TrustLock] window.VtTrustLock.isActive() returned', active);
         if (secure ? active : !active) {
           console.info('[VibTribe][TrustLock] Confirmed through window.VtTrustLock.isActive()');
-          return secure;
+          return true;
         }
       }
       console.warn('[VibTribe][TrustLock] window.VtTrustLock did not confirm within ' + TRUST_LOCK_BRIDGE_CONFIRM_TIMEOUT_MS + 'ms; trying Capacitor fallback');
