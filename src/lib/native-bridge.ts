@@ -389,6 +389,12 @@ type AndroidTrustLockPlugin = {
   isActive: () => Promise<{ active: boolean }>;
 };
 
+type AndroidTrustLockJavascriptBridge = {
+  enable: () => boolean | void;
+  disable: () => boolean | void;
+  isActive?: () => boolean;
+};
+
 let androidTrustLockPlugin: AndroidTrustLockPlugin | null | undefined;
 
 const TRUST_LOCK_NATIVE_TIMEOUT_MS = 1200;
@@ -453,8 +459,34 @@ async function getAndroidTrustLockPlugin(): Promise<AndroidTrustLockPlugin | nul
 export async function setAndroidSecureFlag(secure: boolean): Promise<boolean> {
   if (typeof window === 'undefined') return false;
   const bridge = (window as unknown as {
-    VtTrustLock?: { enable: () => void; disable: () => void; isActive?: () => boolean };
+    VtTrustLock?: AndroidTrustLockJavascriptBridge;
   }).VtTrustLock;
+
+  // Prefer the explicit Android JavascriptInterface because VibTribe loads the
+  // live site in the WebView. On remote/service-worker-served HTML, Capacitor's
+  // injected PluginHeaders can be absent or stale, so registerPlugin() may never
+  // dispatch to native even though MainActivity installed window.VtTrustLock.
+  if (bridge) {
+    try {
+      console.info('[VibTribe][TrustLock] Calling window.VtTrustLock.' + (secure ? 'enable()' : 'disable()'));
+      const result = secure ? bridge.enable() : bridge.disable();
+      console.info('[VibTribe][TrustLock] window.VtTrustLock.' + (secure ? 'enable()' : 'disable()') + ' returned', result);
+      if (typeof result === 'boolean' && (secure ? result : !result)) return true;
+      for (let i = 0; i < 8; i += 1) {
+        await new Promise((resolve) => window.setTimeout(resolve, 100));
+        if (typeof bridge.isActive !== 'function') {
+          console.warn('[VibTribe][TrustLock] window.VtTrustLock.isActive missing; assuming fallback call was accepted');
+          return secure;
+        }
+        const active = !!bridge.isActive();
+        console.info('[VibTribe][TrustLock] window.VtTrustLock.isActive() returned', active);
+        if (secure ? active : !active) return true;
+      }
+    } catch (e) {
+      console.warn('[VibTribe] window.VtTrustLock bridge call failed', e);
+    }
+  }
+
   const plugin = await getAndroidTrustLockPlugin();
   if (plugin) {
     try {
@@ -476,27 +508,6 @@ export async function setAndroidSecureFlag(secure: boolean): Promise<boolean> {
       console.warn('[VibTribe] VtTrustLock plugin call failed', e);
     }
   }
-  if (!bridge) {
-    console.warn('[VibTribe][TrustLock] No Capacitor plugin confirmation and no window.VtTrustLock fallback bridge');
-    return false;
-  }
-  try {
-    console.warn('[VibTribe][TrustLock] Falling back to window.VtTrustLock.' + (secure ? 'enable()' : 'disable()'));
-    if (secure) bridge.enable();
-    else bridge.disable();
-    for (let i = 0; i < 8; i += 1) {
-      await new Promise((resolve) => window.setTimeout(resolve, 100));
-      if (typeof bridge.isActive !== 'function') {
-        console.warn('[VibTribe][TrustLock] window.VtTrustLock.isActive missing; assuming fallback call was accepted');
-        return secure;
-      }
-      const active = !!bridge.isActive();
-      console.info('[VibTribe][TrustLock] window.VtTrustLock.isActive() returned', active);
-      if (secure ? active : !active) return true;
-    }
-    return false;
-  } catch (e) {
-    console.warn('[VibTribe] setAndroidSecureFlag failed', e);
-    return false;
-  }
+  console.warn('[VibTribe][TrustLock] No Android Trust Lock bridge/plugin confirmation');
+  return false;
 }
