@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.Bundle;
+import android.os.Looper;
 import android.util.Base64;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
@@ -29,6 +30,9 @@ import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.WebViewListener;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -154,6 +158,60 @@ public class MainActivity extends BridgeActivity {
         TrustLockBridge(MainActivity a) { this.activity = a; }
 
         @JavascriptInterface
+        public boolean enable() {
+            return activity.applyTrustLockFlagAndRead(true, "window.VtTrustLock.enable() fallback");
+        }
+
+        @JavascriptInterface
+        public boolean disable() {
+            return activity.applyTrustLockFlagAndRead(false, "window.VtTrustLock.disable() fallback");
+        }
+
+        @JavascriptInterface
+        public boolean isActive() {
+            boolean active = activity.isTrustLockFlagActive();
+            Log.i(TRUST_LOCK_TAG, "window.VtTrustLock.isActive() fallback returning " + active);
+            return active;
+        }
+    }
+
+    private boolean applyTrustLockFlagAndRead(boolean enabled, String source) {
+        AtomicBoolean active = new AtomicBoolean(isTrustLockFlagActive());
+        CountDownLatch latch = new CountDownLatch(1);
+        Runnable action = () -> {
+            try {
+                Log.i(TRUST_LOCK_TAG, source + " called");
+                trustLockEnabled = enabled;
+                applyTrustLockFlag(enabled);
+                active.set(isTrustLockFlagActive());
+                Log.i(TRUST_LOCK_TAG, source + " active=" + active.get());
+            } catch (Exception e) {
+                Log.w(TRUST_LOCK_TAG, source + " failed", e);
+            } finally {
+                latch.countDown();
+            }
+        };
+
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            action.run();
+        } else {
+            runOnUiThread(action);
+            try {
+                if (!latch.await(800, TimeUnit.MILLISECONDS)) {
+                    Log.w(TRUST_LOCK_TAG, source + " timed out waiting for UI thread");
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                Log.w(TRUST_LOCK_TAG, source + " interrupted while waiting for UI thread", e);
+            }
+        }
+
+        boolean currentActive = active.get();
+        Log.i(TRUST_LOCK_TAG, source + " returning active=" + currentActive);
+        return currentActive;
+    }
+
+    /*
         public void enable() {
             activity.runOnUiThread(() -> {
                 try {
@@ -188,6 +246,7 @@ public class MainActivity extends BridgeActivity {
             return active;
         }
     }
+    */
 
     private void applyTrustLockFlag(boolean enabled) {
         Log.i(TRUST_LOCK_TAG, "MainActivity.applyTrustLockFlag(" + enabled + ")");
