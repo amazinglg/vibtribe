@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { appConfirm } from '@/components/ui/AppDialog';
+import ImageCropModal from '@/components/ImageCropModal';
 
 interface Props {
   chatId: string;
