@@ -1201,10 +1201,8 @@ function ContactsTabContent({
       for (let i = 0; i < uniquePhones.length; i += CHUNK) {
         const slice = uniquePhones.slice(i, i + CHUNK);
         try {
-          const { data: platformUsers } = await supabase
-            .from('user_profiles')
-            .select('id, full_name, mobile_number, avatar_url, profile_photo_visibility')
-            .in('mobile_number', slice);
+          const { data: platformUsers } = await (supabase as any)
+            .rpc('find_users_by_mobiles', { _mobiles: slice });
           for (const u of (platformUsers || [])) {
             const key = (u as any).mobile_number?.replace(/\D/g, '');
             if (key) map.set(key, u);
@@ -1253,11 +1251,8 @@ function ContactsTabContent({
 
   const loadDemo = async () => {
     setLoading(true);
-    const { data: users } = await supabase
-      .from('user_profiles')
-      .select('id, full_name, mobile_number, avatar_url, profile_photo_visibility')
-      .neq('id', user?.id || '')
-      .limit(50);
+    const { data: users } = await (supabase as any)
+      .rpc('list_recent_public_users', { _limit: 50 });
     const result = (users || []).map((u: any) => ({
       name: u.full_name || 'Unknown',
       phone: u.mobile_number || '',

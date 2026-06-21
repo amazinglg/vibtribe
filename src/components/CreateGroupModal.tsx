@@ -29,12 +29,11 @@ export default function CreateGroupModal({ isOpen, onClose, onCreated }: Props) 
   useEffect(() => {
     if (!isOpen || !user) return;
     (async () => {
-      const { data } = await supabase
-        .from('user_profiles')
-        .select('id, full_name, mobile_number')
-        .neq('id', user.id)
-        .limit(100);
-      setUsers(data || []);
+      const { data } = await (supabase as any)
+        .rpc('list_recent_public_users', { _limit: 100 });
+      setUsers((data || []).map((u: any) => ({
+        id: u.id, full_name: u.full_name, mobile_number: u.mobile_number,
+      })));
     })();
   }, [isOpen, user]);
 

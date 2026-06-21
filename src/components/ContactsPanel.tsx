@@ -165,10 +165,8 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
     const platformUsers: any[] = [];
     for (let i = 0; i < allPhones.length; i += 50) {
       const chunk = allPhones.slice(i, i + 50);
-      const { data } = await supabase
-        .from('user_profiles')
-        .select('id, full_name, mobile_number, avatar_url, profile_photo_visibility, is_verified')
-        .or(chunk.length ? chunk.map(p => `mobile_number.ilike.%${p}%`).join(',') : 'id.eq.00000000-0000-0000-0000-000000000000');
+      const { data } = await (supabase as any)
+        .rpc('find_users_by_mobiles', { _mobiles: chunk });
       platformUsers.push(...(data || []));
     }
 
@@ -210,11 +208,8 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
   const loadDemoContacts = async () => {
     setLoading(true);
     // Load actual platform users as "contacts"
-    const { data: users } = await supabase
-      .from('user_profiles')
-      .select('id, full_name, mobile_number, avatar_url, profile_photo_visibility, is_verified')
-      .neq('id', user?.id || '')
-      .limit(20);
+    const { data: users } = await (supabase as any)
+      .rpc('list_recent_public_users', { _limit: 20 });
 
     const result: Contact[] = (users || []).map(u => ({
       name: u.full_name || 'Unknown',
