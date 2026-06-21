@@ -2218,9 +2218,18 @@ export default function ChatWindowPanel() {
                 className={`flex ${isMe ? 'justify-end' : 'justify-start'} group`}
                 onMouseEnter={() => setHoveredMsg(msg.id)}
                 onMouseLeave={() => setHoveredMsg(null)}
+                onClick={() => {
+                  if (!selectionMode) return;
+                  if (msg.deletedForEveryone || msg.messageType === 'system') return;
+                  setSelectedIds(prev => {
+                    const next = new Set(prev);
+                    if (next.has(msg.id)) next.delete(msg.id); else next.add(msg.id);
+                    return next;
+                  });
+                }}
               >
                 <div
-                  className={`relative max-w-[75%] ${isMe ? 'items-end' : 'items-start'} flex flex-col gap-1`}
+                  className={`relative max-w-[75%] ${isMe ? 'items-end' : 'items-start'} flex flex-col gap-1 ${selectionMode && selectedIds.has(msg.id) ? 'ring-2 ring-primary rounded-2xl' : ''}`}
                   onTouchStart={() => handleLongPressStart(msg)}
                   onTouchEnd={handleLongPressEnd}
                   onTouchMove={handleLongPressEnd}
