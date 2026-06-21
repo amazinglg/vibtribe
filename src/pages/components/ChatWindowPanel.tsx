@@ -3171,6 +3171,55 @@ export default function ChatWindowPanel() {
         </div>
       )}
     </div>
+    <ForwardMessageModal
+      isOpen={!!forwardTexts}
+      messages={forwardTexts || []}
+      onClose={() => setForwardTexts(null)}
+    />
+    {selectionMode && (
+      <div className="fixed left-0 right-0 z-[1450] bg-card border-t border-border px-3 py-2 flex items-center gap-2 shadow-2xl" style={{ bottom: 'var(--mobile-bottom-nav-offset, 0px)' }}>
+        <span className="text-xs text-foreground font-semibold">{selectedIds.size} selected</span>
+        <div className="flex-1" />
+        <button
+          onClick={async () => {
+            if (trustLock.enabled) { toast.error('Disabled by Trust Lock'); return; }
+            const texts = messages.filter(m => selectedIds.has(m.id)).map(m => m.text || '').filter(t => t && !t.startsWith('__media__:') && !t.startsWith('[IMAGE:') && !t.startsWith('[FILE:'));
+            if (texts.length === 0) { toast.error('No text messages selected'); return; }
+            try { await navigator.clipboard.writeText(texts.join('\n\n')); toast.success('Copied'); } catch { toast.error('Copy failed'); }
+          }}
+          disabled={selectedIds.size === 0 || trustLock.enabled}
+          className="px-3 py-1.5 rounded-lg text-xs bg-muted text-foreground disabled:opacity-40"
+        >📋 Copy</button>
+        <button
+          onClick={() => {
+            if (trustLock.enabled) { toast.error('Disabled by Trust Lock'); return; }
+            const texts = messages.filter(m => selectedIds.has(m.id)).map(m => m.text || '').filter(t => t && !t.startsWith('__media__:') && !t.startsWith('[IMAGE:') && !t.startsWith('[FILE:'));
+            if (texts.length === 0) { toast.error('Forwarding media is not supported yet'); return; }
+            setForwardTexts(texts);
+            setSelectionMode(false);
+            setSelectedIds(new Set());
+          }}
+          disabled={selectedIds.size === 0 || trustLock.enabled}
+          className="px-3 py-1.5 rounded-lg text-xs bg-primary text-white font-semibold disabled:opacity-40"
+        >↪️ Forward</button>
+        <button
+          onClick={async () => {
+            for (const id of Array.from(selectedIds)) {
+              try { await supabase.rpc('delete_message_for_me' as any, { _msg_id: id } as any); } catch {}
+            }
+            setMessages(prev => prev.filter(m => !selectedIds.has(m.id)));
+            setSelectedIds(new Set());
+            setSelectionMode(false);
+          }}
+          disabled={selectedIds.size === 0}
+          className="px-3 py-1.5 rounded-lg text-xs bg-red-500/15 text-red-400 disabled:opacity-40"
+        >🗑️</button>
+        <button
+          onClick={() => { setSelectionMode(false); setSelectedIds(new Set()); }}
+          className="px-2 py-1.5 rounded-lg text-xs text-muted-foreground"
+        ><X size={14} /></button>
+      </div>
+    )}
     </TrustLockProvider>
   );
 }
