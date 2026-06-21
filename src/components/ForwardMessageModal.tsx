@@ -146,7 +146,11 @@ export default function ForwardMessageModal({ isOpen, onClose, messages }: Props
 
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 z-[1800] bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-4" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-[1800] bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
+      style={{ paddingBottom: 'calc(var(--mobile-bottom-nav-offset, 0px) + 1rem)' }}
+      onClick={onClose}
+    >
       <div className="bg-card border border-border rounded-2xl w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden shadow-card float-up" onClick={(e) => e.stopPropagation()}>
         <div className="px-4 py-3 border-b border-border flex items-center justify-between">
           <div>
