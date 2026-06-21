@@ -13,6 +13,7 @@ import Wordmark from '@/components/ui/Wordmark';
 import { BROADCAST_CHAT_ID } from './BroadcastChatPanel';
 import { useT } from '@/contexts/LanguageContext';
 import { isNativeWrapper, requestNativeContactsPermission } from '@/lib/native-bridge';
+import { appConfirm, appAlert } from '@/components/ui/AppDialog';
 const BROADCAST_LOGO = '/assets/images/app_logo.png';
 
 interface Chat {
@@ -56,14 +57,20 @@ export default function ChatListPanel() {
   const handleBlockFromList = async (chatId: string, participantId: string | undefined, name: string) => {
     setContextMenu(null);
     if (!user || !participantId) return;
-    if (!confirm(`Block ${name}? You won’t receive their messages or calls.`)) return;
+    const ok = await appConfirm({
+      title: `Block ${name}?`,
+      message: 'You won\u2019t receive their messages or calls.',
+      confirmLabel: 'Block',
+      variant: 'destructive',
+    });
+    if (!ok) return;
     try {
       await supabase.from('blocked_users').insert({ blocker_id: user.id, blocked_user_id: participantId });
       // Hide blocked user's chat from list immediately
       setChats(prev => prev.filter(c => c.id !== chatId));
       if (selectedChatId === chatId) setSelectedChatId(null);
     } catch (e: any) {
-      alert(e?.message || 'Failed to block user');
+      appAlert({ title: 'Could not block user', message: e?.message || 'Please try again.' });
     }
   };
   const CHATS_CACHE_KEY = 'vt_chats_cache_v1';
