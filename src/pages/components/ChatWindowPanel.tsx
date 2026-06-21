@@ -435,11 +435,15 @@ export default function ChatWindowPanel() {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
+  // Track when to auto-scroll: only on chat open or when a NEW message arrives,
+  // never on in-place updates (reactions, edits, status changes) — otherwise
+  // reacting on an older message would yank the user to the bottom.
+  const lastScrollKeyRef = useRef<string>('');
   useEffect(() => {
-    // Jump straight to the latest message. We use instant scroll (not smooth)
-    // so opening a chat lands on the newest message immediately instead of
-    // animating from the top — and we re-run on the next tick to account for
-    // late-loading media changing the scroll height.
+    const lastId = messages.length ? messages[messages.length - 1].id : '';
+    const key = `${selectedChatId || ''}::${messages.length}::${lastId}`;
+    if (key === lastScrollKeyRef.current) return;
+    lastScrollKeyRef.current = key;
     const el = messagesEndRef.current;
     if (!el) return;
     el.scrollIntoView({ behavior: 'auto', block: 'end' });
