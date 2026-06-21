@@ -22,6 +22,7 @@ import TribeDetailsSheet from '@/components/TribeDetailsSheet';
 import EncryptionPinModal from '@/components/EncryptionPinModal';
 import { TrustLockProvider } from '@/contexts/TrustLockContext';
 import ForwardMessageModal from '@/components/ForwardMessageModal';
+import { appConfirm } from '@/components/ui/AppDialog';
 
 interface Message {
   id: string;
