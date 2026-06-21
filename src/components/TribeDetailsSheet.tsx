@@ -447,6 +447,15 @@ export default function TribeDetailsSheet({ chatId, isOpen, onClose, onLeft }: P
           </div>
         )}
       </div>
+      <ImageCropModal
+        isOpen={!!cropFile}
+        file={cropFile}
+        title="Crop tribe photo"
+        aspect={1}
+        output={{ width: 512, height: 512, mime: 'image/jpeg', quality: 0.9 }}
+        onClose={() => setCropFile(null)}
+        onCropped={onCroppedAvatar}
+      />
     </div>
   );
 }
