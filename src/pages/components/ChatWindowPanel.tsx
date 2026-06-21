@@ -2710,6 +2710,48 @@ export default function ChatWindowPanel() {
               <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Message options</p>
               <p className="text-sm text-foreground truncate mt-0.5">{formatPreviewText(actionMsg.text)}</p>
             </div>
+            {/* Copy (disabled by Trust Lock) */}
+            <button
+              onClick={async () => {
+                if (trustLock.enabled) return;
+                try {
+                  const t = (actionMsg?.text || '').toString();
+                  await navigator.clipboard.writeText(t);
+                  toast.success('Copied to clipboard');
+                } catch {
+                  toast.error('Copy failed');
+                }
+                setActionMsg(null);
+              }}
+              disabled={trustLock.enabled}
+              className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground disabled:opacity-40"
+            >
+              📋 Copy
+              {trustLock.enabled && <span className="ml-auto text-[10px] text-muted-foreground">Trust Lock</span>}
+            </button>
+            {/* Forward (uses native share when available; disabled by Trust Lock) */}
+            <button
+              onClick={async () => {
+                if (trustLock.enabled) return;
+                const text = (actionMsg?.text || '').toString();
+                setActionMsg(null);
+                try {
+                  if (typeof navigator !== 'undefined' && (navigator as any).share) {
+                    await (navigator as any).share({ text });
+                  } else {
+                    await navigator.clipboard.writeText(text);
+                    toast.success('Message copied — paste into any chat to forward');
+                  }
+                } catch {
+                  // user cancelled share — no-op
+                }
+              }}
+              disabled={trustLock.enabled}
+              className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground border-t border-border disabled:opacity-40"
+            >
+              ↪️ Forward
+              {trustLock.enabled && <span className="ml-auto text-[10px] text-muted-foreground">Trust Lock</span>}
+            </button>
             {actionMsg.senderId === user?.id && (
               <button
                 onClick={() => {
