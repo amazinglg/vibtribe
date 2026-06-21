@@ -2734,24 +2734,31 @@ export default function ChatWindowPanel() {
             <button
               onClick={async () => {
                 if (trustLock.enabled) return;
-                const text = (actionMsg?.text || '').toString();
+                const raw = (actionMsg?.text || '').toString();
                 setActionMsg(null);
-                try {
-                  if (typeof navigator !== 'undefined' && (navigator as any).share) {
-                    await (navigator as any).share({ text });
-                  } else {
-                    await navigator.clipboard.writeText(text);
-                    toast.success('Message copied — paste into any chat to forward');
-                  }
-                } catch {
-                  // user cancelled share — no-op
+                if (!raw || raw.startsWith('__media__:') || raw.startsWith('[IMAGE:') || raw.startsWith('[FILE:')) {
+                  toast.error('Forwarding media is not supported yet');
+                  return;
                 }
+                setForwardTexts([raw]);
               }}
               disabled={trustLock.enabled}
               className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground border-t border-border disabled:opacity-40"
             >
               ↪️ Forward
               {trustLock.enabled && <span className="ml-auto text-[10px] text-muted-foreground">Trust Lock</span>}
+            </button>
+            {/* Enter multi-select mode */}
+            <button
+              onClick={() => {
+                if (!actionMsg) return;
+                setSelectedIds(new Set([actionMsg.id]));
+                setSelectionMode(true);
+                setActionMsg(null);
+              }}
+              className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground border-t border-border"
+            >
+              ✅ Select more
             </button>
             {actionMsg.senderId === user?.id && (
               <button
