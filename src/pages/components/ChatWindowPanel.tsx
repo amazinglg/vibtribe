@@ -2223,8 +2223,8 @@ export default function ChatWindowPanel() {
                   onTouchCancel={handleLongPressEnd}
                   onContextMenu={(e) => {
                     if (msg.deletedForEveryone || msg.messageType === 'system') return;
-                    const canOpen = (msg.senderId === user?.id) || (chatType === 'group' && tribeRole === 'leader');
-                    if (canOpen) { e.preventDefault(); setActionMsg(msg); }
+                    e.preventDefault();
+                    setActionMsg(msg);
                   }}
                 >
                   <div
