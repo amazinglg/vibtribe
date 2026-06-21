@@ -1383,19 +1383,19 @@ export type Database = {
       user_secure_chats: {
         Row: {
           chat_id: string
-          code: string
+          code_hash: string | null
           created_at: string
           user_id: string
         }
         Insert: {
           chat_id: string
-          code: string
+          code_hash?: string | null
           created_at?: string
           user_id: string
         }
         Update: {
           chat_id?: string
-          code?: string
+          code_hash?: string | null
           created_at?: string
           user_id?: string
         }
@@ -1660,6 +1660,7 @@ export type Database = {
         Returns: number
       }
       expire_seen_messages: { Args: { p_chat_id: string }; Returns: undefined }
+      find_secure_chat_by_code: { Args: { _code: string }; Returns: string }
       get_my_encryption_material: {
         Args: never
         Returns: {
@@ -1773,6 +1774,10 @@ export type Database = {
         Returns: undefined
       }
       mark_messages_read: { Args: { _chat_id: string }; Returns: undefined }
+      mark_secure_chat: {
+        Args: { _chat_id: string; _code: string }
+        Returns: undefined
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string
