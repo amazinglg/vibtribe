@@ -2287,13 +2287,23 @@ export default function ChatWindowPanel() {
                     )}
                   </div>
 
-                  {msg.reactions.length > 0 && (
-                    <div className="flex gap-1 flex-wrap">
-                      {msg.reactions.map((r, i) => (
-                        <span key={i} className="text-sm bg-muted rounded-full px-1.5 py-0.5 text-xs">{r}</span>
-                      ))}
-                    </div>
-                  )}
+                   {msg.reactions.length > 0 && (
+                     <div className="flex gap-1 flex-wrap">
+                       {msg.reactions.map((r, i) => {
+                         const vtMatch = /^:vt:([a-z0-9_-]+):$/.exec(r);
+                         const vt = vtMatch ? VIBTRIBE_EMOJI_MAP[vtMatch[1]] : null;
+                         return (
+                           <span key={i} className="inline-flex items-center bg-muted rounded-full px-1.5 py-0.5 text-xs">
+                             {vt ? (
+                               <img src={vt.url} alt={vt.name} className="w-4 h-4 select-none" draggable={false} loading="lazy" decoding="async" />
+                             ) : (
+                               <span className="text-sm leading-none">{r}</span>
+                             )}
+                           </span>
+                         );
+                       })}
+                     </div>
+                   )}
 
                   <div className={`flex items-center gap-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
                     <span className="text-[10px] text-muted-foreground">{msg.time}</span>
