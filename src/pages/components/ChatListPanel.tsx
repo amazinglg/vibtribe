@@ -8,6 +8,7 @@ import { useChatStore } from '@/store/chatStore';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { decryptMessage, isEncrypted } from '@/lib/encryption';
+import { renderVtEmojis, VIBTRIBE_SHORTCODE_RE } from '@/lib/vibtribe-emojis';
 import Wordmark from '@/components/ui/Wordmark';
 import { BROADCAST_CHAT_ID } from './BroadcastChatPanel';
 import { useT } from '@/contexts/LanguageContext';
