@@ -2720,6 +2720,17 @@ export default function ChatWindowPanel() {
               <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Message options</p>
               <p className="text-sm text-foreground truncate mt-0.5">{formatPreviewText(actionMsg.text)}</p>
             </div>
+            {/* React with emoji */}
+            <button
+              onClick={() => {
+                setReactionPickerMsg(actionMsg);
+                setActionMsg(null);
+              }}
+              className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground"
+            >
+              <Smile size={16} className="text-primary" />
+              React
+            </button>
             {/* Copy (disabled by Trust Lock) */}
             <button
               onClick={async () => {
