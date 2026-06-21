@@ -90,7 +90,7 @@ export default function OldVersionBanner() {
     (async () => {
       try {
         const { data: release } = await (supabase as any)
-          .from('app_releases')
+          .from('app_releases_public')
           .select('version, released_at')
           .order('released_at', { ascending: false })
           .limit(1)
