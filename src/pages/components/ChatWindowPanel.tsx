@@ -444,11 +444,21 @@ export default function ChatWindowPanel() {
   // never on in-place updates (reactions, edits, status changes) — otherwise
   // reacting on an older message would yank the user to the bottom.
   const lastScrollKeyRef = useRef<string>('');
+  const prevChatIdScrollRef = useRef<string | null>(null);
+  const prevLenRef = useRef<number>(0);
   useEffect(() => {
     const lastId = messages.length ? messages[messages.length - 1].id : '';
     const key = `${selectedChatId || ''}::${messages.length}::${lastId}`;
     if (key === lastScrollKeyRef.current) return;
+    const chatChanged = prevChatIdScrollRef.current !== selectedChatId;
+    const grew = messages.length > prevLenRef.current;
     lastScrollKeyRef.current = key;
+    prevChatIdScrollRef.current = selectedChatId || null;
+    prevLenRef.current = messages.length;
+    // Only auto-scroll when opening a chat or when a new message is appended.
+    // Skip on in-place updates AND on deletions (delete-for-me, etc.) so
+    // tapping an action sheet doesn't yank the user to the bottom.
+    if (!chatChanged && !grew) return;
     const el = messagesEndRef.current;
     if (!el) return;
     el.scrollIntoView({ behavior: 'auto', block: 'end' });
