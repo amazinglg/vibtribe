@@ -21,6 +21,7 @@ import { useT } from '@/contexts/LanguageContext';
 import TribeDetailsSheet from '@/components/TribeDetailsSheet';
 import EncryptionPinModal from '@/components/EncryptionPinModal';
 import { TrustLockProvider } from '@/contexts/TrustLockContext';
+import ForwardMessageModal from '@/components/ForwardMessageModal';
 
 interface Message {
   id: string;
