@@ -70,6 +70,7 @@ export default function TribeDetailsSheet({ chatId, isOpen, onClose, onLeft }: P
   const [handleInput, setHandleInput] = useState('');
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+  const [cropFile, setCropFile] = useState<File | null>(null);
 
   const myRole = members.find(m => m.user_id === user?.id)?.role;
   const isLeader = myRole === 'leader' || (tribe && tribe.created_by === user?.id);
@@ -217,17 +218,21 @@ export default function TribeDetailsSheet({ chatId, isOpen, onClose, onLeft }: P
   };
 
   const onPickAvatar = () => fileInputRef.current?.click();
-  const onAvatarFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onAvatarFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file || !isLeader) return;
     if (!file.type.startsWith('image/')) { toast.error('Please choose an image'); return; }
-    if (file.size > 5 * 1024 * 1024) { toast.error('Max 5MB'); return; }
+    if (file.size > 10 * 1024 * 1024) { toast.error('Max 10MB'); return; }
+    setCropFile(file);
+  };
+  const onCroppedAvatar = async (blob: Blob) => {
+    setCropFile(null);
+    if (!isLeader) return;
     setUploadingAvatar(true);
     try {
-      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-      const path = `tribes/${chatId}/${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from('chat-media').upload(path, file, { upsert: true, contentType: file.type });
+      const path = `tribes/${chatId}/${Date.now()}.jpg`;
+      const { error: upErr } = await supabase.storage.from('chat-media').upload(path, blob, { upsert: true, contentType: 'image/jpeg' });
       if (upErr) throw upErr;
       const { data: pub } = supabase.storage.from('chat-media').getPublicUrl(path);
       const url = pub.publicUrl;
