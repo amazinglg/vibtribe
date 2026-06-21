@@ -65,17 +65,11 @@ export default function HelpButton({ variant = 'floating' }: HelpButtonProps) {
       });
       if (insertError) throw insertError;
 
-      // Notify admin via notifications table
-      const { data: adminData } = await supabase
-        .from('user_profiles')
-        .select('id')
-        .eq('role', 'admin')
-        .limit(1)
-        .single();
-
-      if (adminData) {
+      // Notify an admin via notifications table
+      const { data: adminId } = await (supabase as any).rpc('get_any_admin_id');
+      if (adminId) {
         await supabase.from('notifications').insert({
-          user_id: adminData.id,
+          user_id: adminId,
           type: 'support_ticket',
           title: '🎫 New Support Request',
           body: `${name.trim()} submitted: "${title.trim()}"`,

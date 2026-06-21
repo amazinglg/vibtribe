@@ -44,15 +44,17 @@ export default function ForceReleaseListener() {
       window.location.replace(url.toString());
     };
 
-    // Initial check: if a release was published while the tab was closed
-    (async () => {
+    let cancelled = false;
+
+    const checkLatest = async (firstRun: boolean) => {
       try {
         const { data } = await (supabase as any)
-          .from('app_releases')
+          .from('app_releases_public')
           .select('id')
           .order('released_at', { ascending: false })
           .limit(1)
           .maybeSingle();
+        if (cancelled) return;
         if (data?.id) {
           const last = localStorage.getItem(STORAGE_KEY);
           if (!last) {
@@ -63,22 +65,16 @@ export default function ForceReleaseListener() {
           }
         }
       } catch {}
-    })();
+      void firstRun;
+    };
 
-    const channel = supabase
-      .channel('app_releases_force_reload')
-      .on(
-        'postgres_changes' as any,
-        { event: 'INSERT', schema: 'public', table: 'app_releases' },
-        (payload: any) => {
-          const id = payload?.new?.id;
-          if (id) handleNewRelease(id);
-        },
-      )
-      .subscribe();
+    // Initial check + poll every 60s for new releases.
+    void checkLatest(true);
+    const timer = setInterval(() => { void checkLatest(false); }, 60_000);
 
     return () => {
-      try { supabase.removeChannel(channel); } catch {}
+      cancelled = true;
+      clearInterval(timer);
     };
   }, []);
 

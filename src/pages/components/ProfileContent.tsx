@@ -385,13 +385,9 @@ export default function ProfileContent() {
     try {
       const normalizedUsername = username.trim().toLowerCase();
       if (normalizedUsername) {
-        const { data: existing } = await supabase
-          .from('user_profiles')
-          .select('id')
-          .ilike('username', normalizedUsername)
-          .neq('id', user.id)
-          .maybeSingle();
-        if (existing) throw new Error('This username is already taken');
+        const { data: available } = await (supabase as any)
+          .rpc('is_username_available', { _username: normalizedUsername });
+        if (available === false) throw new Error('This username is already taken');
       }
       // DOB validation: must be 18+ if provided
       if (dob) {

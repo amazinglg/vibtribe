@@ -87,22 +87,12 @@ export default function GlobalSearchBar() {
       const digits = q.replace(/\D/g, '');
       const handle = q.startsWith('@') ? q.slice(1) : q;
 
-      let filter = '';
-      if (digits.length >= 7) {
-        // Match by digit suffix so users can search with or without the leading country code
-        filter = `mobile_number.ilike.%${digits}%`;
-      } else {
-        // Exact username match (case-insensitive)
-        filter = `username.eq.${handle},username.ilike.${handle}`;
-      }
-
-      const { data } = await supabase
-        .from('user_profiles')
-        .select('id, full_name, username, mobile_number, is_online')
-        .neq('id', user.id)
-        .or(filter)
-        .limit(10);
-      setResults(data || []);
+      const { data } = await (supabase as any)
+        .rpc('search_public_users', { _q: digits.length >= 7 ? digits : handle, _limit: 10 });
+      setResults((data || []).map((u: any) => ({
+        id: u.id, full_name: u.full_name, username: u.username,
+        mobile_number: u.mobile_number, is_online: u.is_online,
+      })));
     } catch {
       setResults([]);
     } finally {
