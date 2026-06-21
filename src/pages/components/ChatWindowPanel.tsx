@@ -16,7 +16,7 @@ import { isNativeWrapper, pickNativeImage, pickNativeFiles, requestNativeCameraP
 import { TrustLockService, onTrustLockScreenshot, isIOS } from '@/lib/trust-lock-service';
 import { toast } from 'sonner';
 import { EMOJI_CATEGORIES, type EmojiCategoryKey } from '@/lib/emojis';
-import { VIBTRIBE_EMOJI_MAP, VIBTRIBE_SHORTCODE_RE } from '@/lib/vibtribe-emojis';
+import { VIBTRIBE_EMOJI_MAP, VIBTRIBE_SHORTCODE_RE, renderVtEmojis } from '@/lib/vibtribe-emojis';
 import { useT } from '@/contexts/LanguageContext';
 import TribeDetailsSheet from '@/components/TribeDetailsSheet';
 import EncryptionPinModal from '@/components/EncryptionPinModal';
