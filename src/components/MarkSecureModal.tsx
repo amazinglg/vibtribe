@@ -91,12 +91,12 @@ export default function MarkSecureModal({ isOpen, onClose, chatName, chatId, onS
 
       // Per-user secure mark: ONLY this user's view of the chat is locked.
       // The other participant is not affected and won't even know.
-      const { error: upsertError } = await supabase
-        .from('user_secure_chats')
-        .upsert(
-          { user_id: user.id, chat_id: chatId, code: secureCode },
-          { onConflict: 'user_id,chat_id' },
-        );
+      // The unlock code is stored as a one-way hash via the secure RPC —
+      // the raw PIN/pattern never leaves the user's device in plaintext form.
+      const { error: upsertError } = await supabase.rpc('mark_secure_chat', {
+        _chat_id: chatId,
+        _code: secureCode,
+      });
       if (upsertError) throw upsertError;
       onSecured?.(chatId);
 
