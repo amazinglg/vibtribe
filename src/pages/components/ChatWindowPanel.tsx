@@ -21,6 +21,7 @@ import { useT } from '@/contexts/LanguageContext';
 import TribeDetailsSheet from '@/components/TribeDetailsSheet';
 import EncryptionPinModal from '@/components/EncryptionPinModal';
 import { TrustLockProvider } from '@/contexts/TrustLockContext';
+import ForwardMessageModal from '@/components/ForwardMessageModal';
 
 interface Message {
   id: string;
@@ -416,6 +417,9 @@ export default function ChatWindowPanel() {
   const [tribeTotalMembers, setTribeTotalMembers] = useState(0);
   const [actionMsg, setActionMsg] = useState<Message | null>(null);
   const [reactionPickerMsg, setReactionPickerMsg] = useState<Message | null>(null);
+  const [forwardTexts, setForwardTexts] = useState<string[] | null>(null);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editingMsg, setEditingMsg] = useState<Message | null>(null);
   const [editText, setEditText] = useState('');
   const longPressTimerRef = useRef<any>(null);
@@ -1475,9 +1479,6 @@ export default function ChatWindowPanel() {
   const handleLongPressStart = (msg: Message) => {
     if (msg.deletedForEveryone) return;
     if (msg.messageType === 'system') return;
-    const isOwn = msg.senderId === user?.id;
-    const canLeaderActOnOthers = chatType === 'group' && tribeRole === 'leader' && !isOwn;
-    if (!isOwn && !canLeaderActOnOthers) return;
     if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
     longPressTimerRef.current = setTimeout(() => setActionMsg(msg), 500);
   };
@@ -2049,7 +2050,7 @@ export default function ChatWindowPanel() {
           <span className="text-[11px] text-vt-green underline-offset-2 hover:underline">{t('chat.e2eBanner')}</span>
         </button>
       )}
-      {e2eEnabled && contact && !contact.publicKey && (
+      {e2eEnabled && chatType !== 'group' && contact && !contact.publicKey && (
         <div className="px-4 py-2 bg-vt-amber/10 border-b border-vt-amber/20 text-center text-[11px] text-vt-amber">
           Waiting for {contact.name}'s encryption key before secure messages can be sent.
         </div>
@@ -2217,17 +2218,26 @@ export default function ChatWindowPanel() {
                 className={`flex ${isMe ? 'justify-end' : 'justify-start'} group`}
                 onMouseEnter={() => setHoveredMsg(msg.id)}
                 onMouseLeave={() => setHoveredMsg(null)}
+                onClick={() => {
+                  if (!selectionMode) return;
+                  if (msg.deletedForEveryone || msg.messageType === 'system') return;
+                  setSelectedIds(prev => {
+                    const next = new Set(prev);
+                    if (next.has(msg.id)) next.delete(msg.id); else next.add(msg.id);
+                    return next;
+                  });
+                }}
               >
                 <div
-                  className={`relative max-w-[75%] ${isMe ? 'items-end' : 'items-start'} flex flex-col gap-1`}
+                  className={`relative max-w-[75%] ${isMe ? 'items-end' : 'items-start'} flex flex-col gap-1 ${selectionMode && selectedIds.has(msg.id) ? 'ring-2 ring-primary rounded-2xl' : ''}`}
                   onTouchStart={() => handleLongPressStart(msg)}
                   onTouchEnd={handleLongPressEnd}
                   onTouchMove={handleLongPressEnd}
                   onTouchCancel={handleLongPressEnd}
                   onContextMenu={(e) => {
                     if (msg.deletedForEveryone || msg.messageType === 'system') return;
-                    const canOpen = (msg.senderId === user?.id) || (chatType === 'group' && tribeRole === 'leader');
-                    if (canOpen) { e.preventDefault(); setActionMsg(msg); }
+                    e.preventDefault();
+                    setActionMsg(msg);
                   }}
                 >
                   <div
@@ -2733,24 +2743,31 @@ export default function ChatWindowPanel() {
             <button
               onClick={async () => {
                 if (trustLock.enabled) return;
-                const text = (actionMsg?.text || '').toString();
+                const raw = (actionMsg?.text || '').toString();
                 setActionMsg(null);
-                try {
-                  if (typeof navigator !== 'undefined' && (navigator as any).share) {
-                    await (navigator as any).share({ text });
-                  } else {
-                    await navigator.clipboard.writeText(text);
-                    toast.success('Message copied — paste into any chat to forward');
-                  }
-                } catch {
-                  // user cancelled share — no-op
+                if (!raw || raw.startsWith('__media__:') || raw.startsWith('[IMAGE:') || raw.startsWith('[FILE:')) {
+                  toast.error('Forwarding media is not supported yet');
+                  return;
                 }
+                setForwardTexts([raw]);
               }}
               disabled={trustLock.enabled}
               className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground border-t border-border disabled:opacity-40"
             >
               ↪️ Forward
               {trustLock.enabled && <span className="ml-auto text-[10px] text-muted-foreground">Trust Lock</span>}
+            </button>
+            {/* Enter multi-select mode */}
+            <button
+              onClick={() => {
+                if (!actionMsg) return;
+                setSelectedIds(new Set([actionMsg.id]));
+                setSelectionMode(true);
+                setActionMsg(null);
+              }}
+              className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground border-t border-border"
+            >
+              ✅ Select more
             </button>
             {actionMsg.senderId === user?.id && (
               <button
@@ -3163,6 +3180,55 @@ export default function ChatWindowPanel() {
         </div>
       )}
     </div>
+    <ForwardMessageModal
+      isOpen={!!forwardTexts}
+      messages={forwardTexts || []}
+      onClose={() => setForwardTexts(null)}
+    />
+    {selectionMode && (
+      <div className="fixed left-0 right-0 z-[1450] bg-card border-t border-border px-3 py-2 flex items-center gap-2 shadow-2xl" style={{ bottom: 'var(--mobile-bottom-nav-offset, 0px)' }}>
+        <span className="text-xs text-foreground font-semibold">{selectedIds.size} selected</span>
+        <div className="flex-1" />
+        <button
+          onClick={async () => {
+            if (trustLock.enabled) { toast.error('Disabled by Trust Lock'); return; }
+            const texts = messages.filter(m => selectedIds.has(m.id)).map(m => m.text || '').filter(t => t && !t.startsWith('__media__:') && !t.startsWith('[IMAGE:') && !t.startsWith('[FILE:'));
+            if (texts.length === 0) { toast.error('No text messages selected'); return; }
+            try { await navigator.clipboard.writeText(texts.join('\n\n')); toast.success('Copied'); } catch { toast.error('Copy failed'); }
+          }}
+          disabled={selectedIds.size === 0 || trustLock.enabled}
+          className="px-3 py-1.5 rounded-lg text-xs bg-muted text-foreground disabled:opacity-40"
+        >📋 Copy</button>
+        <button
+          onClick={() => {
+            if (trustLock.enabled) { toast.error('Disabled by Trust Lock'); return; }
+            const texts = messages.filter(m => selectedIds.has(m.id)).map(m => m.text || '').filter(t => t && !t.startsWith('__media__:') && !t.startsWith('[IMAGE:') && !t.startsWith('[FILE:'));
+            if (texts.length === 0) { toast.error('Forwarding media is not supported yet'); return; }
+            setForwardTexts(texts);
+            setSelectionMode(false);
+            setSelectedIds(new Set());
+          }}
+          disabled={selectedIds.size === 0 || trustLock.enabled}
+          className="px-3 py-1.5 rounded-lg text-xs bg-primary text-white font-semibold disabled:opacity-40"
+        >↪️ Forward</button>
+        <button
+          onClick={async () => {
+            for (const id of Array.from(selectedIds)) {
+              try { await supabase.rpc('delete_message_for_me' as any, { _msg_id: id } as any); } catch {}
+            }
+            setMessages(prev => prev.filter(m => !selectedIds.has(m.id)));
+            setSelectedIds(new Set());
+            setSelectionMode(false);
+          }}
+          disabled={selectedIds.size === 0}
+          className="px-3 py-1.5 rounded-lg text-xs bg-red-500/15 text-red-400 disabled:opacity-40"
+        >🗑️</button>
+        <button
+          onClick={() => { setSelectionMode(false); setSelectedIds(new Set()); }}
+          className="px-2 py-1.5 rounded-lg text-xs text-muted-foreground"
+        ><X size={14} /></button>
+      </div>
+    )}
     </TrustLockProvider>
   );
 }
