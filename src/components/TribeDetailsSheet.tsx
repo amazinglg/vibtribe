@@ -231,7 +231,7 @@ export default function TribeDetailsSheet({ chatId, isOpen, onClose, onLeft }: P
     if (!isLeader) return;
     setUploadingAvatar(true);
     try {
-      const path = `tribes/${chatId}/${Date.now()}.jpg`;
+      const path = `${user!.id}/${chatId}/avatar-${Date.now()}.jpg`;
       const { error: upErr } = await supabase.storage.from('chat-media').upload(path, blob, { upsert: true, contentType: 'image/jpeg' });
       if (upErr) throw upErr;
       const { data: pub } = supabase.storage.from('chat-media').getPublicUrl(path);
