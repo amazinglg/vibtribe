@@ -132,3 +132,42 @@ export const vibtribeShortcode = (id: string) => `:vt:${id}:`;
 
 // Matches :vt:<id>: tokens anywhere in a string.
 export const VIBTRIBE_SHORTCODE_RE = /:vt:([a-z0-9_-]+):/g;
+
+// Render a string that may contain :vt:<id>: shortcodes, replacing each one
+// with an inline <img> of the matching VibTribe emoji. Plain text is kept
+// as-is so this can be dropped into chat bubbles, reaction chips, chat
+// previews, etc.
+import * as React from 'react';
+export function renderVtEmojis(
+  text: string,
+  opts?: { imgClassName?: string },
+): React.ReactNode[] {
+  const src = String(text ?? '');
+  const nodes: React.ReactNode[] = [];
+  const re = new RegExp(VIBTRIBE_SHORTCODE_RE.source, 'g');
+  const cls = opts?.imgClassName || 'inline-block align-[-0.25em] w-[1.25em] h-[1.25em] mx-[1px] select-none';
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(src)) !== null) {
+    if (m.index > last) nodes.push(src.slice(last, m.index));
+    const emoji = VIBTRIBE_EMOJI_MAP[m[1]];
+    if (emoji) {
+      nodes.push(
+        React.createElement('img', {
+          key: `vt-${m.index}`,
+          src: emoji.url,
+          alt: emoji.name,
+          draggable: false,
+          loading: 'lazy',
+          decoding: 'async',
+          className: cls,
+        }),
+      );
+    } else {
+      nodes.push(m[0]);
+    }
+    last = m.index + m[0].length;
+  }
+  if (last < src.length) nodes.push(src.slice(last));
+  return nodes;
+}
