@@ -1056,7 +1056,7 @@ function ChatListItem({ chat, isSelected, onClick, onContextMenu, onDelete, onMa
           }`}>
             {chat.typing
               ? 'typing...'
-              : (VIBTRIBE_SHORTCODE_RE.test(chat.lastMessage || '')
+              : (/:vt:[a-z0-9_-]+:/.test(chat.lastMessage || '')
                   ? renderVtEmojis(chat.lastMessage, { imgClassName: 'inline-block align-[-0.25em] w-4 h-4 mx-[1px] select-none' })
                   : chat.lastMessage)}
           </p>
