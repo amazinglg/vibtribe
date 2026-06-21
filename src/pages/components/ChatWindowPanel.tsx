@@ -416,6 +416,9 @@ export default function ChatWindowPanel() {
   const [tribeTotalMembers, setTribeTotalMembers] = useState(0);
   const [actionMsg, setActionMsg] = useState<Message | null>(null);
   const [reactionPickerMsg, setReactionPickerMsg] = useState<Message | null>(null);
+  const [forwardTexts, setForwardTexts] = useState<string[] | null>(null);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editingMsg, setEditingMsg] = useState<Message | null>(null);
   const [editText, setEditText] = useState('');
   const longPressTimerRef = useRef<any>(null);
