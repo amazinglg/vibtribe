@@ -18,6 +18,7 @@ import TotpEnrollDialog from '@/components/TotpEnrollDialog';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useT } from '@/contexts/LanguageContext';
 import { Globe } from 'lucide-react';
+import { appConfirm } from '@/components/ui/AppDialog';
 import { recordMarketingConsent } from '@/lib/marketing.functions';
 import {
   AlertDialog,
@@ -1114,7 +1115,13 @@ export default function ProfileContent() {
                   <button
                     disabled={totpBusy}
                     onClick={async () => {
-                      if (!confirm('Disable 2-step verification? Your account will no longer require a code at sign-in.')) return;
+                      const ok = await appConfirm({
+                        title: 'Disable 2-step verification?',
+                        message: 'Your account will no longer require a code at sign-in.',
+                        confirmLabel: 'Disable',
+                        variant: 'destructive',
+                      });
+                      if (!ok) return;
                       setTotpBusy(true);
                       try {
                         const { error } = await supabase.rpc('disable_totp');

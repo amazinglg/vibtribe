@@ -4,6 +4,7 @@ import { X, Users, Lock, Globe, Copy, Trash2, UserPlus, Crown, LogOut, AtSign, E
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { appConfirm } from '@/components/ui/AppDialog';
 
 interface Props {
   chatId: string;
@@ -159,7 +160,14 @@ export default function TribeDetailsSheet({ chatId, isOpen, onClose, onLeft }: P
   };
   const togglePrivacy = async () => {
     const next = tribe.privacy === 'public' ? 'private' : 'public';
-    if (!confirm(`Switch tribe to ${next}? ${next === 'public' ? 'Anyone can join without approval. Pending requests will be auto-approved.' : 'New members will need an invite or to request to join.'}`)) return;
+    const ok = await appConfirm({
+      title: `Switch tribe to ${next}?`,
+      message: next === 'public'
+        ? 'Anyone can join without approval. Pending requests will be auto-approved.'
+        : 'New members will need an invite or to request to join.',
+      confirmLabel: `Make ${next}`,
+    });
+    if (!ok) return;
     const { error } = await supabase.rpc('tribe_change_privacy', { _chat_id: chatId, _privacy: next });
     if (error) toast.error(error.message); else { toast.success(`Now ${next}`); load(); }
   };
@@ -191,12 +199,14 @@ export default function TribeDetailsSheet({ chatId, isOpen, onClose, onLeft }: P
     if (error) toast.error(error.message); else { toast.success('Demoted'); load(); }
   };
   const removeMember = async (uid: string) => {
-    if (!confirm('Remove this member?')) return;
+    const ok = await appConfirm({ title: 'Remove member?', message: 'They will lose access to this tribe.', confirmLabel: 'Remove', variant: 'destructive' });
+    if (!ok) return;
     const { error } = await supabase.rpc('tribe_remove_member', { _chat_id: chatId, _user_id: uid });
     if (error) toast.error(error.message); else { toast.success('Removed'); load(); }
   };
   const leaveTribe = async () => {
-    if (!confirm('Leave this tribe?')) return;
+    const ok = await appConfirm({ title: 'Leave this tribe?', message: 'You will stop receiving messages from this tribe.', confirmLabel: 'Leave', variant: 'destructive' });
+    if (!ok) return;
     const { error } = await supabase.rpc('tribe_leave', { _chat_id: chatId });
     if (error) toast.error(error.message); else { toast.success('Left tribe'); onLeft?.(); onClose(); }
   };
@@ -411,7 +421,13 @@ export default function TribeDetailsSheet({ chatId, isOpen, onClose, onLeft }: P
           <div className="px-4 pb-6">
             <button
               onClick={async () => {
-                if (!confirm('Delete this tribe permanently? All chats, media, members and history will be lost for everyone. This cannot be undone.')) return;
+                const ok = await appConfirm({
+                  title: 'Delete this tribe?',
+                  message: 'All chats, media, members and history will be lost for everyone. This cannot be undone.',
+                  confirmLabel: 'Delete tribe',
+                  variant: 'destructive',
+                });
+                if (!ok) return;
                 const { error } = await supabase.rpc('tribe_delete' as any, { _chat_id: chatId } as any);
                 if (error) { toast.error(error.message); return; }
                 toast.success('Tribe deleted');

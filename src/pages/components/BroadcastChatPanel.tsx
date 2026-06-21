@@ -9,6 +9,7 @@ import { isNativeWrapper, pickNativeFiles } from '@/lib/native-bridge';
 import Wordmark from '@/components/ui/Wordmark';
 import ImageCropModal from '@/components/ImageCropModal';
 import { EMOJI_CATEGORIES, type EmojiCategoryKey } from '@/lib/emojis';
+import { appConfirm } from '@/components/ui/AppDialog';
 import { VIBTRIBE_EMOJI_MAP } from '@/lib/vibtribe-emojis';
 
 export const BROADCAST_CHAT_ID = '__vibtribe_broadcast__';
@@ -191,7 +192,13 @@ export default function BroadcastChatPanel() {
 
   const handleDelete = async (id: string) => {
     if (!isMaster) return;
-    if (!confirm('Permanently delete this broadcast for everyone? This cannot be undone.')) return;
+    const ok = await appConfirm({
+      title: 'Delete broadcast?',
+      message: 'This will permanently delete this broadcast for everyone. This cannot be undone.',
+      confirmLabel: 'Delete',
+      variant: 'destructive',
+    });
+    if (!ok) return;
     const { error } = await supabase.from('broadcast_messages').delete().eq('id', id);
     if (error) toast.error('Delete failed: ' + error.message);
     else setMessages((prev) => prev.filter((m) => m.id !== id));

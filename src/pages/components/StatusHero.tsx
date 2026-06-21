@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import StatusViewer from './StatusViewer';
 import { useT } from '@/contexts/LanguageContext';
 import { StatusMedia } from '@/components/StatusMedia';
+import { appConfirm, appAlert } from '@/components/ui/AppDialog';
 
 type VisibilityOption = 'all' | 'contacts' | 'selected';
 
@@ -114,7 +115,8 @@ export default function StatusHero() {
 
   const deleteStatus = async (status: any) => {
     if (!status?.id || !user?.id) return;
-    if (!window.confirm('Delete this status?')) return;
+    const ok = await appConfirm({ title: 'Delete this status?', message: 'It will be removed from everyone\u2019s view.', confirmLabel: 'Delete', variant: 'destructive' });
+    if (!ok) return;
     try {
       const path = statusStoragePath(status.media_url);
       if (path) await supabase.storage.from('status-media').remove([path]).catch(() => {});
@@ -122,7 +124,7 @@ export default function StatusHero() {
       if (error) throw error;
       setMyStatuses(prev => prev.filter(s => s.id !== status.id));
     } catch (err: any) {
-      alert(err?.message || 'Could not delete status');
+      appAlert({ title: 'Could not delete status', message: err?.message || 'Please try again.' });
     }
   };
 
@@ -130,7 +132,7 @@ export default function StatusHero() {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
-    if (!user?.id) { alert('Please sign in again before posting a status.'); return; }
+    if (!user?.id) { appAlert({ message: 'Please sign in again before posting a status.' }); return; }
     // Open preview + caption modal instead of posting immediately
     setMediaFile(file);
     setMediaPreviewUrl(URL.createObjectURL(file));
@@ -170,7 +172,7 @@ export default function StatusHero() {
       setMediaPreviewUrl(null);
       setMediaCaption('');
     } catch (err: any) {
-      console.error(err); alert('Upload failed: ' + (err?.message || 'unknown'));
+      console.error(err); appAlert({ title: 'Upload failed', message: err?.message || 'Unknown error' });
     } finally { setUploading(false); }
   };
 
@@ -184,7 +186,7 @@ export default function StatusHero() {
   const openMyStatuses = async () => {
     if (!user?.id) return;
     const data = await loadMyStatuses();
-    if (!data || data.length === 0) { alert("You haven't posted any status in the last 24 hours."); return; }
+    if (!data || data.length === 0) { appAlert({ message: "You haven't posted any status in the last 24 hours." }); return; }
     setMyViewerOpen(true);
   };
 
@@ -196,7 +198,7 @@ export default function StatusHero() {
       await loadMyStatuses();
       setTextValue(''); setTextPrompt(null);
     } catch (err: any) {
-      console.error(err); alert('Status failed: ' + (err?.message || 'unknown'));
+      console.error(err); appAlert({ title: 'Status failed', message: err?.message || 'Unknown error' });
     } finally { setUploading(false); }
   };
 
