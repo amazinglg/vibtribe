@@ -22,6 +22,7 @@ import MarketingConsentGate from '@/components/MarketingConsentGate';
 import { hasLocalPrivateKey, hasServerKey } from '@/lib/encryption';
 import { useT } from '@/contexts/LanguageContext';
 import { initNativeBridge, isNativeWrapper, registerNativePushNotifications } from '@/lib/native-bridge';
+import { AppDialogHost } from '@/components/ui/AppDialog';
 
 
 
@@ -218,6 +219,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <CallProvider>
     <div className="gradient-bg-page min-h-screen flex">
+      <AppDialogHost />
       {/* App-level Permission Prompt */}
       {showAppPermPrompt && (
         <PermissionPrompt
