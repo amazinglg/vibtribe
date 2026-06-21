@@ -99,14 +99,12 @@ export default function SecureVaultModal({ isOpen, onClose }: SecureVaultModalPr
     if (!user || !code.trim()) return;
     setLoading(true);
     try {
-      const { data: marks } = await supabase
-        .from('user_secure_chats')
-        .select('chat_id')
-        .eq('user_id', user.id)
-        .eq('code', code.trim());
+      const { data: foundChatId } = await supabase.rpc('find_secure_chat_by_code', {
+        _code: code.trim(),
+      });
 
-      if (marks && marks.length > 0) {
-        const chatId = marks[0].chat_id as string;
+      if (foundChatId) {
+        const chatId = foundChatId as string;
         const { data: chat } = await supabase
           .from('chats')
           .select('id, participant_one, participant_two')
