@@ -535,20 +535,28 @@ export default function BroadcastChatPanel() {
                 )}
                 {Object.keys(grouped).length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-1 ml-1">
-                    {Object.entries(grouped).map(([emoji, count]) => (
-                      <button
-                        key={emoji}
-                        onClick={() => toggleReaction(m.id, emoji)}
-                        className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[11px] border ${
-                          myReactions.has(emoji)
-                            ? 'bg-primary/20 border-primary/50 text-foreground'
-                            : 'bg-card border-border text-muted-foreground'
-                        }`}
-                      >
-                        <span>{emoji}</span>
-                        <span className="font-semibold">{count}</span>
-                      </button>
-                    ))}
+                    {Object.entries(grouped).map(([emoji, count]) => {
+                      const vtMatch = /^:vt:([a-z0-9_-]+):$/.exec(emoji);
+                      const vt = vtMatch ? VIBTRIBE_EMOJI_MAP[vtMatch[1]] : null;
+                      return (
+                        <button
+                          key={emoji}
+                          onClick={() => toggleReaction(m.id, emoji)}
+                          className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[11px] border ${
+                            myReactions.has(emoji)
+                              ? 'bg-primary/20 border-primary/50 text-foreground'
+                              : 'bg-card border-border text-muted-foreground'
+                          }`}
+                        >
+                          {vt ? (
+                            <img src={vt.url} alt={vt.name} className="w-4 h-4 select-none" draggable={false} loading="lazy" decoding="async" />
+                          ) : (
+                            <span>{emoji}</span>
+                          )}
+                          <span className="font-semibold">{count}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
               </div>

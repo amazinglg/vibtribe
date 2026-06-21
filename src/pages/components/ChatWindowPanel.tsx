@@ -16,7 +16,7 @@ import { isNativeWrapper, pickNativeImage, pickNativeFiles, requestNativeCameraP
 import { TrustLockService, onTrustLockScreenshot, isIOS } from '@/lib/trust-lock-service';
 import { toast } from 'sonner';
 import { EMOJI_CATEGORIES, type EmojiCategoryKey } from '@/lib/emojis';
-import { VIBTRIBE_EMOJI_MAP, VIBTRIBE_SHORTCODE_RE } from '@/lib/vibtribe-emojis';
+import { VIBTRIBE_EMOJI_MAP, VIBTRIBE_SHORTCODE_RE, renderVtEmojis } from '@/lib/vibtribe-emojis';
 import { useT } from '@/contexts/LanguageContext';
 import TribeDetailsSheet from '@/components/TribeDetailsSheet';
 import EncryptionPinModal from '@/components/EncryptionPinModal';
@@ -435,11 +435,15 @@ export default function ChatWindowPanel() {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
+  // Track when to auto-scroll: only on chat open or when a NEW message arrives,
+  // never on in-place updates (reactions, edits, status changes) — otherwise
+  // reacting on an older message would yank the user to the bottom.
+  const lastScrollKeyRef = useRef<string>('');
   useEffect(() => {
-    // Jump straight to the latest message. We use instant scroll (not smooth)
-    // so opening a chat lands on the newest message immediately instead of
-    // animating from the top — and we re-run on the next tick to account for
-    // late-loading media changing the scroll height.
+    const lastId = messages.length ? messages[messages.length - 1].id : '';
+    const key = `${selectedChatId || ''}::${messages.length}::${lastId}`;
+    if (key === lastScrollKeyRef.current) return;
+    lastScrollKeyRef.current = key;
     const el = messagesEndRef.current;
     if (!el) return;
     el.scrollIntoView({ behavior: 'auto', block: 'end' });
@@ -2287,13 +2291,23 @@ export default function ChatWindowPanel() {
                     )}
                   </div>
 
-                  {msg.reactions.length > 0 && (
-                    <div className="flex gap-1 flex-wrap">
-                      {msg.reactions.map((r, i) => (
-                        <span key={i} className="text-sm bg-muted rounded-full px-1.5 py-0.5 text-xs">{r}</span>
-                      ))}
-                    </div>
-                  )}
+                   {msg.reactions.length > 0 && (
+                     <div className="flex gap-1 flex-wrap">
+                       {msg.reactions.map((r, i) => {
+                         const vtMatch = /^:vt:([a-z0-9_-]+):$/.exec(r);
+                         const vt = vtMatch ? VIBTRIBE_EMOJI_MAP[vtMatch[1]] : null;
+                         return (
+                           <span key={i} className="inline-flex items-center bg-muted rounded-full px-1.5 py-0.5 text-xs">
+                             {vt ? (
+                               <img src={vt.url} alt={vt.name} className="w-4 h-4 select-none" draggable={false} loading="lazy" decoding="async" />
+                             ) : (
+                               <span className="text-sm leading-none">{r}</span>
+                             )}
+                           </span>
+                         );
+                       })}
+                     </div>
+                   )}
 
                   <div className={`flex items-center gap-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
                     <span className="text-[10px] text-muted-foreground">{msg.time}</span>
