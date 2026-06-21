@@ -1439,6 +1439,24 @@ export type Database = {
       }
     }
     Views: {
+      app_releases_public: {
+        Row: {
+          id: string | null
+          released_at: string | null
+          version: string | null
+        }
+        Insert: {
+          id?: string | null
+          released_at?: string | null
+          version?: string | null
+        }
+        Update: {
+          id?: string | null
+          released_at?: string | null
+          version?: string | null
+        }
+        Relationships: []
+      }
       tribe_public: {
         Row: {
           avatar_url: string | null
@@ -1661,6 +1679,18 @@ export type Database = {
       }
       expire_seen_messages: { Args: { p_chat_id: string }; Returns: undefined }
       find_secure_chat_by_code: { Args: { _code: string }; Returns: string }
+      find_users_by_mobiles: {
+        Args: { _mobiles: string[] }
+        Returns: {
+          avatar_url: string
+          full_name: string
+          id: string
+          is_verified: boolean
+          mobile_number: string
+          profile_photo_visibility: string
+        }[]
+      }
+      get_any_admin_id: { Args: never; Returns: string }
       get_my_encryption_material: {
         Args: never
         Returns: {
@@ -1769,9 +1799,21 @@ export type Database = {
         Args: { _chat_id: string; _user_id: string }
         Returns: boolean
       }
+      is_username_available: { Args: { _username: string }; Returns: boolean }
       issue_email_otp: {
         Args: { _code: string; _email: string; _purpose: string }
         Returns: undefined
+      }
+      list_recent_public_users: {
+        Args: { _limit?: number }
+        Returns: {
+          avatar_url: string
+          full_name: string
+          id: string
+          is_verified: boolean
+          mobile_number: string
+          profile_photo_visibility: string
+        }[]
       }
       mark_messages_read: { Args: { _chat_id: string }; Returns: undefined }
       mark_secure_chat: {
@@ -1811,6 +1853,19 @@ export type Database = {
       reset_password_with_otp: {
         Args: { _code: string; _identifier: string; _new_password: string }
         Returns: undefined
+      }
+      search_public_users: {
+        Args: { _limit?: number; _q: string }
+        Returns: {
+          avatar_url: string
+          full_name: string
+          id: string
+          is_online: boolean
+          is_verified: boolean
+          mobile_number: string
+          profile_photo_visibility: string
+          username: string
+        }[]
       }
       set_broadcast_avatar: { Args: { _url: string }; Returns: undefined }
       start_totp_enrollment: { Args: { _secret: string }; Returns: undefined }
