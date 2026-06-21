@@ -3242,6 +3242,14 @@ export default function ChatWindowPanel() {
         >↪️ Forward</button>
         <button
           onClick={async () => {
+            const count = selectedIds.size;
+            const ok = await appConfirm({
+              title: `Delete ${count} message${count > 1 ? 's' : ''} for me?`,
+              message: 'These messages will be removed from your view only. Other participants will still see them.',
+              confirmLabel: 'Delete for me',
+              variant: 'destructive',
+            });
+            if (!ok) return;
             for (const id of Array.from(selectedIds)) {
               try { await supabase.rpc('delete_message_for_me' as any, { _msg_id: id } as any); } catch {}
             }
