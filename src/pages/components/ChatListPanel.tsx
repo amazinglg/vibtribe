@@ -1054,7 +1054,11 @@ function ChatListItem({ chat, isSelected, onClick, onContextMenu, onDelete, onMa
           <p className={`text-xs truncate ${
             chat.typing ? 'text-primary italic' : hasUnread ?'text-foreground font-medium': 'text-muted-foreground'
           }`}>
-            {chat.typing ? 'typing...' : chat.lastMessage}
+            {chat.typing
+              ? 'typing...'
+              : (VIBTRIBE_SHORTCODE_RE.test(chat.lastMessage || '')
+                  ? renderVtEmojis(chat.lastMessage, { imgClassName: 'inline-block align-[-0.25em] w-4 h-4 mx-[1px] select-none' })
+                  : chat.lastMessage)}
           </p>
           {hasUnread && (
             <span className="flex-shrink-0 min-w-[20px] h-5 gradient-primary rounded-full text-[10px] font-bold text-white flex items-center justify-center px-1">
