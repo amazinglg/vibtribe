@@ -7,7 +7,7 @@ import CreateGroupModal from '@/components/CreateGroupModal';
 import { useChatStore } from '@/store/chatStore';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
-import { decryptMessage, isEncrypted } from '@/lib/encryption';
+import { decryptMessage, isEncrypted, isGroupEncrypted, decryptGroupMessageForMe } from '@/lib/encryption';
 import { renderVtEmojis, VIBTRIBE_SHORTCODE_RE } from '@/lib/vibtribe-emojis';
 import Wordmark from '@/components/ui/Wordmark';
 import { BROADCAST_CHAT_ID } from './BroadcastChatPanel';
@@ -419,12 +419,51 @@ export default function ChatListPanel() {
 
         if (isGroup) {
           const gname = (chat as any).name || 'Group';
+          // Decrypt the latest tribe message preview so members see real text
+          // (not the g2e:... ciphertext blob).
+          let gPreview = lastMsg?.content || 'Start the conversation...';
+          if (lastMsg?.content && isGroupEncrypted(lastMsg.content) && lastMsg.sender_id) {
+            try {
+              let senderPk: string | null = null;
+              const cached = otherProfilesMap.get(lastMsg.sender_id);
+              if (cached?.public_key) senderPk = cached.public_key;
+              else {
+                const { data: sp } = await supabase
+                  .from('user_profiles')
+                  .select('public_key')
+                  .eq('id', lastMsg.sender_id)
+                  .maybeSingle();
+                senderPk = sp?.public_key || null;
+              }
+              if (senderPk) {
+                gPreview = await decryptGroupMessageForMe(lastMsg.content, user.id, senderPk);
+              } else {
+                gPreview = '🔒 New message';
+              }
+            } catch {
+              gPreview = '🔒 New message';
+            }
+          } else if (lastMsg?.content && isEncrypted(lastMsg.content)) {
+            gPreview = '🔒 New message';
+          }
+          if (gPreview?.startsWith('[IMAGE:')) gPreview = '📷 Photo';
+          else if (gPreview?.startsWith('[FILE:')) gPreview = '📎 File';
+          else if (gPreview?.startsWith('__media__:')) {
+            try {
+              const m = JSON.parse(gPreview.slice('__media__:'.length));
+              const isVid = m.type === 'video' || (m.mime && String(m.mime).startsWith('video/'));
+              gPreview = isVid ? '🎥 Video'
+                : m.type === 'image' ? '📷 Photo'
+                : m.type === 'audio' ? '🎵 Audio'
+                : `📎 ${m.name || 'File'}`;
+            } catch { gPreview = '📎 Media'; }
+          }
           chatList.push({
             id: chat.id,
             name: gname,
             avatar: gname[0]?.toUpperCase() || 'G',
             avatarColor: avatarColors[chatList.length % avatarColors.length],
-            lastMessage: lastMsg?.content?.startsWith('e2e:') ? '[message]' : (lastMsg?.content || 'Start the conversation...'),
+            lastMessage: gPreview,
             time: lastMsg ? formatTime(lastMsg.created_at) : '',
             rawTime: lastMsg?.created_at || (chat as any).updated_at,
             unread: unreadCount,
