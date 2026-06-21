@@ -1417,8 +1417,15 @@ export default function ChatWindowPanel() {
   };
 
   const deleteForMe = async (msgId: string) => {
-    setMessages(prev => prev.filter(m => m.id !== msgId));
     setActionMsg(null);
+    const ok = await appConfirm({
+      title: 'Delete for me?',
+      message: 'This message will be removed from your view only. Other participants will still see it.',
+      confirmLabel: 'Delete for me',
+      variant: 'destructive',
+    });
+    if (!ok) return;
+    setMessages(prev => prev.filter(m => m.id !== msgId));
     try {
       const { error } = await supabase.rpc('delete_message_for_me', { _msg_id: msgId });
       if (error) throw error;
