@@ -22,6 +22,7 @@ import TribeDetailsSheet from '@/components/TribeDetailsSheet';
 import EncryptionPinModal from '@/components/EncryptionPinModal';
 import { TrustLockProvider } from '@/contexts/TrustLockContext';
 import ForwardMessageModal from '@/components/ForwardMessageModal';
+import { appConfirm } from '@/components/ui/AppDialog';
 
 interface Message {
   id: string;
@@ -443,11 +444,21 @@ export default function ChatWindowPanel() {
   // never on in-place updates (reactions, edits, status changes) — otherwise
   // reacting on an older message would yank the user to the bottom.
   const lastScrollKeyRef = useRef<string>('');
+  const prevChatIdScrollRef = useRef<string | null>(null);
+  const prevLenRef = useRef<number>(0);
   useEffect(() => {
     const lastId = messages.length ? messages[messages.length - 1].id : '';
     const key = `${selectedChatId || ''}::${messages.length}::${lastId}`;
     if (key === lastScrollKeyRef.current) return;
+    const chatChanged = prevChatIdScrollRef.current !== selectedChatId;
+    const grew = messages.length > prevLenRef.current;
     lastScrollKeyRef.current = key;
+    prevChatIdScrollRef.current = selectedChatId || null;
+    prevLenRef.current = messages.length;
+    // Only auto-scroll when opening a chat or when a new message is appended.
+    // Skip on in-place updates AND on deletions (delete-for-me, etc.) so
+    // tapping an action sheet doesn't yank the user to the bottom.
+    if (!chatChanged && !grew) return;
     const el = messagesEndRef.current;
     if (!el) return;
     el.scrollIntoView({ behavior: 'auto', block: 'end' });
@@ -1406,8 +1417,15 @@ export default function ChatWindowPanel() {
   };
 
   const deleteForMe = async (msgId: string) => {
-    setMessages(prev => prev.filter(m => m.id !== msgId));
     setActionMsg(null);
+    const ok = await appConfirm({
+      title: 'Delete for me?',
+      message: 'This message will be removed from your view only. Other participants will still see it.',
+      confirmLabel: 'Delete for me',
+      variant: 'destructive',
+    });
+    if (!ok) return;
+    setMessages(prev => prev.filter(m => m.id !== msgId));
     try {
       const { error } = await supabase.rpc('delete_message_for_me', { _msg_id: msgId });
       if (error) throw error;
@@ -3224,6 +3242,14 @@ export default function ChatWindowPanel() {
         >↪️ Forward</button>
         <button
           onClick={async () => {
+            const count = selectedIds.size;
+            const ok = await appConfirm({
+              title: `Delete ${count} message${count > 1 ? 's' : ''} for me?`,
+              message: 'These messages will be removed from your view only. Other participants will still see them.',
+              confirmLabel: 'Delete for me',
+              variant: 'destructive',
+            });
+            if (!ok) return;
             for (const id of Array.from(selectedIds)) {
               try { await supabase.rpc('delete_message_for_me' as any, { _msg_id: id } as any); } catch {}
             }

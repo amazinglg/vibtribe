@@ -277,7 +277,15 @@ export default function TribeDetailsSheet({ chatId, isOpen, onClose, onLeft }: P
                 {uploadingAvatar ? <RefreshCw size={14} className="animate-spin" /> : <Camera size={14} />}
               </button>
             )}
-            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={onAvatarFile} />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={onAvatarFile}
+              style={{ position: 'absolute', width: 1, height: 1, opacity: 0, pointerEvents: 'none', overflow: 'hidden' }}
+              tabIndex={-1}
+              aria-hidden="true"
+            />
           </div>
           {editingName && isLeader ? (
             <div className="flex gap-1 w-full">
