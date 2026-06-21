@@ -2049,7 +2049,7 @@ export default function ChatWindowPanel() {
           <span className="text-[11px] text-vt-green underline-offset-2 hover:underline">{t('chat.e2eBanner')}</span>
         </button>
       )}
-      {e2eEnabled && contact && !contact.publicKey && (
+      {e2eEnabled && chatType !== 'group' && contact && !contact.publicKey && (
         <div className="px-4 py-2 bg-vt-amber/10 border-b border-vt-amber/20 text-center text-[11px] text-vt-amber">
           Waiting for {contact.name}'s encryption key before secure messages can be sent.
         </div>
