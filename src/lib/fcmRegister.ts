@@ -4,6 +4,7 @@
  * separately by pushNotifications.ts).
  */
 import { supabase } from '@/integrations/supabase/client';
+import { openNativeDeepLink } from '@/lib/native-bridge';
 
 export async function registerFcmToken(userId: string): Promise<void> {
   if (!userId || typeof window === 'undefined') return;
@@ -44,18 +45,7 @@ export async function registerFcmToken(userId: string): Promise<void> {
         const data: any = action?.notification?.data || {};
         const chatId = data.chatId || data.chat_id || null;
         const callId = data.callId || data.call_id || null;
-        const url = (data.url as string) || (chatId ? `/?chat=${encodeURIComponent(chatId)}${callId ? `&call=${encodeURIComponent(callId)}` : ''}` : '/');
-        // Update the URL so deep-link handlers in the app pick it up.
-        try {
-          window.history.pushState({}, '', url);
-          window.dispatchEvent(new PopStateEvent('popstate'));
-        } catch {}
-        // Fire a custom event the chat store listens for — this works even
-        // when the SPA is already on `/` and history.pushState alone would
-        // not re-render the chat panel.
-        if (chatId) {
-          window.dispatchEvent(new CustomEvent('vt-open-chat', { detail: { chatId, callId } }));
-        }
+        openNativeDeepLink(data.url as string | undefined, { chatId, callId });
         if (callId) {
           window.dispatchEvent(new CustomEvent('vt-incoming-call', { detail: { callId, chatId } }));
         }
