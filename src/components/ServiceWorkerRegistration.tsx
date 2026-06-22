@@ -110,8 +110,8 @@ export default function ServiceWorkerRegistration() {
   // Listen for SW messages (incoming call from push)
   useEffect(() => {
     // Deep-link from notification tap: read ?chat= from the URL (set by
-    // either the web-push SW redirect or the native FCM action handler
-    // in src/lib/fcmRegister.ts) and open that conversation. Runs on mount
+    // either the web-push SW redirect or the native FCM action handler)
+    // and open that conversation. Runs on mount
     // and again on history changes so background/foreground taps both work.
     const openChatFromUrl = () => {
       try {
@@ -162,7 +162,7 @@ export default function ServiceWorkerRegistration() {
     }
     // Native (Capacitor) push-tap dispatches this event — same handler as
     // the SW `OPEN_NOTIFICATION` postMessage so deep-linking works on
-    // Android too. See src/lib/fcmRegister.ts.
+    // Android too.
     const handleOpenChat = (e: Event) => {
       const chatId = (e as CustomEvent).detail?.chatId;
       if (chatId) setSelectedChatId(chatId);
