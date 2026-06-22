@@ -38,10 +38,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         import('@/lib/sessions').then(({ registerSession }) =>
           registerSession(session.user.id).then(() => startSessionHeartbeat(session.user.id)),
         ).catch(() => {});
-        // Register FCM token (Capacitor / Android only, no-op in browser)
-        import('@/lib/fcmRegister').then(({ registerFcmToken }) =>
-          registerFcmToken(session.user.id),
-        ).catch(() => {});
       }
       setLoading(false);
     }).catch(() => {
@@ -59,9 +55,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         startPresenceHeartbeat(session.user.id);
         import('@/lib/sessions').then(({ registerSession }) =>
           registerSession(session.user.id).then(() => startSessionHeartbeat(session.user.id)),
-        ).catch(() => {});
-        import('@/lib/fcmRegister').then(({ registerFcmToken }) =>
-          registerFcmToken(session.user.id),
         ).catch(() => {});
       } else {
         setProfile(null);
