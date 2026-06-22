@@ -5,6 +5,43 @@
  *
  * Safe to call repeatedly. No-op during SSR.
  */
+type NativeDeepLinkPayload = {
+  chatId?: string | null;
+  chat_id?: string | null;
+  callId?: string | null;
+  call_id?: string | null;
+  url?: string | null;
+};
+
+export function openNativeDeepLink(target?: string | null, payload: NativeDeepLinkPayload = {}): void {
+  if (typeof window === 'undefined') return;
+  try {
+    let chatId = payload.chatId || payload.chat_id || null;
+    let callId = payload.callId || payload.call_id || null;
+    let path = '';
+
+    if (target) {
+      const url = new URL(target, window.location.origin);
+      path = url.pathname + url.search + url.hash;
+      chatId = chatId || url.searchParams.get('chat');
+      callId = callId || url.searchParams.get('call') || url.searchParams.get('answerCall') || url.searchParams.get('declineCall');
+    } else if (chatId) {
+      path = `/?chat=${encodeURIComponent(chatId)}${callId ? `&call=${encodeURIComponent(callId)}` : ''}`;
+    }
+
+    if (path && path !== window.location.pathname + window.location.search + window.location.hash) {
+      window.history.pushState({}, '', path);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    }
+    if (chatId) {
+      window.dispatchEvent(new CustomEvent('vt-open-chat', { detail: { chatId, callId } }));
+    }
+    if (callId) {
+      window.dispatchEvent(new CustomEvent('vt-call-url'));
+    }
+  } catch {}
+}
+
 export function initNativeBridge(): 'capacitor' | 'twa' | 'browser' {
   if (typeof window === 'undefined' || typeof document === 'undefined') return 'browser';
 
@@ -90,16 +127,12 @@ export function initNativeBridge(): 'capacitor' | 'twa' | 'browser' {
           }
         });
 
-        // Deep links: vibtribe.in/* and custom scheme → push into the router.
+        // Deep links: vibtribe.in/* and notification launch URLs → push into the router.
+        App.getLaunchUrl().then((launch) => {
+          if (launch?.url) openNativeDeepLink(launch.url);
+        }).catch(() => {});
         App.addListener('appUrlOpen', ({ url }) => {
-          try {
-            const u = new URL(url);
-            const path = u.pathname + u.search + u.hash;
-            if (path && path !== '/') {
-              window.history.pushState({}, '', path);
-              window.dispatchEvent(new PopStateEvent('popstate'));
-            }
-          } catch {}
+          openNativeDeepLink(url);
         });
       })
       .catch(() => {});
