@@ -1,0 +1,1 @@
+REVOKE SELECT (totp_secret, totp_pending_secret, encrypted_private_key, key_salt, key_iv, real_email, dob, country_code, marketing_consent_ip, login_attempts, is_suspended, account_status, marketing_consent_source, email_marketing_opt_in) ON public.user_profiles FROM anon, authenticated, PUBLIC;
