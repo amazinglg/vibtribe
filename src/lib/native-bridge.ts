@@ -293,11 +293,8 @@ export async function registerNativePushNotifications(
         done(null);
       });
       PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
-        const url = action.notification?.data?.url as string | undefined;
-        if (url) {
-          window.history.pushState({}, '', url);
-          window.dispatchEvent(new PopStateEvent('popstate'));
-        }
+        const data = action.notification?.data as NativeDeepLinkPayload | undefined;
+        openNativeDeepLink(data?.url, data || {});
       });
 
       PushNotifications.register().catch(() => done(null));
