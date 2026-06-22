@@ -294,7 +294,7 @@ export const sendMessagePush = createServerFn({ method: 'POST' })
             ttl: '86400s',
             notification: {
               tag,
-              click_action: 'FLUTTER_NOTIFICATION_CLICK',
+              click_action: 'app.vibtribe.app.NOTIFICATION_OPEN',
               channel_id: 'vibtribe_messages',
               default_sound: true,
               default_vibrate_timings: true,

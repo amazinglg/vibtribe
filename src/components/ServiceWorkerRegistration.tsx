@@ -109,11 +109,9 @@ export default function ServiceWorkerRegistration() {
 
   // Listen for SW messages (incoming call from push)
   useEffect(() => {
-    if (!('serviceWorker' in navigator)) return;
-
     // Deep-link from notification tap: read ?chat= from the URL (set by
-    // either the web-push SW redirect or the native FCM action handler
-    // in src/lib/fcmRegister.ts) and open that conversation. Runs on mount
+    // either the web-push SW redirect or the native FCM action handler)
+    // and open that conversation. Runs on mount
     // and again on history changes so background/foreground taps both work.
     const openChatFromUrl = () => {
       try {
@@ -159,17 +157,21 @@ export default function ServiceWorkerRegistration() {
       }
     };
 
-    navigator.serviceWorker.addEventListener('message', handleSWMessage);
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', handleSWMessage);
+    }
     // Native (Capacitor) push-tap dispatches this event — same handler as
     // the SW `OPEN_NOTIFICATION` postMessage so deep-linking works on
-    // Android too. See src/lib/fcmRegister.ts.
+    // Android too.
     const handleOpenChat = (e: Event) => {
       const chatId = (e as CustomEvent).detail?.chatId;
       if (chatId) setSelectedChatId(chatId);
     };
     window.addEventListener('vt-open-chat', handleOpenChat as EventListener);
     return () => {
-      navigator.serviceWorker.removeEventListener('message', handleSWMessage);
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.removeEventListener('message', handleSWMessage);
+      }
       window.removeEventListener('vt-open-chat', handleOpenChat as EventListener);
       window.removeEventListener('popstate', openChatFromUrl);
       stopRingtone();

@@ -3,6 +3,7 @@ package app.vibtribe.app;
 import android.Manifest;
 import android.app.DownloadManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Environment;
@@ -57,6 +58,12 @@ public class MainActivity extends BridgeActivity {
         // The web layer no longer depends on Android WebView env() support.
         EdgeToEdge.enable(this);
         installSafeAreaInsetsBridge();
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
     }
 
     @Override
