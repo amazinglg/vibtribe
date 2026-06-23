@@ -28,6 +28,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as DownloadIosRouteImport } from './routes/download.ios'
 import { Route as DownloadAndroidRouteImport } from './routes/download.android'
+import { Route as BlogWhatsappAlternativesIndiaRouteImport } from './routes/blog.whatsapp-alternatives-india'
 import { Route as BlogVibtribeVsSignalVsTelegramRouteImport } from './routes/blog.vibtribe-vs-signal-vs-telegram'
 import { Route as AdminPermissionsRouteImport } from './routes/admin.permissions'
 import { Route as AdminMarketingRouteImport } from './routes/admin.marketing'
@@ -142,6 +143,12 @@ const DownloadAndroidRoute = DownloadAndroidRouteImport.update({
   path: '/download/android',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BlogWhatsappAlternativesIndiaRoute =
+  BlogWhatsappAlternativesIndiaRouteImport.update({
+    id: '/blog/whatsapp-alternatives-india',
+    path: '/blog/whatsapp-alternatives-india',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const BlogVibtribeVsSignalVsTelegramRoute =
   BlogVibtribeVsSignalVsTelegramRouteImport.update({
     id: '/blog/vibtribe-vs-signal-vs-telegram',
@@ -259,6 +266,7 @@ export interface FileRoutesByFullPath {
   '/admin/marketing': typeof AdminMarketingRoute
   '/admin/permissions': typeof AdminPermissionsRoute
   '/blog/vibtribe-vs-signal-vs-telegram': typeof BlogVibtribeVsSignalVsTelegramRoute
+  '/blog/whatsapp-alternatives-india': typeof BlogWhatsappAlternativesIndiaRoute
   '/download/android': typeof DownloadAndroidRoute
   '/download/ios': typeof DownloadIosRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
@@ -297,6 +305,7 @@ export interface FileRoutesByTo {
   '/admin/marketing': typeof AdminMarketingRoute
   '/admin/permissions': typeof AdminPermissionsRoute
   '/blog/vibtribe-vs-signal-vs-telegram': typeof BlogVibtribeVsSignalVsTelegramRoute
+  '/blog/whatsapp-alternatives-india': typeof BlogWhatsappAlternativesIndiaRoute
   '/download/android': typeof DownloadAndroidRoute
   '/download/ios': typeof DownloadIosRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
@@ -337,6 +346,7 @@ export interface FileRoutesById {
   '/admin/marketing': typeof AdminMarketingRoute
   '/admin/permissions': typeof AdminPermissionsRoute
   '/blog/vibtribe-vs-signal-vs-telegram': typeof BlogVibtribeVsSignalVsTelegramRoute
+  '/blog/whatsapp-alternatives-india': typeof BlogWhatsappAlternativesIndiaRoute
   '/download/android': typeof DownloadAndroidRoute
   '/download/ios': typeof DownloadIosRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
@@ -378,6 +388,7 @@ export interface FileRouteTypes {
     | '/admin/marketing'
     | '/admin/permissions'
     | '/blog/vibtribe-vs-signal-vs-telegram'
+    | '/blog/whatsapp-alternatives-india'
     | '/download/android'
     | '/download/ios'
     | '/email/unsubscribe'
@@ -416,6 +427,7 @@ export interface FileRouteTypes {
     | '/admin/marketing'
     | '/admin/permissions'
     | '/blog/vibtribe-vs-signal-vs-telegram'
+    | '/blog/whatsapp-alternatives-india'
     | '/download/android'
     | '/download/ios'
     | '/email/unsubscribe'
@@ -455,6 +467,7 @@ export interface FileRouteTypes {
     | '/admin/marketing'
     | '/admin/permissions'
     | '/blog/vibtribe-vs-signal-vs-telegram'
+    | '/blog/whatsapp-alternatives-india'
     | '/download/android'
     | '/download/ios'
     | '/email/unsubscribe'
@@ -493,6 +506,7 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
   BlogVibtribeVsSignalVsTelegramRoute: typeof BlogVibtribeVsSignalVsTelegramRoute
+  BlogWhatsappAlternativesIndiaRoute: typeof BlogWhatsappAlternativesIndiaRoute
   DownloadAndroidRoute: typeof DownloadAndroidRoute
   DownloadIosRoute: typeof DownloadIosRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
@@ -645,6 +659,13 @@ declare module '@tanstack/react-router' {
       path: '/download/android'
       fullPath: '/download/android'
       preLoaderRoute: typeof DownloadAndroidRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/whatsapp-alternatives-india': {
+      id: '/blog/whatsapp-alternatives-india'
+      path: '/blog/whatsapp-alternatives-india'
+      fullPath: '/blog/whatsapp-alternatives-india'
+      preLoaderRoute: typeof BlogWhatsappAlternativesIndiaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/blog/vibtribe-vs-signal-vs-telegram': {
@@ -809,6 +830,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   UnsubscribeRoute: UnsubscribeRoute,
   BlogVibtribeVsSignalVsTelegramRoute: BlogVibtribeVsSignalVsTelegramRoute,
+  BlogWhatsappAlternativesIndiaRoute: BlogWhatsappAlternativesIndiaRoute,
   DownloadAndroidRoute: DownloadAndroidRoute,
   DownloadIosRoute: DownloadIosRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
