@@ -15,6 +15,7 @@ import { Route as StatusScreenRouteImport } from './routes/status-screen'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as SignInRouteImport } from './routes/sign-in'
+import { Route as SecurityRouteImport } from './routes/security'
 import { Route as ProfileScreenRouteImport } from './routes/profile-screen'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
@@ -73,6 +74,11 @@ const SignUpRoute = SignUpRouteImport.update({
 const SignInRoute = SignInRouteImport.update({
   id: '/sign-in',
   path: '/sign-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SecurityRoute = SecurityRouteImport.update({
+  id: '/security',
+  path: '/security',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileScreenRoute = ProfileScreenRouteImport.update({
@@ -236,6 +242,7 @@ export interface FileRoutesByFullPath {
   '/forgot-password': typeof ForgotPasswordRoute
   '/privacy': typeof PrivacyRoute
   '/profile-screen': typeof ProfileScreenRoute
+  '/security': typeof SecurityRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -272,6 +279,7 @@ export interface FileRoutesByTo {
   '/forgot-password': typeof ForgotPasswordRoute
   '/privacy': typeof PrivacyRoute
   '/profile-screen': typeof ProfileScreenRoute
+  '/security': typeof SecurityRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -310,6 +318,7 @@ export interface FileRoutesById {
   '/forgot-password': typeof ForgotPasswordRoute
   '/privacy': typeof PrivacyRoute
   '/profile-screen': typeof ProfileScreenRoute
+  '/security': typeof SecurityRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -349,6 +358,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/privacy'
     | '/profile-screen'
+    | '/security'
     | '/sign-in'
     | '/sign-up'
     | '/sitemap.xml'
@@ -385,6 +395,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/privacy'
     | '/profile-screen'
+    | '/security'
     | '/sign-in'
     | '/sign-up'
     | '/sitemap.xml'
@@ -422,6 +433,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/privacy'
     | '/profile-screen'
+    | '/security'
     | '/sign-in'
     | '/sign-up'
     | '/sitemap.xml'
@@ -460,6 +472,7 @@ export interface RootRouteChildren {
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   PrivacyRoute: typeof PrivacyRoute
   ProfileScreenRoute: typeof ProfileScreenRoute
+  SecurityRoute: typeof SecurityRoute
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -528,6 +541,13 @@ declare module '@tanstack/react-router' {
       path: '/sign-in'
       fullPath: '/sign-in'
       preLoaderRoute: typeof SignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/security': {
+      id: '/security'
+      path: '/security'
+      fullPath: '/security'
+      preLoaderRoute: typeof SecurityRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile-screen': {
@@ -760,6 +780,7 @@ const rootRouteChildren: RootRouteChildren = {
   ForgotPasswordRoute: ForgotPasswordRoute,
   PrivacyRoute: PrivacyRoute,
   ProfileScreenRoute: ProfileScreenRoute,
+  SecurityRoute: SecurityRoute,
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
