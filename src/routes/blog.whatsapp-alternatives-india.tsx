@@ -75,7 +75,7 @@ function Post() {
           </p>
           <h2 className="text-xl font-semibold">3. Telegram</h2>
           <p>
-            Very feature-rich \u2014 large channels, bots, file sharing. Important caveat: regular Telegram chats are not end-to-end encrypted by default. Only opt-in &ldquo;Secret Chats&rdquo; are. Treat it as a broadcast platform with optional privacy rather than a private messenger.
+            Very feature-rich &mdash; large channels, bots, file sharing. Important caveat: regular Telegram chats are not end-to-end encrypted by default. Only opt-in &ldquo;Secret Chats&rdquo; are. Treat it as a broadcast platform with optional privacy rather than a private messenger.
           </p>
           <h2 className="text-xl font-semibold">4. Threema</h2>
           <p>
