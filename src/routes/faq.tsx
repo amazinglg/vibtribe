@@ -85,7 +85,7 @@ function FaqPage() {
       <main className="mx-auto max-w-3xl px-4 py-10">
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Frequently Asked Questions</h1>
         <p className="mt-3 text-base text-muted-foreground">
-          Quick answers about VibTribe \u2014 the private messaging app for real conversations.
+          Quick answers about VibTribe &mdash; the private messaging app for real conversations.
         </p>
         <section className="mt-8 divide-y divide-border/60 rounded-2xl border border-border/60 bg-card/40">
           {FAQS.map((f) => (

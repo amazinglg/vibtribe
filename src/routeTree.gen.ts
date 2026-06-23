@@ -20,6 +20,7 @@ import { Route as ProfileScreenRouteImport } from './routes/profile-screen'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as FeaturesRouteImport } from './routes/features'
+import { Route as FaqRouteImport } from './routes/faq'
 import { Route as CompleteProfileRouteImport } from './routes/complete-profile'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
@@ -99,6 +100,11 @@ const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
 const FeaturesRoute = FeaturesRouteImport.update({
   id: '/features',
   path: '/features',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CompleteProfileRoute = CompleteProfileRouteImport.update({
@@ -238,6 +244,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/complete-profile': typeof CompleteProfileRoute
+  '/faq': typeof FaqRoute
   '/features': typeof FeaturesRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/privacy': typeof PrivacyRoute
@@ -275,6 +282,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/complete-profile': typeof CompleteProfileRoute
+  '/faq': typeof FaqRoute
   '/features': typeof FeaturesRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/privacy': typeof PrivacyRoute
@@ -314,6 +322,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/complete-profile': typeof CompleteProfileRoute
+  '/faq': typeof FaqRoute
   '/features': typeof FeaturesRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/privacy': typeof PrivacyRoute
@@ -354,6 +363,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/complete-profile'
+    | '/faq'
     | '/features'
     | '/forgot-password'
     | '/privacy'
@@ -391,6 +401,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/complete-profile'
+    | '/faq'
     | '/features'
     | '/forgot-password'
     | '/privacy'
@@ -429,6 +440,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/complete-profile'
+    | '/faq'
     | '/features'
     | '/forgot-password'
     | '/privacy'
@@ -468,6 +480,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   CompleteProfileRoute: typeof CompleteProfileRoute
+  FaqRoute: typeof FaqRoute
   FeaturesRoute: typeof FeaturesRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -576,6 +589,13 @@ declare module '@tanstack/react-router' {
       path: '/features'
       fullPath: '/features'
       preLoaderRoute: typeof FeaturesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/complete-profile': {
@@ -776,6 +796,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   CompleteProfileRoute: CompleteProfileRoute,
+  FaqRoute: FaqRoute,
   FeaturesRoute: FeaturesRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   PrivacyRoute: PrivacyRoute,
