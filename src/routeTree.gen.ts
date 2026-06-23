@@ -18,6 +18,7 @@ import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as ProfileScreenRouteImport } from './routes/profile-screen'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as FeaturesRouteImport } from './routes/features'
 import { Route as CompleteProfileRouteImport } from './routes/complete-profile'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
@@ -87,6 +88,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   id: '/forgot-password',
   path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FeaturesRoute = FeaturesRouteImport.update({
+  id: '/features',
+  path: '/features',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CompleteProfileRoute = CompleteProfileRouteImport.update({
@@ -226,6 +232,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/complete-profile': typeof CompleteProfileRoute
+  '/features': typeof FeaturesRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/privacy': typeof PrivacyRoute
   '/profile-screen': typeof ProfileScreenRoute
@@ -261,6 +268,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/complete-profile': typeof CompleteProfileRoute
+  '/features': typeof FeaturesRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/privacy': typeof PrivacyRoute
   '/profile-screen': typeof ProfileScreenRoute
@@ -298,6 +306,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/complete-profile': typeof CompleteProfileRoute
+  '/features': typeof FeaturesRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/privacy': typeof PrivacyRoute
   '/profile-screen': typeof ProfileScreenRoute
@@ -336,6 +345,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/complete-profile'
+    | '/features'
     | '/forgot-password'
     | '/privacy'
     | '/profile-screen'
@@ -371,6 +381,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/complete-profile'
+    | '/features'
     | '/forgot-password'
     | '/privacy'
     | '/profile-screen'
@@ -407,6 +418,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/complete-profile'
+    | '/features'
     | '/forgot-password'
     | '/privacy'
     | '/profile-screen'
@@ -444,6 +456,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   CompleteProfileRoute: typeof CompleteProfileRoute
+  FeaturesRoute: typeof FeaturesRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   PrivacyRoute: typeof PrivacyRoute
   ProfileScreenRoute: typeof ProfileScreenRoute
@@ -536,6 +549,13 @@ declare module '@tanstack/react-router' {
       path: '/forgot-password'
       fullPath: '/forgot-password'
       preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/features': {
+      id: '/features'
+      path: '/features'
+      fullPath: '/features'
+      preLoaderRoute: typeof FeaturesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/complete-profile': {
@@ -736,6 +756,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   CompleteProfileRoute: CompleteProfileRoute,
+  FeaturesRoute: FeaturesRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   PrivacyRoute: PrivacyRoute,
   ProfileScreenRoute: ProfileScreenRoute,
