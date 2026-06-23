@@ -30,6 +30,7 @@ import { Route as DownloadIosRouteImport } from './routes/download.ios'
 import { Route as DownloadAndroidRouteImport } from './routes/download.android'
 import { Route as BlogWhatsappAlternativesIndiaRouteImport } from './routes/blog.whatsapp-alternatives-india'
 import { Route as BlogVibtribeVsSignalVsTelegramRouteImport } from './routes/blog.vibtribe-vs-signal-vs-telegram'
+import { Route as BlogSelfDestructingMessagesGuideRouteImport } from './routes/blog.self-destructing-messages-guide'
 import { Route as BlogEndToEndEncryptionExplainedRouteImport } from './routes/blog.end-to-end-encryption-explained'
 import { Route as AdminPermissionsRouteImport } from './routes/admin.permissions'
 import { Route as AdminMarketingRouteImport } from './routes/admin.marketing'
@@ -156,6 +157,12 @@ const BlogVibtribeVsSignalVsTelegramRoute =
     path: '/blog/vibtribe-vs-signal-vs-telegram',
     getParentRoute: () => rootRouteImport,
   } as any)
+const BlogSelfDestructingMessagesGuideRoute =
+  BlogSelfDestructingMessagesGuideRouteImport.update({
+    id: '/blog/self-destructing-messages-guide',
+    path: '/blog/self-destructing-messages-guide',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const BlogEndToEndEncryptionExplainedRoute =
   BlogEndToEndEncryptionExplainedRouteImport.update({
     id: '/blog/end-to-end-encryption-explained',
@@ -273,6 +280,7 @@ export interface FileRoutesByFullPath {
   '/admin/marketing': typeof AdminMarketingRoute
   '/admin/permissions': typeof AdminPermissionsRoute
   '/blog/end-to-end-encryption-explained': typeof BlogEndToEndEncryptionExplainedRoute
+  '/blog/self-destructing-messages-guide': typeof BlogSelfDestructingMessagesGuideRoute
   '/blog/vibtribe-vs-signal-vs-telegram': typeof BlogVibtribeVsSignalVsTelegramRoute
   '/blog/whatsapp-alternatives-india': typeof BlogWhatsappAlternativesIndiaRoute
   '/download/android': typeof DownloadAndroidRoute
@@ -313,6 +321,7 @@ export interface FileRoutesByTo {
   '/admin/marketing': typeof AdminMarketingRoute
   '/admin/permissions': typeof AdminPermissionsRoute
   '/blog/end-to-end-encryption-explained': typeof BlogEndToEndEncryptionExplainedRoute
+  '/blog/self-destructing-messages-guide': typeof BlogSelfDestructingMessagesGuideRoute
   '/blog/vibtribe-vs-signal-vs-telegram': typeof BlogVibtribeVsSignalVsTelegramRoute
   '/blog/whatsapp-alternatives-india': typeof BlogWhatsappAlternativesIndiaRoute
   '/download/android': typeof DownloadAndroidRoute
@@ -355,6 +364,7 @@ export interface FileRoutesById {
   '/admin/marketing': typeof AdminMarketingRoute
   '/admin/permissions': typeof AdminPermissionsRoute
   '/blog/end-to-end-encryption-explained': typeof BlogEndToEndEncryptionExplainedRoute
+  '/blog/self-destructing-messages-guide': typeof BlogSelfDestructingMessagesGuideRoute
   '/blog/vibtribe-vs-signal-vs-telegram': typeof BlogVibtribeVsSignalVsTelegramRoute
   '/blog/whatsapp-alternatives-india': typeof BlogWhatsappAlternativesIndiaRoute
   '/download/android': typeof DownloadAndroidRoute
@@ -398,6 +408,7 @@ export interface FileRouteTypes {
     | '/admin/marketing'
     | '/admin/permissions'
     | '/blog/end-to-end-encryption-explained'
+    | '/blog/self-destructing-messages-guide'
     | '/blog/vibtribe-vs-signal-vs-telegram'
     | '/blog/whatsapp-alternatives-india'
     | '/download/android'
@@ -438,6 +449,7 @@ export interface FileRouteTypes {
     | '/admin/marketing'
     | '/admin/permissions'
     | '/blog/end-to-end-encryption-explained'
+    | '/blog/self-destructing-messages-guide'
     | '/blog/vibtribe-vs-signal-vs-telegram'
     | '/blog/whatsapp-alternatives-india'
     | '/download/android'
@@ -479,6 +491,7 @@ export interface FileRouteTypes {
     | '/admin/marketing'
     | '/admin/permissions'
     | '/blog/end-to-end-encryption-explained'
+    | '/blog/self-destructing-messages-guide'
     | '/blog/vibtribe-vs-signal-vs-telegram'
     | '/blog/whatsapp-alternatives-india'
     | '/download/android'
@@ -519,6 +532,7 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
   BlogEndToEndEncryptionExplainedRoute: typeof BlogEndToEndEncryptionExplainedRoute
+  BlogSelfDestructingMessagesGuideRoute: typeof BlogSelfDestructingMessagesGuideRoute
   BlogVibtribeVsSignalVsTelegramRoute: typeof BlogVibtribeVsSignalVsTelegramRoute
   BlogWhatsappAlternativesIndiaRoute: typeof BlogWhatsappAlternativesIndiaRoute
   DownloadAndroidRoute: typeof DownloadAndroidRoute
@@ -689,6 +703,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogVibtribeVsSignalVsTelegramRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog/self-destructing-messages-guide': {
+      id: '/blog/self-destructing-messages-guide'
+      path: '/blog/self-destructing-messages-guide'
+      fullPath: '/blog/self-destructing-messages-guide'
+      preLoaderRoute: typeof BlogSelfDestructingMessagesGuideRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/blog/end-to-end-encryption-explained': {
       id: '/blog/end-to-end-encryption-explained'
       path: '/blog/end-to-end-encryption-explained'
@@ -851,6 +872,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   UnsubscribeRoute: UnsubscribeRoute,
   BlogEndToEndEncryptionExplainedRoute: BlogEndToEndEncryptionExplainedRoute,
+  BlogSelfDestructingMessagesGuideRoute: BlogSelfDestructingMessagesGuideRoute,
   BlogVibtribeVsSignalVsTelegramRoute: BlogVibtribeVsSignalVsTelegramRoute,
   BlogWhatsappAlternativesIndiaRoute: BlogWhatsappAlternativesIndiaRoute,
   DownloadAndroidRoute: DownloadAndroidRoute,
