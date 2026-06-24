@@ -54,7 +54,7 @@ function Post() {
     <div className="min-h-screen bg-background text-foreground">
       <header className="border-b border-border/40 px-4 py-3">
         <div className="mx-auto flex max-w-3xl items-center justify-between">
-          <Link to="/" className="flex items-center gap-2"><AppLogo className="h-8 w-8" /><Wordmark className="h-5" /></Link>
+          <Link to="/" className="flex items-center gap-2"><AppLogo size={28} /><Wordmark className="text-lg" /></Link>
           <Link to="/" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" /> Home</Link>
         </div>
       </header>
