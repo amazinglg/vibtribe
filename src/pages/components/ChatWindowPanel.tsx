@@ -13,7 +13,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { sendPushNotification } from '@/lib/pushNotifications';
 import { useCall } from '@/components/CallProvider';
 import { isNativeWrapper, pickNativeImage, pickNativeFiles, requestNativeCameraPermission } from '@/lib/native-bridge';
-import { TrustLockService, onTrustLockScreenshot, isIOS } from '@/lib/trust-lock-service';
+import { TrustLockService, onTrustLockScreenshot, isIOS, isIosPwa } from '@/lib/trust-lock-service';
 import { toast } from 'sonner';
 import { EMOJI_CATEGORIES, type EmojiCategoryKey } from '@/lib/emojis';
 import { VIBTRIBE_EMOJI_MAP, VIBTRIBE_SHORTCODE_RE, renderVtEmojis } from '@/lib/vibtribe-emojis';
@@ -955,6 +955,13 @@ export default function ChatWindowPanel() {
         if (!cancelled && attemptId === trustLockAttemptRef.current) setTrustLockProtected(protectedNow);
         if (!protectedNow && !cancelled) {
           toast.error('Trust Lock could not confirm screenshot blocking on this device. Please use the updated Android app.');
+        }
+        // iOS PWA: Apple does not let web apps block screenshots. Warn the
+        // user pre-emptively that screenshots are not allowed and will be
+        // logged. Native iOS app shows this through the OS-level blur +
+        // detection — no extra toast needed there.
+        if (!cancelled && isIosPwa()) {
+          toast.warning('Trust Lock is on — screenshots are not allowed. If a screenshot is detected, it will be logged in this chat.', { duration: 6000 });
         }
       } else {
         setTrustLockProtected(false);
