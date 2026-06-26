@@ -182,6 +182,14 @@ export const TrustLockService = {
       document.documentElement.setAttribute('data-trust-lock-platform', platform);
     }
     if (platform !== 'android') {
+      // iOS (native + PWA) cannot block screenshots at the OS level — Apple
+      // does not expose that capability. We apply the strongest legal
+      // protections (UIBlurEffect via the native plugin on iOS app, CSS
+      // background blur + in-app UI restrictions on iOS PWA) and treat the
+      // chat as protected so it is not hidden behind an Android-only wall.
+      if (platform === 'ios' || isIOS()) {
+        return true;
+      }
       console.warn('[TrustLock] Screenshot blocking is only enforceable in the native Android app.');
       return false;
     }
