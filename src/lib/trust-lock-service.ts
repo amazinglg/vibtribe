@@ -90,6 +90,53 @@ export function isIOS(): boolean {
   return false;
 }
 
+/** True ONLY for an iOS device running the app as an installed PWA / Safari web — NOT the native Capacitor iOS app. */
+export function isIosPwa(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  const platform = detectTrustLockPlatform();
+  if (platform === 'ios') return false; // native iOS app
+  return /iPad|iPhone|iPod/.test(navigator.userAgent);
+}
+
+/**
+ * Best-effort iOS PWA screenshot heuristic. Apple does not expose a
+ * screenshot API to web content, so we cannot detect with certainty.
+ * Heuristic: taking a screenshot on iOS triggers a brief window `blur`
+ * (the screenshot preview UI takes focus) followed by a `focus` within
+ * a short window, WITHOUT the document going to `visibilityState=hidden`
+ * (an app switch always sets visibility to hidden).
+ */
+function setupIosPwaScreenshotHeuristic(): () => void {
+  if (typeof window === 'undefined') return () => {};
+  let blurredAt = 0;
+  let wentHiddenAfterBlur = false;
+  let lastEmit = 0;
+  const onBlur = () => { blurredAt = Date.now(); wentHiddenAfterBlur = false; };
+  const onVis = () => { if (document.visibilityState === 'hidden') wentHiddenAfterBlur = true; };
+  const onFocus = () => {
+    if (!blurredAt) return;
+    const dt = Date.now() - blurredAt;
+    const wasShort = dt > 0 && dt < 1500;
+    if (wasShort && !wentHiddenAfterBlur) {
+      const now = Date.now();
+      if (now - lastEmit > 2000) {
+        lastEmit = now;
+        window.dispatchEvent(new CustomEvent('vt-trust-lock-screenshot', { detail: { platform: 'ios-pwa', heuristic: true } }));
+      }
+    }
+    blurredAt = 0;
+    wentHiddenAfterBlur = false;
+  };
+  window.addEventListener('blur', onBlur);
+  window.addEventListener('focus', onFocus);
+  document.addEventListener('visibilitychange', onVis);
+  return () => {
+    window.removeEventListener('blur', onBlur);
+    window.removeEventListener('focus', onFocus);
+    document.removeEventListener('visibilitychange', onVis);
+  };
+}
+
 async function getIosPlugin(): Promise<IosTrustLockPlugin | null> {
   if (detectTrustLockPlatform() !== 'ios') return null;
   const plugin = getCapacitor()?.Plugins?.VtTrustLock;
@@ -167,6 +214,13 @@ export const TrustLockService = {
       } else {
         console.warn('[TrustLock] iOS plugin VtTrustLock is not registered — falling back to web-only protections.');
       }
+    }
+
+    // iOS PWA only: install best-effort screenshot heuristic so the chat
+    // layer can log "screenshot detected" system events even without the
+    // native plugin. Android & native iOS already covered above.
+    if (isIosPwa()) {
+      cleanupFns.push(setupIosPwaScreenshotHeuristic());
     }
 
     // Always apply web-level backgrounding blur as a defence-in-depth layer.
