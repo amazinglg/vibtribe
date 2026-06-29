@@ -3,8 +3,10 @@ import { createFileRoute } from '@tanstack/react-router'
 export const Route = createFileRoute('/api/public/download-apk')({
   server: {
     handlers: {
-      GET: async () => {
+      GET: async ({ request }) => {
+        const origin = new URL(request.url).origin
         const assetUrl =
+          origin +
           '/__l5e/assets-v1/130795b7-4179-4c74-8100-7e0e4bc13034/VibTribe_v1.2.2.zip'
         const response = await fetch(assetUrl)
         if (!response.ok) {
