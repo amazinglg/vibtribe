@@ -382,6 +382,42 @@ export type Database = {
           },
         ]
       }
+      consent_log: {
+        Row: {
+          accepted_at: string
+          consent_type: string
+          created_at: string
+          id: string
+          ip: string | null
+          policy_version: string
+          user_agent: string | null
+          user_id: string
+          withdrawn_at: string | null
+        }
+        Insert: {
+          accepted_at?: string
+          consent_type: string
+          created_at?: string
+          id?: string
+          ip?: string | null
+          policy_version: string
+          user_agent?: string | null
+          user_id: string
+          withdrawn_at?: string | null
+        }
+        Update: {
+          accepted_at?: string
+          consent_type?: string
+          created_at?: string
+          id?: string
+          ip?: string | null
+          policy_version?: string
+          user_agent?: string | null
+          user_id?: string
+          withdrawn_at?: string | null
+        }
+        Relationships: []
+      }
       contacts: {
         Row: {
           contact_id: string
@@ -1847,6 +1883,15 @@ export type Database = {
           msg_id: number
           read_ct: number
         }[]
+      }
+      record_consent: {
+        Args: {
+          _consent_type: string
+          _ip?: string
+          _policy_version: string
+          _user_agent?: string
+        }
+        Returns: string
       }
       record_login_failure: { Args: { _user_id: string }; Returns: number }
       record_login_success: { Args: { _user_id: string }; Returns: undefined }
