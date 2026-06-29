@@ -1,9 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AlertTriangle, Check, Loader2, ShieldCheck } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
+import { useServerFn } from '@tanstack/react-start';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { TermsContent } from '@/components/legal/LegalContent';
+import { TermsConditionsContent, PrivacyPolicyContent } from '@/components/legal/LegalContent';
+import { recordConsents } from '@/lib/consent.functions';
+import { TERMS_VERSION, PRIVACY_VERSION } from '@/lib/legal-versions';
 import { toast } from 'sonner';
 
 const OFFBOARD_DAYS = 15;
@@ -16,10 +20,12 @@ export default function TermsAcceptanceGate() {
   const { user } = useAuth();
   const [needsAccept, setNeedsAccept] = useState(false);
   const [scrolledToEnd, setScrolledToEnd] = useState(false);
-  const [checked, setChecked] = useState(false);
+  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [agreePrivacy, setAgreePrivacy] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [warningSentAt, setWarningSentAt] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const recordConsentsFn = useServerFn(recordConsents);
 
   useEffect(() => {
     if (!user) return;
@@ -48,11 +54,16 @@ export default function TermsAcceptanceGate() {
   };
 
   const handleAccept = async () => {
-    if (!checked) return;
+    if (!agreeTerms || !agreePrivacy) return;
     setSubmitting(true);
     try {
-      const { error } = await supabase.rpc('accept_terms' as any);
-      if (error) throw error;
+      // Log each consent separately with policy version (DPDP §6(6))
+      await recordConsentsFn({
+        data: {
+          terms: { version: TERMS_VERSION },
+          privacy: { version: PRIVACY_VERSION },
+        },
+      });
       setNeedsAccept(false);
       toast.success('Thanks — terms accepted');
     } catch (e: any) {
@@ -108,7 +119,11 @@ export default function TermsAcceptanceGate() {
           onScroll={onScroll}
           className="flex-1 overflow-y-auto px-5 py-4"
         >
-          <TermsContent />
+          <h3 className="text-base font-bold mb-2">Terms &amp; Conditions</h3>
+          <TermsConditionsContent />
+          <div className="my-8 border-t border-border" />
+          <h3 className="text-base font-bold mb-2">Privacy Notice</h3>
+          <PrivacyPolicyContent />
           <div className="h-2" />
         </div>
 
@@ -118,22 +133,40 @@ export default function TermsAcceptanceGate() {
               Scroll to the bottom to enable acceptance.
             </p>
           )}
+          {/* Separate, specific consents — DPDP §6(1) "free, specific, informed". */}
           <label className={`flex items-start gap-2.5 select-none ${scrolledToEnd ? 'cursor-pointer' : 'opacity-50 cursor-not-allowed'}`}>
             <button
               type="button"
               disabled={!scrolledToEnd}
-              onClick={() => setChecked(v => !v)}
-              aria-pressed={checked}
-              className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-md border flex items-center justify-center transition-all ${checked ? 'bg-primary border-primary' : 'bg-input border-border'}`}
+              onClick={() => setAgreeTerms(v => !v)}
+              aria-pressed={agreeTerms}
+              className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-md border flex items-center justify-center transition-all ${agreeTerms ? 'bg-primary border-primary' : 'bg-input border-border'}`}
             >
-              {checked && <Check size={13} className="text-white" />}
+              {agreeTerms && <Check size={13} className="text-white" />}
             </button>
             <span className="text-xs text-foreground/90 leading-relaxed">
-              I have read and accept VibTribe's Terms &amp; Conditions and Privacy Policy.
+              I agree to VibTribe's{' '}
+              <Link to="/terms" target="_blank" className="text-primary underline">Terms &amp; Conditions</Link>.
+            </span>
+          </label>
+          <label className={`flex items-start gap-2.5 select-none ${scrolledToEnd ? 'cursor-pointer' : 'opacity-50 cursor-not-allowed'}`}>
+            <button
+              type="button"
+              disabled={!scrolledToEnd}
+              onClick={() => setAgreePrivacy(v => !v)}
+              aria-pressed={agreePrivacy}
+              className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-md border flex items-center justify-center transition-all ${agreePrivacy ? 'bg-primary border-primary' : 'bg-input border-border'}`}
+            >
+              {agreePrivacy && <Check size={13} className="text-white" />}
+            </button>
+            <span className="text-xs text-foreground/90 leading-relaxed">
+              I consent to the{' '}
+              <Link to="/privacy" target="_blank" className="text-primary underline">Privacy Notice</Link>{' '}
+              and the processing of my personal data as described.
             </span>
           </label>
           <button
-            disabled={!checked || submitting}
+            disabled={!agreeTerms || !agreePrivacy || submitting}
             onClick={handleAccept}
             className="w-full gradient-primary text-white font-semibold py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
