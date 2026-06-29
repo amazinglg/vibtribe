@@ -1,6 +1,5 @@
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
-import { getRequestHeader } from '@tanstack/react-start/server';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
 
 /**
@@ -19,9 +18,17 @@ export const recordConsents = createServerFn({ method: 'POST' })
       .parse(d ?? {}),
   )
   .handler(async ({ data, context }) => {
-    const xff = getRequestHeader('x-forwarded-for') || '';
-    const ip = (xff.split(',')[0] || getRequestHeader('cf-connecting-ip') || '').trim() || null;
-    const userAgent = (getRequestHeader('user-agent') || '').slice(0, 512) || null;
+    let ip: string | null = null;
+    let userAgent: string | null = null;
+    try {
+      const mod: any = await import('@tanstack/react-start');
+      const getHeader = mod.getRequestHeader;
+      if (typeof getHeader === 'function') {
+        const xff = (getHeader('x-forwarded-for') as string | undefined) || '';
+        ip = (xff.split(',')[0] || (getHeader('cf-connecting-ip') as string | undefined) || '').trim() || null;
+        userAgent = ((getHeader('user-agent') as string | undefined) || '').slice(0, 512) || null;
+      }
+    } catch { /* best-effort */ }
 
     const supabase = context.supabase;
     const written: Array<{ type: 'terms' | 'privacy'; version: string }> = [];
