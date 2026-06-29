@@ -109,24 +109,39 @@ export function isIosPwa(): boolean {
 function setupIosPwaScreenshotHeuristic(): () => void {
   if (typeof window === 'undefined') return () => {};
   let blurredAt = 0;
-  let wentHiddenAfterBlur = false;
+  let hiddenAt = 0;
   let lastEmit = 0;
-  const onBlur = () => { blurredAt = Date.now(); wentHiddenAfterBlur = false; };
-  const onVis = () => { if (document.visibilityState === 'hidden') wentHiddenAfterBlur = true; };
+
+  const emit = (source: string) => {
+    const now = Date.now();
+    if (now - lastEmit < 2500) return;
+    lastEmit = now;
+    window.dispatchEvent(
+      new CustomEvent('vt-trust-lock-screenshot', {
+        detail: { platform: 'ios-pwa', heuristic: true, source },
+      }),
+    );
+  };
+
+  const onBlur = () => { blurredAt = Date.now(); };
   const onFocus = () => {
     if (!blurredAt) return;
     const dt = Date.now() - blurredAt;
-    const wasShort = dt > 0 && dt < 1500;
-    if (wasShort && !wentHiddenAfterBlur) {
-      const now = Date.now();
-      if (now - lastEmit > 2000) {
-        lastEmit = now;
-        window.dispatchEvent(new CustomEvent('vt-trust-lock-screenshot', { detail: { platform: 'ios-pwa', heuristic: true } }));
-      }
-    }
+    // App-switcher / lock takes >2s typically. Screenshot preview returns very fast.
+    if (dt > 0 && dt < 1800) emit('blur-focus');
     blurredAt = 0;
-    wentHiddenAfterBlur = false;
   };
+  const onVis = () => {
+    if (document.visibilityState === 'hidden') {
+      hiddenAt = Date.now();
+    } else if (hiddenAt) {
+      const dt = Date.now() - hiddenAt;
+      // iOS sometimes flips visibility briefly when screenshot preview is dismissed.
+      if (dt > 0 && dt < 1200) emit('vis-bounce');
+      hiddenAt = 0;
+    }
+  };
+
   window.addEventListener('blur', onBlur);
   window.addEventListener('focus', onFocus);
   document.addEventListener('visibilitychange', onVis);
