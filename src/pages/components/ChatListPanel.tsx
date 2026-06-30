@@ -903,6 +903,12 @@ export default function ChatListPanel() {
                 chat={chat}
                 isSelected={selectedChatId === chat.id}
                 onClick={() => {
+                  // Shadow stubs (secured 1:1 chats) route to the Secure
+                  // Vault — the actual chat only opens after unlock.
+                  if (chat.isShadow) {
+                    window.dispatchEvent(new Event('vt-open-vault'));
+                    return;
+                  }
                   // Optimistically clear unread on the list as soon as the user
                   // opens the chat. The ChatWindowPanel separately calls the
                   // mark_messages_read RPC; this just keeps the list in sync
@@ -915,6 +921,12 @@ export default function ChatListPanel() {
                 }}
                 onContextMenu={(e) => {
                   e.preventDefault();
+                  // Don't allow long-press actions on shadow stubs — the
+                  // user should manage the chat from the Secure Vault.
+                  if (chat.isShadow) {
+                    window.dispatchEvent(new Event('vt-open-vault'));
+                    return;
+                  }
                   // Allow long-press for broadcast too, but only Block+Mute options.
                   const vh = typeof window !== 'undefined' ? window.innerHeight : 800;
                   // Estimate menu height: ~280px max with all 6 items, ~140px for broadcast (2 items)
