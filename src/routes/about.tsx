@@ -8,9 +8,9 @@ import founderImg from '@/assets/founder-richa.png.asset.json';
 export const Route = createFileRoute('/about')({
   head: () => ({
     meta: [
-      { title: 'About VibTribe — Our Story, Vision & Founder' },
-      { name: 'description', content: 'Learn about VibTribe — founded in June 2026 by Richa. Our mission, values, and a personal note from our founder on building a private, vibrant social messaging platform.' },
-      { property: 'og:title', content: 'About VibTribe — Our Story, Vision & Founder' },
+      { title: 'About VibTribe — Our Story, Vision & Co-Founder' },
+      { name: 'description', content: 'Learn about VibTribe — founded in June 2026 by Richa. Our mission, values, and a personal note from our co-founder on building a private, vibrant social messaging platform.' },
+      { property: 'og:title', content: 'About VibTribe — Our Story, Vision & Co-Founder' },
       { property: 'og:description', content: 'The story, values and vision behind VibTribe — a privacy-first social messaging platform.' },
     ],
   }),
@@ -80,7 +80,7 @@ function AboutPage() {
               <Heart size={18} className="text-white" />
             </div>
             <h3 className="font-bold text-foreground mb-1">Visionary — Richa</h3>
-            <p className="text-sm text-muted-foreground">Founder &amp; product lead, on a mission to make private, joyful communication the default.</p>
+            <p className="text-sm text-muted-foreground">Co-Founder &amp; product lead, on a mission to make private, joyful communication the default.</p>
           </div>
           <div className="glass rounded-2xl border border-border p-5">
             <div className="w-10 h-10 rounded-xl gradient-cyan flex items-center justify-center mb-3">
@@ -149,10 +149,10 @@ function AboutPage() {
         </div>
       </section>
 
-      {/* Founder's Note */}
+      {/* Co-Founder's Note */}
       <section className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24">
         <div className="text-center mb-8">
-          <span className="text-[11px] font-bold uppercase tracking-widest text-primary">Founder&apos;s Note</span>
+          <span className="text-[11px] font-bold uppercase tracking-widest text-primary">Co-Founder&apos;s Note</span>
           <h2 className="font-extrabold text-2xl sm:text-3xl lg:text-4xl tracking-tight mt-2">A message from Richa</h2>
         </div>
 
@@ -167,7 +167,7 @@ function AboutPage() {
               <div className="relative h-72 sm:h-96 lg:h-full min-h-[20rem] overflow-hidden">
                 <img
                   src={founderImg.url}
-                  alt="Richa, Founder of VibTribe"
+                  alt="Richa, Co-Founder of VibTribe"
                   className="absolute inset-0 w-full h-full object-cover object-center"
                 />
                 {/* Gradient blend into the card on desktop */}
@@ -179,7 +179,7 @@ function AboutPage() {
                   </div>
                   <div>
                     <div className="text-white font-extrabold text-lg leading-tight drop-shadow">Richa</div>
-                    <div className="text-xs text-white/80">Founder &amp; Visionary, VibTribe</div>
+                    <div className="text-xs text-white/80">Co-Founder &amp; Visionary, VibTribe</div>
                   </div>
                 </div>
               </div>
