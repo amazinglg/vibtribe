@@ -1,0 +1,1 @@
+GRANT SELECT (key_setup_completed) ON public.user_profiles TO authenticated;
