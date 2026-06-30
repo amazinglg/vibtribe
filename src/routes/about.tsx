@@ -9,7 +9,7 @@ export const Route = createFileRoute('/about')({
   head: () => ({
     meta: [
       { title: 'About VibTribe — Our Story, Vision & Founder' },
-      { name: 'description', content: 'Learn about VibTribe — founded in 2025 by Richa. Our mission, values, and a personal note from our founder on building a private, vibrant social messaging platform.' },
+      { name: 'description', content: 'Learn about VibTribe — founded in June 2026 by Richa. Our mission, values, and a personal note from our founder on building a private, vibrant social messaging platform.' },
       { property: 'og:title', content: 'About VibTribe — Our Story, Vision & Founder' },
       { property: 'og:description', content: 'The story, values and vision behind VibTribe — a privacy-first social messaging platform.' },
     ],
@@ -72,7 +72,7 @@ function AboutPage() {
             <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center mb-3 glow-primary">
               <Calendar size={18} className="text-white" />
             </div>
-            <h3 className="font-bold text-foreground mb-1">Founded in 2025</h3>
+            <h3 className="font-bold text-foreground mb-1">Founded in June 2026</h3>
             <p className="text-sm text-muted-foreground">Born out of a need for a chat experience that puts people, not advertisers, at the center.</p>
           </div>
           <div className="glass rounded-2xl border border-border p-5">
