@@ -263,6 +263,31 @@ export default function SecureVaultModal({ isOpen, onClose }: SecureVaultModalPr
     }
   };
 
+  const handleRemoveFromVault = async (deleteMessages: boolean) => {
+    if (!user || !foundChat) return;
+    setRemoveBusy(true);
+    try {
+      const { error } = await supabase.rpc('unmark_secure_chat' as any, {
+        _chat_id: foundChat.id,
+        _delete_messages: deleteMessages,
+      });
+      if (error) throw error;
+      toast.success(
+        deleteMessages
+          ? 'Chat removed and all messages deleted'
+          : 'Chat removed from Secure Vault — messages restored to your normal chat list',
+      );
+      // Tell the chat list to refresh so the shadow stub disappears.
+      try { window.dispatchEvent(new Event('vt-secure-changed')); } catch {}
+      setRemoveChoice(null);
+      handleClose();
+    } catch (e: any) {
+      toast.error(e?.message || 'Could not remove from vault');
+    } finally {
+      setRemoveBusy(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
