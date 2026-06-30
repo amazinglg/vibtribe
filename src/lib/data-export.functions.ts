@@ -28,7 +28,8 @@ export const requestDataExport = createServerFn({ method: 'POST' })
     }
 
     // Use service role for read+write across multiple tables
-    const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
+    const { supabaseAdmin: _admin } = await import('@/integrations/supabase/client.server');
+    const supabaseAdmin: any = _admin;
 
     // Create queued row first so we always have an audit record
     const { data: reqRow, error: insErr } = await supabaseAdmin
