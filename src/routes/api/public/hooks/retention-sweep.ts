@@ -99,19 +99,15 @@ export const Route = createFileRoute('/api/public/hooks/retention-sweep')({
         // --- 3) Erase ----------------------------------------------------------
         const { data: deleteTargets, error: delErr } = await supabaseAdmin
           .from('user_profiles')
-          .select('id, email, last_seen')
+          .select('id, email, last_seen, is_master_admin')
           .lt('last_seen', thresh(DELETE_DAYS))
           .limit(BATCH)
 
         if (delErr) summary.errors.push('delete-query: ' + delErr.message)
 
-        for (const u of (deleteTargets ?? []) as Profile[]) {
-          // Skip the pinned founder account (master admin), defensively.
-          const { data: isMaster } = await supabaseAdmin.rpc('is_pinned_master_mobile', { _user_id: u.id }).then(
-            (r: any) => ({ data: r?.data }),
-            () => ({ data: false }),
-          )
-          if (isMaster) continue
+        for (const u of (deleteTargets ?? []) as Array<Profile & { is_master_admin: boolean | null }>) {
+          // Defensive: never erase the pinned founder / master-admin account.
+          if (u.is_master_admin) continue
           const { error: delAuthErr } = await supabaseAdmin.auth.admin.deleteUser(u.id)
           if (delAuthErr) {
             summary.errors.push(`delete-user ${u.id}: ${delAuthErr.message}`)

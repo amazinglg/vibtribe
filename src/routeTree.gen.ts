@@ -51,6 +51,7 @@ import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/l
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as ApiPublicHooksRetentionSweepRouteImport } from './routes/api/public/hooks/retention-sweep'
 import { Route as ApiPublicHooksCleanupExpiredStatusesRouteImport } from './routes/api/public/hooks/cleanup-expired-statuses'
 import { Route as ApiPublicHooksCleanupExpiredMessagesRouteImport } from './routes/api/public/hooks/cleanup-expired-messages'
 
@@ -273,6 +274,12 @@ const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
   path: '/lovable/email/auth/preview',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksRetentionSweepRoute =
+  ApiPublicHooksRetentionSweepRouteImport.update({
+    id: '/api/public/hooks/retention-sweep',
+    path: '/api/public/hooks/retention-sweep',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksCleanupExpiredStatusesRoute =
   ApiPublicHooksCleanupExpiredStatusesRouteImport.update({
     id: '/api/public/hooks/cleanup-expired-statuses',
@@ -326,6 +333,7 @@ export interface FileRoutesByFullPath {
   '/tribe/join/$code': typeof TribeJoinCodeRoute
   '/api/public/hooks/cleanup-expired-messages': typeof ApiPublicHooksCleanupExpiredMessagesRoute
   '/api/public/hooks/cleanup-expired-statuses': typeof ApiPublicHooksCleanupExpiredStatusesRoute
+  '/api/public/hooks/retention-sweep': typeof ApiPublicHooksRetentionSweepRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -371,6 +379,7 @@ export interface FileRoutesByTo {
   '/tribe/join/$code': typeof TribeJoinCodeRoute
   '/api/public/hooks/cleanup-expired-messages': typeof ApiPublicHooksCleanupExpiredMessagesRoute
   '/api/public/hooks/cleanup-expired-statuses': typeof ApiPublicHooksCleanupExpiredStatusesRoute
+  '/api/public/hooks/retention-sweep': typeof ApiPublicHooksRetentionSweepRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -418,6 +427,7 @@ export interface FileRoutesById {
   '/tribe/join/$code': typeof TribeJoinCodeRoute
   '/api/public/hooks/cleanup-expired-messages': typeof ApiPublicHooksCleanupExpiredMessagesRoute
   '/api/public/hooks/cleanup-expired-statuses': typeof ApiPublicHooksCleanupExpiredStatusesRoute
+  '/api/public/hooks/retention-sweep': typeof ApiPublicHooksRetentionSweepRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -466,6 +476,7 @@ export interface FileRouteTypes {
     | '/tribe/join/$code'
     | '/api/public/hooks/cleanup-expired-messages'
     | '/api/public/hooks/cleanup-expired-statuses'
+    | '/api/public/hooks/retention-sweep'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -511,6 +522,7 @@ export interface FileRouteTypes {
     | '/tribe/join/$code'
     | '/api/public/hooks/cleanup-expired-messages'
     | '/api/public/hooks/cleanup-expired-statuses'
+    | '/api/public/hooks/retention-sweep'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -557,6 +569,7 @@ export interface FileRouteTypes {
     | '/tribe/join/$code'
     | '/api/public/hooks/cleanup-expired-messages'
     | '/api/public/hooks/cleanup-expired-statuses'
+    | '/api/public/hooks/retention-sweep'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -600,6 +613,7 @@ export interface RootRouteChildren {
   TribeJoinCodeRoute: typeof TribeJoinCodeRoute
   ApiPublicHooksCleanupExpiredMessagesRoute: typeof ApiPublicHooksCleanupExpiredMessagesRoute
   ApiPublicHooksCleanupExpiredStatusesRoute: typeof ApiPublicHooksCleanupExpiredStatusesRoute
+  ApiPublicHooksRetentionSweepRoute: typeof ApiPublicHooksRetentionSweepRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
@@ -903,6 +917,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/retention-sweep': {
+      id: '/api/public/hooks/retention-sweep'
+      path: '/api/public/hooks/retention-sweep'
+      fullPath: '/api/public/hooks/retention-sweep'
+      preLoaderRoute: typeof ApiPublicHooksRetentionSweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/cleanup-expired-statuses': {
       id: '/api/public/hooks/cleanup-expired-statuses'
       path: '/api/public/hooks/cleanup-expired-statuses'
@@ -974,6 +995,7 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicHooksCleanupExpiredMessagesRoute,
   ApiPublicHooksCleanupExpiredStatusesRoute:
     ApiPublicHooksCleanupExpiredStatusesRoute,
+  ApiPublicHooksRetentionSweepRoute: ApiPublicHooksRetentionSweepRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
