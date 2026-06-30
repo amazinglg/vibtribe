@@ -209,6 +209,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [secureVaultOpen]);
 
+  // Allow any descendant (shadow chat row, tribe details sheet, etc.) to
+  // request opening the Secure Vault by dispatching `vt-open-vault`.
+  useEffect(() => {
+    const onOpen = () => setSecureVaultOpen(true);
+    window.addEventListener('vt-open-vault', onOpen);
+    return () => window.removeEventListener('vt-open-vault', onOpen);
+  }, []);
+
   const handleSignOut = async () => {
     try {
       await signOut();

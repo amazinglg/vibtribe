@@ -9,6 +9,7 @@ import { useChatStore } from '@/store/chatStore';
 import { unlockEncryptionWithPIN } from '@/lib/encryption';
 import { useServerFn } from '@tanstack/react-start';
 import { deleteAllSecuredChats } from '@/lib/secure-chats.functions';
+import { appConfirm } from '@/components/ui/AppDialog';
 
 interface SecureVaultModalProps {
   isOpen: boolean;
@@ -67,6 +68,10 @@ export default function SecureVaultModal({ isOpen, onClose }: SecureVaultModalPr
   const [deletePin, setDeletePin] = useState('');
   const [deleteBusy, setDeleteBusy] = useState(false);
   const deleteAllFn = useServerFn(deleteAllSecuredChats);
+
+  // Remove-this-chat-from-vault flow
+  const [removeChoice, setRemoveChoice] = useState<null | 'choose' | 'confirmDelete'>(null);
+  const [removeBusy, setRemoveBusy] = useState(false);
 
   // Nickname editing state
   const [editingNickname, setEditingNickname] = useState(false);
@@ -258,6 +263,31 @@ export default function SecureVaultModal({ isOpen, onClose }: SecureVaultModalPr
     }
   };
 
+  const handleRemoveFromVault = async (deleteMessages: boolean) => {
+    if (!user || !foundChat) return;
+    setRemoveBusy(true);
+    try {
+      const { error } = await supabase.rpc('unmark_secure_chat' as any, {
+        _chat_id: foundChat.id,
+        _delete_messages: deleteMessages,
+      });
+      if (error) throw error;
+      toast.success(
+        deleteMessages
+          ? 'Chat removed and all messages deleted'
+          : 'Chat removed from Secure Vault — messages restored to your normal chat list',
+      );
+      // Tell the chat list to refresh so the shadow stub disappears.
+      try { window.dispatchEvent(new Event('vt-secure-changed')); } catch {}
+      setRemoveChoice(null);
+      handleClose();
+    } catch (e: any) {
+      toast.error(e?.message || 'Could not remove from vault');
+    } finally {
+      setRemoveBusy(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -356,6 +386,13 @@ export default function SecureVaultModal({ isOpen, onClose }: SecureVaultModalPr
               >
                 <span>Open Secure Chat</span>
                 <ArrowRight size={18} />
+              </button>
+              <button
+                onClick={() => setRemoveChoice('choose')}
+                className="w-full mt-2 py-2.5 rounded-xl border border-vt-amber/40 text-vt-amber text-sm font-semibold flex items-center justify-center gap-2 hover:bg-vt-amber/10 transition-all"
+              >
+                <Trash2 size={14} />
+                <span>Remove from Secure Vault</span>
               </button>
               <button onClick={handleReset} className="w-full mt-2 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
                 Try another code
@@ -569,6 +606,80 @@ export default function SecureVaultModal({ isOpen, onClose }: SecureVaultModalPr
                       className="flex-1 py-2.5 rounded-xl bg-vt-red text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50"
                     >
                       {deleteBusy ? 'Deleting…' : 'Delete all'}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Remove-from-Vault overlay (keep or delete messages) */}
+        {removeChoice && foundChat && (
+          <div className="absolute inset-0 z-10 bg-background/85 backdrop-blur-md flex items-center justify-center p-5">
+            <div className="w-full max-w-sm glass-strong rounded-2xl border border-vt-amber/30 p-5 float-up">
+              {removeChoice === 'choose' ? (
+                <>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-full bg-vt-amber/15 flex items-center justify-center">
+                      <Lock size={18} className="text-vt-amber" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-foreground">Remove from Secure Vault?</h3>
+                      <p className="text-[11px] text-muted-foreground">Choose what to do with the existing messages for <span className="text-foreground font-semibold">{foundChat.name}</span>.</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2 mt-2">
+                    <button
+                      disabled={removeBusy}
+                      onClick={() => handleRemoveFromVault(false)}
+                      className="w-full text-left p-3 rounded-xl border border-vt-green/30 bg-vt-green/5 hover:bg-vt-green/10 transition-all"
+                    >
+                      <p className="text-sm font-semibold text-foreground">Keep all messages</p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">Chat returns to your normal list with full history. Auto-delete setting (24h / never) is unchanged.</p>
+                    </button>
+                    <button
+                      disabled={removeBusy}
+                      onClick={() => setRemoveChoice('confirmDelete')}
+                      className="w-full text-left p-3 rounded-xl border border-vt-red/30 bg-vt-red/5 hover:bg-vt-red/10 transition-all"
+                    >
+                      <p className="text-sm font-semibold text-vt-red">Delete everything</p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">Permanently delete all chats, messages and media from the database. This cannot be undone.</p>
+                    </button>
+                  </div>
+                  <button
+                    disabled={removeBusy}
+                    onClick={() => setRemoveChoice(null)}
+                    className="w-full mt-3 py-2.5 rounded-xl glass border border-border text-sm font-semibold text-foreground hover:bg-muted disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-full bg-vt-red/15 flex items-center justify-center">
+                      <AlertTriangle size={18} className="text-vt-red" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-foreground">Delete this chat for everyone?</h3>
+                      <p className="text-[11px] text-muted-foreground">All chats, messages and media with <span className="text-foreground font-semibold">{foundChat.name}</span> will be deleted from the database. This cannot be undone.</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 mt-4">
+                    <button
+                      disabled={removeBusy}
+                      onClick={() => setRemoveChoice('choose')}
+                      className="flex-1 py-2.5 rounded-xl glass border border-border text-sm font-semibold text-foreground hover:bg-muted disabled:opacity-50"
+                    >
+                      Back
+                    </button>
+                    <button
+                      disabled={removeBusy}
+                      onClick={() => handleRemoveFromVault(true)}
+                      className="flex-1 py-2.5 rounded-xl bg-vt-red text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50"
+                    >
+                      {removeBusy ? 'Deleting…' : 'Delete forever'}
                     </button>
                   </div>
                 </>

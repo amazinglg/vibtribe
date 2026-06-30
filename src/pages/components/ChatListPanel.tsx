@@ -35,6 +35,7 @@ interface Chat {
   participantId?: string;
   isBroadcast?: boolean;
   isVerified?: boolean;
+  isShadow?: boolean;
 }
 
 export default function ChatListPanel() {
@@ -387,9 +388,14 @@ export default function ChatListPanel() {
         groups = gData || [];
       }
 
-      // Filter out chats the user has moved to their Secure Vault.
+      // Secured 1:1 chats stay visible in the normal list as a "shadow"
+      // stub (so the user remains searchable and you can still see they
+      // exist) but the real messages and avatar are hidden until the
+      // chat is unlocked from the Secure Vault. Secured tribes are
+      // hidden entirely from this list — they're only reachable via the
+      // Secure Vault, as the leader configured.
       const data = [...(oneToOne || []), ...groups].filter(
-        (c: any) => !securedSet.has(c.id),
+        (c: any) => !(securedSet.has(c.id) && c.is_group),
       );
 
       // Batch-fetch all other participants in a single query to avoid the
@@ -411,6 +417,34 @@ export default function ChatListPanel() {
       const chatList: Chat[] = [];
       for (const chat of data) {
         const isGroup = !!(chat as any).is_group;
+
+        // SHADOW row for secured 1:1 chats — no preview, no unread.
+        if (!isGroup && securedSet.has(chat.id)) {
+          const otherUserId = chat.participant_one === user.id ? chat.participant_two : chat.participant_one;
+          const ou = otherProfilesMap.get(otherUserId) || { full_name: 'VibTribe user', is_verified: false };
+          const name = ou.full_name || 'VibTribe user';
+          const avatarColors = ['gradient-primary', 'gradient-cyan', 'gradient-pink', 'gradient-tri'];
+          chatList.push({
+            id: chat.id,
+            name,
+            avatar: (name[0] || 'V').toUpperCase(),
+            avatarColor: avatarColors[chatList.length % avatarColors.length],
+            avatarUrl: null,
+            lastMessage: '🔒 Secured chat — unlock from Secure Vault',
+            time: '',
+            rawTime: (chat as any).updated_at,
+            unread: 0,
+            online: false,
+            typing: false,
+            pinned: false,
+            muted: false,
+            participantId: otherUserId,
+            isVerified: !!ou.is_verified,
+            isShadow: true,
+          });
+          continue;
+        }
+
         const msgs = (chat as any).messages || [];
         const sortedMsgs = msgs.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
         const lastMsg = sortedMsgs[0];
@@ -869,6 +903,12 @@ export default function ChatListPanel() {
                 chat={chat}
                 isSelected={selectedChatId === chat.id}
                 onClick={() => {
+                  // Shadow stubs (secured 1:1 chats) route to the Secure
+                  // Vault — the actual chat only opens after unlock.
+                  if (chat.isShadow) {
+                    window.dispatchEvent(new Event('vt-open-vault'));
+                    return;
+                  }
                   // Optimistically clear unread on the list as soon as the user
                   // opens the chat. The ChatWindowPanel separately calls the
                   // mark_messages_read RPC; this just keeps the list in sync
@@ -881,6 +921,12 @@ export default function ChatListPanel() {
                 }}
                 onContextMenu={(e) => {
                   e.preventDefault();
+                  // Don't allow long-press actions on shadow stubs — the
+                  // user should manage the chat from the Secure Vault.
+                  if (chat.isShadow) {
+                    window.dispatchEvent(new Event('vt-open-vault'));
+                    return;
+                  }
                   // Allow long-press for broadcast too, but only Block+Mute options.
                   const vh = typeof window !== 'undefined' ? window.innerHeight : 800;
                   // Estimate menu height: ~280px max with all 6 items, ~140px for broadcast (2 items)
@@ -1061,6 +1107,8 @@ function ChatListItem({ chat, isSelected, onClick, onContextMenu, onDelete, onMa
   return (
     <div
       className={`relative flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-200 hover:bg-muted/50 ${
+        chat.isShadow ? 'opacity-75' : ''
+      } ${
         isSelected ? 'bg-primary/10 border-r-2 border-primary' : hasUnread ? 'bg-primary/5' : ''
       }`}
       onClick={onClick}
@@ -1068,7 +1116,11 @@ function ChatListItem({ chat, isSelected, onClick, onContextMenu, onDelete, onMa
     >
       {/* Avatar */}
       <div className="relative flex-shrink-0">
-        {chat.avatarUrl ? (
+        {chat.isShadow ? (
+          <div className="w-12 h-12 rounded-full bg-muted border border-border flex items-center justify-center text-muted-foreground">
+            <Lock size={18} />
+          </div>
+        ) : chat.avatarUrl ? (
           <img
             src={chat.avatarUrl}
             alt={chat.name}
