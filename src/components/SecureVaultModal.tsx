@@ -9,6 +9,7 @@ import { useChatStore } from '@/store/chatStore';
 import { unlockEncryptionWithPIN } from '@/lib/encryption';
 import { useServerFn } from '@tanstack/react-start';
 import { deleteAllSecuredChats } from '@/lib/secure-chats.functions';
+import { appConfirm } from '@/components/ui/AppDialog';
 
 interface SecureVaultModalProps {
   isOpen: boolean;
@@ -67,6 +68,10 @@ export default function SecureVaultModal({ isOpen, onClose }: SecureVaultModalPr
   const [deletePin, setDeletePin] = useState('');
   const [deleteBusy, setDeleteBusy] = useState(false);
   const deleteAllFn = useServerFn(deleteAllSecuredChats);
+
+  // Remove-this-chat-from-vault flow
+  const [removeChoice, setRemoveChoice] = useState<null | 'choose' | 'confirmDelete'>(null);
+  const [removeBusy, setRemoveBusy] = useState(false);
 
   // Nickname editing state
   const [editingNickname, setEditingNickname] = useState(false);
