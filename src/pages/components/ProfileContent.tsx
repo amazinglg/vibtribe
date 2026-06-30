@@ -1296,6 +1296,8 @@ export default function ProfileContent() {
               </div>
 
               {/* Legal — Terms & Privacy Policy */}
+              <ConsentCenter />
+
               <div className="glass rounded-2xl border border-border p-5">
                 <h3 className="font-semibold text-base text-foreground mb-2 flex items-center gap-2">
                   <Shield size={16} className="text-primary" />
