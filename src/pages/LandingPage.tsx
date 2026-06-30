@@ -45,7 +45,7 @@ export default function LandingPage() {
 
           <div className="hidden md:flex items-center gap-7 text-sm text-muted-foreground">
             <a href="#features" className="hover:text-foreground transition-colors">{t('landing.nav.features')}</a>
-            <a href="#about" className="hover:text-foreground transition-colors">{t('landing.nav.about')}</a>
+            <Link to="/about" className="hover:text-foreground transition-colors">{t('landing.nav.about')}</Link>
             <a href="#contact" className="hover:text-foreground transition-colors">{t('landing.nav.contact')}</a>
           </div>
 
