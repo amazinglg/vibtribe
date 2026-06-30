@@ -1337,6 +1337,36 @@ export default function ProfileContent() {
                     </div>
                     <ExternalLink size={14} className="text-muted-foreground" />
                   </Link>
+                  <Link
+                    to="/data-notice"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between p-3 bg-muted/50 hover:bg-muted rounded-xl transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Shield size={16} className="text-primary" />
+                      <div>
+                        <p className="text-sm font-medium text-foreground">Data Notice</p>
+                        <p className="text-xs text-muted-foreground">What we collect, why, and how long we keep it (DPDP §5)</p>
+                      </div>
+                    </div>
+                    <ExternalLink size={14} className="text-muted-foreground" />
+                  </Link>
+                  <Link
+                    to="/subprocessors"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between p-3 bg-muted/50 hover:bg-muted rounded-xl transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Lock size={16} className="text-primary" />
+                      <div>
+                        <p className="text-sm font-medium text-foreground">Subprocessors</p>
+                        <p className="text-xs text-muted-foreground">Third-party services we use to operate VibTribe</p>
+                      </div>
+                    </div>
+                    <ExternalLink size={14} className="text-muted-foreground" />
+                  </Link>
                 </div>
               </div>
             </div>
