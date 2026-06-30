@@ -1361,6 +1361,8 @@ export type Database = {
           encrypted_private_key: string | null
           full_name: string
           id: string
+          inactivity_final_warning_sent_at: string | null
+          inactivity_warning_sent_at: string | null
           is_master_admin: boolean
           is_online: boolean | null
           is_suspended: boolean | null
@@ -1413,6 +1415,8 @@ export type Database = {
           encrypted_private_key?: string | null
           full_name?: string
           id: string
+          inactivity_final_warning_sent_at?: string | null
+          inactivity_warning_sent_at?: string | null
           is_master_admin?: boolean
           is_online?: boolean | null
           is_suspended?: boolean | null
@@ -1465,6 +1469,8 @@ export type Database = {
           encrypted_private_key?: string | null
           full_name?: string
           id?: string
+          inactivity_final_warning_sent_at?: string | null
+          inactivity_warning_sent_at?: string | null
           is_master_admin?: boolean
           is_online?: boolean | null
           is_suspended?: boolean | null
@@ -1643,6 +1649,8 @@ export type Database = {
           encrypted_private_key: string | null
           full_name: string
           id: string
+          inactivity_final_warning_sent_at: string | null
+          inactivity_warning_sent_at: string | null
           is_master_admin: boolean
           is_online: boolean | null
           is_suspended: boolean | null
@@ -1718,6 +1726,8 @@ export type Database = {
           encrypted_private_key: string | null
           full_name: string
           id: string
+          inactivity_final_warning_sent_at: string | null
+          inactivity_warning_sent_at: string | null
           is_master_admin: boolean
           is_online: boolean | null
           is_suspended: boolean | null
@@ -1856,6 +1866,8 @@ export type Database = {
           encrypted_private_key: string | null
           full_name: string
           id: string
+          inactivity_final_warning_sent_at: string | null
+          inactivity_warning_sent_at: string | null
           is_master_admin: boolean
           is_online: boolean | null
           is_suspended: boolean | null
@@ -1901,6 +1913,14 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      get_my_latest_consent_versions: {
+        Args: never
+        Returns: {
+          accepted_at: string
+          consent_type: string
+          policy_version: string
+        }[]
       }
       get_my_totp_pending_secret: { Args: never; Returns: string }
       get_my_totp_secret: { Args: never; Returns: string }

@@ -40,7 +40,22 @@ export default function TermsAcceptanceGate() {
         console.warn('[VT-TERMS] failed to read terms_accepted_at', error);
         return;
       }
+      // First-time acceptance still missing → prompt.
       if (!data?.terms_accepted_at || !(data as any)?.privacy_accepted_at) {
+        setNeedsAccept(true);
+        setWarningSentAt(((data as any)?.terms_warning_sent_at as string | null) ?? null);
+        return;
+      }
+      // Versioned re-prompt (DPDP §6(6)): if the policy version has been
+      // bumped since their last consent_log entry, re-prompt.
+      const { data: versionsRows } = await supabase.rpc('get_my_latest_consent_versions');
+      const versions: Record<string, string> = {};
+      for (const row of (versionsRows as any[] | null) ?? []) {
+        versions[row.consent_type] = row.policy_version;
+      }
+      const termsOutdated = versions['terms'] !== TERMS_VERSION;
+      const privacyOutdated = versions['privacy'] !== PRIVACY_VERSION;
+      if (termsOutdated || privacyOutdated) {
         setNeedsAccept(true);
         setWarningSentAt(((data as any)?.terms_warning_sent_at as string | null) ?? null);
       }
