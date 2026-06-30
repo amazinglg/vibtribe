@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { appConfirm } from '@/components/ui/AppDialog';
 import ImageCropModal from '@/components/ImageCropModal';
+import MarkSecureModal from '@/components/MarkSecureModal';
 
 interface Props {
   chatId: string;
@@ -71,6 +72,9 @@ export default function TribeDetailsSheet({ chatId, isOpen, onClose, onLeft }: P
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
   const [cropFile, setCropFile] = useState<File | null>(null);
+  const [secureModalOpen, setSecureModalOpen] = useState(false);
+  const [isSecured, setIsSecured] = useState(false);
+  const [shareCodeBanner, setShareCodeBanner] = useState<string | null>(null);
 
   const myRole = members.find(m => m.user_id === user?.id)?.role;
   const isLeader = myRole === 'leader' || (tribe && tribe.created_by === user?.id);
@@ -88,6 +92,10 @@ export default function TribeDetailsSheet({ chatId, isOpen, onClose, onLeft }: P
       setDescInput((t as any).description || '');
       setHandleInput((t as any).handle || '');
     }
+    try {
+      const { data: secured } = await supabase.rpc('is_tribe_secured' as any, { _chat_id: chatId });
+      setIsSecured(!!secured);
+    } catch { /* helper may not exist on older deploys */ }
     const { data: ms } = await supabase
       .from('chat_members')
       .select('user_id, role')
