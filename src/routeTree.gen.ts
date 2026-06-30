@@ -21,6 +21,7 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as FeaturesRouteImport } from './routes/features'
 import { Route as FaqRouteImport } from './routes/faq'
+import { Route as DataNoticeRouteImport } from './routes/data-notice'
 import { Route as CompleteProfileRouteImport } from './routes/complete-profile'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AboutRouteImport } from './routes/about'
@@ -110,6 +111,11 @@ const FeaturesRoute = FeaturesRouteImport.update({
 const FaqRoute = FaqRouteImport.update({
   id: '/faq',
   path: '/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DataNoticeRoute = DataNoticeRouteImport.update({
+  id: '/data-notice',
+  path: '/data-notice',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CompleteProfileRoute = CompleteProfileRouteImport.update({
@@ -279,6 +285,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
   '/complete-profile': typeof CompleteProfileRoute
+  '/data-notice': typeof DataNoticeRoute
   '/faq': typeof FaqRoute
   '/features': typeof FeaturesRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -322,6 +329,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/complete-profile': typeof CompleteProfileRoute
+  '/data-notice': typeof DataNoticeRoute
   '/faq': typeof FaqRoute
   '/features': typeof FeaturesRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -367,6 +375,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
   '/complete-profile': typeof CompleteProfileRoute
+  '/data-notice': typeof DataNoticeRoute
   '/faq': typeof FaqRoute
   '/features': typeof FeaturesRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -413,6 +422,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/admin'
     | '/complete-profile'
+    | '/data-notice'
     | '/faq'
     | '/features'
     | '/forgot-password'
@@ -456,6 +466,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/complete-profile'
+    | '/data-notice'
     | '/faq'
     | '/features'
     | '/forgot-password'
@@ -500,6 +511,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/admin'
     | '/complete-profile'
+    | '/data-notice'
     | '/faq'
     | '/features'
     | '/forgot-password'
@@ -545,6 +557,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AdminRoute: typeof AdminRouteWithChildren
   CompleteProfileRoute: typeof CompleteProfileRoute
+  DataNoticeRoute: typeof DataNoticeRoute
   FaqRoute: typeof FaqRoute
   FeaturesRoute: typeof FeaturesRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
@@ -665,6 +678,13 @@ declare module '@tanstack/react-router' {
       path: '/faq'
       fullPath: '/faq'
       preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data-notice': {
+      id: '/data-notice'
+      path: '/data-notice'
+      fullPath: '/data-notice'
+      preLoaderRoute: typeof DataNoticeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/complete-profile': {
@@ -901,6 +921,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   AdminRoute: AdminRouteWithChildren,
   CompleteProfileRoute: CompleteProfileRoute,
+  DataNoticeRoute: DataNoticeRoute,
   FaqRoute: FaqRoute,
   FeaturesRoute: FeaturesRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
