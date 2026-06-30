@@ -167,6 +167,39 @@ export default function AdminUserDetailPage() {
     }
   };
 
+  const handleGrantPremium = async (months: number | 'forever') => {
+    if (!isMaster) { toast.error('Master admin only'); return; }
+    const label = months === 'forever' ? 'forever' : `${months} month${months === 1 ? '' : 's'}`;
+    if (!confirm(`Mark ${target.full_name || 'this user'} as Premium for ${label}?`)) return;
+    setActionLoading(true);
+    try {
+      const { data, error } = await supabase.rpc('admin_set_premium' as any, {
+        _user_id: userId,
+        _months: months === 'forever' ? 1 : months,
+        _forever: months === 'forever',
+      });
+      if (error) throw error;
+      const row = Array.isArray(data) ? data[0] : data;
+      setTarget((t: any) => ({ ...t, ...(row || {}) }));
+      toast.success(`Premium granted (${label})`);
+    } catch (e: any) { toast.error(e.message || 'Failed'); }
+    finally { setActionLoading(false); }
+  };
+
+  const handleRevokePremium = async () => {
+    if (!isMaster) { toast.error('Master admin only'); return; }
+    if (!confirm(`Revoke premium from ${target.full_name || 'this user'}? Premium features will be removed immediately.`)) return;
+    setActionLoading(true);
+    try {
+      const { data, error } = await supabase.rpc('admin_revoke_premium' as any, { _user_id: userId });
+      if (error) throw error;
+      const row = Array.isArray(data) ? data[0] : data;
+      setTarget((t: any) => ({ ...t, ...(row || { is_premium: false, premium_expires_at: null, premium_source: null }) }));
+      toast.success('Premium revoked');
+    } catch (e: any) { toast.error(e.message || 'Failed'); }
+    finally { setActionLoading(false); }
+  };
+
   if (loading || loadingData || !target) {
     return (
       <AppLayout>
