@@ -442,6 +442,39 @@ export type Database = {
         }
         Relationships: []
       }
+      data_export_requests: {
+        Row: {
+          byte_size: number | null
+          completed_at: string | null
+          created_at: string
+          delivered_to_email: string | null
+          error: string | null
+          id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          byte_size?: number | null
+          completed_at?: string | null
+          created_at?: string
+          delivered_to_email?: string | null
+          error?: string | null
+          id?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          byte_size?: number | null
+          completed_at?: string | null
+          created_at?: string
+          delivered_to_email?: string | null
+          error?: string | null
+          id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       email_campaign_recipients: {
         Row: {
           campaign_id: string
@@ -1278,6 +1311,42 @@ export type Database = {
           },
         ]
       }
+      user_consents: {
+        Row: {
+          created_at: string
+          granted: boolean
+          granted_at: string | null
+          id: string
+          purpose: string
+          source: string | null
+          updated_at: string
+          user_id: string
+          withdrawn_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          granted?: boolean
+          granted_at?: string | null
+          id?: string
+          purpose: string
+          source?: string | null
+          updated_at?: string
+          user_id: string
+          withdrawn_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          granted?: boolean
+          granted_at?: string | null
+          id?: string
+          purpose?: string
+          source?: string | null
+          updated_at?: string
+          user_id?: string
+          withdrawn_at?: string | null
+        }
+        Relationships: []
+      }
       user_profiles: {
         Row: {
           account_status: Database["public"]["Enums"]["user_status"] | null
@@ -1304,6 +1373,7 @@ export type Database = {
           marketing_consent_at: string | null
           marketing_consent_ip: string | null
           marketing_consent_source: string | null
+          mobile_hash: string | null
           mobile_number: string | null
           notif_mentions: boolean
           notif_messages: boolean
@@ -1355,6 +1425,7 @@ export type Database = {
           marketing_consent_at?: string | null
           marketing_consent_ip?: string | null
           marketing_consent_source?: string | null
+          mobile_hash?: string | null
           mobile_number?: string | null
           notif_mentions?: boolean
           notif_messages?: boolean
@@ -1406,6 +1477,7 @@ export type Database = {
           marketing_consent_at?: string | null
           marketing_consent_ip?: string | null
           marketing_consent_source?: string | null
+          mobile_hash?: string | null
           mobile_number?: string | null
           notif_mentions?: boolean
           notif_messages?: boolean
@@ -1583,6 +1655,7 @@ export type Database = {
           marketing_consent_at: string | null
           marketing_consent_ip: string | null
           marketing_consent_source: string | null
+          mobile_hash: string | null
           mobile_number: string | null
           notif_mentions: boolean
           notif_messages: boolean
@@ -1657,6 +1730,7 @@ export type Database = {
           marketing_consent_at: string | null
           marketing_consent_ip: string | null
           marketing_consent_source: string | null
+          mobile_hash: string | null
           mobile_number: string | null
           notif_mentions: boolean
           notif_messages: boolean
@@ -1707,6 +1781,7 @@ export type Database = {
       check_otp_rate_limit: { Args: { _email: string }; Returns: number }
       cleanup_expired_statuses: { Args: never; Returns: undefined }
       cleanup_expired_statuses_for_user: { Args: never; Returns: number }
+      compute_mobile_hash: { Args: { _mobile: string }; Returns: string }
       confirm_totp_enrollment: { Args: never; Returns: undefined }
       consume_email_otp: {
         Args: { _code: string; _email: string; _purpose: string }
@@ -1733,6 +1808,17 @@ export type Database = {
       }
       expire_seen_messages: { Args: { p_chat_id: string }; Returns: undefined }
       find_secure_chat_by_code: { Args: { _code: string }; Returns: string }
+      find_users_by_mobile_hashes: {
+        Args: { _hashes: string[] }
+        Returns: {
+          avatar_url: string
+          full_name: string
+          id: string
+          is_verified: boolean
+          mobile_hash: string
+          profile_photo_visibility: string
+        }[]
+      }
       find_users_by_mobiles: {
         Args: { _mobiles: string[] }
         Returns: {
@@ -1782,6 +1868,7 @@ export type Database = {
           marketing_consent_at: string | null
           marketing_consent_ip: string | null
           marketing_consent_source: string | null
+          mobile_hash: string | null
           mobile_number: string | null
           notif_mentions: boolean
           notif_messages: boolean
@@ -1931,6 +2018,10 @@ export type Database = {
         }[]
       }
       set_broadcast_avatar: { Args: { _url: string }; Returns: undefined }
+      set_user_consent: {
+        Args: { _granted: boolean; _purpose: string; _source?: string }
+        Returns: undefined
+      }
       start_totp_enrollment: { Args: { _secret: string }; Returns: undefined }
       tribe_change_privacy: {
         Args: { _chat_id: string; _privacy: string }

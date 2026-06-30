@@ -159,21 +159,30 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
       }
     }
 
-    // Match in bounded chunks so large phone books cannot create an oversized
-    // PostgREST URL that trips the app error boundary on Android WebView.
-    const allPhones = Array.from(new Set(normalized.map(c => c.phone.slice(-10)).filter(Boolean)));
+    // DPDP §6 / §8: hash each address-book number on-device with SHA-256+pepper
+    // before sending to the server, so we never upload plaintext phone numbers
+    // for the user's contacts.
+    const { hashMobiles } = await import('@/lib/contact-hash');
+    const last10s = Array.from(
+      new Set(normalized.map(c => c.phone.slice(-10)).filter(Boolean)),
+    );
+    const { hashes, hashByLast10 } = await hashMobiles(last10s);
     const platformUsers: any[] = [];
-    for (let i = 0; i < allPhones.length; i += 50) {
-      const chunk = allPhones.slice(i, i + 50);
+    for (let i = 0; i < hashes.length; i += 100) {
+      const chunk = hashes.slice(i, i + 100);
       const { data } = await (supabase as any)
-        .rpc('find_users_by_mobiles', { _mobiles: chunk });
+        .rpc('find_users_by_mobile_hashes', { _hashes: chunk });
       platformUsers.push(...(data || []));
     }
 
     const platformByLast10 = new Map<string, any>();
+    const byHashUser = new Map<string, any>();
     for (const u of (platformUsers || [])) {
-      const digits = (u.mobile_number || '').replace(/\D/g, '');
-      if (digits.length >= 10) platformByLast10.set(digits.slice(-10), u);
+      if (u?.mobile_hash) byHashUser.set(u.mobile_hash, u);
+    }
+    for (const [last10, h] of hashByLast10.entries()) {
+      const u = byHashUser.get(h);
+      if (u) platformByLast10.set(last10, u);
     }
 
     // Build cards: one per unique person. Prefer matched platform user; otherwise unique by phone.
