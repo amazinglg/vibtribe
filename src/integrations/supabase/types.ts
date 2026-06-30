@@ -2149,6 +2149,10 @@ export type Database = {
       }
       is_pinned_master_mobile: { Args: { _mobile: string }; Returns: boolean }
       is_real_email_available: { Args: { _email: string }; Returns: boolean }
+      is_tribe_admin: {
+        Args: { _chat_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_tribe_founder: {
         Args: { _chat_id: string; _user_id: string }
         Returns: boolean
@@ -2161,6 +2165,7 @@ export type Database = {
         Args: { _chat_id: string; _user_id: string }
         Returns: boolean
       }
+      is_tribe_secured: { Args: { _chat_id: string }; Returns: boolean }
       is_username_available: { Args: { _username: string }; Returns: boolean }
       issue_email_otp: {
         Args: { _code: string; _email: string; _purpose: string }
@@ -2181,6 +2186,10 @@ export type Database = {
       mark_secure_chat: {
         Args: { _chat_id: string; _code: string }
         Returns: undefined
+      }
+      mark_secure_tribe: {
+        Args: { _chat_id: string; _code: string }
+        Returns: Json
       }
       move_to_dlq: {
         Args: {
@@ -2271,6 +2280,10 @@ export type Database = {
       tribe_set_handle: {
         Args: { _chat_id: string; _handle: string }
         Returns: undefined
+      }
+      unmark_secure_chat: {
+        Args: { _chat_id: string; _delete_messages?: boolean }
+        Returns: Json
       }
     }
     Enums: {
