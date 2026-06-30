@@ -1626,6 +1626,22 @@ export type Database = {
         Args: { _chat_id: string; _content: string }
         Returns: undefined
       }
+      _my_profile_guard: {
+        Args: never
+        Returns: {
+          account_status: string
+          is_master_admin: boolean
+          is_suspended: boolean
+          role: string
+        }[]
+      }
+      _profile_guard: {
+        Args: { _id: string }
+        Returns: {
+          is_master_admin: boolean
+          role: string
+        }[]
+      }
       accept_privacy_and_terms: { Args: never; Returns: undefined }
       accept_terms: { Args: never; Returns: undefined }
       admin_delete_ticket: { Args: { _ticket_id: string }; Returns: undefined }
