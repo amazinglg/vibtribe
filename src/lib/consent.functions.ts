@@ -18,18 +18,9 @@ export const recordConsents = createServerFn({ method: 'POST' })
       .parse(d ?? {}),
   )
   .handler(async ({ data, context }) => {
-    let ip: string | null = null;
-    let userAgent: string | null = null;
-    try {
-      const mod: any = await import('@tanstack/react-start');
-      const getHeader = mod.getRequestHeader;
-      if (typeof getHeader === 'function') {
-        const xff = (getHeader('x-forwarded-for') as string | undefined) || '';
-        ip = (xff.split(',')[0] || (getHeader('cf-connecting-ip') as string | undefined) || '').trim() || null;
-        userAgent = ((getHeader('user-agent') as string | undefined) || '').slice(0, 512) || null;
-      }
-    } catch { /* best-effort */ }
-
+    // IP + user-agent are captured server-side inside the SECURITY DEFINER
+    // RPC (from request.headers / inet_client_addr) so the audit trail
+    // cannot be spoofed by the caller. We intentionally do not pass them.
     const supabase = context.supabase;
     const written: Array<{ type: 'terms' | 'privacy'; version: string }> = [];
 
@@ -37,8 +28,6 @@ export const recordConsents = createServerFn({ method: 'POST' })
       const { error } = await supabase.rpc('record_consent' as any, {
         _consent_type: 'terms',
         _policy_version: data.terms.version,
-        _ip: ip,
-        _user_agent: userAgent,
       });
       if (error) throw new Error(error.message);
       written.push({ type: 'terms', version: data.terms.version });
@@ -47,8 +36,6 @@ export const recordConsents = createServerFn({ method: 'POST' })
       const { error } = await supabase.rpc('record_consent' as any, {
         _consent_type: 'privacy',
         _policy_version: data.privacy.version,
-        _ip: ip,
-        _user_agent: userAgent,
       });
       if (error) throw new Error(error.message);
       written.push({ type: 'privacy', version: data.privacy.version });

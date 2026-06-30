@@ -2010,12 +2010,7 @@ export type Database = {
         }[]
       }
       record_consent: {
-        Args: {
-          _consent_type: string
-          _ip?: string
-          _policy_version: string
-          _user_agent?: string
-        }
+        Args: { _consent_type: string; _policy_version: string }
         Returns: string
       }
       record_login_failure: { Args: { _user_id: string }; Returns: number }
