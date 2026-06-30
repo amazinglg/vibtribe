@@ -25,9 +25,8 @@ const SUBS: Sub[] = [
   { name: 'Cloudflare', purpose: 'CDN, DDoS protection, edge delivery', region: 'Global edge', dpa: 'Standard DPA on file' },
   { name: 'Google Firebase Cloud Messaging', purpose: 'Push notifications to Android devices', region: 'Global (US-based)', dpa: 'Google Cloud DPA' },
   { name: 'Apple Push Notification Service', purpose: 'Push notifications to iOS devices', region: 'Global (US-based)', dpa: 'Apple Developer Agreement' },
-  { name: 'Resend', purpose: 'Transactional & marketing email delivery', region: 'US / EU', dpa: 'Resend DPA' },
+  { name: 'Resend (via Lovable Emails)', purpose: 'Transactional & marketing email delivery, including email OTP sign-in codes', region: 'US / EU', dpa: 'Resend DPA' },
   { name: 'Google Tag Manager / Analytics', purpose: 'Anonymised product analytics (consent-gated)', region: 'Global (US-based)', dpa: 'Google Ads Data Processing Terms' },
-  { name: 'SMS OTP provider', purpose: 'One-time passcode delivery for sign-in', region: 'India', dpa: 'Standard DPA on file' },
 ];
 
 function SubprocessorsPage() {
