@@ -79,7 +79,7 @@ function AboutPage() {
             <div className="w-10 h-10 rounded-xl gradient-pink flex items-center justify-center mb-3">
               <Heart size={18} className="text-white" />
             </div>
-            <h3 className="font-bold text-foreground mb-1">Visionary — Richa</h3>
+            <h3 className="font-bold text-foreground mb-1">Co-Founder — Richa</h3>
             <p className="text-sm text-muted-foreground">Co-Founder &amp; product lead, on a mission to make private, joyful communication the default.</p>
           </div>
           <div className="glass rounded-2xl border border-border p-5">
@@ -179,7 +179,7 @@ function AboutPage() {
                   </div>
                   <div>
                     <div className="text-white font-extrabold text-lg leading-tight drop-shadow">Richa</div>
-                    <div className="text-xs text-white/80">Co-Founder &amp; Visionary, VibTribe</div>
+                    <div className="text-xs text-white/80">Co-Founder, VibTribe</div>
                   </div>
                 </div>
               </div>
