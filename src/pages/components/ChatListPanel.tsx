@@ -1107,6 +1107,8 @@ function ChatListItem({ chat, isSelected, onClick, onContextMenu, onDelete, onMa
   return (
     <div
       className={`relative flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-200 hover:bg-muted/50 ${
+        chat.isShadow ? 'opacity-75' : ''
+      } ${
         isSelected ? 'bg-primary/10 border-r-2 border-primary' : hasUnread ? 'bg-primary/5' : ''
       }`}
       onClick={onClick}
@@ -1114,7 +1116,11 @@ function ChatListItem({ chat, isSelected, onClick, onContextMenu, onDelete, onMa
     >
       {/* Avatar */}
       <div className="relative flex-shrink-0">
-        {chat.avatarUrl ? (
+        {chat.isShadow ? (
+          <div className="w-12 h-12 rounded-full bg-muted border border-border flex items-center justify-center text-muted-foreground">
+            <Lock size={18} />
+          </div>
+        ) : chat.avatarUrl ? (
           <img
             src={chat.avatarUrl}
             alt={chat.name}
