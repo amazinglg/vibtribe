@@ -35,6 +35,7 @@ interface Chat {
   participantId?: string;
   isBroadcast?: boolean;
   isVerified?: boolean;
+  isShadow?: boolean;
 }
 
 export default function ChatListPanel() {
