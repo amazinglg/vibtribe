@@ -388,9 +388,14 @@ export default function ChatListPanel() {
         groups = gData || [];
       }
 
-      // Filter out chats the user has moved to their Secure Vault.
+      // Secured 1:1 chats stay visible in the normal list as a "shadow"
+      // stub (so the user remains searchable and you can still see they
+      // exist) but the real messages and avatar are hidden until the
+      // chat is unlocked from the Secure Vault. Secured tribes are
+      // hidden entirely from this list — they're only reachable via the
+      // Secure Vault, as the leader configured.
       const data = [...(oneToOne || []), ...groups].filter(
-        (c: any) => !securedSet.has(c.id),
+        (c: any) => !(securedSet.has(c.id) && c.is_group),
       );
 
       // Batch-fetch all other participants in a single query to avoid the
@@ -412,6 +417,34 @@ export default function ChatListPanel() {
       const chatList: Chat[] = [];
       for (const chat of data) {
         const isGroup = !!(chat as any).is_group;
+
+        // SHADOW row for secured 1:1 chats — no preview, no unread.
+        if (!isGroup && securedSet.has(chat.id)) {
+          const otherUserId = chat.participant_one === user.id ? chat.participant_two : chat.participant_one;
+          const ou = otherProfilesMap.get(otherUserId) || { full_name: 'VibTribe user', is_verified: false };
+          const name = ou.full_name || 'VibTribe user';
+          const avatarColors = ['gradient-primary', 'gradient-cyan', 'gradient-pink', 'gradient-tri'];
+          chatList.push({
+            id: chat.id,
+            name,
+            avatar: (name[0] || 'V').toUpperCase(),
+            avatarColor: avatarColors[chatList.length % avatarColors.length],
+            avatarUrl: null,
+            lastMessage: '🔒 Secured chat — unlock from Secure Vault',
+            time: '',
+            rawTime: (chat as any).updated_at,
+            unread: 0,
+            online: false,
+            typing: false,
+            pinned: false,
+            muted: false,
+            participantId: otherUserId,
+            isVerified: !!ou.is_verified,
+            isShadow: true,
+          });
+          continue;
+        }
+
         const msgs = (chat as any).messages || [];
         const sortedMsgs = msgs.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
         const lastMsg = sortedMsgs[0];
