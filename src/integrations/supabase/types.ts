@@ -1031,6 +1031,24 @@ export type Database = {
           },
         ]
       }
+      subprocessor_subscribers: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+        }
+        Relationships: []
+      }
       support_ticket_messages: {
         Row: {
           body: string
