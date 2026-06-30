@@ -90,43 +90,10 @@ function SubprocessorsPage() {
         </div>
       </section>
 
-      <section className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 pb-16">
-        <div className="glass rounded-3xl border border-border p-6 sm:p-8">
-          <div className="flex items-center gap-2 mb-2">
-            <Bell size={18} className="text-primary" />
-            <h2 className="font-bold text-lg">Get notified about changes</h2>
-          </div>
-          <p className="text-sm text-muted-foreground mb-4">
-            We notify subscribers at least 30 days before adding or replacing a subprocessor.
-          </p>
-          {done ? (
-            <div className="flex items-center gap-2 text-sm text-primary">
-              <CheckCircle2 size={18} /> You're subscribed. We'll email you on changes.
-            </div>
-          ) : (
-            <form onSubmit={subscribe} className="flex flex-col sm:flex-row gap-2">
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                maxLength={255}
-                className="flex-1 px-4 py-2.5 rounded-xl bg-card/40 border border-border text-sm focus:outline-none focus:border-primary/60"
-              />
-              <button
-                type="submit"
-                disabled={submitting}
-                className="px-5 py-2.5 rounded-xl gradient-primary text-white font-semibold text-sm disabled:opacity-60 glow-primary"
-              >
-                {submitting ? 'Subscribing…' : 'Subscribe'}
-              </button>
-            </form>
-          )}
-          <p className="text-[11px] text-muted-foreground mt-3">
-            One email per change. Unsubscribe any time. See <Link to="/data-notice" className="text-primary hover:underline">Data Notice</Link>.
-          </p>
-        </div>
+      <section className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 pb-16 text-center">
+        <p className="text-xs text-muted-foreground">
+          See also <Link to="/data-notice" className="text-primary hover:underline">Data Notice</Link> · <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
+        </p>
       </section>
     </div>
   );
