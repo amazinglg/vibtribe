@@ -26,8 +26,8 @@ type Row = {
 };
 
 const ROWS: Row[] = [
-  { element: 'Mobile number', purpose: 'Account identifier and contact discovery (OTP is delivered to email)', basis: 'Contract performance & consent', retention: 'Until account deletion', subprocessors: 'Lovable Cloud', rights: 'Withdraw, export, delete' },
-  { element: 'Email address (optional)', purpose: 'Account recovery, transactional & marketing emails', basis: 'Consent', retention: 'Until account deletion or unsubscribe', subprocessors: 'Resend', rights: 'Withdraw, export, delete' },
+  { element: 'Mobile number', purpose: 'Account identifier and contact discovery', basis: 'Contract performance', retention: 'Until account deletion', subprocessors: 'Lovable Cloud', rights: 'Export, delete' },
+  { element: 'Email address (mandatory)', purpose: 'OTP verification at signup, password recovery, transactional & support emails. Marketing emails only if you opt in.', basis: 'Contract performance (OTP/recovery) & consent (marketing)', retention: 'Until account deletion', subprocessors: 'Resend', rights: 'Export, delete; withdraw marketing consent any time' },
   { element: 'Display name, username, profile photo, bio', purpose: 'Profile rendering & contact identification', basis: 'Contract performance', retention: 'Until account deletion', subprocessors: 'Lovable Cloud, Cloudflare (CDN)', rights: 'Edit, export, delete' },
   { element: 'Date of birth', purpose: 'Age verification (under-18 safeguards under DPDP §9)', basis: 'Legal obligation', retention: 'Until account deletion', subprocessors: 'Lovable Cloud', rights: 'Export, delete' },
   { element: 'Chats, media, status, reactions', purpose: 'Deliver messaging service', basis: 'Contract performance', retention: 'Until deleted by you or account deletion', subprocessors: 'Lovable Cloud (storage), Cloudflare (delivery)', rights: 'Delete per-message or whole account' },
@@ -124,7 +124,7 @@ function DataNoticePage() {
               <h3 className="font-bold">Grievance Officer</h3>
             </div>
             <p className="text-sm text-muted-foreground">
-              For DPDP-related grievances, write to <a href="mailto:privacy@vibtribe.in" className="text-primary hover:underline">privacy@vibtribe.in</a>. We respond within 30 days as required by the Act.
+              For DPDP-related grievances, write to <a href="mailto:Labhansh.garg@outlook.com" className="text-primary hover:underline">Labhansh.garg@outlook.com</a>. We acknowledge within 24 hours and resolve within the timelines required by the DPDP Act, 2023 and IT Rules, 2021.
             </p>
             <p className="text-xs text-muted-foreground mt-3">
               See also: <Link to="/subprocessors" className="text-primary hover:underline">Subprocessors</Link> · <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
