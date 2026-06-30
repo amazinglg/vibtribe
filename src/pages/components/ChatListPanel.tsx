@@ -1195,24 +1195,30 @@ function ContactsTabContent({
       // reject overly long URLs when the address book has hundreds of
       // numbers, which previously bubbled up as the root error boundary
       // ("This page didn't load").
-      const uniquePhones = Array.from(new Set(normalized.map(c => c.phone)));
-      const map = new Map<string, any>();
-      const CHUNK = 100;
-      for (let i = 0; i < uniquePhones.length; i += CHUNK) {
-        const slice = uniquePhones.slice(i, i + CHUNK);
+      // DPDP-compliant contact sync: hash address-book numbers client-side
+      // (SHA-256 + fixed pepper, last 10 digits) before sending to the server.
+      const { hashMobiles } = await import('@/lib/contact-hash');
+      const uniqueLast10 = Array.from(
+        new Set(normalized.map(c => c.phone.slice(-10)).filter(Boolean)),
+      );
+      const { hashes, hashByLast10 } = await hashMobiles(uniqueLast10);
+      const userByHash = new Map<string, any>();
+      const CHUNK = 200;
+      for (let i = 0; i < hashes.length; i += CHUNK) {
+        const slice = hashes.slice(i, i + CHUNK);
         try {
           const { data: platformUsers } = await (supabase as any)
-            .rpc('find_users_by_mobiles', { _mobiles: slice });
+            .rpc('find_users_by_mobile_hashes', { _hashes: slice });
           for (const u of (platformUsers || [])) {
-            const key = (u as any).mobile_number?.replace(/\D/g, '');
-            if (key) map.set(key, u);
+            if ((u as any).mobile_hash) userByHash.set((u as any).mobile_hash, u);
           }
         } catch (e) {
           console.warn('[VibTribe] contact match chunk failed', e);
         }
       }
       const merged = normalized.map(c => {
-        const m: any = map.get(c.phone);
+        const h = hashByLast10.get(c.phone.slice(-10));
+        const m: any = h ? userByHash.get(h) : null;
         return {
           name: c.name,
           phone: c.phone,
