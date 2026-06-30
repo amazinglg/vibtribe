@@ -20,6 +20,7 @@ import { useT } from '@/contexts/LanguageContext';
 import { Globe } from 'lucide-react';
 import { appConfirm } from '@/components/ui/AppDialog';
 import { recordMarketingConsent } from '@/lib/marketing.functions';
+import ConsentCenter from '@/components/ConsentCenter';
 import {
   AlertDialog,
   AlertDialogAction,
