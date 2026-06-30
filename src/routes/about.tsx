@@ -9,7 +9,7 @@ export const Route = createFileRoute('/about')({
   head: () => ({
     meta: [
       { title: 'About VibTribe — Our Story, Vision & Founder' },
-      { name: 'description', content: 'Learn about VibTribe — founded in 2025 by Richa. Our mission, values, and a personal note from our founder on building a private, vibrant social messaging platform.' },
+      { name: 'description', content: 'Learn about VibTribe — founded in June 2026 by Richa. Our mission, values, and a personal note from our founder on building a private, vibrant social messaging platform.' },
       { property: 'og:title', content: 'About VibTribe — Our Story, Vision & Founder' },
       { property: 'og:description', content: 'The story, values and vision behind VibTribe — a privacy-first social messaging platform.' },
     ],
