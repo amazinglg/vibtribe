@@ -348,6 +348,8 @@ export default function LandingPage() {
           <div className="flex items-center gap-5 text-xs text-muted-foreground">
             <Link to="/terms" className="hover:text-foreground transition-colors">{t('landing.footer.terms')}</Link>
             <Link to="/privacy" className="hover:text-foreground transition-colors">{t('landing.footer.privacy')}</Link>
+            <Link to="/data-notice" className="hover:text-foreground transition-colors">Data Notice</Link>
+            <Link to="/subprocessors" className="hover:text-foreground transition-colors">Subprocessors</Link>
             <span>© {new Date().getFullYear()}</span>
           </div>
         </div>
