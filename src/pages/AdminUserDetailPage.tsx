@@ -5,6 +5,7 @@ import {
   ArrowLeft, Shield, Pencil, X, Save, KeyRound, Ban, Trash2,
   UserX, UserCheck, LogOut, AlertTriangle, ShieldCheck, ShieldOff, RotateCcw,
   Mail, Phone, Clock, Calendar, Activity, Lock, BadgeCheck, FileText, Megaphone,
+  Crown, Infinity as InfinityIcon,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLayout from '@/components/AppLayout';
