@@ -359,6 +359,67 @@ export default function TribeDetailsSheet({ chatId, isOpen, onClose, onLeft }: P
           )}
         </div>
 
+        {/* Tribe-wide secure (leaders/admins only) */}
+        {isLeader && (
+          <div className="px-4 py-3 border-b border-border">
+            <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+              <Lock size={12} /> Tribe security
+            </p>
+            {isSecured ? (
+              <div className="p-3 rounded-xl border border-vt-green/30 bg-vt-green/5">
+                <p className="text-sm font-semibold text-vt-green flex items-center gap-1.5">
+                  <Lock size={14} /> This tribe is secured
+                </p>
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  The tribe is hidden from the normal tribes list and only opens from the Secure Vault using the shared code. Coming soon as a Pro / Verified feature.
+                </p>
+              </div>
+            ) : (
+              <>
+                <button
+                  onClick={() => setSecureModalOpen(true)}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 gradient-primary rounded-xl text-white text-sm font-semibold"
+                >
+                  <Lock size={14} /> Mark entire tribe as Secure
+                </button>
+                <p className="text-[11px] text-muted-foreground mt-2 leading-relaxed">
+                  Sets a shared PIN/pattern for every member. The tribe is hidden from the normal tribes list and only opens from the Secure Vault. Only leaders & admins can configure this. <span className="text-vt-amber">Will become a Pro / Verified feature in future.</span>
+                </p>
+              </>
+            )}
+            {shareCodeBanner && (
+              <div className="mt-3 p-3 rounded-xl border border-vt-amber/30 bg-vt-amber/5">
+                <p className="text-[11px] uppercase tracking-wider text-vt-amber mb-1">Share with members</p>
+                <p className="text-sm text-foreground">
+                  Share this code with every member so they can open the tribe from their Secure Vault:
+                </p>
+                <div className="mt-2 flex items-center gap-2">
+                  <div className="flex-1 px-3 py-2 bg-input border border-border rounded-lg font-mono text-sm tracking-widest text-foreground">
+                    {shareCodeBanner}
+                  </div>
+                  <button
+                    onClick={() => { navigator.clipboard.writeText(shareCodeBanner); toast.success('Code copied'); }}
+                    className="p-2 bg-primary text-white rounded-lg"
+                    title="Copy"
+                  >
+                    <Copy size={14} />
+                  </button>
+                  <button
+                    onClick={() => setShareCodeBanner(null)}
+                    className="p-2 bg-muted rounded-lg text-muted-foreground"
+                    title="Dismiss"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-2">
+                  Share it through a safe channel — VibTribe will never show this code again.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Invite */}
         {isLeader && (
           <div className="px-4 py-3 border-b border-border">
@@ -471,6 +532,18 @@ export default function TribeDetailsSheet({ chatId, isOpen, onClose, onLeft }: P
         output={{ width: 512, height: 512, mime: 'image/jpeg', quality: 0.9 }}
         onClose={() => setCropFile(null)}
         onCropped={onCroppedAvatar}
+      />
+      <MarkSecureModal
+        isOpen={secureModalOpen}
+        onClose={() => setSecureModalOpen(false)}
+        chatId={chatId}
+        chatName={tribe.name || 'this tribe'}
+        isTribe
+        onSecured={(_id, code) => {
+          setIsSecured(true);
+          if (code) setShareCodeBanner(code);
+          try { window.dispatchEvent(new Event('vt-secure-changed')); } catch {}
+        }}
       />
     </div>
   );
