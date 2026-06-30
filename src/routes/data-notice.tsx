@@ -26,7 +26,7 @@ type Row = {
 };
 
 const ROWS: Row[] = [
-  { element: 'Mobile number', purpose: 'Account identifier, sign-in via OTP, contact discovery', basis: 'Contract performance & consent', retention: 'Until account deletion', subprocessors: 'Lovable Cloud, SMS OTP provider', rights: 'Withdraw, export, delete' },
+  { element: 'Mobile number', purpose: 'Account identifier and contact discovery (OTP is delivered to email)', basis: 'Contract performance & consent', retention: 'Until account deletion', subprocessors: 'Lovable Cloud', rights: 'Withdraw, export, delete' },
   { element: 'Email address (optional)', purpose: 'Account recovery, transactional & marketing emails', basis: 'Consent', retention: 'Until account deletion or unsubscribe', subprocessors: 'Resend', rights: 'Withdraw, export, delete' },
   { element: 'Display name, username, profile photo, bio', purpose: 'Profile rendering & contact identification', basis: 'Contract performance', retention: 'Until account deletion', subprocessors: 'Lovable Cloud, Cloudflare (CDN)', rights: 'Edit, export, delete' },
   { element: 'Date of birth', purpose: 'Age verification (under-18 safeguards under DPDP §9)', basis: 'Legal obligation', retention: 'Until account deletion', subprocessors: 'Lovable Cloud', rights: 'Export, delete' },
