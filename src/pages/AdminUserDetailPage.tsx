@@ -5,6 +5,7 @@ import {
   ArrowLeft, Shield, Pencil, X, Save, KeyRound, Ban, Trash2,
   UserX, UserCheck, LogOut, AlertTriangle, ShieldCheck, ShieldOff, RotateCcw,
   Mail, Phone, Clock, Calendar, Activity, Lock, BadgeCheck, FileText, Megaphone,
+  Crown, Infinity as InfinityIcon,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLayout from '@/components/AppLayout';
@@ -164,6 +165,39 @@ export default function AdminUserDetailPage() {
     } finally {
       setActionLoading(false);
     }
+  };
+
+  const handleGrantPremium = async (months: number | 'forever') => {
+    if (!isMaster) { toast.error('Master admin only'); return; }
+    const label = months === 'forever' ? 'forever' : `${months} month${months === 1 ? '' : 's'}`;
+    if (!confirm(`Mark ${target.full_name || 'this user'} as Premium for ${label}?`)) return;
+    setActionLoading(true);
+    try {
+      const { data, error } = await supabase.rpc('admin_set_premium' as any, {
+        _user_id: userId,
+        _months: months === 'forever' ? 1 : months,
+        _forever: months === 'forever',
+      });
+      if (error) throw error;
+      const row = Array.isArray(data) ? data[0] : data;
+      setTarget((t: any) => ({ ...t, ...(row || {}) }));
+      toast.success(`Premium granted (${label})`);
+    } catch (e: any) { toast.error(e.message || 'Failed'); }
+    finally { setActionLoading(false); }
+  };
+
+  const handleRevokePremium = async () => {
+    if (!isMaster) { toast.error('Master admin only'); return; }
+    if (!confirm(`Revoke premium from ${target.full_name || 'this user'}? Premium features will be removed immediately.`)) return;
+    setActionLoading(true);
+    try {
+      const { data, error } = await supabase.rpc('admin_revoke_premium' as any, { _user_id: userId });
+      if (error) throw error;
+      const row = Array.isArray(data) ? data[0] : data;
+      setTarget((t: any) => ({ ...t, ...(row || { is_premium: false, premium_expires_at: null, premium_source: null }) }));
+      toast.success('Premium revoked');
+    } catch (e: any) { toast.error(e.message || 'Failed'); }
+    finally { setActionLoading(false); }
   };
 
   if (loading || loadingData || !target) {
@@ -357,6 +391,60 @@ export default function AdminUserDetailPage() {
                 <span className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-all ${target.is_verified ? 'right-1' : 'left-1'}`} />
               </button>
             </div>
+          </div>
+        )}
+
+        {/* Premium membership — master admin only */}
+        {!isSelf && !locked && isMaster && (
+          <div className="glass rounded-2xl border border-amber-500/30 p-5">
+            <div className="flex items-start gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/30 to-orange-500/20 flex items-center justify-center ring-1 ring-amber-400/20">
+                <Crown size={18} className="text-amber-300" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-foreground">Premium Membership</h3>
+                {target.is_premium ? (
+                  <p className="text-xs text-amber-300 mt-0.5">
+                    Active{' '}
+                    {target.premium_expires_at
+                      ? <>· expires {new Date(target.premium_expires_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</>
+                      : <>· <span className="inline-flex items-center gap-0.5"><InfinityIcon size={11} /> forever</span></>
+                    }
+                    {target.premium_source ? <span className="text-muted-foreground"> · source: {target.premium_source}</span> : null}
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground mt-0.5">Not a premium user. Grant a duration to unlock premium features.</p>
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+              {[1, 3, 6, 12].map((m) => (
+                <button
+                  key={m}
+                  disabled={actionLoading}
+                  onClick={() => handleGrantPremium(m)}
+                  className="px-2 py-2 text-xs font-semibold rounded-xl bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/20 transition-colors"
+                >
+                  {m} month{m === 1 ? '' : 's'}
+                </button>
+              ))}
+              <button
+                disabled={actionLoading}
+                onClick={() => handleGrantPremium('forever')}
+                className="px-2 py-2 text-xs font-semibold rounded-xl bg-gradient-to-r from-amber-500/30 to-orange-500/30 text-amber-200 hover:brightness-110 border border-amber-400/40 transition-all flex items-center justify-center gap-1"
+              >
+                <InfinityIcon size={12} /> Forever
+              </button>
+            </div>
+            {target.is_premium && (
+              <button
+                disabled={actionLoading}
+                onClick={handleRevokePremium}
+                className="mt-2 w-full px-3 py-2 text-xs font-semibold rounded-xl bg-red-500/10 text-red-300 hover:bg-red-500/20 border border-red-500/20 transition-colors"
+              >
+                Revoke premium now
+              </button>
+            )}
           </div>
         )}
 

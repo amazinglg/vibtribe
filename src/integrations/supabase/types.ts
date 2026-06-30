@@ -1365,6 +1365,7 @@ export type Database = {
           inactivity_warning_sent_at: string | null
           is_master_admin: boolean
           is_online: boolean | null
+          is_premium: boolean
           is_suspended: boolean | null
           is_verified: boolean
           key_iv: string | null
@@ -1386,6 +1387,10 @@ export type Database = {
           pref_contacts_enabled: boolean
           pref_mic_enabled: boolean
           pref_notifications_enabled: boolean
+          premium_expires_at: string | null
+          premium_granted_at: string | null
+          premium_granted_by: string | null
+          premium_source: string | null
           privacy_accepted_at: string | null
           profile_completed: boolean | null
           profile_photo_visibility: string
@@ -1419,6 +1424,7 @@ export type Database = {
           inactivity_warning_sent_at?: string | null
           is_master_admin?: boolean
           is_online?: boolean | null
+          is_premium?: boolean
           is_suspended?: boolean | null
           is_verified?: boolean
           key_iv?: string | null
@@ -1440,6 +1446,10 @@ export type Database = {
           pref_contacts_enabled?: boolean
           pref_mic_enabled?: boolean
           pref_notifications_enabled?: boolean
+          premium_expires_at?: string | null
+          premium_granted_at?: string | null
+          premium_granted_by?: string | null
+          premium_source?: string | null
           privacy_accepted_at?: string | null
           profile_completed?: boolean | null
           profile_photo_visibility?: string
@@ -1473,6 +1483,7 @@ export type Database = {
           inactivity_warning_sent_at?: string | null
           is_master_admin?: boolean
           is_online?: boolean | null
+          is_premium?: boolean
           is_suspended?: boolean | null
           is_verified?: boolean
           key_iv?: string | null
@@ -1494,6 +1505,10 @@ export type Database = {
           pref_contacts_enabled?: boolean
           pref_mic_enabled?: boolean
           pref_notifications_enabled?: boolean
+          premium_expires_at?: string | null
+          premium_granted_at?: string | null
+          premium_granted_by?: string | null
+          premium_source?: string | null
           privacy_accepted_at?: string | null
           profile_completed?: boolean | null
           profile_photo_visibility?: string
@@ -1669,6 +1684,7 @@ export type Database = {
           inactivity_warning_sent_at: string | null
           is_master_admin: boolean
           is_online: boolean | null
+          is_premium: boolean
           is_suspended: boolean | null
           is_verified: boolean
           key_iv: string | null
@@ -1690,6 +1706,10 @@ export type Database = {
           pref_contacts_enabled: boolean
           pref_mic_enabled: boolean
           pref_notifications_enabled: boolean
+          premium_expires_at: string | null
+          premium_granted_at: string | null
+          premium_granted_by: string | null
+          premium_source: string | null
           privacy_accepted_at: string | null
           profile_completed: boolean | null
           profile_photo_visibility: string
@@ -1712,6 +1732,24 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      admin_list_premium_users: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          country_code: string
+          created_at: string
+          full_name: string
+          id: string
+          is_premium: boolean
+          mobile_number: string
+          premium_expires_at: string
+          premium_granted_at: string
+          premium_granted_by: string
+          premium_source: string
+          real_email: string
+          username: string
+        }[]
       }
       admin_list_tribes: {
         Args: never
@@ -1746,6 +1784,7 @@ export type Database = {
           inactivity_warning_sent_at: string | null
           is_master_admin: boolean
           is_online: boolean | null
+          is_premium: boolean
           is_suspended: boolean | null
           is_verified: boolean
           key_iv: string | null
@@ -1767,6 +1806,10 @@ export type Database = {
           pref_contacts_enabled: boolean
           pref_mic_enabled: boolean
           pref_notifications_enabled: boolean
+          premium_expires_at: string | null
+          premium_granted_at: string | null
+          premium_granted_by: string | null
+          premium_source: string | null
           privacy_accepted_at: string | null
           profile_completed: boolean | null
           profile_photo_visibility: string
@@ -1797,6 +1840,142 @@ export type Database = {
       admin_reset_user_password: {
         Args: { new_password: string; target_user_id: string }
         Returns: undefined
+      }
+      admin_revoke_premium: {
+        Args: { _user_id: string }
+        Returns: {
+          account_status: Database["public"]["Enums"]["user_status"] | null
+          app_theme: string | null
+          avatar_url: string | null
+          bio: string | null
+          country_code: string | null
+          created_at: string | null
+          dob: string | null
+          email: string
+          email_marketing_opt_in: boolean
+          encrypted_private_key: string | null
+          full_name: string
+          id: string
+          inactivity_final_warning_sent_at: string | null
+          inactivity_warning_sent_at: string | null
+          is_master_admin: boolean
+          is_online: boolean | null
+          is_premium: boolean
+          is_suspended: boolean | null
+          is_verified: boolean
+          key_iv: string | null
+          key_salt: string | null
+          key_setup_completed: boolean
+          last_seen: string | null
+          login_attempts: number | null
+          marketing_consent_at: string | null
+          marketing_consent_ip: string | null
+          marketing_consent_source: string | null
+          mobile_hash: string | null
+          mobile_number: string | null
+          notif_mentions: boolean
+          notif_messages: boolean
+          notif_secure_chats: boolean
+          notif_sounds: boolean
+          notif_status: boolean
+          pref_camera_enabled: boolean
+          pref_contacts_enabled: boolean
+          pref_mic_enabled: boolean
+          pref_notifications_enabled: boolean
+          premium_expires_at: string | null
+          premium_granted_at: string | null
+          premium_granted_by: string | null
+          premium_source: string | null
+          privacy_accepted_at: string | null
+          profile_completed: boolean | null
+          profile_photo_visibility: string
+          public_key: string | null
+          real_email: string | null
+          role: string
+          status_visibility: string
+          terms_accepted_at: string | null
+          terms_warning_sent_at: string | null
+          totp_enabled: boolean
+          totp_enabled_at: string | null
+          totp_pending_secret: string | null
+          totp_secret: string | null
+          updated_at: string | null
+          username: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "user_profiles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      admin_set_premium: {
+        Args: { _forever?: boolean; _months: number; _user_id: string }
+        Returns: {
+          account_status: Database["public"]["Enums"]["user_status"] | null
+          app_theme: string | null
+          avatar_url: string | null
+          bio: string | null
+          country_code: string | null
+          created_at: string | null
+          dob: string | null
+          email: string
+          email_marketing_opt_in: boolean
+          encrypted_private_key: string | null
+          full_name: string
+          id: string
+          inactivity_final_warning_sent_at: string | null
+          inactivity_warning_sent_at: string | null
+          is_master_admin: boolean
+          is_online: boolean | null
+          is_premium: boolean
+          is_suspended: boolean | null
+          is_verified: boolean
+          key_iv: string | null
+          key_salt: string | null
+          key_setup_completed: boolean
+          last_seen: string | null
+          login_attempts: number | null
+          marketing_consent_at: string | null
+          marketing_consent_ip: string | null
+          marketing_consent_source: string | null
+          mobile_hash: string | null
+          mobile_number: string | null
+          notif_mentions: boolean
+          notif_messages: boolean
+          notif_secure_chats: boolean
+          notif_sounds: boolean
+          notif_status: boolean
+          pref_camera_enabled: boolean
+          pref_contacts_enabled: boolean
+          pref_mic_enabled: boolean
+          pref_notifications_enabled: boolean
+          premium_expires_at: string | null
+          premium_granted_at: string | null
+          premium_granted_by: string | null
+          premium_source: string | null
+          privacy_accepted_at: string | null
+          profile_completed: boolean | null
+          profile_photo_visibility: string
+          public_key: string | null
+          real_email: string | null
+          role: string
+          status_visibility: string
+          terms_accepted_at: string | null
+          terms_warning_sent_at: string | null
+          totp_enabled: boolean
+          totp_enabled_at: string | null
+          totp_pending_secret: string | null
+          totp_secret: string | null
+          updated_at: string | null
+          username: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "user_profiles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       admin_set_user_verified: {
         Args: { _user_id: string; _verified: boolean }
@@ -1832,6 +2011,7 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      expire_premium_users: { Args: never; Returns: undefined }
       expire_seen_messages: { Args: { p_chat_id: string }; Returns: undefined }
       find_secure_chat_by_code: { Args: { _code: string }; Returns: string }
       find_users_by_mobile_hashes: {
@@ -1886,6 +2066,7 @@ export type Database = {
           inactivity_warning_sent_at: string | null
           is_master_admin: boolean
           is_online: boolean | null
+          is_premium: boolean
           is_suspended: boolean | null
           is_verified: boolean
           key_iv: string | null
@@ -1907,6 +2088,10 @@ export type Database = {
           pref_contacts_enabled: boolean
           pref_mic_enabled: boolean
           pref_notifications_enabled: boolean
+          premium_expires_at: string | null
+          premium_granted_at: string | null
+          premium_granted_by: string | null
+          premium_source: string | null
           privacy_accepted_at: string | null
           profile_completed: boolean | null
           profile_photo_visibility: string
