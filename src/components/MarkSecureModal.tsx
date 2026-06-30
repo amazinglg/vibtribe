@@ -11,12 +11,13 @@ interface MarkSecureModalProps {
   onClose: () => void;
   chatName: string;
   chatId: string;
-  onSecured?: (chatId: string) => void;
+  isTribe?: boolean;
+  onSecured?: (chatId: string, code?: string) => void;
 }
 
 type CodeType = 'pin' | 'pattern';
 
-export default function MarkSecureModal({ isOpen, onClose, chatName, chatId, onSecured }: MarkSecureModalProps) {
+export default function MarkSecureModal({ isOpen, onClose, chatName, chatId, isTribe, onSecured }: MarkSecureModalProps) {
   const { user } = useAuth();
   const supabase = createClient();
   const [step, setStep] = useState<'choose-code-type' | 'set-pin' | 'set-pattern'>('choose-code-type');
@@ -89,18 +90,30 @@ export default function MarkSecureModal({ isOpen, onClose, chatName, chatId, onS
     try {
       const secureCode = codeType === 'pin' ? pin : patternSelected.join('-');
 
-      // Per-user secure mark: ONLY this user's view of the chat is locked.
-      // The other participant is not affected and won't even know.
-      // The unlock code is stored as a one-way hash via the secure RPC —
-      // the raw PIN/pattern never leaves the user's device in plaintext form.
-      const { error: upsertError } = await supabase.rpc('mark_secure_chat', {
-        _chat_id: chatId,
-        _code: secureCode,
-      });
-      if (upsertError) throw upsertError;
-      onSecured?.(chatId);
-
-      toast.success(`Chat with ${chatName} moved to your Secure Vault`);
+      if (isTribe) {
+        // Tribe-wide secure: a single shared code is hashed per-member and
+        // installed for every current member of the tribe. The leader will
+        // see a banner with the code to share out-of-band with members.
+        const { error: tErr } = await supabase.rpc('mark_secure_tribe' as any, {
+          _chat_id: chatId,
+          _code: secureCode,
+        });
+        if (tErr) throw tErr;
+        onSecured?.(chatId, secureCode);
+        toast.success(`${chatName} is now secured for all members`);
+      } else {
+        // Per-user secure mark: ONLY this user's view of the chat is locked.
+        // The other participant is not affected and won't even know.
+        // The unlock code is stored as a one-way hash via the secure RPC —
+        // the raw PIN/pattern never leaves the user's device in plaintext form.
+        const { error: upsertError } = await supabase.rpc('mark_secure_chat', {
+          _chat_id: chatId,
+          _code: secureCode,
+        });
+        if (upsertError) throw upsertError;
+        onSecured?.(chatId, secureCode);
+        toast.success(`Chat with ${chatName} moved to your Secure Vault`);
+      }
       handleClose();
     } catch (err: any) {
       toast.error(err?.message || 'Could not secure this chat');
