@@ -146,6 +146,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     if (ringtoneRef.current) { try { ringtoneRef.current.pause(); } catch {} ringtoneRef.current = null; }
     setCallDuration(0);
     setMicMuted(false); setSpeakerOff(false); setVideoOff(false);
+    setShowAudioMenu(false);
   }, [supabase]);
 
   const endCall = useCallback(async (finalStatus: 'ended' | 'declined' | 'missed' = 'ended') => {
