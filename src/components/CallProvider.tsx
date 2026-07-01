@@ -100,6 +100,57 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   useEffect(() => { activeCallRef.current = activeCall; }, [activeCall]);
   useEffect(() => { callDurationRef.current = callDuration; }, [callDuration]);
 
+  // Detect whether a Bluetooth audio device is currently connected so we can
+  // show the Bluetooth option only when it's actually available.
+  useEffect(() => {
+    if (!activeCall) return;
+    let cancelled = false;
+    const check = async () => {
+      try {
+        const md: any = navigator.mediaDevices;
+        if (!md?.enumerateDevices) return;
+        const devices = await md.enumerateDevices();
+        const bt = devices.some((d: MediaDeviceInfo) =>
+          d.kind === 'audiooutput' && /bluetooth|bt|airpod|headset|handsfree/i.test(d.label || '')
+        );
+        if (!cancelled) setBluetoothAvailable(bt);
+      } catch {}
+    };
+    check();
+    const md: any = navigator.mediaDevices;
+    md?.addEventListener?.('devicechange', check);
+    return () => { cancelled = true; md?.removeEventListener?.('devicechange', check); };
+  }, [activeCall]);
+
+  // Apply the selected audio route to the remote audio/video elements
+  // (setSinkId on web) and to the native bridge (Android WebView).
+  const applyAudioRoute = useCallback(async (route: 'earpiece' | 'speaker' | 'bluetooth') => {
+    setAudioRoute(route);
+    setCallAudioRoute(route);
+    try {
+      const md: any = navigator.mediaDevices;
+      if (!md?.enumerateDevices) return;
+      const devices = await md.enumerateDevices();
+      const outs = devices.filter((d: MediaDeviceInfo) => d.kind === 'audiooutput');
+      let target: MediaDeviceInfo | undefined;
+      if (route === 'bluetooth') {
+        target = outs.find((d: MediaDeviceInfo) => /bluetooth|bt|airpod|headset|handsfree/i.test(d.label || ''));
+      } else if (route === 'speaker') {
+        target = outs.find((d: MediaDeviceInfo) => /speaker|loud/i.test(d.label || '')) || outs.find((d: MediaDeviceInfo) => d.deviceId === 'default');
+      } else {
+        target = outs.find((d: MediaDeviceInfo) => /earpiece|receiver|phone/i.test(d.label || '')) || outs.find((d: MediaDeviceInfo) => d.deviceId === 'default');
+      }
+      const sinkId = target?.deviceId || 'default';
+      const setSink = async (el: HTMLMediaElement | null) => {
+        if (!el) return;
+        const anyEl = el as any;
+        if (typeof anyEl.setSinkId === 'function') { try { await anyEl.setSinkId(sinkId); } catch {} }
+      };
+      await setSink(remoteAudioRef.current);
+      await setSink(remoteVideoRef.current as unknown as HTMLMediaElement);
+    } catch {}
+  }, []);
+
   // When the call overlay mounts AFTER media was already acquired (we now
   // acquire mic/camera inside the click gesture, before the dialog renders),
   // wire the existing stream into the freshly-mounted local <video>.
