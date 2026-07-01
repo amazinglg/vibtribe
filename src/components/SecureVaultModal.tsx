@@ -491,21 +491,28 @@ export default function SecureVaultModal({ isOpen, onClose }: SecureVaultModalPr
                       const chatId = foundChatId as string;
                       const { data: chat } = await supabase
                         .from('chats')
-                        .select('id, participant_one, participant_two')
+                        .select('id, participant_one, participant_two, is_group, chat_type, name')
                         .eq('id', chatId)
                         .single();
                       if (!chat) throw new Error('Chat not found');
-                      const otherUserId = chat.participant_one === user.id ? chat.participant_two : chat.participant_one;
-                      const { data: otherUser } = await supabase
-                        .from('user_profiles').select('full_name').eq('id', otherUserId).single();
-                      const realName = otherUser?.full_name || 'Secure Contact';
-                      const nickname = getPreferredNickname(user.id, otherUserId);
-                      const displayName = nickname || realName;
+                      const isGroup = !!(chat as any).is_group || (chat as any).chat_type === 'group';
+                      let displayName: string;
+                      let otherUserId: string | undefined;
+                      if (isGroup) {
+                        displayName = (chat as any).name || 'Secured Tribe';
+                      } else {
+                        otherUserId = chat.participant_one === user.id ? chat.participant_two : chat.participant_one;
+                        const { data: otherUser } = await supabase
+                          .from('user_profiles').select('full_name').eq('id', otherUserId!).single();
+                        const realName = otherUser?.full_name || 'Secure Contact';
+                        const nickname = getPreferredNickname(user.id, otherUserId!);
+                        displayName = nickname || realName;
+                      }
                       setFoundChat({
                         id: chat.id, name: displayName,
                         avatar: displayName[0]?.toUpperCase() || 'S',
-                        lastMessage: 'Secure conversation',
-                        code: patternCode, otherUserId,
+                        lastMessage: isGroup ? 'Secure tribe' : 'Secure conversation',
+                        code: patternCode, otherUserId: otherUserId as any,
                       });
                       setError('');
                       toast.success(`Opening secure chat with ${displayName}`);
