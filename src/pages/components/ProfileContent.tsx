@@ -739,7 +739,9 @@ export default function ProfileContent() {
               ref={avatarInputRef}
               type="file"
               accept="image/*"
-              className="hidden"
+              style={{ position: 'absolute', width: 1, height: 1, opacity: 0, pointerEvents: 'none', overflow: 'hidden' }}
+              tabIndex={-1}
+              aria-hidden="true"
               onChange={(e) => { const f = e.target.files?.[0]; if (f) handleAvatarFile(f); }}
             />
           </div>
