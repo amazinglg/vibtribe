@@ -2124,8 +2124,32 @@ export type Database = {
           policy_version: string
         }[]
       }
+      get_my_saved_contact_profiles: {
+        Args: { _ids: string[] }
+        Returns: {
+          avatar_url: string
+          full_name: string
+          id: string
+          is_verified: boolean
+          mobile_number: string
+          profile_photo_visibility: string
+        }[]
+      }
       get_my_totp_pending_secret: { Args: never; Returns: string }
       get_my_totp_secret: { Args: never; Returns: string }
+      get_public_profile_snippets: {
+        Args: { _ids: string[] }
+        Returns: {
+          avatar_url: string
+          full_name: string
+          id: string
+          is_online: boolean
+          is_verified: boolean
+          last_seen: string
+          profile_photo_visibility: string
+          username: string
+        }[]
+      }
       has_permission: {
         Args: { _permission_key: string; _user_id: string }
         Returns: boolean

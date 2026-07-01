@@ -112,9 +112,7 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
         const profileMap = new Map<string, any>();
         if (ids.length > 0) {
           const { data: profiles } = await supabase
-            .from('user_profiles')
-            .select('id, full_name, mobile_number, avatar_url, profile_photo_visibility, is_verified')
-            .in('id', ids);
+            .rpc('get_my_saved_contact_profiles', { _ids: ids });
           for (const p of (profiles || [])) profileMap.set(p.id, p);
         }
         const savedContacts: Contact[] = (saved || []).map((s: any) => ({
