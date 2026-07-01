@@ -5,75 +5,58 @@ import { toast } from 'sonner';
 import { useServerFn } from '@tanstack/react-start';
 import { requestDataExport } from '@/lib/data-export.functions';
 
+/**
+ * A DPDP-visible "purpose" shown in the UI. Each maps to one or more
+ * backend consent keys so we can present a short, human-friendly list
+ * without losing granular audit records.
+ */
 type Purpose = {
   key: string;
   label: string;
   description: string;
   defaultGranted: boolean;
+  // Backend consent keys written when this toggle changes.
+  writes: string[];
+  // Backend keys read to determine the ON state (ANY granted = ON).
+  reads: string[];
 };
 
 const PURPOSES: Purpose[] = [
   {
     key: 'contacts_matching',
-    label: 'Contacts matching',
+    label: 'Find friends from my contacts',
     description:
-      'Allow VibTribe to match your address book against existing users (numbers are hashed on your device first).',
+      'Match your address book against existing users so you can chat with people you already know. Numbers are hashed on your device first.',
     defaultGranted: true,
+    writes: ['contacts_matching'],
+    reads: ['contacts_matching'],
   },
   {
-    key: 'photo_visibility_public',
-    label: 'Public profile photo',
-    description: 'Show your profile photo to anyone who can see your profile.',
+    key: 'profile_visibility',
+    label: 'Show my profile activity',
+    description:
+      'Let your contacts see your profile photo and when you were last active.',
     defaultGranted: true,
+    writes: ['photo_visibility_public', 'last_seen_visible'],
+    reads: ['photo_visibility_public', 'last_seen_visible'],
   },
   {
-    key: 'last_seen_visible',
-    label: 'Show last-seen',
-    description: 'Let your contacts see when you were last active.',
-    defaultGranted: true,
-  },
-  {
-    key: 'marketing_email',
-    label: 'Marketing emails',
-    description: 'Receive product updates, tips and announcements by email.',
+    key: 'marketing_comms',
+    label: 'Product news & tips',
+    description:
+      'Occasional product updates, tips and announcements over email and push. You can turn this off any time.',
     defaultGranted: false,
-  },
-  {
-    key: 'marketing_push',
-    label: 'Marketing push notifications',
-    description: 'Receive product announcements as push notifications.',
-    defaultGranted: false,
+    writes: ['marketing_email', 'marketing_push'],
+    reads: ['marketing_email', 'marketing_push'],
   },
   {
     key: 'analytics',
-    label: 'Anonymised analytics',
+    label: 'Help improve VibTribe',
     description:
-      'Allow anonymised usage analytics to help us improve the app. No message content is ever sent.',
+      'Share anonymised usage analytics so we can fix bugs and improve the app. No message content is ever sent.',
     defaultGranted: false,
-  },
-  {
-    key: 'notification_messages',
-    label: 'Message notifications',
-    description: 'Get notified when you receive a new direct message.',
-    defaultGranted: true,
-  },
-  {
-    key: 'notification_calls',
-    label: 'Call notifications',
-    description: 'Get notified for incoming voice and video calls.',
-    defaultGranted: true,
-  },
-  {
-    key: 'notification_tribes',
-    label: 'Tribe notifications',
-    description: 'Get notified for new messages in your tribes and broadcasts.',
-    defaultGranted: true,
-  },
-  {
-    key: 'notification_status',
-    label: 'Status notifications',
-    description: 'Get notified when contacts post new status updates.',
-    defaultGranted: false,
+    writes: ['analytics'],
+    reads: ['analytics'],
   },
 ];
 
@@ -90,14 +73,18 @@ export default function ConsentCenter() {
         const { data } = await supabase
           .from('user_consents' as any)
           .select('purpose, granted');
-        const map: Record<string, boolean> = {};
-        for (const p of PURPOSES) map[p.key] = p.defaultGranted;
+        const raw: Record<string, boolean> = {};
         for (const row of (data || []) as any[]) {
-          if (row?.purpose in map) map[row.purpose] = !!row.granted;
+          if (row?.purpose) raw[row.purpose] = !!row.granted;
+        }
+        const map: Record<string, boolean> = {};
+        for (const p of PURPOSES) {
+          const values = p.reads.map(k => (k in raw ? raw[k] : p.defaultGranted));
+          // A group is ON if any of its underlying consents is granted.
+          map[p.key] = values.some(Boolean);
         }
         setState(map);
-      } catch (e) {
-        // fall back to defaults
+      } catch {
         const map: Record<string, boolean> = {};
         for (const p of PURPOSES) map[p.key] = p.defaultGranted;
         setState(map);
@@ -112,15 +99,19 @@ export default function ConsentCenter() {
     const prev = state[p.key];
     setState(s => ({ ...s, [p.key]: next }));
     try {
-      const { error } = await supabase.rpc('set_user_consent' as any, {
-        _purpose: p.key,
-        _granted: next,
-        _source: 'consent_center',
-      });
-      if (error) throw error;
-      toast.success(
-        next ? `Enabled "${p.label}"` : `Disabled "${p.label}"`,
+      // Write every underlying consent key so audit records stay accurate.
+      const results = await Promise.all(
+        p.writes.map(k =>
+          supabase.rpc('set_user_consent' as any, {
+            _purpose: k,
+            _granted: next,
+            _source: 'consent_center',
+          }),
+        ),
       );
+      const firstErr = results.find(r => (r as any).error)?.error;
+      if (firstErr) throw firstErr;
+      toast.success(next ? `Enabled "${p.label}"` : `Disabled "${p.label}"`);
     } catch (err: any) {
       setState(s => ({ ...s, [p.key]: prev }));
       toast.error(err?.message || 'Could not save preference');
