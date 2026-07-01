@@ -1860,7 +1860,7 @@ export default function ChatWindowPanel() {
                   <Info size={16} className="text-muted-foreground" />
                   Chat info
                 </button>
-                {chatType !== 'group' && (
+                {(chatType !== 'group' || tribeIsFounder || tribeRole === 'leader') && (
                   <button
                     onClick={async () => {
                       setShowMoreMenu(false);
@@ -1873,7 +1873,9 @@ export default function ChatWindowPanel() {
                     className="w-full text-left px-3 py-2.5 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground"
                   >
                     {myChatSecured ? <ShieldOff size={16} className="text-vt-amber" /> : <Lock size={16} className="text-primary" />}
-                    {myChatSecured ? 'Mark as Unsecured (for me)' : 'Mark as secure (only for me)'}
+                    {chatType === 'group'
+                      ? (myChatSecured ? 'Mark tribe as Unsecured' : 'Mark tribe as Secured')
+                      : (myChatSecured ? 'Mark as Unsecured (for me)' : 'Mark as secure (only for me)')}
                   </button>
                 )}
                 <button
