@@ -769,9 +769,32 @@ export default function CallProvider({ children }: { children: React.ReactNode }
                     className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${micMuted ? 'bg-red-500/30 text-red-300' : 'bg-white/10 text-white hover:bg-white/20'}`}>
                     {micMuted ? <MicOff size={20} /> : <Mic size={20} />}
                   </button>
+                  <div className="relative">
+                    <button onClick={() => setShowAudioMenu(v => !v)}
+                      aria-label="Audio output"
+                      className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${audioRoute === 'speaker' ? 'bg-white/20 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}>
+                      {audioRoute === 'bluetooth' ? <Bluetooth size={20} /> : audioRoute === 'earpiece' ? <Ear size={20} /> : <Volume2 size={20} />}
+                    </button>
+                    {showAudioMenu && (
+                      <div className="absolute bottom-14 left-1/2 -translate-x-1/2 w-40 rounded-2xl bg-neutral-900/95 border border-white/10 shadow-2xl backdrop-blur-md p-1 z-10">
+                        {[
+                          { id: 'earpiece' as const, label: 'Phone', icon: <Ear size={16} /> },
+                          { id: 'speaker' as const, label: 'Speaker', icon: <Volume2 size={16} /> },
+                          ...(bluetoothAvailable ? [{ id: 'bluetooth' as const, label: 'Bluetooth', icon: <Bluetooth size={16} /> }] : []),
+                        ].map(opt => (
+                          <button key={opt.id}
+                            onClick={() => { applyAudioRoute(opt.id); setShowAudioMenu(false); }}
+                            className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-colors ${audioRoute === opt.id ? 'bg-white/15 text-white' : 'text-white/80 hover:bg-white/10'}`}>
+                            {opt.icon}<span>{opt.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   <button onClick={() => setSpeakerOff(s => !s)}
+                    aria-label={speakerOff ? 'Unmute speaker' : 'Mute speaker'}
                     className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${speakerOff ? 'bg-red-500/30 text-red-300' : 'bg-white/10 text-white hover:bg-white/20'}`}>
-                    {speakerOff ? <VolumeX size={20} /> : <Volume2 size={20} />}
+                    {speakerOff ? <VolumeX size={20} /> : <Headphones size={20} />}
                   </button>
                   {activeCall.call_type === 'video' && (
                     <button onClick={toggleVideo}
