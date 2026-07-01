@@ -392,7 +392,7 @@ export async function acquireCallWakeLock(): Promise<() => void> {
  * mode via the WebRTC track's `setSinkId` when available, and otherwise
  * relies on the system default.
  */
-export async function setCallAudioRoute(route: 'speaker' | 'earpiece'): Promise<void> {
+export async function setCallAudioRoute(route: 'speaker' | 'earpiece' | 'bluetooth'): Promise<void> {
   try {
     // Best-effort: toggle the speakerphone flag the WebView understands.
     // Capacitor 8 does not bundle an AudioManager plugin by default; the
@@ -400,6 +400,16 @@ export async function setCallAudioRoute(route: 'speaker' | 'earpiece'): Promise<
     // so the OS routes WebRTC audio correctly based on whether a video track
     // is present. We expose this hook for future native plugin wiring.
     document.documentElement.setAttribute('data-call-audio', route);
+    // If a native Android bridge exposes audio routing, use it. This lets us
+    // switch between earpiece / loudspeaker / bluetooth SCO at runtime.
+    const w = window as any;
+    const bridge = w.AndroidCallAudio || w.AndroidAudio;
+    if (bridge) {
+      if (route === 'speaker' && typeof bridge.setSpeakerOn === 'function') bridge.setSpeakerOn(true);
+      else if (route === 'earpiece' && typeof bridge.setSpeakerOn === 'function') bridge.setSpeakerOn(false);
+      if (route === 'bluetooth' && typeof bridge.startBluetoothSco === 'function') bridge.startBluetoothSco();
+      else if (route !== 'bluetooth' && typeof bridge.stopBluetoothSco === 'function') bridge.stopBluetoothSco();
+    }
   } catch {}
 }
 

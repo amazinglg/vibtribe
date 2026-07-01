@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
+import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Volume2, VolumeX, Bluetooth, Ear, Headphones } from 'lucide-react';
 import { SwitchCamera } from 'lucide-react';
 import { acquireCallWakeLock, setCallAudioRoute } from '@/lib/native-bridge';
 import { sendCallPush } from '@/lib/fcm-push.functions';
@@ -56,8 +56,10 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     if (activeCall) {
       acquireCallWakeLock().then((release) => { wakeLockReleaseRef.current = release; });
-      // Route audio: video calls → speaker, voice → earpiece.
-      setCallAudioRoute(activeCall.call_type === 'video' ? 'speaker' : 'earpiece');
+      // Route audio: video calls → speaker, voice → earpiece (initial default).
+      const initial = activeCall.call_type === 'video' ? 'speaker' : 'earpiece';
+      setAudioRoute(initial);
+      setCallAudioRoute(initial);
     } else if (wakeLockReleaseRef.current) {
       wakeLockReleaseRef.current();
       wakeLockReleaseRef.current = null;
@@ -77,6 +79,9 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   const [speakerOff, setSpeakerOff] = useState(false);
   const [videoOff, setVideoOff] = useState(false);
   const [cameraFacing, setCameraFacing] = useState<'user' | 'environment'>('user');
+  const [audioRoute, setAudioRoute] = useState<'earpiece' | 'speaker' | 'bluetooth'>('speaker');
+  const [bluetoothAvailable, setBluetoothAvailable] = useState(false);
+  const [showAudioMenu, setShowAudioMenu] = useState(false);
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const activeCallRef = useRef<CallRow | null>(null);
@@ -94,6 +99,57 @@ export default function CallProvider({ children }: { children: React.ReactNode }
 
   useEffect(() => { activeCallRef.current = activeCall; }, [activeCall]);
   useEffect(() => { callDurationRef.current = callDuration; }, [callDuration]);
+
+  // Detect whether a Bluetooth audio device is currently connected so we can
+  // show the Bluetooth option only when it's actually available.
+  useEffect(() => {
+    if (!activeCall) return;
+    let cancelled = false;
+    const check = async () => {
+      try {
+        const md: any = navigator.mediaDevices;
+        if (!md?.enumerateDevices) return;
+        const devices = await md.enumerateDevices();
+        const bt = devices.some((d: MediaDeviceInfo) =>
+          d.kind === 'audiooutput' && /bluetooth|bt|airpod|headset|handsfree/i.test(d.label || '')
+        );
+        if (!cancelled) setBluetoothAvailable(bt);
+      } catch {}
+    };
+    check();
+    const md: any = navigator.mediaDevices;
+    md?.addEventListener?.('devicechange', check);
+    return () => { cancelled = true; md?.removeEventListener?.('devicechange', check); };
+  }, [activeCall]);
+
+  // Apply the selected audio route to the remote audio/video elements
+  // (setSinkId on web) and to the native bridge (Android WebView).
+  const applyAudioRoute = useCallback(async (route: 'earpiece' | 'speaker' | 'bluetooth') => {
+    setAudioRoute(route);
+    setCallAudioRoute(route);
+    try {
+      const md: any = navigator.mediaDevices;
+      if (!md?.enumerateDevices) return;
+      const devices = await md.enumerateDevices();
+      const outs = devices.filter((d: MediaDeviceInfo) => d.kind === 'audiooutput');
+      let target: MediaDeviceInfo | undefined;
+      if (route === 'bluetooth') {
+        target = outs.find((d: MediaDeviceInfo) => /bluetooth|bt|airpod|headset|handsfree/i.test(d.label || ''));
+      } else if (route === 'speaker') {
+        target = outs.find((d: MediaDeviceInfo) => /speaker|loud/i.test(d.label || '')) || outs.find((d: MediaDeviceInfo) => d.deviceId === 'default');
+      } else {
+        target = outs.find((d: MediaDeviceInfo) => /earpiece|receiver|phone/i.test(d.label || '')) || outs.find((d: MediaDeviceInfo) => d.deviceId === 'default');
+      }
+      const sinkId = target?.deviceId || 'default';
+      const setSink = async (el: HTMLMediaElement | null) => {
+        if (!el) return;
+        const anyEl = el as any;
+        if (typeof anyEl.setSinkId === 'function') { try { await anyEl.setSinkId(sinkId); } catch {} }
+      };
+      await setSink(remoteAudioRef.current);
+      await setSink(remoteVideoRef.current as unknown as HTMLMediaElement);
+    } catch {}
+  }, []);
 
   // When the call overlay mounts AFTER media was already acquired (we now
   // acquire mic/camera inside the click gesture, before the dialog renders),
@@ -141,6 +197,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     if (ringtoneRef.current) { try { ringtoneRef.current.pause(); } catch {} ringtoneRef.current = null; }
     setCallDuration(0);
     setMicMuted(false); setSpeakerOff(false); setVideoOff(false);
+    setShowAudioMenu(false);
   }, [supabase]);
 
   const endCall = useCallback(async (finalStatus: 'ended' | 'declined' | 'missed' = 'ended') => {
@@ -712,9 +769,32 @@ export default function CallProvider({ children }: { children: React.ReactNode }
                     className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${micMuted ? 'bg-red-500/30 text-red-300' : 'bg-white/10 text-white hover:bg-white/20'}`}>
                     {micMuted ? <MicOff size={20} /> : <Mic size={20} />}
                   </button>
+                  <div className="relative">
+                    <button onClick={() => setShowAudioMenu(v => !v)}
+                      aria-label="Audio output"
+                      className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${audioRoute === 'speaker' ? 'bg-white/20 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}>
+                      {audioRoute === 'bluetooth' ? <Bluetooth size={20} /> : audioRoute === 'earpiece' ? <Ear size={20} /> : <Volume2 size={20} />}
+                    </button>
+                    {showAudioMenu && (
+                      <div className="absolute bottom-14 left-1/2 -translate-x-1/2 w-40 rounded-2xl bg-neutral-900/95 border border-white/10 shadow-2xl backdrop-blur-md p-1 z-10">
+                        {[
+                          { id: 'earpiece' as const, label: 'Phone', icon: <Ear size={16} /> },
+                          { id: 'speaker' as const, label: 'Speaker', icon: <Volume2 size={16} /> },
+                          ...(bluetoothAvailable ? [{ id: 'bluetooth' as const, label: 'Bluetooth', icon: <Bluetooth size={16} /> }] : []),
+                        ].map(opt => (
+                          <button key={opt.id}
+                            onClick={() => { applyAudioRoute(opt.id); setShowAudioMenu(false); }}
+                            className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-colors ${audioRoute === opt.id ? 'bg-white/15 text-white' : 'text-white/80 hover:bg-white/10'}`}>
+                            {opt.icon}<span>{opt.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   <button onClick={() => setSpeakerOff(s => !s)}
+                    aria-label={speakerOff ? 'Unmute speaker' : 'Mute speaker'}
                     className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${speakerOff ? 'bg-red-500/30 text-red-300' : 'bg-white/10 text-white hover:bg-white/20'}`}>
-                    {speakerOff ? <VolumeX size={20} /> : <Volume2 size={20} />}
+                    {speakerOff ? <VolumeX size={20} /> : <Headphones size={20} />}
                   </button>
                   {activeCall.call_type === 'video' && (
                     <button onClick={toggleVideo}
