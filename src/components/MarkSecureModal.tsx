@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React, { useState } from 'react';
 import { Lock, X, Eye, EyeOff, AlertTriangle, Hash, Grid3X3 } from 'lucide-react';
+import { Copy as CopyIcon, Check as CheckIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -30,6 +31,10 @@ export default function MarkSecureModal({ isOpen, onClose, chatName, chatId, isT
   const [patternStage, setPatternStage] = useState<'draw' | 'confirm'>('draw');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  // For tribes: after a successful secure, show a share-code banner inside
+  // the modal so the leader/admin can copy and share it with all members.
+  // The modal stays open until the user explicitly dismisses this step.
+  const [tribeShareCode, setTribeShareCode] = useState<string | null>(null);
 
   const resetAll = () => {
     setStep('choose-code-type');
@@ -41,6 +46,7 @@ export default function MarkSecureModal({ isOpen, onClose, chatName, chatId, isT
     setPatternStage('draw');
     setError('');
     setLoading(false);
+    setTribeShareCode(null);
   };
 
   const handleClose = () => {
@@ -101,6 +107,11 @@ export default function MarkSecureModal({ isOpen, onClose, chatName, chatId, isT
         if (tErr) throw tErr;
         onSecured?.(chatId, secureCode);
         toast.success(`${chatName} is now secured for all members`);
+        // Show in-modal share banner and keep the modal open so the leader
+        // can copy the code and pass it out. Skip handleClose() below.
+        setTribeShareCode(secureCode);
+        setLoading(false);
+        return;
       } else {
         // Per-user secure mark: ONLY this user's view of the chat is locked.
         // The other participant is not affected and won't even know.
@@ -142,6 +153,46 @@ export default function MarkSecureModal({ isOpen, onClose, chatName, chatId, isT
         </div>
 
         <div className="px-6 py-6 overflow-y-auto flex-1">
+
+          {/* Tribe: share-code banner after a successful lock */}
+          {tribeShareCode && (
+            <div>
+              <div className="p-4 rounded-2xl border border-vt-amber/30 bg-vt-amber/5 mb-4">
+                <p className="text-[11px] uppercase tracking-wider text-vt-amber font-semibold mb-1">
+                  Share with all members
+                </p>
+                <p className="text-sm text-foreground leading-relaxed">
+                  <span className="font-semibold">{chatName}</span> is now secured for every member. Share the code below with all tribe members so they can open it from their Secure Vault.
+                </p>
+                <div className="mt-3 flex items-center gap-2">
+                  <div className="flex-1 px-3 py-2.5 bg-input border border-border rounded-lg font-mono text-sm tracking-widest text-foreground break-all">
+                    {tribeShareCode}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try { await navigator.clipboard.writeText(tribeShareCode); toast.success('Code copied'); } catch { toast.error('Copy failed'); }
+                    }}
+                    className="p-2.5 gradient-primary text-white rounded-lg"
+                    title="Copy code"
+                  >
+                    <CopyIcon size={16} />
+                  </button>
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-3 leading-relaxed">
+                  ⚠️ VibTribe will not show this code again. Save or share it now through a trusted channel.
+                </p>
+              </div>
+              <button
+                onClick={handleClose}
+                className="w-full gradient-primary text-white font-semibold py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-all"
+              >
+                <CheckIcon size={16} /> I've saved &amp; shared the code
+              </button>
+            </div>
+          )}
+
+          {!tribeShareCode && <>
 
           {/* Step 2: Choose Code Type (PIN or Pattern) */}
           {step === 'choose-code-type' && (
@@ -314,6 +365,7 @@ export default function MarkSecureModal({ isOpen, onClose, chatName, chatId, isT
               )}
             </div>
           )}
+          </>}
         </div>
       </div>
     </div>
