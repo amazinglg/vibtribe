@@ -116,9 +116,9 @@ export const submitGuardianDetails = createServerFn({ method: 'POST' })
       minorName,
       guardianName: data.guardianName,
     })
-    const subject = typeof guardianOtpTemplate.subject === 'function'
-      ? guardianOtpTemplate.subject({})
-      : guardianOtpTemplate.subject
+    const subject = typeof guardianOtpTemplate.subject === 'string'
+      ? guardianOtpTemplate.subject
+      : (guardianOtpTemplate.subject as (d: Record<string, any>) => string)({})
     await enqueueTemplateEmail({
       supabase,
       to: data.guardianEmail,
