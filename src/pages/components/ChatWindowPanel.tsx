@@ -2671,6 +2671,7 @@ export default function ChatWindowPanel() {
           onClose={() => setSecureModalOpen(false)}
           chatId={selectedChatId}
           chatName={contact?.name || 'Chat'}
+          isTribe={chatType === 'group'}
           onSecured={() => {
             setMyChatSecured(true);
             window.dispatchEvent(new CustomEvent('vt-secure-changed'));
