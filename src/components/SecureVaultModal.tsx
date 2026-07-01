@@ -306,10 +306,10 @@ export default function SecureVaultModal({ isOpen, onClose }: SecureVaultModalPr
     <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 pb-24 sm:pb-4 overflow-y-auto">
       <div className="absolute inset-0 bg-background/80 backdrop-blur-md" onClick={handleClose} />
       <div
-        className={`relative w-full max-w-md my-auto glass-strong rounded-3xl border border-border shadow-card overflow-hidden float-up max-h-[calc(100dvh-7rem)] sm:max-h-[calc(100dvh-2rem)] ${shaking ? 'secure-shake' : ''}`}
+        className={`relative w-full max-w-md my-auto glass-strong rounded-3xl border border-border shadow-card float-up flex flex-col max-h-[calc(100dvh-7rem)] sm:max-h-[calc(100dvh-2rem)] ${shaking ? 'secure-shake' : ''}`}
       >
         {/* Header */}
-        <div className="relative px-6 py-5 border-b border-border flex items-center gap-3">
+        <div className="relative px-6 py-5 border-b border-border flex items-center gap-3 flex-shrink-0">
           <div className="w-10 h-10 gradient-primary rounded-2xl flex items-center justify-center glow-primary">
             <Lock size={20} className="text-white" />
           </div>
@@ -322,7 +322,7 @@ export default function SecureVaultModal({ isOpen, onClose }: SecureVaultModalPr
           </button>
         </div>
 
-        <div className="px-6 py-6">
+        <div className="px-6 py-6 overflow-y-auto flex-1 min-h-0">
           {/* Privacy Notice */}
           <div className="flex items-start gap-2 p-3 bg-primary/10 border border-primary/20 rounded-xl mb-5">
             <ShieldAlert size={16} className="text-primary mt-0.5 flex-shrink-0" />
