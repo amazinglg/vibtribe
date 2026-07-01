@@ -759,6 +759,75 @@ export type Database = {
           },
         ]
       }
+      guardian_consents: {
+        Row: {
+          consent_token: string
+          consent_version: string
+          consented_at: string | null
+          created_at: string
+          email_otp_attempts: number
+          email_otp_expires_at: string | null
+          email_otp_hash: string | null
+          email_verified_at: string | null
+          graduated_at: string | null
+          guardian_email: string
+          guardian_mobile: string
+          guardian_name: string
+          id: string
+          ip: string | null
+          last_reminder_sent_at: string | null
+          minor_user_id: string
+          relationship: string
+          revoked_at: string | null
+          updated_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          consent_token: string
+          consent_version?: string
+          consented_at?: string | null
+          created_at?: string
+          email_otp_attempts?: number
+          email_otp_expires_at?: string | null
+          email_otp_hash?: string | null
+          email_verified_at?: string | null
+          graduated_at?: string | null
+          guardian_email: string
+          guardian_mobile: string
+          guardian_name: string
+          id?: string
+          ip?: string | null
+          last_reminder_sent_at?: string | null
+          minor_user_id: string
+          relationship: string
+          revoked_at?: string | null
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          consent_token?: string
+          consent_version?: string
+          consented_at?: string | null
+          created_at?: string
+          email_otp_attempts?: number
+          email_otp_expires_at?: string | null
+          email_otp_hash?: string | null
+          email_verified_at?: string | null
+          graduated_at?: string | null
+          guardian_email?: string
+          guardian_mobile?: string
+          guardian_name?: string
+          id?: string
+          ip?: string | null
+          last_reminder_sent_at?: string | null
+          minor_user_id?: string
+          relationship?: string
+          revoked_at?: string | null
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           chat_id: string | null
@@ -1661,6 +1730,37 @@ export type Database = {
       accept_terms: { Args: never; Returns: undefined }
       admin_delete_ticket: { Args: { _ticket_id: string }; Returns: undefined }
       admin_delete_user: { Args: { _user_id: string }; Returns: undefined }
+      admin_get_guardian_consent: {
+        Args: { _user_id: string }
+        Returns: {
+          consent_token: string
+          consent_version: string
+          consented_at: string | null
+          created_at: string
+          email_otp_attempts: number
+          email_otp_expires_at: string | null
+          email_otp_hash: string | null
+          email_verified_at: string | null
+          graduated_at: string | null
+          guardian_email: string
+          guardian_mobile: string
+          guardian_name: string
+          id: string
+          ip: string | null
+          last_reminder_sent_at: string | null
+          minor_user_id: string
+          relationship: string
+          revoked_at: string | null
+          updated_at: string
+          user_agent: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "guardian_consents"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       admin_get_totp_secret_by_identifier: {
         Args: { _identifier: string }
         Returns: string
@@ -2038,6 +2138,21 @@ export type Database = {
         }[]
       }
       get_any_admin_id: { Args: never; Returns: string }
+      get_guardian_consent_by_token: {
+        Args: { _token: string }
+        Returns: {
+          consent_version: string
+          consented_at: string
+          guardian_email: string
+          guardian_mobile: string
+          guardian_name: string
+          id: string
+          minor_dob: string
+          minor_full_name: string
+          relationship: string
+          revoked_at: string
+        }[]
+      }
       get_my_encryption_material: {
         Args: never
         Returns: {
@@ -2150,6 +2265,11 @@ export type Database = {
           username: string
         }[]
       }
+      guardian_auto_graduate: { Args: never; Returns: number }
+      has_active_guardian_consent: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       has_permission: {
         Args: { _permission_key: string; _user_id: string }
         Returns: boolean
@@ -2168,6 +2288,7 @@ export type Database = {
         Returns: boolean
       }
       is_master_admin: { Args: never; Returns: boolean }
+      is_minor: { Args: { _user_id: string }; Returns: boolean }
       is_mobile_available: {
         Args: { _country_code: string; _mobile: string }
         Returns: boolean
@@ -2248,11 +2369,19 @@ export type Database = {
         Args: { _consent_type: string; _policy_version: string }
         Returns: string
       }
+      record_guardian_consent: {
+        Args: { _ip: string; _token: string; _user_agent: string }
+        Returns: boolean
+      }
       record_login_failure: { Args: { _user_id: string }; Returns: number }
       record_login_success: { Args: { _user_id: string }; Returns: undefined }
       reset_password_with_otp: {
         Args: { _code: string; _identifier: string; _new_password: string }
         Returns: undefined
+      }
+      revoke_guardian_consent: {
+        Args: { _ip: string; _token: string; _user_agent: string }
+        Returns: boolean
       }
       search_public_users: {
         Args: { _limit?: number; _q: string }
@@ -2273,6 +2402,19 @@ export type Database = {
         Returns: undefined
       }
       start_totp_enrollment: { Args: { _secret: string }; Returns: undefined }
+      submit_guardian_details: {
+        Args: {
+          _guardian_email: string
+          _guardian_mobile: string
+          _guardian_name: string
+          _relationship: string
+        }
+        Returns: {
+          consent_token: string
+          guardian_email: string
+          otp_code: string
+        }[]
+      }
       tribe_change_privacy: {
         Args: { _chat_id: string; _privacy: string }
         Returns: undefined
@@ -2310,12 +2452,13 @@ export type Database = {
         Args: { _chat_id: string; _delete_messages?: boolean }
         Returns: Json
       }
+      verify_guardian_email_otp: { Args: { _code: string }; Returns: boolean }
     }
     Enums: {
       chat_type: "normal" | "secure" | "dual_normal" | "dual_secure"
       message_status: "sent" | "delivered" | "read"
       ticket_status: "open" | "inprocess" | "solved"
-      user_status: "active" | "suspended" | "inactive"
+      user_status: "active" | "suspended" | "inactive" | "pending_guardian"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2446,7 +2589,7 @@ export const Constants = {
       chat_type: ["normal", "secure", "dual_normal", "dual_secure"],
       message_status: ["sent", "delivered", "read"],
       ticket_status: ["open", "inprocess", "solved"],
-      user_status: ["active", "suspended", "inactive"],
+      user_status: ["active", "suspended", "inactive", "pending_guardian"],
     },
   },
 } as const
