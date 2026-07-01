@@ -30,6 +30,10 @@ export default function MarkSecureModal({ isOpen, onClose, chatName, chatId, isT
   const [patternStage, setPatternStage] = useState<'draw' | 'confirm'>('draw');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  // For tribes: after a successful secure, show a share-code banner inside
+  // the modal so the leader/admin can copy and share it with all members.
+  // The modal stays open until the user explicitly dismisses this step.
+  const [tribeShareCode, setTribeShareCode] = useState<string | null>(null);
 
   const resetAll = () => {
     setStep('choose-code-type');
@@ -41,6 +45,7 @@ export default function MarkSecureModal({ isOpen, onClose, chatName, chatId, isT
     setPatternStage('draw');
     setError('');
     setLoading(false);
+    setTribeShareCode(null);
   };
 
   const handleClose = () => {
@@ -101,6 +106,11 @@ export default function MarkSecureModal({ isOpen, onClose, chatName, chatId, isT
         if (tErr) throw tErr;
         onSecured?.(chatId, secureCode);
         toast.success(`${chatName} is now secured for all members`);
+        // Show in-modal share banner and keep the modal open so the leader
+        // can copy the code and pass it out. Skip handleClose() below.
+        setTribeShareCode(secureCode);
+        setLoading(false);
+        return;
       } else {
         // Per-user secure mark: ONLY this user's view of the chat is locked.
         // The other participant is not affected and won't even know.
