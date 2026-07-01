@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
+import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Volume2, VolumeX, Bluetooth, Ear, Headphones } from 'lucide-react';
 import { SwitchCamera } from 'lucide-react';
 import { acquireCallWakeLock, setCallAudioRoute } from '@/lib/native-bridge';
 import { sendCallPush } from '@/lib/fcm-push.functions';
@@ -56,8 +56,10 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     if (activeCall) {
       acquireCallWakeLock().then((release) => { wakeLockReleaseRef.current = release; });
-      // Route audio: video calls → speaker, voice → earpiece.
-      setCallAudioRoute(activeCall.call_type === 'video' ? 'speaker' : 'earpiece');
+      // Route audio: video calls → speaker, voice → earpiece (initial default).
+      const initial = activeCall.call_type === 'video' ? 'speaker' : 'earpiece';
+      setAudioRoute(initial);
+      setCallAudioRoute(initial);
     } else if (wakeLockReleaseRef.current) {
       wakeLockReleaseRef.current();
       wakeLockReleaseRef.current = null;
@@ -77,6 +79,9 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   const [speakerOff, setSpeakerOff] = useState(false);
   const [videoOff, setVideoOff] = useState(false);
   const [cameraFacing, setCameraFacing] = useState<'user' | 'environment'>('user');
+  const [audioRoute, setAudioRoute] = useState<'earpiece' | 'speaker' | 'bluetooth'>('speaker');
+  const [bluetoothAvailable, setBluetoothAvailable] = useState(false);
+  const [showAudioMenu, setShowAudioMenu] = useState(false);
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const activeCallRef = useRef<CallRow | null>(null);
