@@ -775,6 +775,7 @@ export type Database = {
           guardian_name: string
           id: string
           ip: string | null
+          last_reminder_at: string | null
           last_reminder_sent_at: string | null
           minor_user_id: string
           relationship: string
@@ -797,6 +798,7 @@ export type Database = {
           guardian_name: string
           id?: string
           ip?: string | null
+          last_reminder_at?: string | null
           last_reminder_sent_at?: string | null
           minor_user_id: string
           relationship: string
@@ -819,6 +821,7 @@ export type Database = {
           guardian_name?: string
           id?: string
           ip?: string | null
+          last_reminder_at?: string | null
           last_reminder_sent_at?: string | null
           minor_user_id?: string
           relationship?: string
@@ -1747,6 +1750,7 @@ export type Database = {
           guardian_name: string
           id: string
           ip: string | null
+          last_reminder_at: string | null
           last_reminder_sent_at: string | null
           minor_user_id: string
           relationship: string
@@ -2081,6 +2085,7 @@ export type Database = {
         Args: { _user_id: string; _verified: boolean }
         Returns: undefined
       }
+      age_years: { Args: { _dob: string }; Returns: number }
       can_view_status_owner: { Args: { _owner_id: string }; Returns: boolean }
       cancel_totp_enrollment: { Args: never; Returns: undefined }
       check_otp_rate_limit: { Args: { _email: string }; Returns: number }
@@ -2266,6 +2271,17 @@ export type Database = {
         }[]
       }
       guardian_auto_graduate: { Args: never; Returns: number }
+      guardian_reminders_due: {
+        Args: never
+        Returns: {
+          consent_token: string
+          guardian_email: string
+          guardian_name: string
+          id: string
+          minor_full_name: string
+          minor_user_id: string
+        }[]
+      }
       has_active_guardian_consent: {
         Args: { _user_id: string }
         Returns: boolean
@@ -2293,6 +2309,7 @@ export type Database = {
         Args: { _country_code: string; _mobile: string }
         Returns: boolean
       }
+      is_pending_guardian: { Args: { _user_id: string }; Returns: boolean }
       is_pinned_master_mobile: { Args: { _mobile: string }; Returns: boolean }
       is_real_email_available: { Args: { _email: string }; Returns: boolean }
       is_tribe_admin: {
@@ -2328,6 +2345,7 @@ export type Database = {
           profile_photo_visibility: string
         }[]
       }
+      mark_guardian_reminded: { Args: { _id: string }; Returns: undefined }
       mark_messages_read: { Args: { _chat_id: string }; Returns: undefined }
       mark_secure_chat: {
         Args: { _chat_id: string; _code: string }
