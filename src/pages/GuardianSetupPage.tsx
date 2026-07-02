@@ -163,7 +163,7 @@ export default function GuardianSetupPage() {
                 We’ve emailed <span className="text-foreground font-medium">{status?.guardian_email}</span> a consent request link.
               </div>
               <div className="text-xs text-muted-foreground mb-4">
-                Once they click \u201cI consent\u201d, you’ll get access here automatically.
+                Once they click “I consent”, you’ll get access here automatically.
               </div>
               <button onClick={refresh} className="w-full py-3 rounded-xl border border-border text-foreground flex items-center justify-center gap-2">
                 <RefreshCw size={16}/> Check status
