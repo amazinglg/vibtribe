@@ -202,6 +202,64 @@ export const getMyGuardianStatus = createServerFn({ method: 'GET' })
   })
 
 /**
+ * Re-send the guardian OTP using details already stored server-side. The
+ * client never receives the guardian's raw email/mobile — those are pulled
+ * with the service-role client scoped to the caller's own minor account.
+ */
+export const resendGuardianOtp = createServerFn({ method: 'POST' })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import('@/integrations/supabase/client.server')
+    const { data: existing, error: readErr } = await (supabaseAdmin as any)
+      .from('guardian_consents')
+      .select('guardian_name, guardian_email, guardian_mobile, relationship')
+      .eq('minor_user_id', context.userId)
+      .is('revoked_at', null)
+      .is('graduated_at', null)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (readErr) throw new Error(readErr.message)
+    if (!existing) throw new Error('No pending guardian record to resend')
+
+    const supabase = context.supabase
+    const { data: rows, error } = await supabase.rpc('submit_guardian_details' as any, {
+      _guardian_name: existing.guardian_name,
+      _guardian_email: existing.guardian_email,
+      _guardian_mobile: existing.guardian_mobile,
+      _relationship: existing.relationship,
+    })
+    if (error) throw new Error(error.message)
+    const row: any = Array.isArray(rows) ? rows[0] : rows
+    if (!row?.otp_code) throw new Error('Could not regenerate OTP')
+
+    const { data: minor } = await supabase
+      .from('user_profiles')
+      .select('full_name, username')
+      .eq('id', context.userId)
+      .maybeSingle()
+    const minorName = (minor?.full_name || minor?.username || 'A young user') as string
+
+    const otpEl = React.createElement(guardianOtpTemplate.component, {
+      code: row.otp_code,
+      minorName,
+      guardianName: existing.guardian_name,
+    })
+    const subject = typeof guardianOtpTemplate.subject === 'string'
+      ? guardianOtpTemplate.subject
+      : (guardianOtpTemplate.subject as (d: Record<string, any>) => string)({})
+    await enqueueTemplateEmail({
+      supabase,
+      to: existing.guardian_email,
+      subject,
+      html: await render(otpEl),
+      text: await render(otpEl, { plainText: true }),
+      label: 'guardian_otp',
+    })
+    return { ok: true as const }
+  })
+
+/**
  * Public server function called from the guardian consent page. Uses the
  * unauthenticated `record_guardian_consent` RPC. IP + UA are captured
  * server-side, not from client-provided values.
