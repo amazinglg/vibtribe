@@ -2236,6 +2236,32 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      get_my_guardian_send_target: {
+        Args: never
+        Returns: {
+          consent_token: string
+          consented_at: string
+          guardian_email: string
+          guardian_name: string
+          id: string
+          relationship: string
+        }[]
+      }
+      get_my_guardian_status: {
+        Args: never
+        Returns: {
+          consented_at: string
+          created_at: string
+          email_verified_at: string
+          guardian_email_masked: string
+          guardian_mobile_masked: string
+          guardian_name: string
+          id: string
+          relationship: string
+          revoked_at: string
+          updated_at: string
+        }[]
+      }
       get_my_latest_consent_versions: {
         Args: never
         Returns: {

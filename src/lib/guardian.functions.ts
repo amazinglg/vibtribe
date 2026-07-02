@@ -148,15 +148,10 @@ export const verifyGuardianEmailOtp = createServerFn({ method: 'POST' })
     if (error) throw new Error(error.message)
     if (!ok) return { ok: false as const }
 
-    // Fetch latest guardian row + minor name
-    const { data: rowArr } = await supabase
-      .from('guardian_consents' as any)
-      .select('id, guardian_name, guardian_email, relationship, consent_token, consented_at')
-      .eq('minor_user_id', context.userId)
-      .is('revoked_at', null)
-      .is('graduated_at', null)
-      .order('created_at', { ascending: false })
-      .limit(1)
+    // Fetch latest guardian row + minor name via SECURITY DEFINER RPC (avoids
+    // exposing the guardian_consents row — including OTP hash / IP / UA — to
+    // the minor via direct table SELECT).
+    const { data: rowArr } = await supabase.rpc('get_my_guardian_send_target' as any)
     const row: any = Array.isArray(rowArr) ? rowArr[0] : rowArr
     if (!row) return { ok: true as const }
     if (row.consented_at) return { ok: true as const, alreadyConsented: true }
@@ -200,16 +195,68 @@ export const getMyGuardianStatus = createServerFn({ method: 'GET' })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const supabase = context.supabase
-    const { data, error } = await supabase
-      .from('guardian_consents' as any)
-      .select('id, guardian_name, guardian_email, guardian_mobile, relationship, email_verified_at, consented_at, revoked_at, created_at, updated_at')
+    const { data: rows, error } = await supabase.rpc('get_my_guardian_status' as any)
+    if (error) throw new Error(error.message)
+    const record: any = Array.isArray(rows) ? rows[0] ?? null : rows ?? null
+    return { record }
+  })
+
+/**
+ * Re-send the guardian OTP using details already stored server-side. The
+ * client never receives the guardian's raw email/mobile — those are pulled
+ * with the service-role client scoped to the caller's own minor account.
+ */
+export const resendGuardianOtp = createServerFn({ method: 'POST' })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import('@/integrations/supabase/client.server')
+    const { data: existing, error: readErr } = await (supabaseAdmin as any)
+      .from('guardian_consents')
+      .select('guardian_name, guardian_email, guardian_mobile, relationship')
       .eq('minor_user_id', context.userId)
+      .is('revoked_at', null)
       .is('graduated_at', null)
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle()
+    if (readErr) throw new Error(readErr.message)
+    if (!existing) throw new Error('No pending guardian record to resend')
+
+    const supabase = context.supabase
+    const { data: rows, error } = await supabase.rpc('submit_guardian_details' as any, {
+      _guardian_name: existing.guardian_name,
+      _guardian_email: existing.guardian_email,
+      _guardian_mobile: existing.guardian_mobile,
+      _relationship: existing.relationship,
+    })
     if (error) throw new Error(error.message)
-    return { record: data ?? null }
+    const row: any = Array.isArray(rows) ? rows[0] : rows
+    if (!row?.otp_code) throw new Error('Could not regenerate OTP')
+
+    const { data: minor } = await supabase
+      .from('user_profiles')
+      .select('full_name, username')
+      .eq('id', context.userId)
+      .maybeSingle()
+    const minorName = (minor?.full_name || minor?.username || 'A young user') as string
+
+    const otpEl = React.createElement(guardianOtpTemplate.component, {
+      code: row.otp_code,
+      minorName,
+      guardianName: existing.guardian_name,
+    })
+    const subject = typeof guardianOtpTemplate.subject === 'string'
+      ? guardianOtpTemplate.subject
+      : (guardianOtpTemplate.subject as (d: Record<string, any>) => string)({})
+    await enqueueTemplateEmail({
+      supabase,
+      to: existing.guardian_email,
+      subject,
+      html: await render(otpEl),
+      text: await render(otpEl, { plainText: true }),
+      label: 'guardian_otp',
+    })
+    return { ok: true as const }
   })
 
 /**
