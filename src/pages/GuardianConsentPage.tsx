@@ -14,11 +14,9 @@ type Rec = {
   guardian_email: string
   relationship: string
   minor_full_name: string | null
-  minor_username: string | null
   minor_dob: string | null
   consented_at: string | null
   revoked_at: string | null
-  graduated_at: string | null
 } | null
 
 export default function GuardianConsentPage() {
@@ -65,7 +63,7 @@ export default function GuardianConsentPage() {
     } finally { setSaving(false) }
   }
 
-  const displayMinor = record?.minor_full_name || record?.minor_username || 'a young user'
+  const displayMinor = record?.minor_full_name || 'a young user'
   const consented = !!record?.consented_at && !record?.revoked_at
   const revoked = !!record?.revoked_at
 
