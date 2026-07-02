@@ -19,6 +19,7 @@ import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as SecurityRouteImport } from './routes/security'
 import { Route as ProfileScreenRouteImport } from './routes/profile-screen'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as GuardianSetupRouteImport } from './routes/guardian-setup'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as FeaturesRouteImport } from './routes/features'
 import { Route as FaqRouteImport } from './routes/faq'
@@ -104,6 +105,11 @@ const ProfileScreenRoute = ProfileScreenRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GuardianSetupRoute = GuardianSetupRouteImport.update({
+  id: '/guardian-setup',
+  path: '/guardian-setup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -308,6 +314,7 @@ export interface FileRoutesByFullPath {
   '/faq': typeof FaqRoute
   '/features': typeof FeaturesRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/guardian-setup': typeof GuardianSetupRoute
   '/privacy': typeof PrivacyRoute
   '/profile-screen': typeof ProfileScreenRoute
   '/security': typeof SecurityRoute
@@ -355,6 +362,7 @@ export interface FileRoutesByTo {
   '/faq': typeof FaqRoute
   '/features': typeof FeaturesRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/guardian-setup': typeof GuardianSetupRoute
   '/privacy': typeof PrivacyRoute
   '/profile-screen': typeof ProfileScreenRoute
   '/security': typeof SecurityRoute
@@ -404,6 +412,7 @@ export interface FileRoutesById {
   '/faq': typeof FaqRoute
   '/features': typeof FeaturesRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/guardian-setup': typeof GuardianSetupRoute
   '/privacy': typeof PrivacyRoute
   '/profile-screen': typeof ProfileScreenRoute
   '/security': typeof SecurityRoute
@@ -454,6 +463,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/features'
     | '/forgot-password'
+    | '/guardian-setup'
     | '/privacy'
     | '/profile-screen'
     | '/security'
@@ -501,6 +511,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/features'
     | '/forgot-password'
+    | '/guardian-setup'
     | '/privacy'
     | '/profile-screen'
     | '/security'
@@ -549,6 +560,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/features'
     | '/forgot-password'
+    | '/guardian-setup'
     | '/privacy'
     | '/profile-screen'
     | '/security'
@@ -598,6 +610,7 @@ export interface RootRouteChildren {
   FaqRoute: typeof FaqRoute
   FeaturesRoute: typeof FeaturesRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
+  GuardianSetupRoute: typeof GuardianSetupRoute
   PrivacyRoute: typeof PrivacyRoute
   ProfileScreenRoute: typeof ProfileScreenRoute
   SecurityRoute: typeof SecurityRoute
@@ -703,6 +716,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guardian-setup': {
+      id: '/guardian-setup'
+      path: '/guardian-setup'
+      fullPath: '/guardian-setup'
+      preLoaderRoute: typeof GuardianSetupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/forgot-password': {
@@ -987,6 +1007,7 @@ const rootRouteChildren: RootRouteChildren = {
   FaqRoute: FaqRoute,
   FeaturesRoute: FeaturesRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
+  GuardianSetupRoute: GuardianSetupRoute,
   PrivacyRoute: PrivacyRoute,
   ProfileScreenRoute: ProfileScreenRoute,
   SecurityRoute: SecurityRoute,
