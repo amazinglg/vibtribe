@@ -19,6 +19,15 @@ export default function ChatsPage() {
   const [dobBannerDismissed, setDobBannerDismissed] = useState(false);
   const needsDob = !!user && !!profile && !(profile as any).dob;
 
+  // DPDP 2023: minors (Indian +91, <18) must complete the guardian consent
+  // flow before using the app. Force them to /guardian-setup.
+  useEffect(() => {
+    if (!user || !profile) return;
+    if ((profile as any).account_status === 'pending_guardian') {
+      router({ to: '/guardian-setup', replace: true });
+    }
+  }, [user, profile, router]);
+
   // Open a chat directly when launched from a notification; otherwise start on the list.
   useEffect(() => {
     const chatId = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('chat') : null;

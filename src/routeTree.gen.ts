@@ -19,6 +19,7 @@ import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as SecurityRouteImport } from './routes/security'
 import { Route as ProfileScreenRouteImport } from './routes/profile-screen'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as GuardianSetupRouteImport } from './routes/guardian-setup'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as FeaturesRouteImport } from './routes/features'
 import { Route as FaqRouteImport } from './routes/faq'
@@ -28,6 +29,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as GuardianConsentTokenRouteImport } from './routes/guardian-consent.$token'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as DownloadIosRouteImport } from './routes/download.ios'
 import { Route as DownloadAndroidRouteImport } from './routes/download.android'
@@ -53,6 +55,7 @@ import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/e
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicHooksRetentionSweepRouteImport } from './routes/api/public/hooks/retention-sweep'
+import { Route as ApiPublicHooksGuardianMonthlyReminderRouteImport } from './routes/api/public/hooks/guardian-monthly-reminder'
 import { Route as ApiPublicHooksCleanupExpiredStatusesRouteImport } from './routes/api/public/hooks/cleanup-expired-statuses'
 import { Route as ApiPublicHooksCleanupExpiredMessagesRouteImport } from './routes/api/public/hooks/cleanup-expired-messages'
 
@@ -106,6 +109,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
   path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GuardianSetupRoute = GuardianSetupRouteImport.update({
+  id: '/guardian-setup',
+  path: '/guardian-setup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   id: '/forgot-password',
   path: '/forgot-password',
@@ -150,6 +158,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminRoute,
+} as any)
+const GuardianConsentTokenRoute = GuardianConsentTokenRouteImport.update({
+  id: '/guardian-consent/$token',
+  path: '/guardian-consent/$token',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
   id: '/email/unsubscribe',
@@ -286,6 +299,12 @@ const ApiPublicHooksRetentionSweepRoute =
     path: '/api/public/hooks/retention-sweep',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksGuardianMonthlyReminderRoute =
+  ApiPublicHooksGuardianMonthlyReminderRouteImport.update({
+    id: '/api/public/hooks/guardian-monthly-reminder',
+    path: '/api/public/hooks/guardian-monthly-reminder',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksCleanupExpiredStatusesRoute =
   ApiPublicHooksCleanupExpiredStatusesRouteImport.update({
     id: '/api/public/hooks/cleanup-expired-statuses',
@@ -308,6 +327,7 @@ export interface FileRoutesByFullPath {
   '/faq': typeof FaqRoute
   '/features': typeof FeaturesRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/guardian-setup': typeof GuardianSetupRoute
   '/privacy': typeof PrivacyRoute
   '/profile-screen': typeof ProfileScreenRoute
   '/security': typeof SecurityRoute
@@ -329,6 +349,7 @@ export interface FileRoutesByFullPath {
   '/download/android': typeof DownloadAndroidRoute
   '/download/ios': typeof DownloadIosRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/guardian-consent/$token': typeof GuardianConsentTokenRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
@@ -340,6 +361,7 @@ export interface FileRoutesByFullPath {
   '/tribe/join/$code': typeof TribeJoinCodeRoute
   '/api/public/hooks/cleanup-expired-messages': typeof ApiPublicHooksCleanupExpiredMessagesRoute
   '/api/public/hooks/cleanup-expired-statuses': typeof ApiPublicHooksCleanupExpiredStatusesRoute
+  '/api/public/hooks/guardian-monthly-reminder': typeof ApiPublicHooksGuardianMonthlyReminderRoute
   '/api/public/hooks/retention-sweep': typeof ApiPublicHooksRetentionSweepRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -355,6 +377,7 @@ export interface FileRoutesByTo {
   '/faq': typeof FaqRoute
   '/features': typeof FeaturesRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/guardian-setup': typeof GuardianSetupRoute
   '/privacy': typeof PrivacyRoute
   '/profile-screen': typeof ProfileScreenRoute
   '/security': typeof SecurityRoute
@@ -376,6 +399,7 @@ export interface FileRoutesByTo {
   '/download/android': typeof DownloadAndroidRoute
   '/download/ios': typeof DownloadIosRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/guardian-consent/$token': typeof GuardianConsentTokenRoute
   '/admin': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
@@ -387,6 +411,7 @@ export interface FileRoutesByTo {
   '/tribe/join/$code': typeof TribeJoinCodeRoute
   '/api/public/hooks/cleanup-expired-messages': typeof ApiPublicHooksCleanupExpiredMessagesRoute
   '/api/public/hooks/cleanup-expired-statuses': typeof ApiPublicHooksCleanupExpiredStatusesRoute
+  '/api/public/hooks/guardian-monthly-reminder': typeof ApiPublicHooksGuardianMonthlyReminderRoute
   '/api/public/hooks/retention-sweep': typeof ApiPublicHooksRetentionSweepRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -404,6 +429,7 @@ export interface FileRoutesById {
   '/faq': typeof FaqRoute
   '/features': typeof FeaturesRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/guardian-setup': typeof GuardianSetupRoute
   '/privacy': typeof PrivacyRoute
   '/profile-screen': typeof ProfileScreenRoute
   '/security': typeof SecurityRoute
@@ -425,6 +451,7 @@ export interface FileRoutesById {
   '/download/android': typeof DownloadAndroidRoute
   '/download/ios': typeof DownloadIosRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/guardian-consent/$token': typeof GuardianConsentTokenRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
@@ -436,6 +463,7 @@ export interface FileRoutesById {
   '/tribe/join/$code': typeof TribeJoinCodeRoute
   '/api/public/hooks/cleanup-expired-messages': typeof ApiPublicHooksCleanupExpiredMessagesRoute
   '/api/public/hooks/cleanup-expired-statuses': typeof ApiPublicHooksCleanupExpiredStatusesRoute
+  '/api/public/hooks/guardian-monthly-reminder': typeof ApiPublicHooksGuardianMonthlyReminderRoute
   '/api/public/hooks/retention-sweep': typeof ApiPublicHooksRetentionSweepRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -454,6 +482,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/features'
     | '/forgot-password'
+    | '/guardian-setup'
     | '/privacy'
     | '/profile-screen'
     | '/security'
@@ -475,6 +504,7 @@ export interface FileRouteTypes {
     | '/download/android'
     | '/download/ios'
     | '/email/unsubscribe'
+    | '/guardian-consent/$token'
     | '/admin/'
     | '/admin/user/$userId'
     | '/api/public/auth-login'
@@ -486,6 +516,7 @@ export interface FileRouteTypes {
     | '/tribe/join/$code'
     | '/api/public/hooks/cleanup-expired-messages'
     | '/api/public/hooks/cleanup-expired-statuses'
+    | '/api/public/hooks/guardian-monthly-reminder'
     | '/api/public/hooks/retention-sweep'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -501,6 +532,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/features'
     | '/forgot-password'
+    | '/guardian-setup'
     | '/privacy'
     | '/profile-screen'
     | '/security'
@@ -522,6 +554,7 @@ export interface FileRouteTypes {
     | '/download/android'
     | '/download/ios'
     | '/email/unsubscribe'
+    | '/guardian-consent/$token'
     | '/admin'
     | '/admin/user/$userId'
     | '/api/public/auth-login'
@@ -533,6 +566,7 @@ export interface FileRouteTypes {
     | '/tribe/join/$code'
     | '/api/public/hooks/cleanup-expired-messages'
     | '/api/public/hooks/cleanup-expired-statuses'
+    | '/api/public/hooks/guardian-monthly-reminder'
     | '/api/public/hooks/retention-sweep'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -549,6 +583,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/features'
     | '/forgot-password'
+    | '/guardian-setup'
     | '/privacy'
     | '/profile-screen'
     | '/security'
@@ -570,6 +605,7 @@ export interface FileRouteTypes {
     | '/download/android'
     | '/download/ios'
     | '/email/unsubscribe'
+    | '/guardian-consent/$token'
     | '/admin/'
     | '/admin/user/$userId'
     | '/api/public/auth-login'
@@ -581,6 +617,7 @@ export interface FileRouteTypes {
     | '/tribe/join/$code'
     | '/api/public/hooks/cleanup-expired-messages'
     | '/api/public/hooks/cleanup-expired-statuses'
+    | '/api/public/hooks/guardian-monthly-reminder'
     | '/api/public/hooks/retention-sweep'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -598,6 +635,7 @@ export interface RootRouteChildren {
   FaqRoute: typeof FaqRoute
   FeaturesRoute: typeof FeaturesRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
+  GuardianSetupRoute: typeof GuardianSetupRoute
   PrivacyRoute: typeof PrivacyRoute
   ProfileScreenRoute: typeof ProfileScreenRoute
   SecurityRoute: typeof SecurityRoute
@@ -616,6 +654,7 @@ export interface RootRouteChildren {
   DownloadAndroidRoute: typeof DownloadAndroidRoute
   DownloadIosRoute: typeof DownloadIosRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
+  GuardianConsentTokenRoute: typeof GuardianConsentTokenRoute
   ApiPublicAuthLoginRoute: typeof ApiPublicAuthLoginRoute
   ApiPublicAuthOtpRoute: typeof ApiPublicAuthOtpRoute
   ApiPublicDownloadApkRoute: typeof ApiPublicDownloadApkRoute
@@ -625,6 +664,7 @@ export interface RootRouteChildren {
   TribeJoinCodeRoute: typeof TribeJoinCodeRoute
   ApiPublicHooksCleanupExpiredMessagesRoute: typeof ApiPublicHooksCleanupExpiredMessagesRoute
   ApiPublicHooksCleanupExpiredStatusesRoute: typeof ApiPublicHooksCleanupExpiredStatusesRoute
+  ApiPublicHooksGuardianMonthlyReminderRoute: typeof ApiPublicHooksGuardianMonthlyReminderRoute
   ApiPublicHooksRetentionSweepRoute: typeof ApiPublicHooksRetentionSweepRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -705,6 +745,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/guardian-setup': {
+      id: '/guardian-setup'
+      path: '/guardian-setup'
+      fullPath: '/guardian-setup'
+      preLoaderRoute: typeof GuardianSetupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/forgot-password': {
       id: '/forgot-password'
       path: '/forgot-password'
@@ -767,6 +814,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/guardian-consent/$token': {
+      id: '/guardian-consent/$token'
+      path: '/guardian-consent/$token'
+      fullPath: '/guardian-consent/$token'
+      preLoaderRoute: typeof GuardianConsentTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/email/unsubscribe': {
       id: '/email/unsubscribe'
@@ -943,6 +997,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksRetentionSweepRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/guardian-monthly-reminder': {
+      id: '/api/public/hooks/guardian-monthly-reminder'
+      path: '/api/public/hooks/guardian-monthly-reminder'
+      fullPath: '/api/public/hooks/guardian-monthly-reminder'
+      preLoaderRoute: typeof ApiPublicHooksGuardianMonthlyReminderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/cleanup-expired-statuses': {
       id: '/api/public/hooks/cleanup-expired-statuses'
       path: '/api/public/hooks/cleanup-expired-statuses'
@@ -987,6 +1048,7 @@ const rootRouteChildren: RootRouteChildren = {
   FaqRoute: FaqRoute,
   FeaturesRoute: FeaturesRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
+  GuardianSetupRoute: GuardianSetupRoute,
   PrivacyRoute: PrivacyRoute,
   ProfileScreenRoute: ProfileScreenRoute,
   SecurityRoute: SecurityRoute,
@@ -1005,6 +1067,7 @@ const rootRouteChildren: RootRouteChildren = {
   DownloadAndroidRoute: DownloadAndroidRoute,
   DownloadIosRoute: DownloadIosRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
+  GuardianConsentTokenRoute: GuardianConsentTokenRoute,
   ApiPublicAuthLoginRoute: ApiPublicAuthLoginRoute,
   ApiPublicAuthOtpRoute: ApiPublicAuthOtpRoute,
   ApiPublicDownloadApkRoute: ApiPublicDownloadApkRoute,
@@ -1016,6 +1079,8 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicHooksCleanupExpiredMessagesRoute,
   ApiPublicHooksCleanupExpiredStatusesRoute:
     ApiPublicHooksCleanupExpiredStatusesRoute,
+  ApiPublicHooksGuardianMonthlyReminderRoute:
+    ApiPublicHooksGuardianMonthlyReminderRoute,
   ApiPublicHooksRetentionSweepRoute: ApiPublicHooksRetentionSweepRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
