@@ -141,7 +141,16 @@ export default function SignUpPage() {
       try {
         await recordMarketingConsent({ data: { optIn: marketingOptIn, source: 'signup' } });
       } catch {}
-      router({ to: '/complete-profile', replace: true });
+      // Route Indian minors (<18) into the guardian consent flow first.
+      const ageOf = (iso: string) => {
+        const d = new Date(iso); const t = new Date();
+        let a = t.getFullYear() - d.getFullYear();
+        const m = t.getMonth() - d.getMonth();
+        if (m < 0 || (m === 0 && t.getDate() < d.getDate())) a--;
+        return a;
+      };
+      const isMinorIndian = countryCode === '+91' && ageOf(dob) < 18;
+      router({ to: isMinorIndian ? '/guardian-setup' : '/complete-profile', replace: true });
     } catch (err: any) {
       setError(err.message || 'Verification failed. Please try again.');
     } finally {
