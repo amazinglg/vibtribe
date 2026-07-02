@@ -29,6 +29,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as GuardianConsentTokenRouteImport } from './routes/guardian-consent.$token'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as DownloadIosRouteImport } from './routes/download.ios'
 import { Route as DownloadAndroidRouteImport } from './routes/download.android'
@@ -156,6 +157,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminRoute,
+} as any)
+const GuardianConsentTokenRoute = GuardianConsentTokenRouteImport.update({
+  id: '/guardian-consent/$token',
+  path: '/guardian-consent/$token',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
   id: '/email/unsubscribe',
@@ -336,6 +342,7 @@ export interface FileRoutesByFullPath {
   '/download/android': typeof DownloadAndroidRoute
   '/download/ios': typeof DownloadIosRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/guardian-consent/$token': typeof GuardianConsentTokenRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
@@ -384,6 +391,7 @@ export interface FileRoutesByTo {
   '/download/android': typeof DownloadAndroidRoute
   '/download/ios': typeof DownloadIosRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/guardian-consent/$token': typeof GuardianConsentTokenRoute
   '/admin': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
@@ -434,6 +442,7 @@ export interface FileRoutesById {
   '/download/android': typeof DownloadAndroidRoute
   '/download/ios': typeof DownloadIosRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/guardian-consent/$token': typeof GuardianConsentTokenRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
@@ -485,6 +494,7 @@ export interface FileRouteTypes {
     | '/download/android'
     | '/download/ios'
     | '/email/unsubscribe'
+    | '/guardian-consent/$token'
     | '/admin/'
     | '/admin/user/$userId'
     | '/api/public/auth-login'
@@ -533,6 +543,7 @@ export interface FileRouteTypes {
     | '/download/android'
     | '/download/ios'
     | '/email/unsubscribe'
+    | '/guardian-consent/$token'
     | '/admin'
     | '/admin/user/$userId'
     | '/api/public/auth-login'
@@ -582,6 +593,7 @@ export interface FileRouteTypes {
     | '/download/android'
     | '/download/ios'
     | '/email/unsubscribe'
+    | '/guardian-consent/$token'
     | '/admin/'
     | '/admin/user/$userId'
     | '/api/public/auth-login'
@@ -629,6 +641,7 @@ export interface RootRouteChildren {
   DownloadAndroidRoute: typeof DownloadAndroidRoute
   DownloadIosRoute: typeof DownloadIosRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
+  GuardianConsentTokenRoute: typeof GuardianConsentTokenRoute
   ApiPublicAuthLoginRoute: typeof ApiPublicAuthLoginRoute
   ApiPublicAuthOtpRoute: typeof ApiPublicAuthOtpRoute
   ApiPublicDownloadApkRoute: typeof ApiPublicDownloadApkRoute
@@ -787,6 +800,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/guardian-consent/$token': {
+      id: '/guardian-consent/$token'
+      path: '/guardian-consent/$token'
+      fullPath: '/guardian-consent/$token'
+      preLoaderRoute: typeof GuardianConsentTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/email/unsubscribe': {
       id: '/email/unsubscribe'
@@ -1026,6 +1046,7 @@ const rootRouteChildren: RootRouteChildren = {
   DownloadAndroidRoute: DownloadAndroidRoute,
   DownloadIosRoute: DownloadIosRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
+  GuardianConsentTokenRoute: GuardianConsentTokenRoute,
   ApiPublicAuthLoginRoute: ApiPublicAuthLoginRoute,
   ApiPublicAuthOtpRoute: ApiPublicAuthOtpRoute,
   ApiPublicDownloadApkRoute: ApiPublicDownloadApkRoute,
