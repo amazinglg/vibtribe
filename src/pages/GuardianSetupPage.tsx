@@ -8,13 +8,14 @@ import {
   submitGuardianDetails,
   verifyGuardianEmailOtp,
   getMyGuardianStatus,
+  resendGuardianOtp,
 } from '@/lib/guardian.functions'
 
 type Status = {
   id: string
   guardian_name: string
-  guardian_email: string
-  guardian_mobile: string | null
+  guardian_email_masked: string | null
+  guardian_mobile_masked: string | null
   relationship: string
   email_verified_at: string | null
   consented_at: string | null
@@ -99,15 +100,7 @@ export default function GuardianSetupPage() {
     if (!status) return
     setError(''); setOk(''); setSaving(true)
     try {
-      // Re-submit with existing details to regenerate OTP
-      await submitGuardianDetails({
-        data: {
-          guardianName: status.guardian_name,
-          guardianEmail: status.guardian_email,
-          guardianMobile: status.guardian_mobile || '',
-          relationship: status.relationship as any,
-        },
-      })
+      await resendGuardianOtp()
       setOk('A fresh code has been emailed to your guardian.')
     } catch (e: any) {
       setError(e?.message || 'Could not resend code')
