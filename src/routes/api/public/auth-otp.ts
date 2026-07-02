@@ -318,6 +318,18 @@ export const Route = createFileRoute('/api/public/auth-otp')({
           }
 
           // Persist real_email + extras on profile
+          // If Indian (+91) minor (<18), mark pending_guardian so the app
+          // routes them into the guardian consent flow.
+          let ageYears = 999
+          try {
+            const [y, m, d] = payload.dob.split('-').map(n => parseInt(n, 10))
+            const dobD = new Date(Date.UTC(y, m - 1, d))
+            const now = new Date()
+            ageYears = now.getUTCFullYear() - dobD.getUTCFullYear()
+            const anniv = new Date(Date.UTC(now.getUTCFullYear(), dobD.getUTCMonth(), dobD.getUTCDate()))
+            if (now < anniv) ageYears -= 1
+          } catch {}
+          const isMinorIndian = payload.countryCode === '+91' && ageYears < 18
           await supabase
             .from('user_profiles')
             .update({
@@ -325,6 +337,7 @@ export const Route = createFileRoute('/api/public/auth-otp')({
               country_code: payload.countryCode,
               ...(payload.username ? { username: payload.username } : {}),
               dob: payload.dob,
+              ...(isMinorIndian ? { account_status: 'pending_guardian' } : {}),
             })
             .eq('id', created.user.id)
 
