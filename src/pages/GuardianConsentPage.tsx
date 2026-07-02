@@ -112,7 +112,7 @@ export default function GuardianConsentPage() {
               </div>
               <button onClick={revoke} disabled={saving}
                 className="w-full py-3 rounded-xl border border-red-500/40 text-red-300 hover:bg-red-500/10">
-                {saving ? 'Working\u2026' : 'Withdraw my consent'}
+                {saving ? 'Working…' : 'Withdraw my consent'}
               </button>
               {ok && <div className="text-vt-green text-sm mt-3 text-center">{ok}</div>}
             </>
@@ -129,12 +129,12 @@ export default function GuardianConsentPage() {
               </div>
               <label className="flex items-start gap-2 mb-3 text-sm text-foreground cursor-pointer">
                 <input type="checkbox" checked={acknowledged} onChange={e => setAcknowledged(e.target.checked)} className="mt-1 accent-primary"/>
-                <span>I confirm I am {displayMinor}\u2019s parent or legal guardian and I consent to their use of VibTribe.</span>
+                <span>I confirm I am {displayMinor}’s parent or legal guardian and I consent to their use of VibTribe.</span>
               </label>
               {error && <div className="flex items-center gap-2 text-red-400 text-sm mb-2"><AlertCircle size={16}/>{error}</div>}
               <button onClick={consent} disabled={saving || !acknowledged}
                 className="w-full py-3 rounded-xl gradient-primary text-white font-semibold disabled:opacity-50">
-                {saving ? 'Recording\u2026' : 'I consent'}
+                {saving ? 'Recording…' : 'I consent'}
               </button>
             </>
           )}

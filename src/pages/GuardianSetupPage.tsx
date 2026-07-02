@@ -60,7 +60,7 @@ export default function GuardianSetupPage() {
 
   const handleSubmitDetails = async (e: React.FormEvent) => {
     e.preventDefault(); setError(''); setOk('')
-    if (!name.trim() || name.trim().length < 2) return setError('Please enter your guardian\u2019s full name')
+    if (!name.trim() || name.trim().length < 2) return setError('Please enter your guardian’s full name')
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return setError('Please enter a valid guardian email')
     if (mobile.replace(/\D/g, '').length < 7) return setError('Please enter a valid guardian mobile number')
     setSaving(true)
@@ -73,7 +73,7 @@ export default function GuardianSetupPage() {
           relationship,
         },
       })
-      setOk('We\u2019ve emailed a 6-digit code to your guardian. Ask them to share it with you.')
+      setOk('We’ve emailed a 6-digit code to your guardian. Ask them to share it with you.')
       await refresh()
     } catch (e: any) {
       setError(e?.message || 'Could not send OTP')
@@ -87,7 +87,7 @@ export default function GuardianSetupPage() {
     try {
       const res = await verifyGuardianEmailOtp({ data: { code: otp } })
       if (!(res as any)?.ok) { setError('That code is invalid or expired. Please resend.'); return }
-      setOk('Guardian email verified! We\u2019ve emailed your guardian a consent request link.')
+      setOk('Guardian email verified! We’ve emailed your guardian a consent request link.')
       setOtp('')
       await refresh()
     } catch (e: any) {
@@ -140,7 +140,7 @@ export default function GuardianSetupPage() {
           </div>
           <h1 className="font-bold text-xl text-foreground mb-1 text-center">Set up guardian consent</h1>
           <p className="text-muted-foreground text-sm mb-5 text-center">
-            Because you\u2019re under 18, an adult guardian must approve your VibTribe account before you can chat, call or post.
+            Because you’re under 18, an adult guardian must approve your VibTribe account before you can chat, call or post.
           </p>
 
           {loading ? (
@@ -160,10 +160,10 @@ export default function GuardianSetupPage() {
               <Mail className="text-primary mx-auto mb-2" size={40} />
               <div className="font-semibold text-foreground mb-1">Waiting for your guardian</div>
               <div className="text-sm text-muted-foreground mb-1">
-                We\u2019ve emailed <span className="text-foreground font-medium">{status?.guardian_email}</span> a consent request link.
+                We’ve emailed <span className="text-foreground font-medium">{status?.guardian_email}</span> a consent request link.
               </div>
               <div className="text-xs text-muted-foreground mb-4">
-                Once they click \u201cI consent\u201d, you\u2019ll get access here automatically.
+                Once they click \u201cI consent\u201d, you’ll get access here automatically.
               </div>
               <button onClick={refresh} className="w-full py-3 rounded-xl border border-border text-foreground flex items-center justify-center gap-2">
                 <RefreshCw size={16}/> Check status
@@ -189,7 +189,7 @@ export default function GuardianSetupPage() {
               </button>
               <button type="button" onClick={handleResend} disabled={saving}
                 className="w-full py-2 text-xs text-muted-foreground hover:text-foreground">
-                Didn\u2019t receive it? Resend
+                Didn’t receive it? Resend
               </button>
             </form>
           ) : (
@@ -237,7 +237,7 @@ export default function GuardianSetupPage() {
                 {saving ? <Loader2 className="animate-spin" size={16}/> : null} Send verification code to guardian
               </button>
               <p className="text-[11px] text-muted-foreground text-center leading-relaxed">
-                We\u2019ll email your guardian a 6-digit code plus a consent link. Both steps are required by India\u2019s DPDP Act. You can view or withdraw consent anytime.
+                We’ll email your guardian a 6-digit code plus a consent link. Both steps are required by India’s DPDP Act. You can view or withdraw consent anytime.
               </p>
             </form>
           )}
