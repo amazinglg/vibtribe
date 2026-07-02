@@ -55,6 +55,7 @@ import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/e
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicHooksRetentionSweepRouteImport } from './routes/api/public/hooks/retention-sweep'
+import { Route as ApiPublicHooksGuardianMonthlyReminderRouteImport } from './routes/api/public/hooks/guardian-monthly-reminder'
 import { Route as ApiPublicHooksCleanupExpiredStatusesRouteImport } from './routes/api/public/hooks/cleanup-expired-statuses'
 import { Route as ApiPublicHooksCleanupExpiredMessagesRouteImport } from './routes/api/public/hooks/cleanup-expired-messages'
 
@@ -298,6 +299,12 @@ const ApiPublicHooksRetentionSweepRoute =
     path: '/api/public/hooks/retention-sweep',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksGuardianMonthlyReminderRoute =
+  ApiPublicHooksGuardianMonthlyReminderRouteImport.update({
+    id: '/api/public/hooks/guardian-monthly-reminder',
+    path: '/api/public/hooks/guardian-monthly-reminder',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksCleanupExpiredStatusesRoute =
   ApiPublicHooksCleanupExpiredStatusesRouteImport.update({
     id: '/api/public/hooks/cleanup-expired-statuses',
@@ -354,6 +361,7 @@ export interface FileRoutesByFullPath {
   '/tribe/join/$code': typeof TribeJoinCodeRoute
   '/api/public/hooks/cleanup-expired-messages': typeof ApiPublicHooksCleanupExpiredMessagesRoute
   '/api/public/hooks/cleanup-expired-statuses': typeof ApiPublicHooksCleanupExpiredStatusesRoute
+  '/api/public/hooks/guardian-monthly-reminder': typeof ApiPublicHooksGuardianMonthlyReminderRoute
   '/api/public/hooks/retention-sweep': typeof ApiPublicHooksRetentionSweepRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -403,6 +411,7 @@ export interface FileRoutesByTo {
   '/tribe/join/$code': typeof TribeJoinCodeRoute
   '/api/public/hooks/cleanup-expired-messages': typeof ApiPublicHooksCleanupExpiredMessagesRoute
   '/api/public/hooks/cleanup-expired-statuses': typeof ApiPublicHooksCleanupExpiredStatusesRoute
+  '/api/public/hooks/guardian-monthly-reminder': typeof ApiPublicHooksGuardianMonthlyReminderRoute
   '/api/public/hooks/retention-sweep': typeof ApiPublicHooksRetentionSweepRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -454,6 +463,7 @@ export interface FileRoutesById {
   '/tribe/join/$code': typeof TribeJoinCodeRoute
   '/api/public/hooks/cleanup-expired-messages': typeof ApiPublicHooksCleanupExpiredMessagesRoute
   '/api/public/hooks/cleanup-expired-statuses': typeof ApiPublicHooksCleanupExpiredStatusesRoute
+  '/api/public/hooks/guardian-monthly-reminder': typeof ApiPublicHooksGuardianMonthlyReminderRoute
   '/api/public/hooks/retention-sweep': typeof ApiPublicHooksRetentionSweepRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -506,6 +516,7 @@ export interface FileRouteTypes {
     | '/tribe/join/$code'
     | '/api/public/hooks/cleanup-expired-messages'
     | '/api/public/hooks/cleanup-expired-statuses'
+    | '/api/public/hooks/guardian-monthly-reminder'
     | '/api/public/hooks/retention-sweep'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -555,6 +566,7 @@ export interface FileRouteTypes {
     | '/tribe/join/$code'
     | '/api/public/hooks/cleanup-expired-messages'
     | '/api/public/hooks/cleanup-expired-statuses'
+    | '/api/public/hooks/guardian-monthly-reminder'
     | '/api/public/hooks/retention-sweep'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -605,6 +617,7 @@ export interface FileRouteTypes {
     | '/tribe/join/$code'
     | '/api/public/hooks/cleanup-expired-messages'
     | '/api/public/hooks/cleanup-expired-statuses'
+    | '/api/public/hooks/guardian-monthly-reminder'
     | '/api/public/hooks/retention-sweep'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -651,6 +664,7 @@ export interface RootRouteChildren {
   TribeJoinCodeRoute: typeof TribeJoinCodeRoute
   ApiPublicHooksCleanupExpiredMessagesRoute: typeof ApiPublicHooksCleanupExpiredMessagesRoute
   ApiPublicHooksCleanupExpiredStatusesRoute: typeof ApiPublicHooksCleanupExpiredStatusesRoute
+  ApiPublicHooksGuardianMonthlyReminderRoute: typeof ApiPublicHooksGuardianMonthlyReminderRoute
   ApiPublicHooksRetentionSweepRoute: typeof ApiPublicHooksRetentionSweepRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -983,6 +997,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksRetentionSweepRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/guardian-monthly-reminder': {
+      id: '/api/public/hooks/guardian-monthly-reminder'
+      path: '/api/public/hooks/guardian-monthly-reminder'
+      fullPath: '/api/public/hooks/guardian-monthly-reminder'
+      preLoaderRoute: typeof ApiPublicHooksGuardianMonthlyReminderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/cleanup-expired-statuses': {
       id: '/api/public/hooks/cleanup-expired-statuses'
       path: '/api/public/hooks/cleanup-expired-statuses'
@@ -1058,6 +1079,8 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicHooksCleanupExpiredMessagesRoute,
   ApiPublicHooksCleanupExpiredStatusesRoute:
     ApiPublicHooksCleanupExpiredStatusesRoute,
+  ApiPublicHooksGuardianMonthlyReminderRoute:
+    ApiPublicHooksGuardianMonthlyReminderRoute,
   ApiPublicHooksRetentionSweepRoute: ApiPublicHooksRetentionSweepRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
