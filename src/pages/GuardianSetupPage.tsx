@@ -153,7 +153,7 @@ export default function GuardianSetupPage() {
               <Mail className="text-primary mx-auto mb-2" size={40} />
               <div className="font-semibold text-foreground mb-1">Waiting for your guardian</div>
               <div className="text-sm text-muted-foreground mb-1">
-                We’ve emailed <span className="text-foreground font-medium">{status?.guardian_email}</span> a consent request link.
+                We’ve emailed <span className="text-foreground font-medium">{status?.guardian_email_masked}</span> a consent request link.
               </div>
               <div className="text-xs text-muted-foreground mb-4">
                 Once they click “I consent”, you’ll get access here automatically.
@@ -165,7 +165,7 @@ export default function GuardianSetupPage() {
           ) : awaitingOtp ? (
             <form onSubmit={handleVerifyOtp} className="space-y-4">
               <div className="text-sm text-muted-foreground">
-                We emailed a 6-digit code to <span className="text-foreground font-medium">{status?.guardian_email}</span>.
+                We emailed a 6-digit code to <span className="text-foreground font-medium">{status?.guardian_email_masked}</span>.
                 Ask your guardian to share it with you and enter it below.
               </div>
               <div>
