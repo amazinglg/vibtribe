@@ -133,6 +133,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     scripts: [
       {
+        // Paint the brand-dark background on the very first frame so iOS
+        // PWA / Safari / Android WebView never flash white while the CSS
+        // bundle is still parsing. Runs before styles.css loads.
+        children:
+          "document.documentElement.style.background='#070a1b';document.documentElement.style.colorScheme='dark';",
+      },
+      {
         children:
           "(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-K5LZB9ML');",
       },
@@ -157,11 +164,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" style={{ background: "#070a1b", colorScheme: "dark" }}>
       <head>
         <HeadContent />
       </head>
-      <body>
+      <body style={{ background: "#070a1b", margin: 0 }}>
         <noscript>
           <iframe
             src="https://www.googletagmanager.com/ns.html?id=GTM-K5LZB9ML"
