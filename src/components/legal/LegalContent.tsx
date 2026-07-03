@@ -16,8 +16,14 @@ export function TermsConditionsContent() {
       <h2 className="text-lg font-semibold mt-6">1. Acceptance of Terms</h2>
       <p>By creating an account or using VibTribe ("the App", "we", "us", "our"), you agree to these Terms &amp; Conditions. Use of the App is also governed by our <Link to="/privacy" className="text-primary underline">Privacy Policy</Link>, which is a separate document. If you do not agree with either, you must not use the App.</p>
 
-      <h2 className="text-lg font-semibold mt-6">2. Eligibility</h2>
-      <p>You must be at least <strong>13 years of age</strong> to create an account or use VibTribe. By signing up you confirm that you are 13 years or older, that the information you provide (including your date of birth) is accurate, and that you are legally permitted to use the service. Accounts found to belong to users under 13 will be terminated. Users under the age of majority in their jurisdiction must have permission from a parent or legal guardian to use the service.</p>
+      <h2 className="text-lg font-semibold mt-6">2. Eligibility &amp; Age</h2>
+      <p>VibTribe applies a strict age policy:</p>
+      <ul className="list-disc pl-5 space-y-1">
+        <li><strong>Under 13:</strong> sign-up is <strong>blocked</strong>. You must not create or use an account. Any account discovered to belong to a user under 13 will be terminated and the associated data deleted.</li>
+        <li><strong>13 to 17 (inclusive):</strong> you may sign up, but the account remains restricted until your parent or legal guardian completes verifiable consent via the guardian consent flow, as required by §9 of India\u2019s Digital Personal Data Protection Act, 2023. Your guardian may withdraw consent at any time, which will restrict your account.</li>
+        <li><strong>18 and above:</strong> you may sign up and use the app directly.</li>
+      </ul>
+      <p>By signing up you confirm that the information you provide (including your date of birth) is accurate and that you are legally permitted to use the service. When you turn 18, the guardian consent flow is automatically retired and any minor-related restrictions are lifted; the historical consent record is retained for audit purposes.</p>
 
       <h2 className="text-lg font-semibold mt-6">3. Your Account</h2>
       <ul className="list-disc pl-5 space-y-1">
