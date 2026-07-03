@@ -306,6 +306,7 @@ export default function ChatListPanel() {
     const onResume = () => { loadChats(); };
     window.addEventListener('vt-app-resumed', onResume);
     window.addEventListener('vt-network-online', onResume);
+    window.addEventListener('vt-tribe-avatar-updated', onResume);
     // Immediate refresh when this user marks/unmarks a chat as secure —
     // realtime can lag a beat on slow networks and we want the chat list
     // to update without needing to close and reopen the app.
@@ -325,6 +326,7 @@ export default function ChatListPanel() {
       supabase.removeChannel(channel);
       window.removeEventListener('vt-app-resumed', onResume);
       window.removeEventListener('vt-network-online', onResume);
+      window.removeEventListener('vt-tribe-avatar-updated', onResume);
       window.removeEventListener('vt-secure-changed', onSecureChanged);
       document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('focus', onVisibility);
@@ -377,7 +379,7 @@ export default function ChatListPanel() {
         const { data: gData } = await supabase
           .from('chats')
           .select(`
-            id, chat_type, is_group, name, updated_at,
+            id, chat_type, is_group, name, avatar_url, updated_at,
             messages(id, content, created_at, sender_id, message_status)
           `)
           .in('id', groupIds)
@@ -465,6 +467,7 @@ export default function ChatListPanel() {
             name: gname,
             avatar: gname[0]?.toUpperCase() || 'G',
             avatarColor: avatarColors[chatList.length % avatarColors.length],
+            avatarUrl: (chat as any).avatar_url || null,
             lastMessage: gPreview,
             time: lastMsg ? formatTime(lastMsg.created_at) : '',
             rawTime: lastMsg?.created_at || (chat as any).updated_at,

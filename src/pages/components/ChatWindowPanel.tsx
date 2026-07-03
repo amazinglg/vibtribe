@@ -591,8 +591,34 @@ export default function ChatWindowPanel() {
             ));
           }
         )
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'chats', filter: `id=eq.${selectedChatId}` },
+          (payload) => {
+            const updatedChat = payload.new as any;
+            if (!updatedChat?.is_group) return;
+            const groupName = updatedChat.name || contact?.name || 'Group';
+            setContact(prev => ({
+              ...(prev || {
+                name: groupName,
+                avatar: groupName[0]?.toUpperCase() || 'G',
+                online: false,
+                lastSeen: 'Tribe chat',
+                isContact: false,
+              }),
+              name: groupName,
+              avatar: groupName[0]?.toUpperCase() || 'G',
+              avatarUrl: updatedChat.avatar_url || null,
+            }));
+          }
+        )
         .subscribe();
+      const onTribeAvatarUpdated = (event: Event) => {
+        const detail = (event as CustomEvent<{ chatId?: string; avatarUrl?: string | null }>).detail;
+        if (detail?.chatId !== selectedChatId) return;
+        setContact(prev => prev ? { ...prev, avatarUrl: detail.avatarUrl || null } : prev);
+      };
+      window.addEventListener('vt-tribe-avatar-updated', onTribeAvatarUpdated);
       return () => {
+        window.removeEventListener('vt-tribe-avatar-updated', onTribeAvatarUpdated);
         supabase.removeChannel(channel);
       };
     }
@@ -676,6 +702,7 @@ export default function ChatWindowPanel() {
           setContact({
             name: groupName,
             avatar: groupName[0]?.toUpperCase() || 'G',
+            avatarUrl: (chat as any).avatar_url || null,
             online: false,
             lastSeen: 'Tribe chat',
             publicKey: undefined,
