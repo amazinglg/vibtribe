@@ -28,6 +28,7 @@ import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import com.getcapacitor.BridgeActivity;
+import com.getcapacitor.BridgeWebChromeClient;
 import com.getcapacitor.WebViewListener;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -133,7 +134,7 @@ public class MainActivity extends BridgeActivity {
                     // separately via the Capacitor plugins (see usePermissions).
                     // Without this delegation, getUserMedia() inside the WebView
                     // is silently denied even after the OS permission is granted.
-                    webView.setWebChromeClient(new WebChromeClient() {
+                    webView.setWebChromeClient(new BridgeWebChromeClient(getBridge()) {
                         @Override
                         public void onPermissionRequest(final PermissionRequest request) {
                             runOnUiThread(() -> grantWebRtcPermissions(request));
