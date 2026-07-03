@@ -19,6 +19,7 @@ import { createClient } from '@/lib/supabase/client';
 import EncryptionPinModal from '@/components/EncryptionPinModal';
 import EmailVerificationGate from '@/components/EmailVerificationGate';
 import MarketingConsentGate from '@/components/MarketingConsentGate';
+import MinorGuardianGate from '@/components/MinorGuardianGate';
 import { hasLocalPrivateKey, hasServerKey } from '@/lib/encryption';
 import { useT } from '@/contexts/LanguageContext';
 import { initNativeBridge, isNativeWrapper, registerNativePushNotifications } from '@/lib/native-bridge';
@@ -441,6 +442,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       )}
       <EmailVerificationGate />
       <MarketingConsentGate />
+      <MinorGuardianGate />
     </div>
     </CallProvider>
   );
