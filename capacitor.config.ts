@@ -34,15 +34,20 @@ const config: CapacitorConfig = {
   android: {
     allowMixedContent: false,
     webContentsDebuggingEnabled: false,
+    // Paint the WebView with the brand background so the ~1–2s remote
+    // page-load gap after the native splash hides never flashes black.
+    backgroundColor: '#070a1b',
   },
   plugins: {
     SplashScreen: {
       backgroundColor: '#070a1b',
-      // Hide the native launch logo immediately so the in-app video splash
-      // (SplashAnimation.tsx) is the first thing the user sees instead of
-      // the static logo flashing first.
+      // Keep the branded native launcher screen (app icon on brand-dark
+      // background) visible while the WebView fetches the remote PWA over
+      // HTTPS. Without this bridge the WebView paints black for ~2 seconds
+      // on cold start before the in-app SplashAnimation video mounts.
       launchAutoHide: true,
-      launchShowDuration: 0,
+      launchShowDuration: 2500,
+      launchFadeOutDuration: 350,
       androidScaleType: 'CENTER_CROP',
       showSpinner: false,
       splashFullScreen: true,
