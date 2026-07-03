@@ -21,7 +21,7 @@ import { Globe } from 'lucide-react';
 import { appConfirm } from '@/components/ui/AppDialog';
 import { recordMarketingConsent } from '@/lib/marketing.functions';
 import ConsentCenter from '@/components/ConsentCenter';
-import { isCapacitorWrapper, pickNativeImages } from '@/lib/native-bridge';
+import { isCapacitorWrapper, pickNativeImage, pickNativeImages } from '@/lib/native-bridge';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -225,10 +225,13 @@ export default function ProfileContent() {
     if (isCapacitorWrapper()) {
       (async () => {
         const picked = await pickNativeImages({ multiple: false, readData: true });
-        if (!picked.length) return;
-        const file = await nativeAvatarPickToFile(picked[0]);
+        let file = picked.length ? await nativeAvatarPickToFile(picked[0]) : null;
         if (!file) {
-          toast.error('Could not read the selected photo. Please try again.');
+          const dataUrl = await pickNativeImage({ source: 'photos', quality: 85 });
+          if (dataUrl) file = await dataUrlToFile(dataUrl, `profile-photo-${Date.now()}.jpg`, 'image/jpeg');
+        }
+        if (!file) {
+          avatarInputRef.current?.click();
           return;
         }
         handleAvatarFile(file);
