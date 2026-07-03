@@ -2489,10 +2489,16 @@ export default function ChatWindowPanel() {
         ref={imageInputRef}
         type="file"
         accept="image/*,video/*"
+        multiple
         className="hidden"
         onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) queueAttachment(file, 'image');
+          const files = Array.from(e.target.files || []);
+          if (files.length) {
+            queueAttachments(files.map(file => ({
+              file,
+              type: file.type?.startsWith('video/') ? 'video' : 'image',
+            })));
+          }
           e.target.value = '';
         }}
       />
@@ -2500,10 +2506,11 @@ export default function ChatWindowPanel() {
         ref={fileInputRef}
         type="file"
         accept="*/*"
+        multiple
         className="hidden"
         onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) queueAttachment(file, 'file');
+          const files = Array.from(e.target.files || []);
+          if (files.length) queueAttachments(files.map(file => ({ file, type: 'file' })));
           e.target.value = '';
         }}
       />
