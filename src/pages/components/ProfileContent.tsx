@@ -726,26 +726,25 @@ export default function ProfileContent() {
                 )}
               </button>
             </div>
-            <label
-              className={`absolute bottom-0 right-0 w-7 h-7 gradient-cyan rounded-full flex items-center justify-center border-2 border-background text-white transition-all ${uploadingAvatar ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-80 cursor-pointer'}`}
+            <button
+              type="button"
+              className={`absolute bottom-0 right-0 z-20 w-7 h-7 gradient-cyan rounded-full flex items-center justify-center border-2 border-background text-white transition-all ${uploadingAvatar ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-80 cursor-pointer'}`}
               title="Change profile photo"
               aria-label="Change profile photo"
-              aria-disabled={uploadingAvatar}
-              onClick={(e) => {
-                if (uploadingAvatar) e.preventDefault();
-              }}
+              disabled={uploadingAvatar}
+              onClick={() => { if (!uploadingAvatar) avatarInputRef.current?.click(); }}
             >
               {uploadingAvatar ? <RefreshCw size={12} className="animate-spin" /> : <Camera size={12} />}
-              <input
-                ref={avatarInputRef}
-                type="file"
-                accept="image/*"
-                disabled={uploadingAvatar}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                aria-label="Choose profile photo"
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleAvatarFile(f); }}
-              />
-            </label>
+            </button>
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/*"
+              disabled={uploadingAvatar}
+              className="hidden"
+              aria-label="Choose profile photo"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleAvatarFile(f); }}
+            />
           </div>
 
           {/* Info */}

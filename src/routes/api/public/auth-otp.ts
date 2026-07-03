@@ -317,9 +317,6 @@ export const Route = createFileRoute('/api/public/auth-otp')({
             return jerr(400, createErr?.message || 'Failed to create account')
           }
 
-          // Persist real_email + extras on profile
-          // If Indian (+91) minor (<18), mark pending_guardian so the app
-          // routes them into the guardian consent flow.
           let ageYears = 999
           try {
             const [y, m, d] = payload.dob.split('-').map(n => parseInt(n, 10))
@@ -329,7 +326,14 @@ export const Route = createFileRoute('/api/public/auth-otp')({
             const anniv = new Date(Date.UTC(now.getUTCFullYear(), dobD.getUTCMonth(), dobD.getUTCDate()))
             if (now < anniv) ageYears -= 1
           } catch {}
-          const isMinorIndian = payload.countryCode === '+91' && ageYears < 18
+          // Hard-block sign-up for anyone under 13, regardless of country.
+          if (ageYears < 13) {
+            // Roll back the freshly-created auth user so the account isn't left dangling.
+            try { await supabase.auth.admin.deleteUser(created.user.id) } catch {}
+            return jerr(403, 'You must be at least 13 years old to sign up on VibTribe.')
+          }
+          // Users aged 13-17 must go through the guardian consent flow (all countries).
+          const isMinor = ageYears < 18
           await supabase
             .from('user_profiles')
             .update({
@@ -337,7 +341,7 @@ export const Route = createFileRoute('/api/public/auth-otp')({
               country_code: payload.countryCode,
               ...(payload.username ? { username: payload.username } : {}),
               dob: payload.dob,
-              ...(isMinorIndian ? { account_status: 'pending_guardian' } : {}),
+              ...(isMinor ? { account_status: 'pending_guardian' } : {}),
             })
             .eq('id', created.user.id)
 

@@ -11,13 +11,19 @@ import { Link } from '@tanstack/react-router';
 export function TermsConditionsContent() {
   return (
     <div className="space-y-4 text-sm leading-relaxed text-foreground/90">
-      <p className="text-muted-foreground">Last updated: 18 June 2026</p>
+      <p className="text-muted-foreground">Last updated: 3 July 2026</p>
 
       <h2 className="text-lg font-semibold mt-6">1. Acceptance of Terms</h2>
       <p>By creating an account or using VibTribe ("the App", "we", "us", "our"), you agree to these Terms &amp; Conditions. Use of the App is also governed by our <Link to="/privacy" className="text-primary underline">Privacy Policy</Link>, which is a separate document. If you do not agree with either, you must not use the App.</p>
 
-      <h2 className="text-lg font-semibold mt-6">2. Eligibility</h2>
-      <p>You must be at least <strong>13 years of age</strong> to create an account or use VibTribe. By signing up you confirm that you are 13 years or older, that the information you provide (including your date of birth) is accurate, and that you are legally permitted to use the service. Accounts found to belong to users under 13 will be terminated. Users under the age of majority in their jurisdiction must have permission from a parent or legal guardian to use the service.</p>
+      <h2 className="text-lg font-semibold mt-6">2. Eligibility &amp; Age</h2>
+      <p>VibTribe applies a strict age policy:</p>
+      <ul className="list-disc pl-5 space-y-1">
+        <li><strong>Under 13:</strong> sign-up is <strong>blocked</strong>. You must not create or use an account. Any account discovered to belong to a user under 13 will be terminated and the associated data deleted.</li>
+        <li><strong>13 to 17 (inclusive):</strong> you may sign up, but the account remains restricted until your parent or legal guardian completes verifiable consent via the guardian consent flow, as required by §9 of India\u2019s Digital Personal Data Protection Act, 2023. Your guardian may withdraw consent at any time, which will restrict your account.</li>
+        <li><strong>18 and above:</strong> you may sign up and use the app directly.</li>
+      </ul>
+      <p>By signing up you confirm that the information you provide (including your date of birth) is accurate and that you are legally permitted to use the service. When you turn 18, the guardian consent flow is automatically retired and any minor-related restrictions are lifted; the historical consent record is retained for audit purposes.</p>
 
       <h2 className="text-lg font-semibold mt-6">3. Your Account</h2>
       <ul className="list-disc pl-5 space-y-1">
@@ -84,14 +90,14 @@ export function TermsConditionsContent() {
 export function PrivacyPolicyContent() {
   return (
     <div className="space-y-4 text-sm leading-relaxed text-foreground/90">
-      <p className="text-muted-foreground">Last updated: 18 June 2026</p>
+      <p className="text-muted-foreground">Last updated: 3 July 2026</p>
       <p>VibTribe is a privacy-first messaging app. This Privacy Policy explains exactly what data we collect when you sign up and use the service, how we use it, who can see it, and the choices you have. It is a separate document from our <Link to="/terms" className="text-primary underline">Terms &amp; Conditions</Link>, although both must be accepted to use the App.</p>
 
       <h3 className="text-base font-semibold mt-6">A. Information We Collect About You</h3>
       <p>The following list is exhaustive — these are every field we store about a user account in our database:</p>
       <ul className="list-disc pl-5 space-y-1">
         <li><strong>Full name</strong> — required at signup; shown to other users you chat with.</li>
-        <li><strong>Date of birth</strong> — required at signup, used only to verify you are 13 or older. Kept <strong>strictly confidential</strong>: visible only to you and our authorised admin team; never shown to other users.</li>
+        <li><strong>Date of birth</strong> — required at signup, used to enforce our age policy: sign-up is blocked under 13; users aged 13–17 must complete verifiable guardian consent; users 18+ sign up directly. Kept <strong>strictly confidential</strong>: visible only to you and our authorised admin team; never shown to other users.</li>
         <li><strong>Mobile number &amp; country code</strong> — required at signup; serves as your unique identifier and is visible to other users so they can add you as a contact.</li>
         <li><strong>Email address</strong> — required at signup. Used for OTP verification, password recovery, support replies, and (only if you opted in) promotional emails. Your email is visible only to you and our admins, never to other users.</li>
         <li><strong>Password</strong> — stored only as a salted bcrypt hash. We never see or store your plaintext password.</li>
@@ -159,8 +165,17 @@ export function PrivacyPolicyContent() {
         <li>Storage / file access — to attach files you choose.</li>
       </ul>
 
-      <h3 className="text-base font-semibold mt-6">H. Children</h3>
-      <p>The App is intended for users aged 13 and above. We do not knowingly collect data from anyone under 13. If we learn that we have collected data from a user under 13, we will delete that account and associated data promptly. Minors should use the service only with appropriate parental or guardian consent where required by local law.</p>
+      <h3 className="text-base font-semibold mt-6">H. Children &amp; Guardian Consent</h3>
+      <p>Sign-up is <strong>blocked for anyone under 13</strong>. We do not knowingly collect data from anyone under 13; if we learn that we have, we will delete the account and associated data promptly.</p>
+      <p>Users aged <strong>13 to 17</strong> may sign up, but the account is restricted to the guardian setup flow (<code>/guardian-setup</code>) until a parent or legal guardian:</p>
+      <ul className="list-disc pl-5 space-y-1">
+        <li>receives a one-time verification code by email;</li>
+        <li>reviews the consent request page (linked from the email) and explicitly ticks the confirmation box; and</li>
+        <li>submits verifiable consent under §9 of India\u2019s Digital Personal Data Protection Act, 2023.</li>
+      </ul>
+      <p>Until consent is recorded the minor cannot chat, call, share media, or use age-restricted features. The guardian can withdraw consent at any time from the same link, which immediately restricts the minor\u2019s account. We send the guardian a monthly reminder email while the account is active.</p>
+      <p>When the user turns 18, the guardian consent flow is <strong>automatically retired</strong>, monthly reminders stop, and all minor-related restrictions are lifted. The historical consent record is retained for compliance audit purposes.</p>
+      <p>Users aged <strong>18 and above</strong> may sign up and use the app directly.</p>
 
       <h3 className="text-base font-semibold mt-6">I. Your Rights</h3>
       <p>Subject to applicable law (including India's Digital Personal Data Protection Act, 2023, and the EU/UK GDPR where applicable) you may request access, correction, export, or deletion of your personal data, and may withdraw consent at any time. Contact the Grievance Officer at <strong>Labhansh.garg@outlook.com</strong>.</p>

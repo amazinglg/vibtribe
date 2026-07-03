@@ -25,6 +25,8 @@ interface PlatformUser {
   profile_completed: boolean;
   is_suspended?: boolean;
   login_attempts?: number;
+  dob?: string | null;
+  country_code?: string | null;
 }
 
 interface Stats {
@@ -97,7 +99,7 @@ export default function AdminPage() {
   const [ticketFilter, setTicketFilter] = useState<'all' | 'open' | 'inprocess' | 'solved'>('all');
   const [unreadTickets, setUnreadTickets] = useState(0);
   const [forceLogoutLoading, setForceLogoutLoading] = useState<string | null>(null);
-  const [userFilter, setUserFilter] = useState<'all' | 'active' | 'suspended' | 'blocked' | 'admins' | 'online'>('all');
+  const [userFilter, setUserFilter] = useState<'all' | 'active' | 'suspended' | 'blocked' | 'admins' | 'online' | 'under_age'>('all');
   const [userSort, setUserSort] = useState<'recent' | 'name' | 'lastActive'>('recent');
 
   // Ticket thread state
@@ -442,6 +444,21 @@ export default function AdminPage() {
   const isOnline = (u: PlatformUser) =>
     !!u.last_seen && (Date.now() - new Date(u.last_seen).getTime()) < TWO_MIN;
 
+  const ageYearsOf = (iso?: string | null): number | null => {
+    if (!iso) return null;
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return null;
+    const now = new Date();
+    let age = now.getFullYear() - d.getFullYear();
+    const m = now.getMonth() - d.getMonth();
+    if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--;
+    return age;
+  };
+  const isUnderAge = (u: PlatformUser) => {
+    const a = ageYearsOf(u.dob);
+    return a !== null && a < 18;
+  };
+
   const filteredUsers = users
     .filter(u => {
       const q = search.trim().toLowerCase();
@@ -457,6 +474,7 @@ export default function AdminPage() {
       if (userFilter === 'blocked') return u.account_status === 'blocked';
       if (userFilter === 'admins') return u.role === 'admin' || (u as any).is_master_admin;
       if (userFilter === 'online') return isOnline(u);
+      if (userFilter === 'under_age') return isUnderAge(u);
       return true;
     })
     .sort((a, b) => {
@@ -476,6 +494,7 @@ export default function AdminPage() {
     blocked: users.filter(u => u.account_status === 'blocked').length,
     admins: users.filter(u => u.role === 'admin' || (u as any).is_master_admin).length,
     online: users.filter(isOnline).length,
+    under_age: users.filter(isUnderAge).length,
   };
 
   const relTime = (iso?: string) => {
@@ -687,6 +706,7 @@ export default function AdminPage() {
                   { key: 'active', label: 'Active' },
                   { key: 'suspended', label: 'Suspended' },
                   { key: 'admins', label: 'Admins' },
+                  { key: 'under_age', label: 'Under Age' },
                 ] as const).map(f => (
                   <button
                     key={f.key}
