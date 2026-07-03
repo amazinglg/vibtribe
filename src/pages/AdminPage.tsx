@@ -444,6 +444,21 @@ export default function AdminPage() {
   const isOnline = (u: PlatformUser) =>
     !!u.last_seen && (Date.now() - new Date(u.last_seen).getTime()) < TWO_MIN;
 
+  const ageYearsOf = (iso?: string | null): number | null => {
+    if (!iso) return null;
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return null;
+    const now = new Date();
+    let age = now.getFullYear() - d.getFullYear();
+    const m = now.getMonth() - d.getMonth();
+    if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--;
+    return age;
+  };
+  const isUnderAge = (u: PlatformUser) => {
+    const a = ageYearsOf(u.dob);
+    return a !== null && a < 18;
+  };
+
   const filteredUsers = users
     .filter(u => {
       const q = search.trim().toLowerCase();
@@ -459,6 +474,7 @@ export default function AdminPage() {
       if (userFilter === 'blocked') return u.account_status === 'blocked';
       if (userFilter === 'admins') return u.role === 'admin' || (u as any).is_master_admin;
       if (userFilter === 'online') return isOnline(u);
+      if (userFilter === 'under_age') return isUnderAge(u);
       return true;
     })
     .sort((a, b) => {
@@ -478,6 +494,7 @@ export default function AdminPage() {
     blocked: users.filter(u => u.account_status === 'blocked').length,
     admins: users.filter(u => u.role === 'admin' || (u as any).is_master_admin).length,
     online: users.filter(isOnline).length,
+    under_age: users.filter(isUnderAge).length,
   };
 
   const relTime = (iso?: string) => {
