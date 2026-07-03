@@ -1098,7 +1098,37 @@ export default function ChatWindowPanel() {
     if (!raw.trim() || !selectedChatId || !user) return;
     // Strict E2E: 1:1 chats require both sides to have set up encryption.
     if (chatType !== 'group') {
-      if (!contact?.publicKey) {
+      // If the contact object hasn't loaded yet (race with chat open), or the
+      // cached publicKey is stale, do a fresh lookup against the recipient's
+      // profile before failing. This avoids false "hasn't enabled encryption"
+      // toasts when the user hits Send while the header still shows "Loading…".
+      let effectivePubKey = contact?.publicKey || contactPubKeyRef.current || null;
+      if (!effectivePubKey) {
+        try {
+          const { data: chatRow } = await supabase
+            .from('chats')
+            .select('participant_one, participant_two')
+            .eq('id', selectedChatId)
+            .maybeSingle();
+          const otherId = chatRow
+            ? (chatRow.participant_one === user.id ? chatRow.participant_two : chatRow.participant_one)
+            : null;
+          if (otherId) {
+            const { data: prof } = await supabase
+              .from('user_profiles')
+              .select('public_key, full_name')
+              .eq('id', otherId)
+              .maybeSingle();
+            if (prof?.public_key) {
+              effectivePubKey = prof.public_key;
+              contactPubKeyRef.current = prof.public_key;
+              setE2eEnabled(true);
+              setContact((c) => c ? { ...c, publicKey: prof.public_key } : c);
+            }
+          }
+        } catch {}
+      }
+      if (!effectivePubKey) {
         toast.error(`${contact?.name || 'This user'} hasn't enabled encryption yet. Ask them to set up their encryption PIN.`);
         return;
       }
