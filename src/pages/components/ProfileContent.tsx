@@ -21,6 +21,7 @@ import { Globe } from 'lucide-react';
 import { appConfirm } from '@/components/ui/AppDialog';
 import { recordMarketingConsent } from '@/lib/marketing.functions';
 import ConsentCenter from '@/components/ConsentCenter';
+import { isCapacitorWrapper, pickNativeImage, pickNativeImages } from '@/lib/native-bridge';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -159,12 +160,85 @@ export default function ProfileContent() {
   const [cropOpen, setCropOpen] = useState(false);
   const [avatarPreviewOpen, setAvatarPreviewOpen] = useState(false);
 
+  const dataUrlToFile = async (dataUrl: string, filename: string, fallbackMime = 'image/jpeg'): Promise<File | null> => {
+    try {
+      const match = /^data:([^;,]+)?(?:;charset=[^;,]+)?;base64,(.*)$/s.exec(dataUrl);
+      const mime = match?.[1] || fallbackMime;
+      const base64 = match?.[2] || dataUrl;
+      const binary = atob(base64.replace(/\s/g, ''));
+      const chunkSize = 8192;
+      const chunks: Uint8Array[] = [];
+      for (let offset = 0; offset < binary.length; offset += chunkSize) {
+        const slice = binary.slice(offset, offset + chunkSize);
+        const bytes = new Uint8Array(slice.length);
+        for (let i = 0; i < slice.length; i++) bytes[i] = slice.charCodeAt(i);
+        chunks.push(bytes);
+      }
+      const blob = new Blob(chunks, { type: mime });
+      return new File([blob], filename, { type: mime });
+    } catch (e) {
+      console.warn('[VibTribe] avatar dataUrlToFile failed', e);
+      return null;
+    }
+  };
+
+  const nativeAvatarPickToFile = async (picked: any): Promise<File | null> => {
+    try {
+      const mime = picked?.mime || picked?.mimeType || picked?.blob?.type || 'image/jpeg';
+      const name = picked?.name || `profile-photo-${Date.now()}.jpg`;
+      if (picked?.blob) return new File([picked.blob], name, { type: mime });
+      if (picked?.dataUrl) return dataUrlToFile(picked.dataUrl, name, mime);
+      if (picked?.data) {
+        const url = picked.data.startsWith('data:') ? picked.data : `data:${mime};base64,${picked.data}`;
+        return dataUrlToFile(url, name, mime);
+      }
+      if (picked?.path) {
+        let res: Response | null = null;
+        try { res = await fetch(picked.path); } catch {}
+        if (!res?.ok) {
+          try {
+            const { Capacitor } = await import('@capacitor/core');
+            res = await fetch(Capacitor.convertFileSrc(picked.path));
+          } catch {}
+        }
+        if (res?.ok) {
+          const blob = await res.blob();
+          return new File([blob], name, { type: mime || blob.type || 'image/jpeg' });
+        }
+      }
+    } catch (e) {
+      console.warn('[VibTribe] native avatar file conversion failed', e);
+    }
+    return null;
+  };
+
   const handleAvatarFile = (file: File) => {
     if (!file || !user) return;
     if (!file.type.startsWith('image/')) { toast.error('Please choose an image'); return; }
     if (file.size > 10 * 1024 * 1024) { toast.error('Image must be under 10MB'); return; }
     setPendingAvatarFile(file);
     setCropOpen(true);
+  };
+
+  const handleAvatarPickerClick = () => {
+    if (uploadingAvatar) return;
+    if (isCapacitorWrapper()) {
+      (async () => {
+        const picked = await pickNativeImages({ multiple: false, readData: true });
+        let file = picked.length ? await nativeAvatarPickToFile(picked[0]) : null;
+        if (!file) {
+          const dataUrl = await pickNativeImage({ source: 'photos', quality: 85 });
+          if (dataUrl) file = await dataUrlToFile(dataUrl, `profile-photo-${Date.now()}.jpg`, 'image/jpeg');
+        }
+        if (!file) {
+          avatarInputRef.current?.click();
+          return;
+        }
+        handleAvatarFile(file);
+      })();
+      return;
+    }
+    avatarInputRef.current?.click();
   };
 
   const handleCroppedAvatar = async (blob: Blob) => {
@@ -732,7 +806,7 @@ export default function ProfileContent() {
               title="Change profile photo"
               aria-label="Change profile photo"
               disabled={uploadingAvatar}
-              onClick={() => { if (!uploadingAvatar) avatarInputRef.current?.click(); }}
+              onClick={handleAvatarPickerClick}
             >
               {uploadingAvatar ? <RefreshCw size={12} className="animate-spin" /> : <Camera size={12} />}
             </button>

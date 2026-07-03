@@ -128,17 +128,9 @@ public class MainActivity extends BridgeActivity {
                 @Override
                 public void onPageLoaded(WebView webView) {
                     injectSafeAreaCssVars();
-                    // Auto-grant in-WebView mic/camera permission requests.
-                    // The OS-level RECORD_AUDIO / CAMERA permission is requested
-                    // separately via the Capacitor plugins (see usePermissions).
-                    // Without this delegation, getUserMedia() inside the WebView
-                    // is silently denied even after the OS permission is granted.
-                    webView.setWebChromeClient(new WebChromeClient() {
-                        @Override
-                        public void onPermissionRequest(final PermissionRequest request) {
-                            runOnUiThread(() -> grantWebRtcPermissions(request));
-                        }
-                    });
+                    // Keep Capacitor's default BridgeWebChromeClient installed.
+                    // It owns <input type="file"> / gallery callbacks. Replacing
+                    // it here breaks file chooser results after the gallery closes.
                     // Anchor `download` attribute is a no-op in the WebView
                     // by default. Intercept downloads here so user-initiated
                     // file saves from the chat actually land on disk.
