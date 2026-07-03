@@ -97,7 +97,7 @@ export function PrivacyPolicyContent() {
       <p>The following list is exhaustive — these are every field we store about a user account in our database:</p>
       <ul className="list-disc pl-5 space-y-1">
         <li><strong>Full name</strong> — required at signup; shown to other users you chat with.</li>
-        <li><strong>Date of birth</strong> — required at signup, used only to verify you are 13 or older. Kept <strong>strictly confidential</strong>: visible only to you and our authorised admin team; never shown to other users.</li>
+        <li><strong>Date of birth</strong> — required at signup, used to enforce our age policy: sign-up is blocked under 13; users aged 13–17 must complete verifiable guardian consent; users 18+ sign up directly. Kept <strong>strictly confidential</strong>: visible only to you and our authorised admin team; never shown to other users.</li>
         <li><strong>Mobile number &amp; country code</strong> — required at signup; serves as your unique identifier and is visible to other users so they can add you as a contact.</li>
         <li><strong>Email address</strong> — required at signup. Used for OTP verification, password recovery, support replies, and (only if you opted in) promotional emails. Your email is visible only to you and our admins, never to other users.</li>
         <li><strong>Password</strong> — stored only as a salted bcrypt hash. We never see or store your plaintext password.</li>
