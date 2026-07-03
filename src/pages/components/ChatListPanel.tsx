@@ -306,6 +306,7 @@ export default function ChatListPanel() {
     const onResume = () => { loadChats(); };
     window.addEventListener('vt-app-resumed', onResume);
     window.addEventListener('vt-network-online', onResume);
+    window.addEventListener('vt-tribe-avatar-updated', onResume);
     // Immediate refresh when this user marks/unmarks a chat as secure —
     // realtime can lag a beat on slow networks and we want the chat list
     // to update without needing to close and reopen the app.
@@ -325,6 +326,7 @@ export default function ChatListPanel() {
       supabase.removeChannel(channel);
       window.removeEventListener('vt-app-resumed', onResume);
       window.removeEventListener('vt-network-online', onResume);
+      window.removeEventListener('vt-tribe-avatar-updated', onResume);
       window.removeEventListener('vt-secure-changed', onSecureChanged);
       document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('focus', onVisibility);
