@@ -2467,7 +2467,7 @@ export default function ChatWindowPanel() {
       {/* Attachment Preview Modal — confirm before upload/send */}
       {pendingAttachment && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          className="fixed inset-0 z-[1800] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
           onClick={cancelPendingAttachment}
         >
           <div
