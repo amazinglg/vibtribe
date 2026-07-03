@@ -12,7 +12,7 @@ import PermissionPrompt from '@/components/PermissionPrompt';
 import { usePermissions } from '@/hooks/usePermissions';
 import { sendPushNotification } from '@/lib/pushNotifications';
 import { useCall } from '@/components/CallProvider';
-import { isCapacitorWrapper, isNativeWrapper, pickNativeImage, pickNativeFiles, requestNativeCameraPermission } from '@/lib/native-bridge';
+import { isCapacitorWrapper, isNativeWrapper, pickNativeImage, pickNativeFiles, pickNativeMedia, requestNativeCameraPermission } from '@/lib/native-bridge';
 import { TrustLockService, onTrustLockScreenshot, isIOS, isIosPwa } from '@/lib/trust-lock-service';
 import { toast } from 'sonner';
 import { EMOJI_CATEGORIES, type EmojiCategoryKey } from '@/lib/emojis';
@@ -368,11 +368,11 @@ export default function ChatWindowPanel() {
   };
   const [showInfo, setShowInfo] = useState(false);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
-  const [pendingAttachment, setPendingAttachment] = useState<{
+  const [pendingAttachments, setPendingAttachments] = useState<Array<{
     file: File;
     type: 'image' | 'file' | 'audio' | 'video';
     previewUrl?: string;
-  } | null>(null);
+  }>>([]);
   const [secureModalOpen, setSecureModalOpen] = useState(false);
   const [showUnsecureConfirm, setShowUnsecureConfirm] = useState(false);
   const [hoveredMsg, setHoveredMsg] = useState<string | null>(null);
@@ -1348,22 +1348,32 @@ export default function ChatWindowPanel() {
     }
     const previewUrl = (type === 'image' || type === 'video' || type === 'audio')
       ? URL.createObjectURL(file) : undefined;
-    setPendingAttachment({ file, type, previewUrl });
+    setPendingAttachments(prev => [...prev, { file, type, previewUrl }]);
+  };
+
+  const queueAttachments = (items: Array<{ file: File; type: 'image' | 'file' | 'audio' | 'video' }>) => {
+    items.forEach(({ file, type }) => queueAttachment(file, type));
   };
 
   const cancelPendingAttachment = () => {
-    if (pendingAttachment?.previewUrl) URL.revokeObjectURL(pendingAttachment.previewUrl);
-    setPendingAttachment(null);
+    pendingAttachments.forEach(item => {
+      if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+    });
+    setPendingAttachments([]);
   };
 
   const sendPendingAttachment = async () => {
-    if (!pendingAttachment) return;
-    const { file, type, previewUrl } = pendingAttachment;
-    setPendingAttachment(null);
+    if (pendingAttachments.length === 0) return;
+    const items = pendingAttachments;
+    setPendingAttachments([]);
     try {
-      await handleFileAttach(file, type);
+      for (const { file, type } of items) {
+        await handleFileAttach(file, type);
+      }
     } finally {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      items.forEach(({ previewUrl }) => {
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+      });
     }
   };
 
@@ -1377,19 +1387,21 @@ export default function ChatWindowPanel() {
         // Use the system file picker so users can choose photos OR videos.
         // Camera.getPhoto() is image-only — videos never appeared in the
         // gallery sheet before.
-        const picked = await pickNativeFiles({
-          multiple: false,
-          types: ['image/*', 'video/*'],
-        });
+        const picked = await pickNativeMedia({ multiple: true, readData: true });
         if (!picked.length) return;
-        const p = picked[0];
-        const renamed = await nativePickedFileToFile(p);
-        if (!renamed) {
+        const converted = await Promise.all(picked.map(async (p) => {
+          const file = await nativePickedFileToFile(p);
+          if (!file) return null;
+          const kind: 'image' | 'video' = (p.mime || file.type || '').startsWith('video/') ? 'video' : 'image';
+          return { file, type: kind };
+        }));
+        const readable = converted.filter(Boolean) as Array<{ file: File; type: 'image' | 'video' }>;
+        if (readable.length === 0) {
           toast.error('Could not read the selected photo. Please try again.');
           return;
         }
-        const kind: 'image' | 'video' = (p.mime || '').startsWith('video/') ? 'video' : 'image';
-        queueAttachment(renamed, kind);
+        if (readable.length < picked.length) toast.error('Some selected media could not be read.');
+        queueAttachments(readable);
       })();
       return;
     }
