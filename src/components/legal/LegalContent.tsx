@@ -165,8 +165,17 @@ export function PrivacyPolicyContent() {
         <li>Storage / file access — to attach files you choose.</li>
       </ul>
 
-      <h3 className="text-base font-semibold mt-6">H. Children</h3>
-      <p>The App is intended for users aged 13 and above. We do not knowingly collect data from anyone under 13. If we learn that we have collected data from a user under 13, we will delete that account and associated data promptly. Minors should use the service only with appropriate parental or guardian consent where required by local law.</p>
+      <h3 className="text-base font-semibold mt-6">H. Children &amp; Guardian Consent</h3>
+      <p>Sign-up is <strong>blocked for anyone under 13</strong>. We do not knowingly collect data from anyone under 13; if we learn that we have, we will delete the account and associated data promptly.</p>
+      <p>Users aged <strong>13 to 17</strong> may sign up, but the account is restricted to the guardian setup flow (<code>/guardian-setup</code>) until a parent or legal guardian:</p>
+      <ul className="list-disc pl-5 space-y-1">
+        <li>receives a one-time verification code by email;</li>
+        <li>reviews the consent request page (linked from the email) and explicitly ticks the confirmation box; and</li>
+        <li>submits verifiable consent under §9 of India\u2019s Digital Personal Data Protection Act, 2023.</li>
+      </ul>
+      <p>Until consent is recorded the minor cannot chat, call, share media, or use age-restricted features. The guardian can withdraw consent at any time from the same link, which immediately restricts the minor\u2019s account. We send the guardian a monthly reminder email while the account is active.</p>
+      <p>When the user turns 18, the guardian consent flow is <strong>automatically retired</strong>, monthly reminders stop, and all minor-related restrictions are lifted. The historical consent record is retained for compliance audit purposes.</p>
+      <p>Users aged <strong>18 and above</strong> may sign up and use the app directly.</p>
 
       <h3 className="text-base font-semibold mt-6">I. Your Rights</h3>
       <p>Subject to applicable law (including India's Digital Personal Data Protection Act, 2023, and the EU/UK GDPR where applicable) you may request access, correction, export, or deletion of your personal data, and may withdraw consent at any time. Contact the Grievance Officer at <strong>Labhansh.garg@outlook.com</strong>.</p>
