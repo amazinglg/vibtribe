@@ -12,7 +12,7 @@ import PermissionPrompt from '@/components/PermissionPrompt';
 import { usePermissions } from '@/hooks/usePermissions';
 import { sendPushNotification } from '@/lib/pushNotifications';
 import { useCall } from '@/components/CallProvider';
-import { isNativeWrapper, pickNativeImage, pickNativeFiles, requestNativeCameraPermission } from '@/lib/native-bridge';
+import { isCapacitorWrapper, isNativeWrapper, pickNativeImage, pickNativeFiles, requestNativeCameraPermission } from '@/lib/native-bridge';
 import { TrustLockService, onTrustLockScreenshot, isIOS, isIosPwa } from '@/lib/trust-lock-service';
 import { toast } from 'sonner';
 import { EMOJI_CATEGORIES, type EmojiCategoryKey } from '@/lib/emojis';
@@ -1286,6 +1286,47 @@ export default function ChatWindowPanel() {
     }
   };
 
+  const nativePickedFileToFile = async (picked: {
+    name: string;
+    mime: string;
+    dataUrl?: string;
+    blob?: Blob;
+    path?: string;
+  }): Promise<File | null> => {
+    try {
+      if (picked.blob) {
+        return new File([picked.blob], picked.name, {
+          type: picked.mime || picked.blob.type || 'application/octet-stream',
+        });
+      }
+      if (picked.dataUrl) {
+        const file = await dataUrlToFile(picked.dataUrl, picked.name);
+        return file ? new File([file], picked.name, { type: picked.mime || file.type }) : null;
+      }
+      if (picked.path) {
+        let res: Response | null = null;
+        try {
+          res = await fetch(picked.path);
+        } catch {}
+        if (!res?.ok) {
+          try {
+            const { Capacitor } = await import('@capacitor/core');
+            res = await fetch(Capacitor.convertFileSrc(picked.path));
+          } catch {}
+        }
+        if (res?.ok) {
+          const blob = await res.blob();
+          return new File([blob], picked.name, {
+            type: picked.mime || blob.type || 'application/octet-stream',
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('[VibTribe] nativePickedFileToFile failed', e);
+    }
+    return null;
+  };
+
   // Show the captured/selected file in a preview modal so the user can
   // confirm before sending. Replaces the previous fire-and-forget upload.
   const queueAttachment = (file: File, type: 'image' | 'file' | 'audio' | 'video') => {
@@ -1330,7 +1371,7 @@ export default function ChatWindowPanel() {
   // prompts for READ_MEDIA_IMAGES itself). On web we synchronously click the
   // hidden file input — any await before .click() loses gesture context.
   const handlePickPhotoVideo = () => {
-    if (isNativeWrapper()) {
+    if (isCapacitorWrapper()) {
       setShowAttachMenu(false);
       (async () => {
         // Use the system file picker so users can choose photos OR videos.
@@ -1342,9 +1383,11 @@ export default function ChatWindowPanel() {
         });
         if (!picked.length) return;
         const p = picked[0];
-        const file = await dataUrlToFile(p.dataUrl, p.name);
-        if (!file) return;
-        const renamed = new File([file], p.name, { type: p.mime });
+        const renamed = await nativePickedFileToFile(p);
+        if (!renamed) {
+          toast.error('Could not read the selected photo. Please try again.');
+          return;
+        }
         const kind: 'image' | 'video' = (p.mime || '').startsWith('video/') ? 'video' : 'image';
         queueAttachment(renamed, kind);
       })();
@@ -1355,7 +1398,7 @@ export default function ChatWindowPanel() {
   };
 
   const handlePickCamera = () => {
-    if (isNativeWrapper()) {
+    if (isCapacitorWrapper()) {
       setShowAttachMenu(false);
       (async () => {
         const perm = await requestNativeCameraPermission();
@@ -1375,16 +1418,17 @@ export default function ChatWindowPanel() {
   };
 
   const handlePickDocument = () => {
-    if (isNativeWrapper()) {
+    if (isCapacitorWrapper()) {
       setShowAttachMenu(false);
       (async () => {
         const picked = await pickNativeFiles({ multiple: false });
         if (!picked.length) return;
         const p = picked[0];
-        const file = await dataUrlToFile(p.dataUrl, p.name);
+        const file = await nativePickedFileToFile(p);
         if (file) {
-          const renamed = new File([file], p.name, { type: p.mime });
-          queueAttachment(renamed, 'file');
+          queueAttachment(file, 'file');
+        } else {
+          toast.error('Could not read the selected file. Please try again.');
         }
       })();
       return;

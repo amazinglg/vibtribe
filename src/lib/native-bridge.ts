@@ -175,6 +175,11 @@ export function isNativeWrapper(): boolean {
   return v === 'capacitor' || v === 'twa';
 }
 
+export function isCapacitorWrapper(): boolean {
+  if (typeof document === 'undefined') return false;
+  return document.documentElement.getAttribute('data-native') === 'capacitor';
+}
+
 /**
  * Request native camera permission via the Capacitor Camera plugin.
  * In a browser this returns 'prompt' — the caller should fall back to
@@ -335,15 +340,17 @@ export async function pickNativeImage(opts?: {
 }
 
 /**
- * Pick one or more files (any MIME) using the native system picker. Returns
- * an array of { name, mime, dataUrl } objects so the caller can convert each
- * one into a File via fetch(dataUrl).blob().
+ * Pick one or more files (any MIME) using the native system picker.
+ *
+ * Native Android/iOS usually returns base64 `data` when readData is enabled,
+ * while Web/PWA implementations return a `blob` instead. Keep both shapes so
+ * installed PWAs don't silently drop the selected file after the gallery closes.
  */
 export async function pickNativeFiles(opts?: {
   types?: string[];           // MIME filter, e.g. ['application/pdf']
   multiple?: boolean;
   readData?: boolean;          // include base64 data (default true)
-}): Promise<Array<{ name: string; mime: string; dataUrl: string }>> {
+}): Promise<Array<{ name: string; mime: string; dataUrl: string; blob?: Blob; path?: string; size?: number }>> {
   if (!isNativeWrapper()) return [];
   try {
     const { FilePicker } = await import('@capawesome/capacitor-file-picker');
@@ -352,14 +359,25 @@ export async function pickNativeFiles(opts?: {
       limit: opts?.multiple ? 0 : 1,
       readData: opts?.readData ?? true,
     } as unknown as Parameters<typeof FilePicker.pickFiles>[0]);
-    const files = (res?.files ?? []) as Array<{ name?: string; mimeType?: string; data?: string }>;
-    return files
-      .filter((f) => !!f.data)
-      .map((f) => ({
+    const files = (res?.files ?? []) as Array<{
+      name?: string;
+      mimeType?: string;
+      data?: string;
+      blob?: Blob;
+      path?: string;
+      size?: number;
+    }>;
+    return files.map((f) => {
+      const mime = f.mimeType || f.blob?.type || 'application/octet-stream';
+      return {
         name: f.name || `file-${Date.now()}`,
-        mime: f.mimeType || 'application/octet-stream',
-        dataUrl: `data:${f.mimeType || 'application/octet-stream'};base64,${f.data}`,
-      }));
+        mime,
+        dataUrl: f.data ? `data:${mime};base64,${f.data}` : '',
+        blob: f.blob,
+        path: f.path,
+        size: f.size,
+      };
+    });
   } catch (e) {
     console.warn('[VibTribe] pickNativeFiles failed', e);
     return [];
