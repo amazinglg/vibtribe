@@ -464,18 +464,25 @@ export default function ProfileContent() {
           .rpc('is_username_available', { _username: normalizedUsername });
         if (available === false) throw new Error('This username is already taken');
       }
-      // DOB validation: must be 18+ if provided
+      // DOB check: if under 18, save it but immediately route to guardian
+      // consent flow so the minor completes it right away.
+      let isMinor = false;
       if (dob) {
         const dobD = new Date(dob);
         const today = new Date();
         let age = today.getFullYear() - dobD.getFullYear();
         const m = today.getMonth() - dobD.getMonth();
         if (m < 0 || (m === 0 && today.getDate() < dobD.getDate())) age--;
-        if (age < 18) throw new Error('You must be at least 18 years old');
+        isMinor = age < 18;
       }
       await updateProfile({ full_name: displayName, bio, username: normalizedUsername || null, dob: dob || null } as any);
       setEditMode(false);
-      toast.success('Profile updated successfully ✓');
+      if (isMinor) {
+        toast.info("You're under 18 — please complete guardian consent to keep using VibTribe.");
+        router({ to: '/guardian-setup' as any });
+      } else {
+        toast.success('Profile updated successfully ✓');
+      }
     } catch (err: any) {
       toast.error(err.message || 'Failed to update profile');
     } finally {
