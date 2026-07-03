@@ -49,6 +49,31 @@ serve(async (req) => {
     if (!recipientId) return json({ error: 'recipient_user_id required' }, 400);
     if (recipientId === callerId) return json({ sent: 0, skipped: 'self' });
 
+    // Hard UUID check on both ids before any filter interpolation.
+    // Prevents PostgREST filter injection (e.g. a payload containing `,` or `)`
+    // that would otherwise escape the .or() clause and forge "allowed = true").
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!UUID_RE.test(String(recipientId))) {
+      return json({ error: 'Invalid recipient_user_id' }, 400);
+    }
+    if (chatId && !UUID_RE.test(String(chatId))) {
+      return json({ error: 'Invalid chat_id' }, 400);
+    }
+
+    // Per-caller push abuse cap: 120 pushes / 60s window.
+    try {
+      const { data: allowedByLimit } = await admin.rpc('rate_limit_hit', {
+        _key: `push:${callerId}`,
+        _max: 120,
+        _window_secs: 60,
+      });
+      if (allowedByLimit === false) {
+        return json({ error: 'Rate limit exceeded' }, 429);
+      }
+    } catch (e) {
+      console.warn('[push] rate_limit_hit failed', e);
+    }
+
     let allowed = false;
     if (chatId) {
       const { data: chat } = await admin

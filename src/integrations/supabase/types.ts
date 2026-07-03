@@ -1011,6 +1011,33 @@ export type Database = {
           },
         ]
       }
+      rate_limits: {
+        Row: {
+          count: number
+          created_at: string
+          expires_at: string
+          id: string
+          key: string
+          window_start: string
+        }
+        Insert: {
+          count?: number
+          created_at?: string
+          expires_at: string
+          id?: string
+          key: string
+          window_start: string
+        }
+        Update: {
+          count?: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          key?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       role_permissions: {
         Row: {
           allowed: boolean
@@ -2401,6 +2428,11 @@ export type Database = {
           totp_enabled: boolean
         }[]
       }
+      rate_limit_hit: {
+        Args: { _key: string; _max: number; _window_secs: number }
+        Returns: boolean
+      }
+      rate_limits_cleanup: { Args: never; Returns: undefined }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
