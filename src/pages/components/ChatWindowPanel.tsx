@@ -12,7 +12,7 @@ import PermissionPrompt from '@/components/PermissionPrompt';
 import { usePermissions } from '@/hooks/usePermissions';
 import { sendPushNotification } from '@/lib/pushNotifications';
 import { useCall } from '@/components/CallProvider';
-import { isCapacitorWrapper, isNativeWrapper, pickNativeImage, pickNativeFiles, requestNativeCameraPermission } from '@/lib/native-bridge';
+import { isCapacitorWrapper, isNativeWrapper, pickNativeImage, pickNativeFiles, pickNativeMedia, requestNativeCameraPermission } from '@/lib/native-bridge';
 import { TrustLockService, onTrustLockScreenshot, isIOS, isIosPwa } from '@/lib/trust-lock-service';
 import { toast } from 'sonner';
 import { EMOJI_CATEGORIES, type EmojiCategoryKey } from '@/lib/emojis';
@@ -368,11 +368,11 @@ export default function ChatWindowPanel() {
   };
   const [showInfo, setShowInfo] = useState(false);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
-  const [pendingAttachment, setPendingAttachment] = useState<{
+  const [pendingAttachments, setPendingAttachments] = useState<Array<{
     file: File;
     type: 'image' | 'file' | 'audio' | 'video';
     previewUrl?: string;
-  } | null>(null);
+  }>>([]);
   const [secureModalOpen, setSecureModalOpen] = useState(false);
   const [showUnsecureConfirm, setShowUnsecureConfirm] = useState(false);
   const [hoveredMsg, setHoveredMsg] = useState<string | null>(null);
@@ -1348,22 +1348,32 @@ export default function ChatWindowPanel() {
     }
     const previewUrl = (type === 'image' || type === 'video' || type === 'audio')
       ? URL.createObjectURL(file) : undefined;
-    setPendingAttachment({ file, type, previewUrl });
+    setPendingAttachments(prev => [...prev, { file, type, previewUrl }]);
+  };
+
+  const queueAttachments = (items: Array<{ file: File; type: 'image' | 'file' | 'audio' | 'video' }>) => {
+    items.forEach(({ file, type }) => queueAttachment(file, type));
   };
 
   const cancelPendingAttachment = () => {
-    if (pendingAttachment?.previewUrl) URL.revokeObjectURL(pendingAttachment.previewUrl);
-    setPendingAttachment(null);
+    pendingAttachments.forEach(item => {
+      if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+    });
+    setPendingAttachments([]);
   };
 
   const sendPendingAttachment = async () => {
-    if (!pendingAttachment) return;
-    const { file, type, previewUrl } = pendingAttachment;
-    setPendingAttachment(null);
+    if (pendingAttachments.length === 0) return;
+    const items = pendingAttachments;
+    setPendingAttachments([]);
     try {
-      await handleFileAttach(file, type);
+      for (const { file, type } of items) {
+        await handleFileAttach(file, type);
+      }
     } finally {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      items.forEach(({ previewUrl }) => {
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+      });
     }
   };
 
@@ -1377,19 +1387,21 @@ export default function ChatWindowPanel() {
         // Use the system file picker so users can choose photos OR videos.
         // Camera.getPhoto() is image-only — videos never appeared in the
         // gallery sheet before.
-        const picked = await pickNativeFiles({
-          multiple: false,
-          types: ['image/*', 'video/*'],
-        });
+        const picked = await pickNativeMedia({ multiple: true, readData: true });
         if (!picked.length) return;
-        const p = picked[0];
-        const renamed = await nativePickedFileToFile(p);
-        if (!renamed) {
+        const converted = await Promise.all(picked.map(async (p) => {
+          const file = await nativePickedFileToFile(p);
+          if (!file) return null;
+          const kind: 'image' | 'video' = (p.mime || file.type || '').startsWith('video/') ? 'video' : 'image';
+          return { file, type: kind };
+        }));
+        const readable = converted.filter(Boolean) as Array<{ file: File; type: 'image' | 'video' }>;
+        if (readable.length === 0) {
           toast.error('Could not read the selected photo. Please try again.');
           return;
         }
-        const kind: 'image' | 'video' = (p.mime || '').startsWith('video/') ? 'video' : 'image';
-        queueAttachment(renamed, kind);
+        if (readable.length < picked.length) toast.error('Some selected media could not be read.');
+        queueAttachments(readable);
       })();
       return;
     }
@@ -2477,10 +2489,16 @@ export default function ChatWindowPanel() {
         ref={imageInputRef}
         type="file"
         accept="image/*,video/*"
+        multiple
         className="hidden"
         onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) queueAttachment(file, 'image');
+          const files = Array.from(e.target.files || []);
+          if (files.length) {
+            queueAttachments(files.map(file => ({
+              file,
+              type: file.type?.startsWith('video/') ? 'video' : 'image',
+            })));
+          }
           e.target.value = '';
         }}
       />
@@ -2488,10 +2506,11 @@ export default function ChatWindowPanel() {
         ref={fileInputRef}
         type="file"
         accept="*/*"
+        multiple
         className="hidden"
         onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) queueAttachment(file, 'file');
+          const files = Array.from(e.target.files || []);
+          if (files.length) queueAttachments(files.map(file => ({ file, type: 'file' })));
           e.target.value = '';
         }}
       />
@@ -2509,7 +2528,7 @@ export default function ChatWindowPanel() {
       />
 
       {/* Attachment Preview Modal — confirm before upload/send */}
-      {pendingAttachment && (
+      {pendingAttachments.length > 0 && (
         <div
           className="fixed inset-0 z-[1800] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
           onClick={cancelPendingAttachment}
@@ -2519,7 +2538,9 @@ export default function ChatWindowPanel() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-foreground">Send attachment</h3>
+              <h3 className="text-sm font-semibold text-foreground">
+                {pendingAttachments.length === 1 ? 'Send attachment' : `Send ${pendingAttachments.length} attachments`}
+              </h3>
               <button
                 onClick={cancelPendingAttachment}
                 className="p-1 rounded-lg hover:bg-muted text-muted-foreground"
@@ -2529,44 +2550,60 @@ export default function ChatWindowPanel() {
               </button>
             </div>
 
-            <div className="flex items-center justify-center bg-muted/30 rounded-xl overflow-hidden mb-3 max-h-[60vh]">
-              {pendingAttachment.type === 'image' && pendingAttachment.previewUrl && (
-                <img
-                  src={pendingAttachment.previewUrl}
-                  alt="Preview"
-                  className="max-h-[60vh] w-auto object-contain"
-                />
-              )}
-              {pendingAttachment.type === 'video' && pendingAttachment.previewUrl && (
-                <video
-                  src={pendingAttachment.previewUrl}
-                  controls
-                  playsInline
-                  className="max-h-[60vh] w-auto"
-                />
-              )}
-              {pendingAttachment.type === 'audio' && pendingAttachment.previewUrl && (
-                <audio src={pendingAttachment.previewUrl} controls className="w-full p-4" />
-              )}
-              {pendingAttachment.type === 'file' && (
-                <div className="flex items-center gap-3 p-6 w-full">
-                  <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <FileText size={24} className="text-purple-400" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm font-medium text-foreground truncate">
-                      {pendingAttachment.file.name}
+            <div className={`grid gap-2 mb-3 max-h-[60vh] overflow-y-auto ${pendingAttachments.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+              {pendingAttachments.map((item, index) => (
+                <div key={`${item.file.name}-${item.file.size}-${index}`} className="flex items-center justify-center bg-muted/30 rounded-xl overflow-hidden min-h-32">
+                  {item.type === 'image' && item.previewUrl && (
+                    <img
+                      src={item.previewUrl}
+                      alt="Preview"
+                      className="max-h-[60vh] w-full object-contain"
+                    />
+                  )}
+                  {item.type === 'video' && item.previewUrl && (
+                    <video
+                      src={item.previewUrl}
+                      controls
+                      playsInline
+                      className="max-h-[60vh] w-full"
+                    />
+                  )}
+                  {item.type === 'audio' && item.previewUrl && (
+                    <audio src={item.previewUrl} controls className="w-full p-4" />
+                  )}
+                  {item.type === 'file' && (
+                    <div className="flex items-center gap-3 p-4 w-full">
+                      <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <FileText size={24} className="text-purple-400" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-medium text-foreground truncate">
+                          {item.file.name}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {(item.file.size / 1024).toFixed(1)} KB
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      {(pendingAttachment.file.size / 1024).toFixed(1)} KB
-                    </div>
-                  </div>
+                  )}
+                  {!item.previewUrl && item.type !== 'file' && (
+                    <div className="text-sm text-muted-foreground p-4">{item.file.name}</div>
+                  )}
                 </div>
-              )}
+              ))}
             </div>
 
-            <div className="text-xs text-muted-foreground mb-3 truncate">
-              {pendingAttachment.file.name}
+            <div className="space-y-1 mb-3">
+              {pendingAttachments.slice(0, 4).map((item, index) => (
+                <div key={`${item.file.name}-label-${index}`} className="text-xs text-muted-foreground truncate">
+                  {item.file.name}
+                </div>
+              ))}
+              {pendingAttachments.length > 4 && (
+                <div className="text-xs text-muted-foreground">
+                  +{pendingAttachments.length - 4} more
+                </div>
+              )}
             </div>
 
             <div className="flex items-center justify-end gap-2">
@@ -2581,7 +2618,7 @@ export default function ChatWindowPanel() {
                 className="px-4 py-2 rounded-xl text-sm font-medium bg-primary text-primary-foreground hover:opacity-90 transition-all flex items-center gap-2"
               >
                 <Send size={14} />
-                Send
+                {pendingAttachments.length === 1 ? 'Send' : `Send ${pendingAttachments.length}`}
               </button>
             </div>
           </div>

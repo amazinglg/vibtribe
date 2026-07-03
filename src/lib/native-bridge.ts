@@ -346,11 +346,44 @@ export async function pickNativeImage(opts?: {
  * while Web/PWA implementations return a `blob` instead. Keep both shapes so
  * installed PWAs don't silently drop the selected file after the gallery closes.
  */
+export type NativePickedFile = {
+  name: string;
+  mime: string;
+  dataUrl: string;
+  blob?: Blob;
+  path?: string;
+  size?: number;
+};
+
+function normalizePickedFiles(files: Array<{
+  name?: string;
+  mimeType?: string;
+  data?: string;
+  blob?: Blob;
+  path?: string;
+  size?: number;
+}>): NativePickedFile[] {
+  return files.map((f) => {
+    const mime = f.mimeType || f.blob?.type || 'application/octet-stream';
+    const dataUrl = f.data
+      ? (f.data.startsWith('data:') ? f.data : `data:${mime};base64,${f.data}`)
+      : '';
+    return {
+      name: f.name || `file-${Date.now()}`,
+      mime,
+      dataUrl,
+      blob: f.blob,
+      path: f.path,
+      size: f.size,
+    };
+  });
+}
+
 export async function pickNativeFiles(opts?: {
   types?: string[];           // MIME filter, e.g. ['application/pdf']
   multiple?: boolean;
   readData?: boolean;          // include base64 data (default true)
-}): Promise<Array<{ name: string; mime: string; dataUrl: string; blob?: Blob; path?: string; size?: number }>> {
+}): Promise<NativePickedFile[]> {
   if (!isNativeWrapper()) return [];
   try {
     const { FilePicker } = await import('@capawesome/capacitor-file-picker');
@@ -367,19 +400,40 @@ export async function pickNativeFiles(opts?: {
       path?: string;
       size?: number;
     }>;
-    return files.map((f) => {
-      const mime = f.mimeType || f.blob?.type || 'application/octet-stream';
-      return {
-        name: f.name || `file-${Date.now()}`,
-        mime,
-        dataUrl: f.data ? `data:${mime};base64,${f.data}` : '',
-        blob: f.blob,
-        path: f.path,
-        size: f.size,
-      };
-    });
+    return normalizePickedFiles(files);
   } catch (e) {
     console.warn('[VibTribe] pickNativeFiles failed', e);
+    return [];
+  }
+}
+
+/**
+ * Pick photos/videos from the native gallery. Uses FilePicker.pickMedia()
+ * instead of generic pickFiles() because Android gallery/photo URIs are not
+ * reliably readable through the generic path-fetch flow.
+ */
+export async function pickNativeMedia(opts?: {
+  multiple?: boolean;
+  readData?: boolean;
+}): Promise<NativePickedFile[]> {
+  if (!isNativeWrapper()) return [];
+  try {
+    const { FilePicker } = await import('@capawesome/capacitor-file-picker');
+    const res = await FilePicker.pickMedia({
+      limit: opts?.multiple ? 0 : 1,
+      readData: opts?.readData ?? true,
+    } as unknown as Parameters<typeof FilePicker.pickMedia>[0]);
+    const files = (res?.files ?? []) as Array<{
+      name?: string;
+      mimeType?: string;
+      data?: string;
+      blob?: Blob;
+      path?: string;
+      size?: number;
+    }>;
+    return normalizePickedFiles(files);
+  } catch (e) {
+    console.warn('[VibTribe] pickNativeMedia failed', e);
     return [];
   }
 }
