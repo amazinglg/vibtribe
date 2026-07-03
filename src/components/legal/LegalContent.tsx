@@ -11,7 +11,7 @@ import { Link } from '@tanstack/react-router';
 export function TermsConditionsContent() {
   return (
     <div className="space-y-4 text-sm leading-relaxed text-foreground/90">
-      <p className="text-muted-foreground">Last updated: 18 June 2026</p>
+      <p className="text-muted-foreground">Last updated: 3 July 2026</p>
 
       <h2 className="text-lg font-semibold mt-6">1. Acceptance of Terms</h2>
       <p>By creating an account or using VibTribe ("the App", "we", "us", "our"), you agree to these Terms &amp; Conditions. Use of the App is also governed by our <Link to="/privacy" className="text-primary underline">Privacy Policy</Link>, which is a separate document. If you do not agree with either, you must not use the App.</p>
@@ -90,7 +90,7 @@ export function TermsConditionsContent() {
 export function PrivacyPolicyContent() {
   return (
     <div className="space-y-4 text-sm leading-relaxed text-foreground/90">
-      <p className="text-muted-foreground">Last updated: 18 June 2026</p>
+      <p className="text-muted-foreground">Last updated: 3 July 2026</p>
       <p>VibTribe is a privacy-first messaging app. This Privacy Policy explains exactly what data we collect when you sign up and use the service, how we use it, who can see it, and the choices you have. It is a separate document from our <Link to="/terms" className="text-primary underline">Terms &amp; Conditions</Link>, although both must be accepted to use the App.</p>
 
       <h3 className="text-base font-semibold mt-6">A. Information We Collect About You</h3>
