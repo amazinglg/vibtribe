@@ -175,6 +175,11 @@ export function isNativeWrapper(): boolean {
   return v === 'capacitor' || v === 'twa';
 }
 
+export function isCapacitorWrapper(): boolean {
+  if (typeof document === 'undefined') return false;
+  return document.documentElement.getAttribute('data-native') === 'capacitor';
+}
+
 /**
  * Request native camera permission via the Capacitor Camera plugin.
  * In a browser this returns 'prompt' — the caller should fall back to
