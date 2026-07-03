@@ -25,6 +25,8 @@ interface PlatformUser {
   profile_completed: boolean;
   is_suspended?: boolean;
   login_attempts?: number;
+  dob?: string | null;
+  country_code?: string | null;
 }
 
 interface Stats {
@@ -97,7 +99,7 @@ export default function AdminPage() {
   const [ticketFilter, setTicketFilter] = useState<'all' | 'open' | 'inprocess' | 'solved'>('all');
   const [unreadTickets, setUnreadTickets] = useState(0);
   const [forceLogoutLoading, setForceLogoutLoading] = useState<string | null>(null);
-  const [userFilter, setUserFilter] = useState<'all' | 'active' | 'suspended' | 'blocked' | 'admins' | 'online'>('all');
+  const [userFilter, setUserFilter] = useState<'all' | 'active' | 'suspended' | 'blocked' | 'admins' | 'online' | 'under_age'>('all');
   const [userSort, setUserSort] = useState<'recent' | 'name' | 'lastActive'>('recent');
 
   // Ticket thread state
