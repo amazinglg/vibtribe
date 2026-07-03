@@ -316,6 +316,12 @@ export default function TribeDetailsSheet({ chatId, isOpen, onClose, onLeft }: P
       const url = pub.publicUrl;
       const { error: updErr } = await supabase.from('chats').update({ avatar_url: url }).eq('id', chatId);
       if (updErr) throw updErr;
+      setTribe(prev => prev ? { ...prev, avatar_url: url } : prev);
+      try {
+        window.dispatchEvent(new CustomEvent('vt-tribe-avatar-updated', {
+          detail: { chatId, avatarUrl: url },
+        }));
+      } catch {}
       toast.success('Tribe photo updated');
       load();
     } catch (err: any) {

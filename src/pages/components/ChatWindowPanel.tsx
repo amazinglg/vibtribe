@@ -676,6 +676,7 @@ export default function ChatWindowPanel() {
           setContact({
             name: groupName,
             avatar: groupName[0]?.toUpperCase() || 'G',
+            avatarUrl: (chat as any).avatar_url || null,
             online: false,
             lastSeen: 'Tribe chat',
             publicKey: undefined,
