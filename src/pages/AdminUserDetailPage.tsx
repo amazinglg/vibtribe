@@ -581,6 +581,42 @@ export default function AdminUserDetailPage() {
               />
             </div>
           </SectionCard>
+
+        {/* Guardian information — only for under-18 users */}
+        {guardian && (
+          <SectionCard
+            title="Guardian information"
+            subtitle="DPDP §9 verifiable parental consent record. Retained for audit; automatically retired at age 18."
+            icon={ShieldCheck}
+          >
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <Info label="Guardian name" value={guardian.guardian_name || '—'} />
+              <Info label="Guardian mobile" value={guardian.guardian_mobile || '—'} />
+              <Info label="Guardian email" value={guardian.guardian_email || '—'} />
+              <Info label="Relationship" value={guardian.relationship || '—'} />
+              <Info
+                label="Verified at"
+                value={guardian.email_verified_at ? new Date(guardian.email_verified_at).toLocaleString() : 'Not verified'}
+              />
+              <Info label="IP address" value={guardian.ip || '—'} />
+              <Info label="User agent" value={guardian.user_agent || '—'} />
+              <Info label="Consent version" value={guardian.consent_version || '—'} />
+              <Info label="Minor user ID" value={guardian.minor_user_id || userId} />
+              <Info
+                label="Consented at"
+                value={guardian.consented_at ? new Date(guardian.consented_at).toLocaleString() : 'Pending'}
+                colorClass={guardian.consented_at ? 'text-vt-green' : 'text-vt-amber'}
+              />
+              {guardian.revoked_at && (
+                <Info
+                  label="Revoked at"
+                  value={new Date(guardian.revoked_at).toLocaleString()}
+                  colorClass="text-red-400"
+                />
+              )}
+            </div>
+          </SectionCard>
+        )}
       </div>
 
       {/* Edit Modal */}
