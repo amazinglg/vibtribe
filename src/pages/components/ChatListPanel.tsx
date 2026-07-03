@@ -377,7 +377,7 @@ export default function ChatListPanel() {
         const { data: gData } = await supabase
           .from('chats')
           .select(`
-            id, chat_type, is_group, name, updated_at,
+            id, chat_type, is_group, name, avatar_url, updated_at,
             messages(id, content, created_at, sender_id, message_status)
           `)
           .in('id', groupIds)
@@ -465,6 +465,7 @@ export default function ChatListPanel() {
             name: gname,
             avatar: gname[0]?.toUpperCase() || 'G',
             avatarColor: avatarColors[chatList.length % avatarColors.length],
+            avatarUrl: (chat as any).avatar_url || null,
             lastMessage: gPreview,
             time: lastMsg ? formatTime(lastMsg.created_at) : '',
             rawTime: lastMsg?.created_at || (chat as any).updated_at,
