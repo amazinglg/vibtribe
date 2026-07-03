@@ -446,6 +446,9 @@ export default function ChatWindowPanel() {
   const lastScrollKeyRef = useRef<string>('');
   const prevChatIdScrollRef = useRef<string | null>(null);
   const prevLenRef = useRef<number>(0);
+  // First unread message id captured on chat open (before mark_messages_read).
+  // If set, we scroll to that message instead of the bottom on open.
+  const firstUnreadIdRef = useRef<string | null>(null);
   useEffect(() => {
     const lastId = messages.length ? messages[messages.length - 1].id : '';
     const key = `${selectedChatId || ''}::${messages.length}::${lastId}`;
@@ -459,12 +462,29 @@ export default function ChatWindowPanel() {
     // Skip on in-place updates AND on deletions (delete-for-me, etc.) so
     // tapping an action sheet doesn't yank the user to the bottom.
     if (!chatChanged && !grew) return;
-    const el = messagesEndRef.current;
-    if (!el) return;
-    el.scrollIntoView({ behavior: 'auto', block: 'end' });
-    const t = setTimeout(() => {
+    // On chat-open, if we captured a first-unread message, scroll to it.
+    // Otherwise (no unread, or a new message just arrived), scroll to bottom.
+    const scrollToBottom = () => {
       messagesEndRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
-    }, 50);
+    };
+    const unreadId = chatChanged ? firstUnreadIdRef.current : null;
+    if (unreadId) {
+      firstUnreadIdRef.current = null;
+      const target = document.querySelector<HTMLElement>(`[data-msg-id="${unreadId}"]`);
+      if (target) {
+        target.scrollIntoView({ behavior: 'auto', block: 'start' });
+        const t = setTimeout(() => {
+          document.querySelector<HTMLElement>(`[data-msg-id="${unreadId}"]`)
+            ?.scrollIntoView({ behavior: 'auto', block: 'start' });
+        }, 50);
+        return () => clearTimeout(t);
+      }
+      // Fallback: bottom
+      scrollToBottom();
+      return;
+    }
+    scrollToBottom();
+    const t = setTimeout(scrollToBottom, 50);
     return () => clearTimeout(t);
   }, [messages, selectedChatId]);
 
@@ -759,6 +779,14 @@ export default function ChatWindowPanel() {
             });
           }
           setMessages(out);
+          // Capture the first unread (received) message BEFORE marking as read,
+          // so the scroll effect can jump to it on chat open.
+          {
+            const firstUnread = (msgs || []).find((m: any) =>
+              m.sender_id && m.sender_id !== user.id && m.message_status !== 'read'
+            );
+            firstUnreadIdRef.current = firstUnread ? firstUnread.id : null;
+          }
           await supabase.rpc('mark_messages_read', { _chat_id: selectedChatId });
           setLoading(false);
           return;
@@ -858,6 +886,14 @@ export default function ChatWindowPanel() {
       }
       setMessages(decryptedMsgs);
 
+      // Capture first unread (received) message BEFORE marking read.
+      {
+        const firstUnread = (msgs || []).find((m: any) =>
+          m.sender_id && m.sender_id !== user.id && m.message_status !== 'read'
+            && !(Array.isArray((m as any).deleted_for) && (m as any).deleted_for.includes(user.id))
+        );
+        firstUnreadIdRef.current = firstUnread ? firstUnread.id : null;
+      }
       // Mark all received messages as read (uses SECURITY DEFINER RPC so RLS allows recipient updates)
       await supabase.rpc('mark_messages_read', { _chat_id: selectedChatId });
 
@@ -2309,6 +2345,7 @@ export default function ChatWindowPanel() {
               <React.Fragment key={msg.id}>
               {__sep}
               <div
+                data-msg-id={msg.id}
                 className={`flex ${isMe ? 'justify-end' : 'justify-start'} group`}
                 onMouseEnter={() => setHoveredMsg(msg.id)}
                 onMouseLeave={() => setHoveredMsg(null)}
@@ -2542,13 +2579,18 @@ export default function ChatWindowPanel() {
       {pendingAttachments.length > 0 && (
         <div
           className="fixed inset-0 z-[1800] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          style={{
+            paddingTop: 'max(1rem, env(safe-area-inset-top))',
+            paddingBottom: 'max(1rem, calc(env(safe-area-inset-bottom) + 5rem))',
+          }}
           onClick={cancelPendingAttachment}
         >
           <div
-            className="glass-strong rounded-2xl border border-border shadow-card p-4 max-w-md w-full"
+            className="glass-strong rounded-2xl border border-border shadow-card max-w-md w-full flex flex-col overflow-hidden"
+            style={{ maxHeight: '100%' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between p-4 pb-2 shrink-0">
               <h3 className="text-sm font-semibold text-foreground">
                 {pendingAttachments.length === 1 ? 'Send attachment' : `Send ${pendingAttachments.length} attachments`}
               </h3>
@@ -2561,14 +2603,14 @@ export default function ChatWindowPanel() {
               </button>
             </div>
 
-            <div className={`grid gap-2 mb-3 max-h-[60vh] overflow-y-auto ${pendingAttachments.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+            <div className={`grid gap-2 px-4 overflow-y-auto flex-1 min-h-0 ${pendingAttachments.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
               {pendingAttachments.map((item, index) => (
                 <div key={`${item.file.name}-${item.file.size}-${index}`} className="flex items-center justify-center bg-muted/30 rounded-xl overflow-hidden min-h-32">
                   {item.type === 'image' && item.previewUrl && (
                     <img
                       src={item.previewUrl}
                       alt="Preview"
-                      className="max-h-[60vh] w-full object-contain"
+                      className="max-h-[50vh] w-full object-contain"
                     />
                   )}
                   {item.type === 'video' && item.previewUrl && (
@@ -2576,7 +2618,7 @@ export default function ChatWindowPanel() {
                       src={item.previewUrl}
                       controls
                       playsInline
-                      className="max-h-[60vh] w-full"
+                      className="max-h-[50vh] w-full"
                     />
                   )}
                   {item.type === 'audio' && item.previewUrl && (
@@ -2604,7 +2646,7 @@ export default function ChatWindowPanel() {
               ))}
             </div>
 
-            <div className="space-y-1 mb-3">
+            <div className="space-y-1 px-4 pt-2 shrink-0">
               {pendingAttachments.slice(0, 4).map((item, index) => (
                 <div key={`${item.file.name}-label-${index}`} className="text-xs text-muted-foreground truncate">
                   {item.file.name}
@@ -2617,7 +2659,7 @@ export default function ChatWindowPanel() {
               )}
             </div>
 
-            <div className="flex items-center justify-end gap-2">
+            <div className="flex items-center justify-end gap-2 p-4 pt-3 shrink-0 border-t border-border bg-background/60">
               <button
                 onClick={cancelPendingAttachment}
                 className="px-4 py-2 rounded-xl text-sm text-foreground hover:bg-muted transition-all"
