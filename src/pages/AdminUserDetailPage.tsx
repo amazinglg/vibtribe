@@ -26,6 +26,7 @@ export default function AdminUserDetailPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [editForm, setEditForm] = useState({ full_name: '', email: '', mobile_number: '', country_code: '+91' });
   const [secureChatCount, setSecureChatCount] = useState<number | null>(null);
+  const [guardian, setGuardian] = useState<any>(null);
 
   const isMaster = !!profile?.is_master_admin;
 
@@ -52,6 +53,20 @@ export default function AdminUserDetailPage() {
         .select('chat_id', { count: 'exact', head: true })
         .eq('user_id', userId);
       setSecureChatCount(count || 0);
+    }
+    // If under 18, fetch guardian consent record for the admin panel.
+    if (row?.dob) {
+      const d = new Date(row.dob);
+      const now = new Date();
+      let age = now.getFullYear() - d.getFullYear();
+      const m = now.getMonth() - d.getMonth();
+      if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--;
+      if (age < 18) {
+        const { data: g } = await supabase.rpc('admin_get_guardian_consent', { _user_id: userId });
+        setGuardian(Array.isArray(g) ? g[0] : g);
+      } else {
+        setGuardian(null);
+      }
     }
   };
 
