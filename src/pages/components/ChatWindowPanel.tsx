@@ -1277,9 +1277,20 @@ export default function ChatWindowPanel() {
   // can flow through the same handleFileAttach() pipeline as web uploads.
   const dataUrlToFile = async (dataUrl: string, filename: string): Promise<File | null> => {
     try {
-      const res = await fetch(dataUrl);
-      const blob = await res.blob();
-      return new File([blob], filename, { type: blob.type || 'image/jpeg' });
+      const match = /^data:([^;,]+)?(?:;charset=[^;,]+)?;base64,(.*)$/s.exec(dataUrl);
+      const mime = match?.[1] || 'image/jpeg';
+      const base64 = match?.[2] || dataUrl;
+      const binary = atob(base64.replace(/\s/g, ''));
+      const chunkSize = 8192;
+      const chunks: Uint8Array[] = [];
+      for (let offset = 0; offset < binary.length; offset += chunkSize) {
+        const slice = binary.slice(offset, offset + chunkSize);
+        const bytes = new Uint8Array(slice.length);
+        for (let i = 0; i < slice.length; i++) bytes[i] = slice.charCodeAt(i);
+        chunks.push(bytes);
+      }
+      const blob = new Blob(chunks, { type: mime });
+      return new File([blob], filename, { type: mime });
     } catch (e) {
       console.warn('[VibTribe] dataUrlToFile failed', e);
       return null;
