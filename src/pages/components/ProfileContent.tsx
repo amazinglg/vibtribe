@@ -21,7 +21,7 @@ import { Globe } from 'lucide-react';
 import { appConfirm } from '@/components/ui/AppDialog';
 import { recordMarketingConsent } from '@/lib/marketing.functions';
 import ConsentCenter from '@/components/ConsentCenter';
-import { isCapacitorWrapper, pickNativeMedia } from '@/lib/native-bridge';
+import { isCapacitorWrapper, pickNativeImages } from '@/lib/native-bridge';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -224,7 +224,7 @@ export default function ProfileContent() {
     if (uploadingAvatar) return;
     if (isCapacitorWrapper()) {
       (async () => {
-        const picked = await pickNativeMedia({ multiple: false, readData: true });
+        const picked = await pickNativeImages({ multiple: false, readData: true });
         if (!picked.length) return;
         const file = await nativeAvatarPickToFile(picked[0]);
         if (!file) {
