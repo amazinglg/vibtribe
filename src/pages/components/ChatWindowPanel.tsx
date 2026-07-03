@@ -12,7 +12,7 @@ import PermissionPrompt from '@/components/PermissionPrompt';
 import { usePermissions } from '@/hooks/usePermissions';
 import { sendPushNotification } from '@/lib/pushNotifications';
 import { useCall } from '@/components/CallProvider';
-import { isNativeWrapper, pickNativeImage, pickNativeFiles, requestNativeCameraPermission } from '@/lib/native-bridge';
+import { isCapacitorWrapper, isNativeWrapper, pickNativeImage, pickNativeFiles, requestNativeCameraPermission } from '@/lib/native-bridge';
 import { TrustLockService, onTrustLockScreenshot, isIOS, isIosPwa } from '@/lib/trust-lock-service';
 import { toast } from 'sonner';
 import { EMOJI_CATEGORIES, type EmojiCategoryKey } from '@/lib/emojis';
@@ -1371,7 +1371,7 @@ export default function ChatWindowPanel() {
   // prompts for READ_MEDIA_IMAGES itself). On web we synchronously click the
   // hidden file input — any await before .click() loses gesture context.
   const handlePickPhotoVideo = () => {
-    if (isNativeWrapper()) {
+    if (isCapacitorWrapper()) {
       setShowAttachMenu(false);
       (async () => {
         // Use the system file picker so users can choose photos OR videos.
@@ -1398,7 +1398,7 @@ export default function ChatWindowPanel() {
   };
 
   const handlePickCamera = () => {
-    if (isNativeWrapper()) {
+    if (isCapacitorWrapper()) {
       setShowAttachMenu(false);
       (async () => {
         const perm = await requestNativeCameraPermission();
@@ -1418,7 +1418,7 @@ export default function ChatWindowPanel() {
   };
 
   const handlePickDocument = () => {
-    if (isNativeWrapper()) {
+    if (isCapacitorWrapper()) {
       setShowAttachMenu(false);
       (async () => {
         const picked = await pickNativeFiles({ multiple: false });
