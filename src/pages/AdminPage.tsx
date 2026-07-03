@@ -706,6 +706,7 @@ export default function AdminPage() {
                   { key: 'active', label: 'Active' },
                   { key: 'suspended', label: 'Suspended' },
                   { key: 'admins', label: 'Admins' },
+                  { key: 'under_age', label: 'Under Age' },
                 ] as const).map(f => (
                   <button
                     key={f.key}
