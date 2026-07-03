@@ -446,6 +446,9 @@ export default function ChatWindowPanel() {
   const lastScrollKeyRef = useRef<string>('');
   const prevChatIdScrollRef = useRef<string | null>(null);
   const prevLenRef = useRef<number>(0);
+  // First unread message id captured on chat open (before mark_messages_read).
+  // If set, we scroll to that message instead of the bottom on open.
+  const firstUnreadIdRef = useRef<string | null>(null);
   useEffect(() => {
     const lastId = messages.length ? messages[messages.length - 1].id : '';
     const key = `${selectedChatId || ''}::${messages.length}::${lastId}`;
@@ -459,12 +462,29 @@ export default function ChatWindowPanel() {
     // Skip on in-place updates AND on deletions (delete-for-me, etc.) so
     // tapping an action sheet doesn't yank the user to the bottom.
     if (!chatChanged && !grew) return;
-    const el = messagesEndRef.current;
-    if (!el) return;
-    el.scrollIntoView({ behavior: 'auto', block: 'end' });
-    const t = setTimeout(() => {
+    // On chat-open, if we captured a first-unread message, scroll to it.
+    // Otherwise (no unread, or a new message just arrived), scroll to bottom.
+    const scrollToBottom = () => {
       messagesEndRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
-    }, 50);
+    };
+    const unreadId = chatChanged ? firstUnreadIdRef.current : null;
+    if (unreadId) {
+      firstUnreadIdRef.current = null;
+      const target = document.querySelector<HTMLElement>(`[data-msg-id="${unreadId}"]`);
+      if (target) {
+        target.scrollIntoView({ behavior: 'auto', block: 'start' });
+        const t = setTimeout(() => {
+          document.querySelector<HTMLElement>(`[data-msg-id="${unreadId}"]`)
+            ?.scrollIntoView({ behavior: 'auto', block: 'start' });
+        }, 50);
+        return () => clearTimeout(t);
+      }
+      // Fallback: bottom
+      scrollToBottom();
+      return;
+    }
+    scrollToBottom();
+    const t = setTimeout(scrollToBottom, 50);
     return () => clearTimeout(t);
   }, [messages, selectedChatId]);
 
