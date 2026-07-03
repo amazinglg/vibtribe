@@ -886,6 +886,14 @@ export default function ChatWindowPanel() {
       }
       setMessages(decryptedMsgs);
 
+      // Capture first unread (received) message BEFORE marking read.
+      {
+        const firstUnread = (msgs || []).find((m: any) =>
+          m.sender_id && m.sender_id !== user.id && m.message_status !== 'read'
+            && !(Array.isArray((m as any).deleted_for) && (m as any).deleted_for.includes(user.id))
+        );
+        firstUnreadIdRef.current = firstUnread ? firstUnread.id : null;
+      }
       // Mark all received messages as read (uses SECURITY DEFINER RPC so RLS allows recipient updates)
       await supabase.rpc('mark_messages_read', { _chat_id: selectedChatId });
 
