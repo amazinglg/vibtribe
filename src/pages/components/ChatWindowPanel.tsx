@@ -1201,8 +1201,9 @@ export default function ChatWindowPanel() {
 
     try {
       let contentToStore = text;
-      if (chatType !== 'group' && contact?.publicKey) {
-        contentToStore = await encryptMessage(text, contact.publicKey);
+      const pkForSend = contact?.publicKey || contactPubKeyRef.current || null;
+      if (chatType !== 'group' && pkForSend) {
+        contentToStore = await encryptMessage(text, pkForSend);
       } else if (chatType === 'group') {
         // Always include self so we can decrypt our own messages on other devices.
         const members = [...tribeMembersRef.current];
