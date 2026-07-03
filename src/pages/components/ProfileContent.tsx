@@ -479,7 +479,7 @@ export default function ProfileContent() {
       setEditMode(false);
       if (isMinor) {
         toast.info("You're under 18 — please complete guardian consent to keep using VibTribe.");
-        navigate({ to: '/guardian-setup' as any });
+        router({ to: '/guardian-setup' as any });
       } else {
         toast.success('Profile updated successfully ✓');
       }
