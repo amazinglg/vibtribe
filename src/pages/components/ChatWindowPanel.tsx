@@ -779,6 +779,14 @@ export default function ChatWindowPanel() {
             });
           }
           setMessages(out);
+          // Capture the first unread (received) message BEFORE marking as read,
+          // so the scroll effect can jump to it on chat open.
+          {
+            const firstUnread = (msgs || []).find((m: any) =>
+              m.sender_id && m.sender_id !== user.id && m.message_status !== 'read'
+            );
+            firstUnreadIdRef.current = firstUnread ? firstUnread.id : null;
+          }
           await supabase.rpc('mark_messages_read', { _chat_id: selectedChatId });
           setLoading(false);
           return;
