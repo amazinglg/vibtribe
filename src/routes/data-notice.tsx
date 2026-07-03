@@ -134,7 +134,7 @@ function DataNoticePage() {
         </div>
 
         <p className="text-center text-xs text-muted-foreground mt-8">
-          Notice version 1.0 · Last updated June 2026 · Maintained by VibTribe
+          Notice version 1.1 · Last updated 3 July 2026 · Maintained by VibTribe
         </p>
       </section>
     </div>
