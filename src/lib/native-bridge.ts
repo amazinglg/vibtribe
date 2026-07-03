@@ -408,6 +408,37 @@ export async function pickNativeFiles(opts?: {
 }
 
 /**
+ * Pick one or more images from the native gallery. Prefer this for profile
+ * photos so Android opens an image-only picker instead of the generic WebView
+ * file input or a mixed photo/video picker.
+ */
+export async function pickNativeImages(opts?: {
+  multiple?: boolean;
+  readData?: boolean;
+}): Promise<NativePickedFile[]> {
+  if (!isNativeWrapper()) return [];
+  try {
+    const { FilePicker } = await import('@capawesome/capacitor-file-picker');
+    const res = await FilePicker.pickImages({
+      limit: opts?.multiple ? 0 : 1,
+      readData: opts?.readData ?? true,
+    } as unknown as Parameters<typeof FilePicker.pickImages>[0]);
+    const files = (res?.files ?? []) as Array<{
+      name?: string;
+      mimeType?: string;
+      data?: string;
+      blob?: Blob;
+      path?: string;
+      size?: number;
+    }>;
+    return normalizePickedFiles(files);
+  } catch (e) {
+    console.warn('[VibTribe] pickNativeImages failed', e);
+    return [];
+  }
+}
+
+/**
  * Pick photos/videos from the native gallery. Uses FilePicker.pickMedia()
  * instead of generic pickFiles() because Android gallery/photo URIs are not
  * reliably readable through the generic path-fetch flow.
