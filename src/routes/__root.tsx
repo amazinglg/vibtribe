@@ -164,11 +164,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" style={{ background: "#070a1b", colorScheme: "dark" }}>
       <head>
         <HeadContent />
       </head>
-      <body>
+      <body style={{ background: "#070a1b", margin: 0 }}>
         <noscript>
           <iframe
             src="https://www.googletagmanager.com/ns.html?id=GTM-K5LZB9ML"
