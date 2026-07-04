@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Volume2, VolumeX, Bluetooth, Ear, Headphones, Minimize2, Maximize2 } from 'lucide-react';
+import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Volume2, VolumeX, Bluetooth, Ear, Headphones, Minimize2, Maximize2, AlertTriangle } from 'lucide-react';
 import { SwitchCamera } from 'lucide-react';
 import { acquireCallWakeLock, setCallAudioRoute } from '@/lib/native-bridge';
 import { sendCallPush } from '@/lib/fcm-push.functions';
@@ -104,6 +104,20 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   // when the PWA loses foreground / screen locks. Any actively playing
   // <audio> element keeps the audio session alive so the mic keeps flowing.
   const silentAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // iOS-only mic-recovery UX. On installed iOS PWAs, WebKit can suspend or
+  // end the outbound microphone track when the audio session is preempted
+  // (screen lock, cellular call, app switch, route change). We try to
+  // recover silently via replaceTrack; if that fails we surface a one-tap
+  // "Restore microphone" banner.
+  const [micStatus, setMicStatus] = useState<'ok' | 'recovering' | 'failed'>('ok');
+  const micStatusRef = useRef<'ok' | 'recovering' | 'failed'>('ok');
+  useEffect(() => { micStatusRef.current = micStatus; }, [micStatus]);
+  const isIos = (): boolean => {
+    if (typeof navigator === 'undefined') return false;
+    const ua = navigator.userAgent || '';
+    return /iPad|iPhone|iPod/.test(ua) || (ua.includes('Mac') && 'ontouchend' in document);
+  };
 
   useEffect(() => { activeCallRef.current = activeCall; }, [activeCall]);
   useEffect(() => { callDurationRef.current = callDuration; }, [callDuration]);
@@ -275,6 +289,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     setMicMuted(false); setSpeakerOff(false); setVideoOff(false);
     setShowAudioMenu(false);
     setMinimized(false);
+    setMicStatus('ok');
   }, [supabase]);
 
   const endCall = useCallback(async (finalStatus: 'ended' | 'declined' | 'missed' = 'ended') => {
@@ -485,6 +500,104 @@ export default function CallProvider({ children }: { children: React.ReactNode }
       }
     });
   };
+
+  // Attach lifecycle watchers to the outbound audio track so we can react
+  // when iOS suspends/ends it. Idempotent — safe to call whenever a fresh
+  // audio track is installed.
+  const watchAudioTrack = useCallback((track: MediaStreamTrack | null) => {
+    if (!track || !isIos()) return;
+    const onMute = () => {
+      console.warn('[Call][iOS] audio track muted by system — attempting recovery');
+      void recoverMicrophone('auto:mute');
+    };
+    const onEnded = () => {
+      console.warn('[Call][iOS] audio track ended by system — attempting recovery');
+      void recoverMicrophone('auto:ended');
+    };
+    try { track.addEventListener('mute', onMute); } catch { (track as any).onmute = onMute; }
+    try { track.addEventListener('ended', onEnded); } catch { (track as any).onended = onEnded; }
+  }, []);
+
+  // Re-acquire the microphone and swap it into the existing sender without
+  // renegotiating the peer connection. Also restarts the silent keep-alive
+  // element in case iOS paused it during the interruption. Returns true on
+  // success. Best-effort: swallows failures and sets status='failed' so the
+  // UI can offer manual retry.
+  const recoverMicrophone = useCallback(async (reason: string): Promise<boolean> => {
+    const call = activeCallRef.current;
+    const sender = sendersRef.current.audio;
+    if (!call || !sender) return false;
+    if (micStatusRef.current === 'recovering') return false;
+    console.info('[Call] mic recovery started', { reason });
+    setMicStatus('recovering');
+    try {
+      const fresh = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      const newTrack = fresh.getAudioTracks()[0];
+      if (!newTrack) throw new Error('no audio track');
+      // Preserve current mute state before swapping in.
+      newTrack.enabled = !micMutedRef.current;
+      await sender.replaceTrack(newTrack);
+      // Merge the fresh audio track into the persistent local stream so any
+      // downstream consumers (e.g. camera-switch, mute toggle) stay coherent.
+      const localStream = localStreamRef.current;
+      if (localStream) {
+        localStream.getAudioTracks().forEach((t) => { try { t.stop(); } catch {} localStream.removeTrack(t); });
+        localStream.addTrack(newTrack);
+      } else {
+        localStreamRef.current = fresh;
+      }
+      watchAudioTrack(newTrack);
+      // Kick the silent keep-alive so the iOS audio session stays hot.
+      silentAudioRef.current?.play().catch(() => {});
+      setMicStatus('ok');
+      console.info('[Call] mic recovery succeeded', { reason });
+      return true;
+    } catch (err) {
+      console.error('[Call] mic recovery failed', { reason, err: String((err as any)?.message || err) });
+      setMicStatus('failed');
+      return false;
+    }
+  }, [watchAudioTrack]);
+
+  // Track ref for current mute state (so recovery preserves it).
+  const micMutedRef = useRef(false);
+  useEffect(() => { micMutedRef.current = micMuted; }, [micMuted]);
+
+  // When the app returns to foreground, proactively verify the mic track is
+  // still healthy. iOS often leaves the track object alive but muted after a
+  // screen-lock interruption, and the mute event doesn't always fire.
+  useEffect(() => {
+    if (!activeCall || !isIos()) return;
+    const verify = () => {
+      if (document.visibilityState !== 'visible') return;
+      const sender = sendersRef.current.audio;
+      const track = sender?.track;
+      if (!track) return;
+      if (track.readyState === 'ended' || track.muted) {
+        console.warn('[Call][iOS] mic track unhealthy on foreground', {
+          readyState: track.readyState,
+          muted: track.muted,
+        });
+        void recoverMicrophone('auto:foreground');
+      }
+    };
+    document.addEventListener('visibilitychange', verify);
+    window.addEventListener('focus', verify);
+    window.addEventListener('pageshow', verify);
+    return () => {
+      document.removeEventListener('visibilitychange', verify);
+      window.removeEventListener('focus', verify);
+      window.removeEventListener('pageshow', verify);
+    };
+  }, [activeCall, recoverMicrophone]);
+
+  // Attach the watcher to whatever audio track is currently in flight
+  // whenever the active call changes.
+  useEffect(() => {
+    if (!activeCall) return;
+    const track = localStreamRef.current?.getAudioTracks?.()[0] || sendersRef.current.audio?.track || null;
+    watchAudioTrack(track);
+  }, [activeCall, watchAudioTrack]);
 
   const startCall: CallContextValue['startCall'] = async (opts) => {
     if (!user) return null;
@@ -783,14 +896,23 @@ export default function CallProvider({ children }: { children: React.ReactNode }
       {activeCall && minimized && (
         <div className="fixed top-3 right-3 z-[100] flex items-center gap-2 rounded-full bg-neutral-900/95 text-white shadow-2xl border border-white/10 backdrop-blur-md pl-3 pr-1 py-1">
           <button
-            onClick={() => setMinimized(false)}
+            onClick={() => {
+              setMinimized(false);
+              if (micStatus === 'failed') void recoverMicrophone('user:pill');
+            }}
             className="flex items-center gap-2"
             aria-label="Expand call"
           >
-            <span className={`w-2.5 h-2.5 rounded-full ${callState === 'connected' ? 'bg-green-400 animate-pulse' : 'bg-yellow-400 animate-pulse'}`} />
+            {micStatus === 'failed' ? (
+              <AlertTriangle size={14} className="text-amber-400" />
+            ) : micStatus === 'recovering' ? (
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
+            ) : (
+              <span className={`w-2.5 h-2.5 rounded-full ${callState === 'connected' ? 'bg-green-400 animate-pulse' : 'bg-yellow-400 animate-pulse'}`} />
+            )}
             <span className="text-xs font-medium max-w-[110px] truncate">{remoteName}</span>
             <span className="text-xs text-white/70 tabular-nums">
-              {callState === 'connected' ? fmt(callDuration) : callState === 'connecting' ? '...' : 'ring'}
+              {micStatus === 'failed' ? 'mic' : micStatus === 'recovering' ? '…' : callState === 'connected' ? fmt(callDuration) : callState === 'connecting' ? '...' : 'ring'}
             </span>
             <span className="ml-1 w-7 h-7 rounded-full bg-white/10 flex items-center justify-center">
               <Maximize2 size={13} />
@@ -828,6 +950,20 @@ export default function CallProvider({ children }: { children: React.ReactNode }
                 className="absolute top-3 left-3 z-10 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center backdrop-blur-md"
               >
                 <Minimize2 size={16} />
+              </button>
+            )}
+            {micStatus !== 'ok' && (
+              <button
+                onClick={() => { if (micStatus === 'failed') void recoverMicrophone('user:banner'); }}
+                disabled={micStatus === 'recovering'}
+                className="absolute top-3 right-3 z-10 max-w-[70%] flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/95 text-neutral-900 text-xs font-medium shadow-lg backdrop-blur-md disabled:opacity-80"
+              >
+                <AlertTriangle size={13} />
+                <span className="truncate">
+                  {micStatus === 'recovering'
+                    ? 'Restoring microphone…'
+                    : 'Microphone interrupted. Tap to restore'}
+                </span>
               </button>
             )}
             {activeCall.call_type === 'video' ? (
