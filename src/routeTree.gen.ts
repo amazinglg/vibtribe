@@ -55,6 +55,7 @@ import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/e
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicHooksRetentionSweepRouteImport } from './routes/api/public/hooks/retention-sweep'
+import { Route as ApiPublicHooksIncompleteSignupRemindersRouteImport } from './routes/api/public/hooks/incomplete-signup-reminders'
 import { Route as ApiPublicHooksGuardianMonthlyReminderRouteImport } from './routes/api/public/hooks/guardian-monthly-reminder'
 import { Route as ApiPublicHooksCleanupExpiredStatusesRouteImport } from './routes/api/public/hooks/cleanup-expired-statuses'
 import { Route as ApiPublicHooksCleanupExpiredMessagesRouteImport } from './routes/api/public/hooks/cleanup-expired-messages'
@@ -299,6 +300,12 @@ const ApiPublicHooksRetentionSweepRoute =
     path: '/api/public/hooks/retention-sweep',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksIncompleteSignupRemindersRoute =
+  ApiPublicHooksIncompleteSignupRemindersRouteImport.update({
+    id: '/api/public/hooks/incomplete-signup-reminders',
+    path: '/api/public/hooks/incomplete-signup-reminders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksGuardianMonthlyReminderRoute =
   ApiPublicHooksGuardianMonthlyReminderRouteImport.update({
     id: '/api/public/hooks/guardian-monthly-reminder',
@@ -362,6 +369,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/cleanup-expired-messages': typeof ApiPublicHooksCleanupExpiredMessagesRoute
   '/api/public/hooks/cleanup-expired-statuses': typeof ApiPublicHooksCleanupExpiredStatusesRoute
   '/api/public/hooks/guardian-monthly-reminder': typeof ApiPublicHooksGuardianMonthlyReminderRoute
+  '/api/public/hooks/incomplete-signup-reminders': typeof ApiPublicHooksIncompleteSignupRemindersRoute
   '/api/public/hooks/retention-sweep': typeof ApiPublicHooksRetentionSweepRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -412,6 +420,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/cleanup-expired-messages': typeof ApiPublicHooksCleanupExpiredMessagesRoute
   '/api/public/hooks/cleanup-expired-statuses': typeof ApiPublicHooksCleanupExpiredStatusesRoute
   '/api/public/hooks/guardian-monthly-reminder': typeof ApiPublicHooksGuardianMonthlyReminderRoute
+  '/api/public/hooks/incomplete-signup-reminders': typeof ApiPublicHooksIncompleteSignupRemindersRoute
   '/api/public/hooks/retention-sweep': typeof ApiPublicHooksRetentionSweepRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -464,6 +473,7 @@ export interface FileRoutesById {
   '/api/public/hooks/cleanup-expired-messages': typeof ApiPublicHooksCleanupExpiredMessagesRoute
   '/api/public/hooks/cleanup-expired-statuses': typeof ApiPublicHooksCleanupExpiredStatusesRoute
   '/api/public/hooks/guardian-monthly-reminder': typeof ApiPublicHooksGuardianMonthlyReminderRoute
+  '/api/public/hooks/incomplete-signup-reminders': typeof ApiPublicHooksIncompleteSignupRemindersRoute
   '/api/public/hooks/retention-sweep': typeof ApiPublicHooksRetentionSweepRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -517,6 +527,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/cleanup-expired-messages'
     | '/api/public/hooks/cleanup-expired-statuses'
     | '/api/public/hooks/guardian-monthly-reminder'
+    | '/api/public/hooks/incomplete-signup-reminders'
     | '/api/public/hooks/retention-sweep'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -567,6 +578,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/cleanup-expired-messages'
     | '/api/public/hooks/cleanup-expired-statuses'
     | '/api/public/hooks/guardian-monthly-reminder'
+    | '/api/public/hooks/incomplete-signup-reminders'
     | '/api/public/hooks/retention-sweep'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -618,6 +630,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/cleanup-expired-messages'
     | '/api/public/hooks/cleanup-expired-statuses'
     | '/api/public/hooks/guardian-monthly-reminder'
+    | '/api/public/hooks/incomplete-signup-reminders'
     | '/api/public/hooks/retention-sweep'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -665,6 +678,7 @@ export interface RootRouteChildren {
   ApiPublicHooksCleanupExpiredMessagesRoute: typeof ApiPublicHooksCleanupExpiredMessagesRoute
   ApiPublicHooksCleanupExpiredStatusesRoute: typeof ApiPublicHooksCleanupExpiredStatusesRoute
   ApiPublicHooksGuardianMonthlyReminderRoute: typeof ApiPublicHooksGuardianMonthlyReminderRoute
+  ApiPublicHooksIncompleteSignupRemindersRoute: typeof ApiPublicHooksIncompleteSignupRemindersRoute
   ApiPublicHooksRetentionSweepRoute: typeof ApiPublicHooksRetentionSweepRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -997,6 +1011,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksRetentionSweepRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/incomplete-signup-reminders': {
+      id: '/api/public/hooks/incomplete-signup-reminders'
+      path: '/api/public/hooks/incomplete-signup-reminders'
+      fullPath: '/api/public/hooks/incomplete-signup-reminders'
+      preLoaderRoute: typeof ApiPublicHooksIncompleteSignupRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/guardian-monthly-reminder': {
       id: '/api/public/hooks/guardian-monthly-reminder'
       path: '/api/public/hooks/guardian-monthly-reminder'
@@ -1081,6 +1102,8 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicHooksCleanupExpiredStatusesRoute,
   ApiPublicHooksGuardianMonthlyReminderRoute:
     ApiPublicHooksGuardianMonthlyReminderRoute,
+  ApiPublicHooksIncompleteSignupRemindersRoute:
+    ApiPublicHooksIncompleteSignupRemindersRoute,
   ApiPublicHooksRetentionSweepRoute: ApiPublicHooksRetentionSweepRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
