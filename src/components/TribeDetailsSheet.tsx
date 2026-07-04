@@ -119,7 +119,10 @@ export default function TribeDetailsSheet({ chatId, isOpen, onClose, onLeft }: P
         avatar_url: p?.avatar_url || null,
       };
     }).sort((a, b) => (a.role === b.role ? 0 : a.role === 'leader' ? -1 : 1));
-    setMembers(merged);
+    try {
+      const { applyAvatarPrivacy } = await import('@/lib/visible-avatars');
+      setMembers(await applyAvatarPrivacy(merged as any, 'user_id' as any, 'avatar_url' as any) as any);
+    } catch { setMembers(merged); }
     if (t && (t as any).created_by) {
       const f = profiles.find(p => p.id === (t as any).created_by);
       setFounderName(f?.full_name || 'Founder');
@@ -142,10 +145,14 @@ export default function TribeDetailsSheet({ chatId, isOpen, onClose, onLeft }: P
         .from('user_profiles')
         .select('id, full_name, avatar_url')
         .in('id', rq.map((r: any) => r.user_id));
-      setRequests(rq.map((r: any) => {
+      const rqRows = rq.map((r: any) => {
         const p = (rp || []).find(pp => pp.id === r.user_id);
         return { id: r.id, user_id: r.user_id, status: r.status, full_name: p?.full_name || 'Someone', avatar_url: p?.avatar_url || null };
-      }));
+      });
+      try {
+        const { applyAvatarPrivacy } = await import('@/lib/visible-avatars');
+        setRequests(await applyAvatarPrivacy(rqRows as any, 'user_id' as any, 'avatar_url' as any) as any);
+      } catch { setRequests(rqRows); }
     } else setRequests([]);
   };
 
