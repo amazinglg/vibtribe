@@ -3337,7 +3337,7 @@ export default function ChatWindowPanel() {
           >
             <X size={22} />
           </button>
-          <img
+          <ChatMediaImg
             src={lightboxUrl}
             alt="Media preview"
             className="max-w-full max-h-[90vh] rounded-2xl object-contain"
