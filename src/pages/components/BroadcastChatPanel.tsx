@@ -11,6 +11,7 @@ import ImageCropModal from '@/components/ImageCropModal';
 import { EMOJI_CATEGORIES, type EmojiCategoryKey } from '@/lib/emojis';
 import { appConfirm } from '@/components/ui/AppDialog';
 import { VIBTRIBE_EMOJI_MAP } from '@/lib/vibtribe-emojis';
+import { pruneOldAvatars } from '@/lib/avatar-cleanup';
 
 export const BROADCAST_CHAT_ID = '__vibtribe_broadcast__';
 const FALLBACK_LOGO = '/assets/images/app_logo.png';
