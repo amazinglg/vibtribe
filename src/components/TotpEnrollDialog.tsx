@@ -58,7 +58,7 @@ export default function TotpEnrollDialog({ open, onClose, onEnabled }: { open: b
         setBusy(false);
         return;
       }
-      const { error: rpcErr } = await supabase.rpc('confirm_totp_enrollment');
+      const { error: rpcErr } = await supabase.rpc('confirm_totp_enrollment', { _code: code });
       if (rpcErr) throw new Error(rpcErr.message);
       setStep('done');
       toast.success('Two-factor authentication enabled ✅');

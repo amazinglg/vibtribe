@@ -1780,7 +1780,9 @@ export type Database = {
       }
     }
     Functions: {
+      _base32_decode: { Args: { _input: string }; Returns: string }
       _hash_otp: { Args: { _code: string }; Returns: string }
+      _hotp: { Args: { _counter: number; _secret: string }; Returns: string }
       _insert_tribe_system_message: {
         Args: { _chat_id: string; _content: string }
         Returns: undefined
@@ -1797,7 +1799,9 @@ export type Database = {
       _profile_guard: {
         Args: { _id: string }
         Returns: {
+          account_status: string
           is_master_admin: boolean
+          is_suspended: boolean
           role: string
         }[]
       }
@@ -2184,7 +2188,7 @@ export type Database = {
       cleanup_expired_statuses: { Args: never; Returns: undefined }
       cleanup_expired_statuses_for_user: { Args: never; Returns: number }
       compute_mobile_hash: { Args: { _mobile: string }; Returns: string }
-      confirm_totp_enrollment: { Args: never; Returns: undefined }
+      confirm_totp_enrollment: { Args: { _code: string }; Returns: undefined }
       consume_email_otp: {
         Args: { _code: string; _email: string; _purpose: string }
         Returns: boolean
