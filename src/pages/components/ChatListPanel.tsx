@@ -388,11 +388,27 @@ export default function ChatListPanel() {
         groups = gData || [];
       }
 
+      // Per-user hidden chats: if the chat's updated_at is <= hidden_at
+      // we suppress it from this user's inbox. If a newer message arrives
+      // (updated_at > hidden_at), the chat reappears automatically.
+      const { data: hiddenRows } = await supabase
+        .from('user_hidden_chats' as any)
+        .select('chat_id, hidden_at')
+        .eq('user_id', user.id);
+      const hiddenMap = new Map<string, string>();
+      for (const h of (hiddenRows || []) as any[]) hiddenMap.set(h.chat_id, h.hidden_at);
+
       // Secured chats (1:1 and tribes) are hidden entirely from the
       // normal chat list. They're only reachable via the Secure Vault
       // after entering the PIN/pattern. On exit, the user returns here.
       const data = [...(oneToOne || []), ...groups].filter(
-        (c: any) => !securedSet.has(c.id),
+        (c: any) => {
+          if (securedSet.has(c.id)) return false;
+          const h = hiddenMap.get(c.id);
+          if (!h) return true;
+          // reappear when a newer update exists
+          return new Date(c.updated_at).getTime() > new Date(h).getTime();
+        },
       );
 
       // Batch-fetch all other participants in a single query to avoid the
