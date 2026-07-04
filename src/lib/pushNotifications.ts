@@ -31,6 +31,30 @@ export function isWebPushSupported(): boolean {
     && 'Notification' in window;
 }
 
+// iOS Safari (16.4+) only allows Web Push when the site is installed to the
+// Home Screen and launched as a standalone PWA. Detect that here so we can
+// skip prompting inside mobile Safari tabs (where the request would fail).
+export function isIosDevice(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent || '';
+  const iOS = /iPad|iPhone|iPod/.test(ua) || (ua.includes('Mac') && 'ontouchend' in document);
+  return iOS;
+}
+
+export function isStandalonePwa(): boolean {
+  if (typeof window === 'undefined') return false;
+  const mm = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
+  const iosStandalone = (window.navigator as any).standalone === true;
+  return !!(mm || iosStandalone);
+}
+
+export function canRequestWebPush(): boolean {
+  if (!isWebPushSupported()) return false;
+  // On iOS, PushManager only works when launched from the Home Screen PWA.
+  if (isIosDevice() && !isStandalonePwa()) return false;
+  return true;
+}
+
 async function getVapidPublicKey(supabase: any): Promise<string | null> {
   const cached = sessionStorage.getItem(PUBLIC_KEY_CACHE);
   if (cached) return cached;
@@ -49,8 +73,35 @@ async function getVapidPublicKey(supabase: any): Promise<string | null> {
   return data.publicKey;
 }
 
+async function seedVapidKeyToServiceWorker(key: string) {
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    reg.active?.postMessage({ type: 'SET_VAPID_PUBLIC_KEY', key });
+  } catch {}
+}
+
+async function persistSubscription(
+  supabase: any,
+  userId: string,
+  json: PushSubscriptionJSON,
+  previousEndpoint?: string | null,
+): Promise<boolean> {
+  if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) return false;
+  const { error } = await supabase.from('push_subscriptions').upsert({
+    user_id: userId,
+    endpoint: json.endpoint,
+    p256dh: json.keys.p256dh,
+    auth: json.keys.auth,
+    updated_at: new Date().toISOString(),
+  }, { onConflict: 'endpoint' });
+  if (!error && previousEndpoint && previousEndpoint !== json.endpoint) {
+    await supabase.from('push_subscriptions').delete().eq('endpoint', previousEndpoint);
+  }
+  return !error;
+}
+
 export async function ensurePushSubscription(supabase: any, userId: string): Promise<boolean> {
-  if (!isWebPushSupported() || !userId) return false;
+  if (!canRequestWebPush() || !userId) return false;
 
   const permission = Notification.permission === 'default'
     ? await Notification.requestPermission()
@@ -59,10 +110,28 @@ export async function ensurePushSubscription(supabase: any, userId: string): Pro
 
   const publicKey = await getVapidPublicKey(supabase);
   if (!publicKey) return false;
+  await seedVapidKeyToServiceWorker(publicKey);
 
   const registration = await navigator.serviceWorker.ready;
   await registration.update().catch(() => {});
   let subscription = await registration.pushManager.getSubscription();
+
+  // If a stored subscription exists but was created with a different VAPID key
+  // (e.g. keys were rotated), the server will 401/403 pushes to it. Detect and
+  // resubscribe so we always end up with a subscription bound to the current key.
+  if (subscription) {
+    try {
+      const existingKey = subscription.options?.applicationServerKey;
+      const expected = base64UrlToUint8Array(publicKey);
+      const same = existingKey
+        && new Uint8Array(existingKey as ArrayBuffer).every((byte, i) => byte === expected[i])
+        && (existingKey as ArrayBuffer).byteLength === expected.byteLength;
+      if (!same) {
+        await subscription.unsubscribe().catch(() => {});
+        subscription = null;
+      }
+    } catch {}
+  }
 
   if (!subscription) {
     subscription = await registration.pushManager.subscribe({
@@ -71,18 +140,24 @@ export async function ensurePushSubscription(supabase: any, userId: string): Pro
     });
   }
 
-  const json = subscription.toJSON();
-  if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) return false;
+  return persistSubscription(supabase, userId, subscription.toJSON());
+}
 
-  const { error } = await supabase.from('push_subscriptions').upsert({
-    user_id: userId,
-    endpoint: json.endpoint,
-    p256dh: json.keys.p256dh,
-    auth: json.keys.auth,
-    updated_at: new Date().toISOString(),
-  }, { onConflict: 'endpoint' });
-
-  return !error;
+// Listen for the SW's `pushsubscriptionchange` notification and persist the
+// refreshed endpoint on behalf of the signed-in user. Idempotent — safe to
+// call multiple times.
+export function attachPushSubscriptionChangeListener(supabase: any, getUserId: () => string | null) {
+  if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return () => {};
+  const handler = (event: MessageEvent) => {
+    if (event.data?.type !== 'PUSH_SUBSCRIPTION_CHANGED') return;
+    const uid = getUserId();
+    if (!uid) return;
+    const { subscription, oldEndpoint } = event.data.payload || {};
+    if (!subscription) return;
+    void persistSubscription(supabase, uid, subscription, oldEndpoint);
+  };
+  navigator.serviceWorker.addEventListener('message', handler);
+  return () => navigator.serviceWorker.removeEventListener('message', handler);
 }
 
 export async function removePushSubscription(supabase: any, userId: string): Promise<void> {
