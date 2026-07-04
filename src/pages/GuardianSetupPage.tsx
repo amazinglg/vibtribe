@@ -4,6 +4,7 @@ import { Loader2, ShieldCheck, Mail, User, Phone, AlertCircle, CheckCircle2, Ref
 import AppLogo from '@/components/ui/AppLogo'
 import Wordmark from '@/components/ui/Wordmark'
 import { supabase } from '@/integrations/supabase/client'
+import { useAuth } from '@/contexts/AuthContext'
 import {
   submitGuardianDetails,
   verifyGuardianEmailOtp,
@@ -26,6 +27,7 @@ type Status = {
 
 export default function GuardianSetupPage() {
   const navigate = useNavigate()
+  const { fetchProfile, user } = useAuth() as any
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [status, setStatus] = useState<Status>(null)
@@ -43,6 +45,9 @@ export default function GuardianSetupPage() {
   // new row yet (avoids the user being stuck on the details form when the
   // guardian has already received the code).
   const [otpSent, setOtpSent] = useState(false)
+  // Local flag: OTP just verified. Immediately switches UI to
+  // "waiting for guardian" without waiting on the refreshed RPC.
+  const [emailVerifiedLocal, setEmailVerifiedLocal] = useState(false)
 
   const refresh = async () => {
     try {
@@ -95,6 +100,7 @@ export default function GuardianSetupPage() {
       const res = await verifyGuardianEmailOtp({ data: { code: otp } })
       if (!(res as any)?.ok) { setError('That code is invalid or expired. Please resend.'); return }
       setOk('Guardian email verified! We’ve emailed your guardian a consent request link.')
+      setEmailVerifiedLocal(true)
       setOtp('')
       await refresh()
     } catch (e: any) {
@@ -114,8 +120,27 @@ export default function GuardianSetupPage() {
   }
 
   const consented = !!status?.consented_at && !status?.revoked_at
-  const awaitingConsent = !!status?.email_verified_at && !status?.consented_at
-  const awaitingOtp = (!!status && !status?.email_verified_at) || (otpSent && !status?.email_verified_at)
+  const awaitingConsent =
+    (!!status?.email_verified_at || emailVerifiedLocal) && !status?.consented_at
+  const awaitingOtp =
+    !awaitingConsent && !consented &&
+    ((!!status && !status?.email_verified_at) || (otpSent && !status?.email_verified_at))
+
+  // While waiting for guardian to click "I consent", poll every 5s so the UI
+  // advances automatically the moment consent lands.
+  useEffect(() => {
+    if (!awaitingConsent) return
+    const t = setInterval(() => { refresh() }, 5000)
+    return () => clearInterval(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [awaitingConsent])
+
+  // When consent lands, refresh the auth profile so MinorGuardianGate stops
+  // redirecting back here (account_status flips to 'active' server-side).
+  useEffect(() => {
+    if (!consented || !user?.id) return
+    ;(async () => { try { await fetchProfile?.(user.id) } catch { /* ignore */ } })()
+  }, [consented, user?.id])
 
   return (
     <div className="gradient-bg-page min-h-screen w-full flex flex-col items-center justify-start relative overflow-x-hidden overflow-y-auto px-4"
