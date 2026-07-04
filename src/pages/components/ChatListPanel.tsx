@@ -267,13 +267,15 @@ export default function ChatListPanel() {
           onPlatform: true,
           userId: row.contact_id,
           avatar: name[0]?.toUpperCase() || 'U',
-          avatarUrl: (p?.profile_photo_visibility ?? 'all') === 'all' ? (p?.avatar_url || null) : null,
+          avatarUrl: p?.avatar_url || null,
           saved: true,
         };
       }).sort((a: any, b: any) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }));
-      setContactsList(rows);
+      const { applyAvatarPrivacy } = await import('@/lib/visible-avatars');
+      const rowsPriv = await applyAvatarPrivacy(rows, 'userId', 'avatarUrl');
+      setContactsList(rowsPriv);
       if (rows.length > 0) setContactsPerm('granted');
-      return rows;
+      return rowsPriv;
     } catch (err) {
       console.error('load saved contacts', err);
       return [];
