@@ -15,6 +15,10 @@ import { template as ticketReply } from './ticket-reply'
 import { template as notification } from './notification'
 import { template as guardianOtp } from './guardian-otp'
 import { template as guardianConsentRequest } from './guardian-consent-request'
+import { template as incompleteSignupReminder } from './incomplete-signup-reminder'
+import { template as offboardingGeneral } from './offboarding-general'
+import { template as offboardingTermsBreach } from './offboarding-terms-breach'
+import { template as offboardingIncompleteSignup } from './offboarding-incomplete-signup'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'otp-code': otpCode,
@@ -23,4 +27,8 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'notification': notification,
   'guardian-otp': guardianOtp,
   'guardian-consent-request': guardianConsentRequest,
+  'incomplete-signup-reminder': incompleteSignupReminder,
+  'offboarding-general': offboardingGeneral,
+  'offboarding-terms-breach': offboardingTermsBreach,
+  'offboarding-incomplete-signup': offboardingIncompleteSignup,
 }

@@ -27,6 +27,8 @@ export default function AdminUserDetailPage() {
   const [editForm, setEditForm] = useState({ full_name: '', email: '', mobile_number: '', country_code: '+91' });
   const [secureChatCount, setSecureChatCount] = useState<number | null>(null);
   const [guardian, setGuardian] = useState<any>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteReason, setDeleteReason] = useState<'general' | 'terms_breach' | 'incomplete_signup' | ''>('');
 
   const isMaster = !!profile?.is_master_admin;
 
@@ -140,13 +142,19 @@ export default function AdminUserDetailPage() {
     finally { setActionLoading(false); }
   };
 
+  const openDeleteDialog = () => {
+    setDeleteReason('');
+    setDeleteOpen(true);
+  };
+
   const handleDelete = async () => {
-    if (!confirm('Delete this user? Cannot be undone.')) return;
+    if (!deleteReason) { toast.error('Please select a reason'); return; }
     setActionLoading(true);
     try {
       const { adminDeleteUser } = await import('@/lib/admin-users.functions');
-      await adminDeleteUser({ data: { userId } });
-      toast.success('User deleted');
+      await adminDeleteUser({ data: { userId, reason: deleteReason } });
+      toast.success('User deleted — offboarding email sent');
+      setDeleteOpen(false);
       navigate({ to: '/admin' });
     } catch (e: any) { toast.error(e.message || 'Failed'); }
     finally { setActionLoading(false); }
@@ -536,7 +544,7 @@ export default function AdminUserDetailPage() {
                 icon={Trash2}
                 label="Delete user permanently"
                 hint="Removes account, chats, statuses, and uploads"
-                onClick={handleDelete}
+                onClick={openDeleteDialog}
                 className="bg-red-500/10 text-red-400 hover:bg-red-500/20 border-red-500/30 w-full"
               />
             </div>
@@ -656,6 +664,77 @@ export default function AdminUserDetailPage() {
               <button onClick={() => setEditOpen(false)} className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium bg-muted text-muted-foreground">Cancel</button>
               <button onClick={handleSaveEdit} disabled={actionLoading} className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium gradient-primary text-white">
                 <Save size={14} /> Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Offboarding reason dialog */}
+      {deleteOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="glass-strong rounded-2xl border border-red-500/40 p-6 w-full max-w-md">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-red-500/15 text-red-400 flex items-center justify-center">
+                <AlertTriangle size={18} />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-foreground">Offboard user permanently</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Select a reason. The user will receive an email explaining the
+                  outcome. This action cannot be undone.
+                </p>
+              </div>
+              <button onClick={() => setDeleteOpen(false)} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground"><X size={16} /></button>
+            </div>
+
+            <div className="space-y-2 mb-5">
+              {([
+                { key: 'general', label: 'General', hint: 'Removed per platform policies (no specific reason disclosed).' },
+                { key: 'terms_breach', label: 'Breach of Terms & Conditions', hint: 'User will be told their account violated the Terms.' },
+                { key: 'incomplete_signup', label: 'Incomplete Sign-up', hint: 'User will be told sign-up was not completed in time.' },
+              ] as const).map(opt => (
+                <label
+                  key={opt.key}
+                  className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                    deleteReason === opt.key ? 'border-red-500/60 bg-red-500/10' : 'border-border bg-muted/30 hover:bg-muted/50'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="offboard_reason"
+                    className="mt-1 accent-red-500"
+                    checked={deleteReason === opt.key}
+                    onChange={() => setDeleteReason(opt.key)}
+                  />
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-sm font-semibold text-foreground">{opt.label}</span>
+                    <span className="block text-[11px] text-muted-foreground mt-0.5">{opt.hint}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+
+            <p className="text-[11px] text-muted-foreground mb-4">
+              Personal data will be deleted or retained in accordance with
+              applicable law (DPDP Act, 2023), our Privacy Policy, and legal
+              obligations for security, fraud prevention and dispute resolution.
+            </p>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setDeleteOpen(false)}
+                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium bg-muted text-muted-foreground"
+                disabled={actionLoading}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={actionLoading || !deleteReason}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-red-500 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Trash2 size={14} /> {actionLoading ? 'Deleting…' : 'Confirm delete'}
               </button>
             </div>
           </div>
