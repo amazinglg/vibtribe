@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { ensurePushSubscription } from '@/lib/pushNotifications';
+import { ensurePushSubscription, attachPushSubscriptionChangeListener } from '@/lib/pushNotifications';
 import { useChatStore } from '@/store/chatStore';
 
 // Ringtone audio context for incoming calls
@@ -54,6 +54,8 @@ export default function ServiceWorkerRegistration() {
   const { setSelectedChatId } = useChatStore();
   const supabase = createClient();
   const subscriptionSavedRef = useRef(false);
+  const userIdRef = useRef<string | null>(null);
+  userIdRef.current = user?.id ?? null;
 
   // Register SW and subscribe to push
   useEffect(() => {
@@ -101,9 +103,11 @@ export default function ServiceWorkerRegistration() {
     };
     window.addEventListener('focus', onFocusOrVisible);
     document.addEventListener('visibilitychange', onFocusOrVisible);
+    const detachChange = attachPushSubscriptionChangeListener(supabase, () => userIdRef.current);
     return () => {
       window.removeEventListener('focus', onFocusOrVisible);
       document.removeEventListener('visibilitychange', onFocusOrVisible);
+      detachChange();
     };
   }, [user]);
 
