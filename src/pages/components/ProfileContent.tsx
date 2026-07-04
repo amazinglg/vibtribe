@@ -285,6 +285,10 @@ export default function ProfileContent() {
       setEditMobileNumber(parsed.number);
       if (profile.profile_photo_visibility) setProfilePhotoVisibility(profile.profile_photo_visibility);
       if (profile.status_visibility) setStatusVisibilitySetting(profile.status_visibility);
+      if (Array.isArray((profile as any).profile_photo_allowed_viewers))
+        setProfilePhotoAllowed((profile as any).profile_photo_allowed_viewers);
+      if (Array.isArray((profile as any).status_allowed_viewers))
+        setStatusAllowed((profile as any).status_allowed_viewers);
       const p: any = profile;
       if (typeof p.notif_messages === 'boolean') setNotifMessages(p.notif_messages);
       if (typeof p.notif_status === 'boolean') setNotifStatus(p.notif_status);
