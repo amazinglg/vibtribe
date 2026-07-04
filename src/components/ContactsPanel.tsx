@@ -121,14 +121,16 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
           onPlatform: true,
           userId: s.contact_id,
           avatar: (s.contact_name || profileMap.get(s.contact_id)?.full_name || '?')[0]?.toUpperCase(),
-          avatarUrl: (profileMap.get(s.contact_id)?.profile_photo_visibility ?? 'all') === 'all' ? (profileMap.get(s.contact_id)?.avatar_url || null) : null,
+          avatarUrl: profileMap.get(s.contact_id)?.avatar_url || null,
           isVerified: !!profileMap.get(s.contact_id)?.is_verified,
         }));
         if (savedContacts.length > 0) {
+          const { applyAvatarPrivacy } = await import('@/lib/visible-avatars');
+          const gated = await applyAvatarPrivacy(savedContacts, 'userId', 'avatarUrl');
           setPermissionState('granted');
           setContacts(prev => {
             const byId = new Map<string, Contact>();
-            for (const c of [...savedContacts, ...prev]) {
+            for (const c of [...gated, ...prev]) {
               const key = c.userId || c.phone;
               if (!byId.has(key)) byId.set(key, c);
             }
@@ -198,7 +200,7 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
           onPlatform: true,
           userId: match.id,
           avatar: match.full_name?.[0]?.toUpperCase(),
-          avatarUrl: (match.profile_photo_visibility ?? 'all') === 'all' ? (match.avatar_url || null) : null,
+          avatarUrl: match.avatar_url || null,
           isVerified: !!match.is_verified,
         });
       } else {
@@ -207,8 +209,8 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
         result.push({ name: c.name, phone: c.phone, onPlatform: false });
       }
     }
-
-    setContacts(result);
+    const { applyAvatarPrivacy } = await import('@/lib/visible-avatars');
+    setContacts(await applyAvatarPrivacy(result, 'userId', 'avatarUrl'));
     setLoading(false);
   };
 
@@ -224,7 +226,7 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
       onPlatform: true,
       userId: u.id,
       avatar: u.full_name?.[0]?.toUpperCase(),
-      avatarUrl: (u.profile_photo_visibility ?? 'all') === 'all' ? (u.avatar_url || null) : null,
+      avatarUrl: u.avatar_url || null,
       isVerified: !!u.is_verified,
     }));
 
@@ -234,7 +236,8 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
       { name: 'Priya Patel', phone: '9123456789', onPlatform: false },
     );
 
-    setContacts(result);
+    const { applyAvatarPrivacy } = await import('@/lib/visible-avatars');
+    setContacts(await applyAvatarPrivacy(result, 'userId', 'avatarUrl'));
     setLoading(false);
   };
 
