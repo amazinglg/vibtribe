@@ -1270,7 +1270,12 @@ export default function ProfileContent() {
                       onChange={async (e) => {
                         const v = e.target.value as any;
                         setProfilePhotoVisibility(v);
-                        try { await updateProfile({ profile_photo_visibility: v }); toast.success('Profile photo visibility updated'); } catch {}
+                        try {
+                          await updateProfile({ profile_photo_visibility: v });
+                          invalidateVisibleAvatar();
+                          toast.success('Profile photo visibility updated');
+                        } catch {}
+                        if (v === 'selected') setPickerFor('photo');
                       }}
                       className="w-full px-3 py-2 bg-input border border-border rounded-xl text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                     >
@@ -1278,6 +1283,17 @@ export default function ProfileContent() {
                       <option value="contacts">My Contacts</option>
                       <option value="selected">Specific Users</option>
                     </select>
+                    {profilePhotoVisibility === 'selected' && (
+                      <div className="flex items-center justify-between mt-2">
+                        <span className="text-[11px] text-muted-foreground">
+                          {profilePhotoAllowed.length} user{profilePhotoAllowed.length === 1 ? '' : 's'} allowed
+                        </span>
+                        <button
+                          onClick={() => setPickerFor('photo')}
+                          className="text-[11px] font-semibold text-primary hover:underline"
+                        >Edit list</button>
+                      </div>
+                    )}
                   </div>
 
                   {/* Status Visibility */}
@@ -1294,6 +1310,7 @@ export default function ProfileContent() {
                         const v = e.target.value as any;
                         setStatusVisibilitySetting(v);
                         try { await updateProfile({ status_visibility: v }); toast.success('Status visibility updated'); } catch {}
+                        if (v === 'selected') setPickerFor('status');
                       }}
                       className="w-full px-3 py-2 bg-input border border-border rounded-xl text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                     >
@@ -1301,6 +1318,17 @@ export default function ProfileContent() {
                       <option value="contacts">My Contacts</option>
                       <option value="selected">Specific Users</option>
                     </select>
+                    {statusVisibilitySetting === 'selected' && (
+                      <div className="flex items-center justify-between mt-2">
+                        <span className="text-[11px] text-muted-foreground">
+                          {statusAllowed.length} user{statusAllowed.length === 1 ? '' : 's'} allowed
+                        </span>
+                        <button
+                          onClick={() => setPickerFor('status')}
+                          className="text-[11px] font-semibold text-primary hover:underline"
+                        >Edit list</button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
