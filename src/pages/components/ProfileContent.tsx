@@ -24,6 +24,7 @@ import ConsentCenter from '@/components/ConsentCenter';
 import { isCapacitorWrapper, pickNativeImage, pickNativeImages } from '@/lib/native-bridge';
 import SpecificUsersPicker from '@/components/SpecificUsersPicker';
 import { invalidateVisibleAvatar } from '@/lib/visible-avatars';
+import { pruneOldAvatars } from '@/lib/avatar-cleanup';
 import {
   AlertDialog,
   AlertDialogAction,
