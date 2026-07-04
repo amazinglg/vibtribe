@@ -1,8 +1,51 @@
 // Bump on every release so installed PWAs pick up the latest build
 // (auth/email branding, OTP throttling, profile + admin redesign, etc.).
-const CACHE_NAME = 'vibtribe-v19';
+const CACHE_NAME = 'vibtribe-v20';
 const IMG_CACHE = 'vibtribe-images-v5';
 const STATIC_ASSETS = ['/', '/manifest.json', '/favicon.ico'];
+
+// Cached VAPID public key so `pushsubscriptionchange` can re-subscribe
+// without a live client window. Seeded via postMessage from the app on
+// first load and persisted in Cache Storage so it survives SW restarts.
+let VAPID_PUBLIC_KEY = null;
+const VAPID_CACHE = 'vibtribe-vapid-v1';
+const VAPID_CACHE_URL = '/__vapid_public_key__';
+
+async function loadVapidKey() {
+  if (VAPID_PUBLIC_KEY) return VAPID_PUBLIC_KEY;
+  try {
+    const cache = await caches.open(VAPID_CACHE);
+    const res = await cache.match(VAPID_CACHE_URL);
+    if (res) VAPID_PUBLIC_KEY = (await res.text()) || null;
+  } catch {}
+  return VAPID_PUBLIC_KEY;
+}
+
+async function saveVapidKey(key) {
+  if (!key || key === VAPID_PUBLIC_KEY) return;
+  VAPID_PUBLIC_KEY = key;
+  try {
+    const cache = await caches.open(VAPID_CACHE);
+    await cache.put(VAPID_CACHE_URL, new Response(key, { headers: { 'Content-Type': 'text/plain' } }));
+  } catch {}
+}
+
+function base64UrlToUint8Array(value) {
+  const padding = '='.repeat((4 - (value.length % 4)) % 4);
+  const base64 = (value + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = self.atob(base64);
+  const out = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i += 1) out[i] = raw.charCodeAt(i);
+  return out;
+}
+
+self.addEventListener('message', (event) => {
+  const data = event.data;
+  if (!data || typeof data !== 'object') return;
+  if (data.type === 'SET_VAPID_PUBLIC_KEY' && typeof data.key === 'string') {
+    event.waitUntil(saveVapidKey(data.key));
+  }
+});
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS)));
@@ -135,4 +178,32 @@ self.addEventListener('notificationclick', (event) => {
       return self.clients.openWindow(targetUrl.href);
     })
   );
+});
+
+// Browsers (Chrome/FCM, Safari/APNs) occasionally rotate the push endpoint
+// or invalidate the current subscription. Re-subscribe silently with the
+// cached VAPID key and notify any open client so it can persist the new
+// endpoint to the server. If no client is open, the client will pick up
+// the fresh subscription on its next load (via getSubscription()) and
+// upsert it there.
+self.addEventListener('pushsubscriptionchange', (event) => {
+  event.waitUntil((async () => {
+    try {
+      const key = await loadVapidKey();
+      if (!key) return;
+      const newSub = await self.registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: base64UrlToUint8Array(key),
+      });
+      const json = newSub.toJSON();
+      const oldEndpoint = event.oldSubscription ? event.oldSubscription.endpoint : null;
+      const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      clientList.forEach((client) => client.postMessage({
+        type: 'PUSH_SUBSCRIPTION_CHANGED',
+        payload: { oldEndpoint, subscription: json },
+      }));
+    } catch (err) {
+      // Swallow — client will re-subscribe on next visit.
+    }
+  })());
 });
