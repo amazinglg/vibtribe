@@ -99,7 +99,7 @@ export default function AdminPage() {
   const [ticketFilter, setTicketFilter] = useState<'all' | 'open' | 'inprocess' | 'solved'>('all');
   const [unreadTickets, setUnreadTickets] = useState(0);
   const [forceLogoutLoading, setForceLogoutLoading] = useState<string | null>(null);
-  const [userFilter, setUserFilter] = useState<'all' | 'active' | 'suspended' | 'blocked' | 'admins' | 'online' | 'under_age'>('all');
+  const [userFilter, setUserFilter] = useState<'all' | 'active' | 'suspended' | 'blocked' | 'admins' | 'online' | 'under_age' | 'incomplete_signup'>('all');
   const [userSort, setUserSort] = useState<'recent' | 'name' | 'lastActive'>('recent');
 
   // Ticket thread state
@@ -475,6 +475,7 @@ export default function AdminPage() {
       if (userFilter === 'admins') return u.role === 'admin' || (u as any).is_master_admin;
       if (userFilter === 'online') return isOnline(u);
       if (userFilter === 'under_age') return isUnderAge(u);
+      if (userFilter === 'incomplete_signup') return !(u as any).profile_completed;
       return true;
     })
     .sort((a, b) => {
@@ -495,6 +496,7 @@ export default function AdminPage() {
     admins: users.filter(u => u.role === 'admin' || (u as any).is_master_admin).length,
     online: users.filter(isOnline).length,
     under_age: users.filter(isUnderAge).length,
+    incomplete_signup: users.filter(u => !(u as any).profile_completed).length,
   };
 
   const relTime = (iso?: string) => {
@@ -707,6 +709,7 @@ export default function AdminPage() {
                   { key: 'suspended', label: 'Suspended' },
                   { key: 'admins', label: 'Admins' },
                   { key: 'under_age', label: 'Under Age' },
+                  { key: 'incomplete_signup', label: 'Incomplete Sign-up' },
                 ] as const).map(f => (
                   <button
                     key={f.key}
