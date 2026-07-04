@@ -274,6 +274,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     setCallDuration(0);
     setMicMuted(false); setSpeakerOff(false); setVideoOff(false);
     setShowAudioMenu(false);
+    setMinimized(false);
   }, [supabase]);
 
   const endCall = useCallback(async (finalStatus: 'ended' | 'declined' | 'missed' = 'ended') => {
