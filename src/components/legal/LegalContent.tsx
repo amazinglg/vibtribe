@@ -93,7 +93,7 @@ export function TermsConditionsContent() {
 export function PrivacyPolicyContent() {
   return (
     <div className="space-y-4 text-sm leading-relaxed text-foreground/90">
-      <p className="text-muted-foreground">Last updated: 3 July 2026</p>
+      <p className="text-muted-foreground">Last updated: 4 July 2026</p>
       <p>VibTribe is a privacy-first messaging app. This Privacy Policy explains exactly what data we collect when you sign up and use the service, how we use it, who can see it, and the choices you have. It is a separate document from our <Link to="/terms" className="text-primary underline">Terms &amp; Conditions</Link>, although both must be accepted to use the App.</p>
 
       <h3 className="text-base font-semibold mt-6">A. Information We Collect About You</h3>
@@ -105,7 +105,8 @@ export function PrivacyPolicyContent() {
         <li><strong>Email address</strong> — required at signup. Used for OTP verification, password recovery, support replies, and (only if you opted in) promotional emails. Your email is visible only to you and our admins, never to other users.</li>
         <li><strong>Password</strong> — stored only as a salted bcrypt hash. We never see or store your plaintext password.</li>
         <li><strong>Username</strong> (optional) — a public handle other users can find you by.</li>
-        <li><strong>Profile photo / avatar</strong> (optional) — visible according to your Profile photo visibility setting (All / Contacts / Nobody).</li>
+        <li><strong>Profile photo / avatar</strong> (optional) — stored in a <strong>private</strong> storage bucket and served only via short-lived signed URLs to viewers permitted by your Profile photo visibility setting (All / Contacts / Nobody). Direct public URLs are not issued.</li>
+        <li><strong>Tribe (group) avatar</strong> (optional) — stored in a <strong>private</strong> storage bucket and served via short-lived signed URLs only to current members of that tribe. Non-members cannot fetch the image.</li>
         <li><strong>Short bio</strong> (optional).</li>
         <li><strong>App preferences</strong> — selected theme, notification toggles, language, and per-feature permissions you have granted (microphone, camera, contacts, notifications).</li>
         <li><strong>Two-factor authentication state</strong> — whether 2FA is enabled, and if so, the encrypted TOTP secret (readable only by you, never to other users).</li>
@@ -152,6 +153,9 @@ export function PrivacyPolicyContent() {
 
       <h3 className="text-base font-semibold mt-6">E. Account Deletion &amp; Retention</h3>
       <p>You can delete your account any time from Profile &rarr; Danger Zone &rarr; Delete My Account. This removes your profile, contacts, encrypted keys, chats, messages, statuses, push tokens, support tickets, and your authentication record. Some operational logs and backups may persist for a short period for security and legal reasons. Status media is auto-deleted 24 hours after posting regardless of account state. For any data-protection request, contact the Grievance Officer at <strong>Labhansh.garg@outlook.com</strong>.</p>
+      <p><strong>Admin-initiated offboarding.</strong> When an administrator removes your account, we send an email to your registered address stating the reason — <em>General</em>, <em>Breach of Terms &amp; Conditions</em>, or <em>Incomplete Sign-up</em> — and personal data associated with the account is deleted <strong>immediately</strong>. A limited set of records (e.g. audit logs, consent records, records required for security, fraud prevention, dispute resolution and statutory retention under Indian law) may be retained for the periods required by applicable law.</p>
+      <p><strong>Incomplete sign-up reminders.</strong> If you verify your email address but do not complete onboarding, we send up to three reminder emails (at approximately 24 hours, 72 hours and 7 days after email verification) to help you finish. Reminders stop the moment onboarding is completed. This processing is based on legitimate interest in completing the account creation you started, and no reminders are sent once onboarding is complete or the account is deleted.</p>
+      <p><strong>Silent Delete of messages.</strong> Inside 1:1 and tribe chats, the <em>Silent Delete</em> option permanently removes a message or media file for both parties without leaving a "message was deleted" placeholder or a server-side deletion log. Once used, the content cannot be recovered by you, the recipient, or us.</p>
 
       <h3 className="text-base font-semibold mt-6">F. Third-Party Processors</h3>
       <ul className="list-disc pl-5 space-y-1">
