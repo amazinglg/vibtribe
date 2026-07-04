@@ -11,7 +11,7 @@ import { Link } from '@tanstack/react-router';
 export function TermsConditionsContent() {
   return (
     <div className="space-y-4 text-sm leading-relaxed text-foreground/90">
-      <p className="text-muted-foreground">Last updated: 3 July 2026</p>
+      <p className="text-muted-foreground">Last updated: 4 July 2026</p>
 
       <h2 className="text-lg font-semibold mt-6">1. Acceptance of Terms</h2>
       <p>By creating an account or using VibTribe ("the App", "we", "us", "our"), you agree to these Terms &amp; Conditions. Use of the App is also governed by our <Link to="/privacy" className="text-primary underline">Privacy Policy</Link>, which is a separate document. If you do not agree with either, you must not use the App.</p>
@@ -59,6 +59,9 @@ export function TermsConditionsContent() {
 
       <h2 className="text-lg font-semibold mt-6">7. Suspension &amp; Termination</h2>
       <p>We may suspend or terminate your account at any time, with or without notice, if we reasonably believe you have violated these Terms, applicable law, or if your account poses a security or safety risk to other users. You may delete your own account at any time from Profile &rarr; Danger Zone &rarr; Delete My Account.</p>
+      <p><strong>Admin-initiated offboarding.</strong> When an administrator removes an account, you will receive an email at your registered email address explaining the reason for offboarding. The reason will be one of: (a) <em>General</em> — account closed at admin discretion; (b) <em>Breach of Terms &amp; Conditions</em> — violation of these Terms or applicable law; or (c) <em>Incomplete Sign-up</em> — verified email but onboarding never completed despite reminder emails. Following offboarding, personal data associated with the account is deleted <strong>immediately</strong>, save for a limited set of records that must be retained for security, fraud prevention, dispute resolution or legal compliance under Indian law (including the DPDP Act, 2023 and the IT Rules, 2021).</p>
+      <p><strong>Incomplete sign-up reminders.</strong> If you verify your email but do not finish onboarding, we send up to three reminder emails (approximately 24 hours, 72 hours and 7 days after email verification). Reminders stop as soon as you complete onboarding, and the account may be offboarded if onboarding is never completed.</p>
+      <p><strong>Silent Delete.</strong> Inside 1:1 and tribe chats, you may permanently delete a message or media item for both sides via <em>Silent Delete</em>. Unlike "Delete for everyone", Silent Delete leaves no "message was deleted" placeholder on either device. Once used, the content is unrecoverable.</p>
 
       <h2 className="text-lg font-semibold mt-6">8. Disclaimers</h2>
       <p>The App is provided "as is" and "as available". To the maximum extent permitted by law we disclaim all warranties, express or implied, including merchantability, fitness for purpose, and non-infringement. We do not guarantee uninterrupted, error-free, or perfectly secure operation.</p>
