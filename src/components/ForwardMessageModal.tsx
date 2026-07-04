@@ -71,7 +71,11 @@ export default function ForwardMessageModal({ isOpen, onClose, messages }: Props
           const p = profMap[other] || {};
           return { chatId: c.id, name: p.full_name || 'Contact', avatarUrl: p.avatar_url, isGroup: false, otherUserId: other };
         });
-        setTargets(out);
+        // Apply avatar-privacy for 1:1 targets (group avatars are public).
+        try {
+          const { applyAvatarPrivacy } = await import('@/lib/visible-avatars');
+          setTargets(await applyAvatarPrivacy(out, 'otherUserId' as any, 'avatarUrl' as any));
+        } catch { setTargets(out); }
       } catch (err: any) {
         toast.error(err?.message || 'Failed to load contacts');
       } finally { setLoading(false); }

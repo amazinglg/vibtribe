@@ -109,12 +109,16 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
         : { data: [] };
       const profileById = new Map((profiles || []).map((p: any) => [p.id, p]));
 
-      setViewers((viewRows || []).map((v: any) => ({
+      const viewersRaw = (viewRows || []).map((v: any) => ({
         id: v.viewer_id,
         name: profileById.get(v.viewer_id)?.full_name || profileById.get(v.viewer_id)?.username || 'Someone',
         avatar_url: profileById.get(v.viewer_id)?.avatar_url || null,
         viewed_at: v.viewed_at,
-      })));
+      }));
+      try {
+        const { applyAvatarPrivacy } = await import('@/lib/visible-avatars');
+        setViewers(await applyAvatarPrivacy(viewersRaw, 'id' as any, 'avatar_url' as any));
+      } catch { setViewers(viewersRaw); }
     })();
   }, [story?.id, isOwner]);
 

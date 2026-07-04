@@ -844,22 +844,17 @@ export default function ChatWindowPanel() {
             .eq('contact_id', otherUserId)
             .maybeSingle();
 
-          // Honor profile photo privacy: only show avatar if 'all' OR ('contacts' AND we're in their contacts)
-          let showAvatar = false;
-          const vis = (otherUser as any).profile_photo_visibility || 'all';
-          if (vis === 'all') showAvatar = true;
-          else if (vis === 'contacts') {
-            const { data: theyHaveUs } = await supabase
-              .from('contacts').select('id')
-              .eq('user_id', otherUserId).eq('contact_id', user.id).maybeSingle();
-            showAvatar = !!theyHaveUs;
-          }
+          // Centralized privacy: resolve via visible_avatar_urls RPC which
+          // enforces 'all' / 'contacts' / 'selected' server-side.
+          const { resolveVisibleAvatars } = await import('@/lib/visible-avatars');
+          const avMap = await resolveVisibleAvatars([otherUserId]);
+          const effectiveAvatar = avMap.get(otherUserId) ?? null;
 
           const isReallyOnline = !!(otherUser.is_online && (otherUser as any).last_seen && (Date.now() - new Date((otherUser as any).last_seen).getTime()) < 2 * 60 * 1000);
           setContact({
             name: displayName,
             avatar: displayName[0]?.toUpperCase() || 'U',
-            avatarUrl: showAvatar ? (otherUser as any).avatar_url || null : null,
+            avatarUrl: effectiveAvatar,
             online: isReallyOnline,
             lastSeen: isReallyOnline ? 'Online' : 'Last seen recently',
             publicKey: otherUser.public_key || undefined,

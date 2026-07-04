@@ -45,3 +45,26 @@ export function invalidateVisibleAvatar(ownerId?: string) {
   if (!ownerId) cache.clear();
   else cache.delete(ownerId);
 }
+
+// Post-processes an array of items with an owner id + avatarUrl field so
+// that avatar visibility rules ('all' | 'contacts' | 'selected') are always
+// enforced through the backend RPC — no ad-hoc client-side visibility guards.
+// Owners that are not permitted return null (renderers fall back to the
+// default avatar placeholder). Items missing an owner id are passed through
+// unchanged (tribe / broadcast avatars are handled separately).
+export async function applyAvatarPrivacy<T extends Record<string, any>>(
+  items: T[],
+  ownerKey: keyof T = 'userId' as keyof T,
+  urlKey: keyof T = 'avatarUrl' as keyof T,
+): Promise<T[]> {
+  if (!items || items.length === 0) return items;
+  const owners = items.map((it) => it?.[ownerKey]).filter(Boolean) as string[];
+  if (owners.length === 0) return items;
+  const map = await resolveVisibleAvatars(owners);
+  return items.map((it) => {
+    const owner = it?.[ownerKey] as string | undefined;
+    if (!owner) return it;
+    if (!map.has(owner)) return it; // unknown -> leave as-is
+    return { ...it, [urlKey]: map.get(owner) ?? null } as T;
+  });
+}

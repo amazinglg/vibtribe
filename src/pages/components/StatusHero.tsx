@@ -55,17 +55,29 @@ export default function StatusHero() {
     return rows;
   }, [user?.id]);
 
-  // Load persisted visibility preference
+  // Load persisted visibility preference + allow-list (source of truth is
+  // user_profiles; keeps parity with profile-photo privacy).
   useEffect(() => {
     if (!user?.id) return;
-    supabase.from('user_profiles').select('status_visibility').eq('id', user.id).maybeSingle()
-      .then(({ data }) => { if (data?.status_visibility) setVisibility(data.status_visibility as VisibilityOption); });
-    // Load latest selected_viewers list from most recent status
-    supabase.from('statuses').select('selected_viewers').eq('user_id', user.id)
-      .order('created_at', { ascending: false }).limit(1).maybeSingle()
-      .then(({ data }) => { if (Array.isArray(data?.selected_viewers)) setSelectedViewers(data.selected_viewers); });
+    supabase.from('user_profiles')
+      .select('status_visibility, status_allowed_viewers')
+      .eq('id', user.id).maybeSingle()
+      .then(({ data }) => {
+        if (data?.status_visibility) setVisibility(data.status_visibility as VisibilityOption);
+        if (Array.isArray((data as any)?.status_allowed_viewers)) {
+          setSelectedViewers((data as any).status_allowed_viewers);
+        }
+      });
     loadMyStatuses();
   }, [user?.id, loadMyStatuses]);
+
+  // Persist allow-list edits back to user_profiles as they change.
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase.from('user_profiles')
+      .update({ status_allowed_viewers: selectedViewers })
+      .eq('id', user.id).then(() => {});
+  }, [user?.id, selectedViewers]);
 
   const loadContacts = useCallback(async () => {
     if (!user?.id) return;
