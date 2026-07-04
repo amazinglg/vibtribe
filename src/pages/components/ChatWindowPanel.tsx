@@ -2466,7 +2466,7 @@ export default function ChatWindowPanel() {
                         />
                       )
                     ) : imageUrl ? (
-                      <img
+                      <ChatMediaImg
                         src={imageUrl}
                         alt="Shared image"
                         className="max-w-[200px] rounded-xl cursor-zoom-in"
