@@ -1530,6 +1530,8 @@ export type Database = {
           public_key: string | null
           real_email: string | null
           role: string
+          signup_reminder_last_sent_at: string | null
+          signup_reminders_sent: number
           status_allowed_viewers: string[]
           status_visibility: string
           terms_accepted_at: string | null
@@ -1591,6 +1593,8 @@ export type Database = {
           public_key?: string | null
           real_email?: string | null
           role?: string
+          signup_reminder_last_sent_at?: string | null
+          signup_reminders_sent?: number
           status_allowed_viewers?: string[]
           status_visibility?: string
           terms_accepted_at?: string | null
@@ -1652,6 +1656,8 @@ export type Database = {
           public_key?: string | null
           real_email?: string | null
           role?: string
+          signup_reminder_last_sent_at?: string | null
+          signup_reminders_sent?: number
           status_allowed_viewers?: string[]
           status_visibility?: string
           terms_accepted_at?: string | null
@@ -1887,6 +1893,8 @@ export type Database = {
           public_key: string | null
           real_email: string | null
           role: string
+          signup_reminder_last_sent_at: string | null
+          signup_reminders_sent: number
           status_allowed_viewers: string[]
           status_visibility: string
           terms_accepted_at: string | null
@@ -1989,6 +1997,8 @@ export type Database = {
           public_key: string | null
           real_email: string | null
           role: string
+          signup_reminder_last_sent_at: string | null
+          signup_reminders_sent: number
           status_allowed_viewers: string[]
           status_visibility: string
           terms_accepted_at: string | null
@@ -2067,6 +2077,8 @@ export type Database = {
           public_key: string | null
           real_email: string | null
           role: string
+          signup_reminder_last_sent_at: string | null
+          signup_reminders_sent: number
           status_allowed_viewers: string[]
           status_visibility: string
           terms_accepted_at: string | null
@@ -2137,6 +2149,8 @@ export type Database = {
           public_key: string | null
           real_email: string | null
           role: string
+          signup_reminder_last_sent_at: string | null
+          signup_reminders_sent: number
           status_allowed_viewers: string[]
           status_visibility: string
           terms_accepted_at: string | null
@@ -2298,6 +2312,8 @@ export type Database = {
           public_key: string | null
           real_email: string | null
           role: string
+          signup_reminder_last_sent_at: string | null
+          signup_reminders_sent: number
           status_allowed_viewers: string[]
           status_visibility: string
           terms_accepted_at: string | null
@@ -2440,6 +2456,16 @@ export type Database = {
         Args: { _code: string; _email: string; _purpose: string }
         Returns: undefined
       }
+      list_pending_signup_reminders: {
+        Args: { _limit?: number }
+        Returns: {
+          email: string
+          email_confirmed_at: string
+          full_name: string
+          reminders_sent: number
+          user_id: string
+        }[]
+      }
       list_recent_public_users: {
         Args: { _limit?: number }
         Returns: {
@@ -2460,6 +2486,10 @@ export type Database = {
       mark_secure_tribe: {
         Args: { _chat_id: string; _code: string }
         Returns: Json
+      }
+      mark_signup_reminder_sent: {
+        Args: { _user_id: string }
+        Returns: undefined
       }
       move_to_dlq: {
         Args: {
