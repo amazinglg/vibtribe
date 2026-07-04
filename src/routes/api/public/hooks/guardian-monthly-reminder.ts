@@ -17,7 +17,13 @@ const SITE_ORIGIN = 'https://www.vibtribe.in'
 export const Route = createFileRoute('/api/public/hooks/guardian-monthly-reminder')({
   server: {
     handlers: {
-      POST: async () => {
+      POST: async ({ request }) => {
+        const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+        if (!serviceKey) return new Response('Server misconfigured', { status: 500 })
+        const authHeader = request.headers.get('authorization') || request.headers.get('Authorization') || ''
+        if (!authHeader.startsWith('Bearer ')) return new Response('Unauthorized', { status: 401 })
+        const token = authHeader.slice('Bearer '.length).trim()
+        if (token !== serviceKey) return new Response('Forbidden', { status: 403 })
         const { supabaseAdmin } = await import('@/integrations/supabase/client.server')
         const { data: due, error } = await supabaseAdmin.rpc('guardian_reminders_due' as any)
         if (error) return Response.json({ ok: false, error: error.message }, { status: 500 })
