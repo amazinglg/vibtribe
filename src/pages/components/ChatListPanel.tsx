@@ -559,7 +559,7 @@ export default function ChatListPanel() {
             name: ou.full_name || 'VibTribe user',
             avatar: (ou.full_name || 'V')[0].toUpperCase(),
             avatarColor: avatarColors[chatList.length % avatarColors.length],
-            avatarUrl: (ou.profile_photo_visibility ?? 'all') === 'all' ? (ou.avatar_url || null) : null,
+            avatarUrl: ou.avatar_url || null,
             lastMessage: preview,
             time: lastMsg ? formatTime(lastMsg.created_at) : '',
             rawTime: lastMsg?.created_at || (chat as any).updated_at,
@@ -580,8 +580,10 @@ export default function ChatListPanel() {
       if (chatList.length === 0 && chats.length > 0) {
         // skip overwrite — keep showing previously loaded chats
       } else {
-        setChats(chatList);
-        try { sessionStorage.setItem(CHATS_CACHE_KEY, JSON.stringify(chatList)); } catch {}
+        const { applyAvatarPrivacy } = await import('@/lib/visible-avatars');
+        const gated = await applyAvatarPrivacy(chatList, 'participantId', 'avatarUrl');
+        setChats(gated);
+        try { sessionStorage.setItem(CHATS_CACHE_KEY, JSON.stringify(gated)); } catch {}
       }
       // Only auto-open the first chat on desktop side-by-side layout.
       // On mobile/tablet the user should land on the chat list, not a chat.
