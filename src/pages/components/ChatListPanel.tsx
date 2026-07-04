@@ -1278,10 +1278,12 @@ function ContactsTabContent({
           onPlatform: !!m,
           userId: m?.id,
           avatar: m?.full_name?.[0]?.toUpperCase() || c.name?.[0]?.toUpperCase() || 'U',
-          avatarUrl: m && (m.profile_photo_visibility ?? 'all') === 'all' ? (m.avatar_url || null) : null,
+          avatarUrl: m?.avatar_url || null,
         };
       }).sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }));
-      setContacts(merged);
+      const { applyAvatarPrivacy } = await import('@/lib/visible-avatars');
+      const mergedPriv = await applyAvatarPrivacy(merged, 'userId', 'avatarUrl');
+      setContacts(mergedPriv);
       // Auto-save VibTribe-platform matches into the user's contacts table
       try {
         const platformMatches = merged.filter(c => c.onPlatform && c.userId);
@@ -1318,9 +1320,10 @@ function ContactsTabContent({
       onPlatform: true,
       userId: u.id,
       avatar: u.full_name?.[0]?.toUpperCase(),
-      avatarUrl: (u.profile_photo_visibility ?? 'all') === 'all' ? (u.avatar_url || null) : null,
+      avatarUrl: u.avatar_url || null,
     }));
-    setContacts(result);
+    const { applyAvatarPrivacy } = await import('@/lib/visible-avatars');
+    setContacts(await applyAvatarPrivacy(result, 'userId', 'avatarUrl'));
     setLoading(false);
   };
 
