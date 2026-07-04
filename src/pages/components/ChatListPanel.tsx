@@ -613,8 +613,18 @@ export default function ChatListPanel() {
 
   const handleDeleteChat = async (chatId: string) => {
     try {
-      await supabase.from('messages').delete().eq('chat_id', chatId);
-      await supabase.from('chats').delete().eq('id', chatId);
+      // Per-user hide only — do NOT delete the underlying chat or messages,
+      // otherwise the other participant would lose the conversation too.
+      // If a new message arrives later, the load() query treats
+      // updated_at > hidden_at as "unhidden" so the chat reappears.
+      if (user) {
+        await supabase
+          .from('user_hidden_chats' as any)
+          .upsert(
+            { user_id: user.id, chat_id: chatId, hidden_at: new Date().toISOString() },
+            { onConflict: 'user_id,chat_id' },
+          );
+      }
       setChats(prev => prev.filter(c => c.id !== chatId));
       if (selectedChatId === chatId) setSelectedChatId(null);
     } catch {
