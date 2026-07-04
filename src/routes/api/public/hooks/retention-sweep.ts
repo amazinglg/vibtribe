@@ -31,7 +31,13 @@ type Profile = {
 export const Route = createFileRoute('/api/public/hooks/retention-sweep')({
   server: {
     handlers: {
-      POST: async () => {
+      POST: async ({ request }) => {
+        const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+        if (!serviceKey) return new Response('Server misconfigured', { status: 500 })
+        const authHeader = request.headers.get('authorization') || request.headers.get('Authorization') || ''
+        if (!authHeader.startsWith('Bearer ')) return new Response('Unauthorized', { status: 401 })
+        const token = authHeader.slice('Bearer '.length).trim()
+        if (token !== serviceKey) return new Response('Forbidden', { status: 403 })
         const { supabaseAdmin } = await import('@/integrations/supabase/client.server')
         const now = Date.now()
         const thresh = (days: number) => new Date(now - days * 86400_000).toISOString()
