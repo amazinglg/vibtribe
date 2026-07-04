@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Volume2, VolumeX, Bluetooth, Ear, Headphones, Minimize2, Maximize2 } from 'lucide-react';
+import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Volume2, VolumeX, Bluetooth, Ear, Headphones, Minimize2, Maximize2, AlertTriangle } from 'lucide-react';
 import { SwitchCamera } from 'lucide-react';
 import { acquireCallWakeLock, setCallAudioRoute } from '@/lib/native-bridge';
 import { sendCallPush } from '@/lib/fcm-push.functions';
@@ -104,6 +104,20 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   // when the PWA loses foreground / screen locks. Any actively playing
   // <audio> element keeps the audio session alive so the mic keeps flowing.
   const silentAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // iOS-only mic-recovery UX. On installed iOS PWAs, WebKit can suspend or
+  // end the outbound microphone track when the audio session is preempted
+  // (screen lock, cellular call, app switch, route change). We try to
+  // recover silently via replaceTrack; if that fails we surface a one-tap
+  // "Restore microphone" banner.
+  const [micStatus, setMicStatus] = useState<'ok' | 'recovering' | 'failed'>('ok');
+  const micStatusRef = useRef<'ok' | 'recovering' | 'failed'>('ok');
+  useEffect(() => { micStatusRef.current = micStatus; }, [micStatus]);
+  const isIos = (): boolean => {
+    if (typeof navigator === 'undefined') return false;
+    const ua = navigator.userAgent || '';
+    return /iPad|iPhone|iPod/.test(ua) || (ua.includes('Mac') && 'ontouchend' in document);
+  };
 
   useEffect(() => { activeCallRef.current = activeCall; }, [activeCall]);
   useEffect(() => { callDurationRef.current = callDuration; }, [callDuration]);
