@@ -544,7 +544,7 @@ export default function AdminUserDetailPage() {
                 icon={Trash2}
                 label="Delete user permanently"
                 hint="Removes account, chats, statuses, and uploads"
-                onClick={handleDelete}
+                onClick={openDeleteDialog}
                 className="bg-red-500/10 text-red-400 hover:bg-red-500/20 border-red-500/30 w-full"
               />
             </div>
