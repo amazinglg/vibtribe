@@ -108,6 +108,74 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   useEffect(() => { activeCallRef.current = activeCall; }, [activeCall]);
   useEffect(() => { callDurationRef.current = callDuration; }, [callDuration]);
 
+  // iOS PWA background-audio keep-alive.
+  // On installed iOS PWAs, once the screen locks or the app leaves the
+  // foreground, Safari suspends the WebRTC audio graph — the microphone
+  // effectively goes silent to the remote peer even though the peer
+  // connection stays "connected". Keeping any HTMLMediaElement actively
+  // playing (even inaudible silence) keeps the audio session hot so both
+  // capture and playback continue. Media Session API also tells iOS this
+  // is an active call, which further discourages suspension.
+  useEffect(() => {
+    if (!activeCall) {
+      if (silentAudioRef.current) {
+        try { silentAudioRef.current.pause(); } catch {}
+        silentAudioRef.current.src = '';
+        silentAudioRef.current = null;
+      }
+      if ('mediaSession' in navigator) {
+        try {
+          (navigator as any).mediaSession.playbackState = 'none';
+          (navigator as any).mediaSession.metadata = null;
+        } catch {}
+      }
+      return;
+    }
+
+    // ~1s of true silence (44.1kHz mono, 16-bit PCM) inside a WAV container.
+    // Loops seamlessly; totally inaudible.
+    const SILENT_WAV = 'data:audio/wav;base64,UklGRiQFAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAFAAA' + 'A'.repeat(1600);
+    try {
+      const audio = new Audio(SILENT_WAV);
+      audio.loop = true;
+      audio.preload = 'auto';
+      audio.crossOrigin = 'anonymous';
+      (audio as any).playsInline = true;
+      audio.setAttribute('playsinline', '');
+      audio.volume = 0.0001; // effectively silent but non-zero keeps sessions alive
+      audio.play().catch(() => {});
+      silentAudioRef.current = audio;
+    } catch {}
+
+    if ('mediaSession' in navigator) {
+      try {
+        const ms: any = (navigator as any).mediaSession;
+        ms.metadata = new (window as any).MediaMetadata({
+          title: 'VibTribe Call',
+          artist: remoteName || 'In call',
+          album: 'VibTribe',
+        });
+        ms.playbackState = 'playing';
+        const noop = () => {};
+        try { ms.setActionHandler('play', noop); } catch {}
+        try { ms.setActionHandler('pause', noop); } catch {}
+        try { ms.setActionHandler('stop', () => endCall('ended')); } catch {}
+      } catch {}
+    }
+
+    // If iOS pauses the silent element when the tab is backgrounded, restart
+    // it as soon as we regain any lifecycle signal.
+    const kick = () => { silentAudioRef.current?.play().catch(() => {}); };
+    document.addEventListener('visibilitychange', kick);
+    window.addEventListener('focus', kick);
+    window.addEventListener('pageshow', kick);
+    return () => {
+      document.removeEventListener('visibilitychange', kick);
+      window.removeEventListener('focus', kick);
+      window.removeEventListener('pageshow', kick);
+    };
+  }, [activeCall, remoteName]);
+
   // Detect whether a Bluetooth audio device is currently connected so we can
   // show the Bluetooth option only when it's actually available.
   useEffect(() => {
