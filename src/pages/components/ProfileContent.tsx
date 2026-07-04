@@ -122,6 +122,9 @@ export default function ProfileContent() {
   // Privacy visibility settings (Profile Photo / Status)
   const [profilePhotoVisibility, setProfilePhotoVisibility] = useState<'all' | 'contacts' | 'selected'>('all');
   const [statusVisibilitySetting, setStatusVisibilitySetting] = useState<'all' | 'contacts' | 'selected'>('all');
+  const [profilePhotoAllowed, setProfilePhotoAllowed] = useState<string[]>([]);
+  const [statusAllowed, setStatusAllowed] = useState<string[]>([]);
+  const [pickerFor, setPickerFor] = useState<null | 'photo' | 'status'>(null);
 
   // App-level permissions state for the Permissions section
   const { permissions: appPerms, requestNotifications, requestMicAndCamera, requestStorage, checkAllPermissions } = usePermissions();
