@@ -36,8 +36,13 @@ export default function GuardianSetupPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [mobile, setMobile] = useState('')
-  const [relationship, setRelationship] = useState<'parent' | 'mother' | 'father' | 'legal_guardian' | 'grandparent' | 'other'>('parent')
+  const [relationship, setRelationship] = useState<'father' | 'mother' | 'legal_guardian'>('father')
   const [otp, setOtp] = useState('')
+  // Local flag so we always show the OTP entry step immediately after a
+  // successful submit, even if the refreshed status hasn't reflected the
+  // new row yet (avoids the user being stuck on the details form when the
+  // guardian has already received the code).
+  const [otpSent, setOtpSent] = useState(false)
 
   const refresh = async () => {
     try {
@@ -75,6 +80,7 @@ export default function GuardianSetupPage() {
         },
       })
       setOk('We’ve emailed a 6-digit code to your guardian. Ask them to share it with you.')
+      setOtpSent(true)
       await refresh()
     } catch (e: any) {
       setError(e?.message || 'Could not send OTP')
@@ -109,7 +115,7 @@ export default function GuardianSetupPage() {
 
   const consented = !!status?.consented_at && !status?.revoked_at
   const awaitingConsent = !!status?.email_verified_at && !status?.consented_at
-  const awaitingOtp = !!status && !status?.email_verified_at
+  const awaitingOtp = (!!status && !status?.email_verified_at) || (otpSent && !status?.email_verified_at)
 
   return (
     <div className="gradient-bg-page min-h-screen w-full flex flex-col items-center justify-start relative overflow-x-hidden overflow-y-auto px-4"
@@ -165,7 +171,7 @@ export default function GuardianSetupPage() {
           ) : awaitingOtp ? (
             <form onSubmit={handleVerifyOtp} className="space-y-4">
               <div className="text-sm text-muted-foreground">
-                We emailed a 6-digit code to <span className="text-foreground font-medium">{status?.guardian_email_masked}</span>.
+                We emailed a 6-digit code to <span className="text-foreground font-medium">{status?.guardian_email_masked || email}</span>.
                 Ask your guardian to share it with you and enter it below.
               </div>
               <div>
@@ -199,12 +205,9 @@ export default function GuardianSetupPage() {
                 <label className="block text-sm font-medium text-foreground mb-1.5">Relationship</label>
                 <select value={relationship} onChange={e => setRelationship(e.target.value as any)}
                   className="w-full px-4 py-3 rounded-xl bg-input border border-border text-foreground">
-                  <option value="parent">Parent</option>
-                  <option value="mother">Mother</option>
                   <option value="father">Father</option>
+                  <option value="mother">Mother</option>
                   <option value="legal_guardian">Legal guardian</option>
-                  <option value="grandparent">Grandparent</option>
-                  <option value="other">Other</option>
                 </select>
               </div>
               <div>
