@@ -1446,6 +1446,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_hidden_chats: {
+        Row: {
+          chat_id: string
+          hidden_at: string
+          user_id: string
+        }
+        Insert: {
+          chat_id: string
+          hidden_at?: string
+          user_id: string
+        }
+        Update: {
+          chat_id?: string
+          hidden_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_hidden_chats_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_hidden_chats_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "tribe_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_profiles: {
         Row: {
           account_status: Database["public"]["Enums"]["user_status"] | null
