@@ -8,6 +8,7 @@ import { appConfirm } from '@/components/ui/AppDialog';
 import ImageCropModal from '@/components/ImageCropModal';
 import MarkSecureModal from '@/components/MarkSecureModal';
 import { isCapacitorWrapper, pickNativeImage, pickNativeImages } from '@/lib/native-bridge';
+import { pruneOldAvatars } from '@/lib/avatar-cleanup';
 
 interface Props {
   chatId: string;
