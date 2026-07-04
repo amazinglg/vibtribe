@@ -27,6 +27,8 @@ export default function AdminUserDetailPage() {
   const [editForm, setEditForm] = useState({ full_name: '', email: '', mobile_number: '', country_code: '+91' });
   const [secureChatCount, setSecureChatCount] = useState<number | null>(null);
   const [guardian, setGuardian] = useState<any>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteReason, setDeleteReason] = useState<'general' | 'terms_breach' | 'incomplete_signup' | ''>('');
 
   const isMaster = !!profile?.is_master_admin;
 
@@ -140,13 +142,19 @@ export default function AdminUserDetailPage() {
     finally { setActionLoading(false); }
   };
 
+  const openDeleteDialog = () => {
+    setDeleteReason('');
+    setDeleteOpen(true);
+  };
+
   const handleDelete = async () => {
-    if (!confirm('Delete this user? Cannot be undone.')) return;
+    if (!deleteReason) { toast.error('Please select a reason'); return; }
     setActionLoading(true);
     try {
       const { adminDeleteUser } = await import('@/lib/admin-users.functions');
-      await adminDeleteUser({ data: { userId } });
-      toast.success('User deleted');
+      await adminDeleteUser({ data: { userId, reason: deleteReason } });
+      toast.success('User deleted — offboarding email sent');
+      setDeleteOpen(false);
       navigate({ to: '/admin' });
     } catch (e: any) { toast.error(e.message || 'Failed'); }
     finally { setActionLoading(false); }
