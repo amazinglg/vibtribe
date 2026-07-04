@@ -75,6 +75,8 @@ export default function BroadcastChatPanel() {
       const { error: rpcErr } = await supabase.rpc('set_broadcast_avatar', { _url: url });
       if (rpcErr) throw rpcErr;
       setBroadcastAvatar(url);
+      const keep = path.split('/').pop() || '';
+      void pruneOldAvatars('broadcast', keep);
       toast.success('Broadcast avatar updated');
     } catch (e: any) {
       toast.error(e?.message || 'Could not update avatar');
