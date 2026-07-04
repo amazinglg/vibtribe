@@ -22,6 +22,8 @@ import { appConfirm } from '@/components/ui/AppDialog';
 import { recordMarketingConsent } from '@/lib/marketing.functions';
 import ConsentCenter from '@/components/ConsentCenter';
 import { isCapacitorWrapper, pickNativeImage, pickNativeImages } from '@/lib/native-bridge';
+import SpecificUsersPicker from '@/components/SpecificUsersPicker';
+import { invalidateVisibleAvatar } from '@/lib/visible-avatars';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -120,6 +122,9 @@ export default function ProfileContent() {
   // Privacy visibility settings (Profile Photo / Status)
   const [profilePhotoVisibility, setProfilePhotoVisibility] = useState<'all' | 'contacts' | 'selected'>('all');
   const [statusVisibilitySetting, setStatusVisibilitySetting] = useState<'all' | 'contacts' | 'selected'>('all');
+  const [profilePhotoAllowed, setProfilePhotoAllowed] = useState<string[]>([]);
+  const [statusAllowed, setStatusAllowed] = useState<string[]>([]);
+  const [pickerFor, setPickerFor] = useState<null | 'photo' | 'status'>(null);
 
   // App-level permissions state for the Permissions section
   const { permissions: appPerms, requestNotifications, requestMicAndCamera, requestStorage, checkAllPermissions } = usePermissions();
@@ -280,6 +285,10 @@ export default function ProfileContent() {
       setEditMobileNumber(parsed.number);
       if (profile.profile_photo_visibility) setProfilePhotoVisibility(profile.profile_photo_visibility);
       if (profile.status_visibility) setStatusVisibilitySetting(profile.status_visibility);
+      if (Array.isArray((profile as any).profile_photo_allowed_viewers))
+        setProfilePhotoAllowed((profile as any).profile_photo_allowed_viewers);
+      if (Array.isArray((profile as any).status_allowed_viewers))
+        setStatusAllowed((profile as any).status_allowed_viewers);
       const p: any = profile;
       if (typeof p.notif_messages === 'boolean') setNotifMessages(p.notif_messages);
       if (typeof p.notif_status === 'boolean') setNotifStatus(p.notif_status);
@@ -1261,7 +1270,12 @@ export default function ProfileContent() {
                       onChange={async (e) => {
                         const v = e.target.value as any;
                         setProfilePhotoVisibility(v);
-                        try { await updateProfile({ profile_photo_visibility: v }); toast.success('Profile photo visibility updated'); } catch {}
+                        try {
+                          await updateProfile({ profile_photo_visibility: v });
+                          invalidateVisibleAvatar();
+                          toast.success('Profile photo visibility updated');
+                        } catch {}
+                        if (v === 'selected') setPickerFor('photo');
                       }}
                       className="w-full px-3 py-2 bg-input border border-border rounded-xl text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                     >
@@ -1269,6 +1283,17 @@ export default function ProfileContent() {
                       <option value="contacts">My Contacts</option>
                       <option value="selected">Specific Users</option>
                     </select>
+                    {profilePhotoVisibility === 'selected' && (
+                      <div className="flex items-center justify-between mt-2">
+                        <span className="text-[11px] text-muted-foreground">
+                          {profilePhotoAllowed.length} user{profilePhotoAllowed.length === 1 ? '' : 's'} allowed
+                        </span>
+                        <button
+                          onClick={() => setPickerFor('photo')}
+                          className="text-[11px] font-semibold text-primary hover:underline"
+                        >Edit list</button>
+                      </div>
+                    )}
                   </div>
 
                   {/* Status Visibility */}
@@ -1285,6 +1310,7 @@ export default function ProfileContent() {
                         const v = e.target.value as any;
                         setStatusVisibilitySetting(v);
                         try { await updateProfile({ status_visibility: v }); toast.success('Status visibility updated'); } catch {}
+                        if (v === 'selected') setPickerFor('status');
                       }}
                       className="w-full px-3 py-2 bg-input border border-border rounded-xl text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                     >
@@ -1292,6 +1318,17 @@ export default function ProfileContent() {
                       <option value="contacts">My Contacts</option>
                       <option value="selected">Specific Users</option>
                     </select>
+                    {statusVisibilitySetting === 'selected' && (
+                      <div className="flex items-center justify-between mt-2">
+                        <span className="text-[11px] text-muted-foreground">
+                          {statusAllowed.length} user{statusAllowed.length === 1 ? '' : 's'} allowed
+                        </span>
+                        <button
+                          onClick={() => setPickerFor('status')}
+                          className="text-[11px] font-semibold text-primary hover:underline"
+                        >Edit list</button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -2022,6 +2059,30 @@ export default function ProfileContent() {
           )}
         </AlertDialogContent>
       </AlertDialog>
+      <SpecificUsersPicker
+        open={pickerFor !== null}
+        title={pickerFor === 'status' ? 'Who can see your Status' : 'Who can see your Profile Photo'}
+        description="Only people you pick below will be able to see it."
+        ownerId={user?.id || ''}
+        initialSelected={pickerFor === 'status' ? statusAllowed : profilePhotoAllowed}
+        onClose={() => setPickerFor(null)}
+        onSave={async (ids) => {
+          try {
+            if (pickerFor === 'status') {
+              await updateProfile({ status_allowed_viewers: ids });
+              setStatusAllowed(ids);
+              toast.success('Status allowed list updated');
+            } else {
+              await updateProfile({ profile_photo_allowed_viewers: ids });
+              setProfilePhotoAllowed(ids);
+              invalidateVisibleAvatar();
+              toast.success('Profile photo allowed list updated');
+            }
+          } catch (e: any) {
+            toast.error(e?.message || 'Failed to save');
+          }
+        }}
+      />
     </div>
   );
 }

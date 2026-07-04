@@ -1525,10 +1525,12 @@ export type Database = {
           premium_source: string | null
           privacy_accepted_at: string | null
           profile_completed: boolean | null
+          profile_photo_allowed_viewers: string[]
           profile_photo_visibility: string
           public_key: string | null
           real_email: string | null
           role: string
+          status_allowed_viewers: string[]
           status_visibility: string
           terms_accepted_at: string | null
           terms_warning_sent_at: string | null
@@ -1584,10 +1586,12 @@ export type Database = {
           premium_source?: string | null
           privacy_accepted_at?: string | null
           profile_completed?: boolean | null
+          profile_photo_allowed_viewers?: string[]
           profile_photo_visibility?: string
           public_key?: string | null
           real_email?: string | null
           role?: string
+          status_allowed_viewers?: string[]
           status_visibility?: string
           terms_accepted_at?: string | null
           terms_warning_sent_at?: string | null
@@ -1643,10 +1647,12 @@ export type Database = {
           premium_source?: string | null
           privacy_accepted_at?: string | null
           profile_completed?: boolean | null
+          profile_photo_allowed_viewers?: string[]
           profile_photo_visibility?: string
           public_key?: string | null
           real_email?: string | null
           role?: string
+          status_allowed_viewers?: string[]
           status_visibility?: string
           terms_accepted_at?: string | null
           terms_warning_sent_at?: string | null
@@ -1876,10 +1882,12 @@ export type Database = {
           premium_source: string | null
           privacy_accepted_at: string | null
           profile_completed: boolean | null
+          profile_photo_allowed_viewers: string[]
           profile_photo_visibility: string
           public_key: string | null
           real_email: string | null
           role: string
+          status_allowed_viewers: string[]
           status_visibility: string
           terms_accepted_at: string | null
           terms_warning_sent_at: string | null
@@ -1976,10 +1984,12 @@ export type Database = {
           premium_source: string | null
           privacy_accepted_at: string | null
           profile_completed: boolean | null
+          profile_photo_allowed_viewers: string[]
           profile_photo_visibility: string
           public_key: string | null
           real_email: string | null
           role: string
+          status_allowed_viewers: string[]
           status_visibility: string
           terms_accepted_at: string | null
           terms_warning_sent_at: string | null
@@ -2052,10 +2062,12 @@ export type Database = {
           premium_source: string | null
           privacy_accepted_at: string | null
           profile_completed: boolean | null
+          profile_photo_allowed_viewers: string[]
           profile_photo_visibility: string
           public_key: string | null
           real_email: string | null
           role: string
+          status_allowed_viewers: string[]
           status_visibility: string
           terms_accepted_at: string | null
           terms_warning_sent_at: string | null
@@ -2120,10 +2132,12 @@ export type Database = {
           premium_source: string | null
           privacy_accepted_at: string | null
           profile_completed: boolean | null
+          profile_photo_allowed_viewers: string[]
           profile_photo_visibility: string
           public_key: string | null
           real_email: string | null
           role: string
+          status_allowed_viewers: string[]
           status_visibility: string
           terms_accepted_at: string | null
           terms_warning_sent_at: string | null
@@ -2146,6 +2160,10 @@ export type Database = {
         Returns: undefined
       }
       age_years: { Args: { _dob: string }; Returns: number }
+      can_view_profile_photo: {
+        Args: { _owner: string; _viewer: string }
+        Returns: boolean
+      }
       can_view_status_owner: { Args: { _owner_id: string }; Returns: boolean }
       cancel_totp_enrollment: { Args: never; Returns: undefined }
       check_otp_rate_limit: { Args: { _email: string }; Returns: number }
@@ -2275,10 +2293,12 @@ export type Database = {
           premium_source: string | null
           privacy_accepted_at: string | null
           profile_completed: boolean | null
+          profile_photo_allowed_viewers: string[]
           profile_photo_visibility: string
           public_key: string | null
           real_email: string | null
           role: string
+          status_allowed_viewers: string[]
           status_visibility: string
           terms_accepted_at: string | null
           terms_warning_sent_at: string | null
@@ -2562,6 +2582,13 @@ export type Database = {
         Returns: Json
       }
       verify_guardian_email_otp: { Args: { _code: string }; Returns: boolean }
+      visible_avatar_urls: {
+        Args: { _owner_ids: string[] }
+        Returns: {
+          avatar_url: string
+          id: string
+        }[]
+      }
     }
     Enums: {
       chat_type: "normal" | "secure" | "dual_normal" | "dual_secure"
