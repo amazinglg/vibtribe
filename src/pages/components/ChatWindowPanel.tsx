@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { getOrCreateKeyPair, encryptMessage, decryptMessage, isEncrypted, encryptBytes, encryptBytesWithRandomKey, hasLocalPrivateKey, encryptGroupMessage, decryptGroupMessageForMe, isGroupEncrypted, type GroupMember } from '@/lib/encryption';
 import EncryptedMedia from '@/components/EncryptedMedia';
+import ChatMediaImg from '@/components/ChatMediaImg';
 import { getPreferredNickname } from '@/components/SecureVaultModal';
 import PermissionPrompt from '@/components/PermissionPrompt';
 import { usePermissions } from '@/hooks/usePermissions';
