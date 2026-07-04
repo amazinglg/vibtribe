@@ -309,10 +309,15 @@ export default function TribeDetailsSheet({ chatId, isOpen, onClose, onLeft }: P
     if (!isLeader) return;
     setUploadingAvatar(true);
     try {
-      const path = `${user!.id}/${chatId}/avatar-${Date.now()}.jpg`;
-      const { error: upErr } = await supabase.storage.from('chat-media').upload(path, blob, { upsert: true, contentType: 'image/jpeg' });
+      // Tribe avatars are user-facing group photos and must be readable by all
+      // tribe members via a plain <img>. Store them in the public `profile-photos`
+      // bucket (which is intentionally public for avatars) rather than the
+      // private `chat-media` bucket. Path is prefixed with the uploader's uid
+      // to satisfy the profile-photos folder-owner RLS policy.
+      const path = `${user!.id}/tribes/${chatId}/avatar-${Date.now()}.jpg`;
+      const { error: upErr } = await supabase.storage.from('profile-photos').upload(path, blob, { upsert: true, contentType: 'image/jpeg' });
       if (upErr) throw upErr;
-      const { data: pub } = supabase.storage.from('chat-media').getPublicUrl(path);
+      const { data: pub } = supabase.storage.from('profile-photos').getPublicUrl(path);
       const url = pub.publicUrl;
       const { error: updErr } = await supabase.from('chats').update({ avatar_url: url }).eq('id', chatId);
       if (updErr) throw updErr;

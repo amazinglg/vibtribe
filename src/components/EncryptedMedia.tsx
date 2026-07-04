@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React, { useEffect, useState } from 'react';
 import { decryptBytes, decryptBytesWithKey } from '@/lib/encryption';
+import { signChatMediaUrl } from '@/lib/chat-media-url';
 import { Download, FileText, Loader2, AlertTriangle, X, Eye } from 'lucide-react';
 import { isNativeWrapper } from '@/lib/native-bridge';
 import { toast } from 'sonner';
@@ -43,7 +44,8 @@ export default function EncryptedMedia({ url, mime, name, kind, theirPublicKey, 
     (async () => {
       try {
         setLoading(true);
-        const res = await fetch(url);
+        const signed = await signChatMediaUrl(url);
+        const res = await fetch(signed);
         if (!res.ok) throw new Error('fetch failed');
         const cipher = await res.arrayBuffer();
         const plain = mediaKey

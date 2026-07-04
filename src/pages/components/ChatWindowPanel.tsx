@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { getOrCreateKeyPair, encryptMessage, decryptMessage, isEncrypted, encryptBytes, encryptBytesWithRandomKey, hasLocalPrivateKey, encryptGroupMessage, decryptGroupMessageForMe, isGroupEncrypted, type GroupMember } from '@/lib/encryption';
 import EncryptedMedia from '@/components/EncryptedMedia';
+import ChatMediaImg from '@/components/ChatMediaImg';
 import { getPreferredNickname } from '@/components/SecureVaultModal';
 import PermissionPrompt from '@/components/PermissionPrompt';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -2465,7 +2466,7 @@ export default function ChatWindowPanel() {
                         />
                       )
                     ) : imageUrl ? (
-                      <img
+                      <ChatMediaImg
                         src={imageUrl}
                         alt="Shared image"
                         className="max-w-[200px] rounded-xl cursor-zoom-in"
@@ -3336,7 +3337,7 @@ export default function ChatWindowPanel() {
           >
             <X size={22} />
           </button>
-          <img
+          <ChatMediaImg
             src={lightboxUrl}
             alt="Media preview"
             className="max-w-full max-h-[90vh] rounded-2xl object-contain"

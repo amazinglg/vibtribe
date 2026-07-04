@@ -240,14 +240,18 @@ export default function BroadcastChatPanel() {
     setUploading(true);
     try {
       const ext = file.name.split('.').pop() || 'bin';
-      const path = `${user.id}/broadcast-${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from('chat-media').upload(path, file, {
+      // Broadcast media is admin-published content visible to every VibTribe
+      // user; upload to the public `profile-photos` bucket so recipients can
+      // load it via a plain <img>. The private `chat-media` bucket is now
+      // reserved for participant-only 1:1 / tribe chat attachments.
+      const path = `${user.id}/broadcasts/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from('profile-photos').upload(path, file, {
         contentType: file.type,
          upsert: false,
          cacheControl: '3600',
       });
       if (upErr) throw upErr;
-      const { data: pub } = supabase.storage.from('chat-media').getPublicUrl(path);
+      const { data: pub } = supabase.storage.from('profile-photos').getPublicUrl(path);
       const type = file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : 'file';
       const { error: insErr } = await supabase.from('broadcast_messages').insert({
         sender_id: user.id,
