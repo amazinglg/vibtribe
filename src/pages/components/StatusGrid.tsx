@@ -82,14 +82,13 @@ export default function StatusGrid() {
         const profile = s.user_profiles as any;
         const isMe = s.user_id === user?.id;
         const name = isMe ? 'My Status' : (profile?.full_name || 'Unknown');
-        const showAvatar = isMe || (profile?.profile_photo_visibility ?? 'all') === 'all';
         if (!grouped[s.user_id]) {
           grouped[s.user_id] = {
             id: `status-${s.user_id}`,
             name,
             userId: s.user_id,
             avatar: name[0]?.toUpperCase() || '?',
-            avatarUrl: showAvatar ? (profile?.avatar_url || null) : null,
+            avatarUrl: profile?.avatar_url || null,
             color: COLORS[colorIdx++ % COLORS.length],
             updates: 0,
             seen: false,
@@ -134,7 +133,8 @@ export default function StatusGrid() {
       // Put own status first
       const all = Object.values(grouped);
       all.sort((a, b) => (a.id.endsWith(user?.id || '') ? -1 : b.id.endsWith(user?.id || '') ? 1 : 0));
-      setContactStatuses(all);
+      const { applyAvatarPrivacy } = await import('@/lib/visible-avatars');
+      setContactStatuses(await applyAvatarPrivacy(all, 'userId', 'avatarUrl'));
     } catch {
       setContactStatuses([]);
     } finally {
