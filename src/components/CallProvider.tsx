@@ -952,6 +952,20 @@ export default function CallProvider({ children }: { children: React.ReactNode }
                 <Minimize2 size={16} />
               </button>
             )}
+            {micStatus !== 'ok' && (
+              <button
+                onClick={() => { if (micStatus === 'failed') void recoverMicrophone('user:banner'); }}
+                disabled={micStatus === 'recovering'}
+                className="absolute top-3 right-3 z-10 max-w-[70%] flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/95 text-neutral-900 text-xs font-medium shadow-lg backdrop-blur-md disabled:opacity-80"
+              >
+                <AlertTriangle size={13} />
+                <span className="truncate">
+                  {micStatus === 'recovering'
+                    ? 'Restoring microphone…'
+                    : 'Microphone interrupted. Tap to restore'}
+                </span>
+              </button>
+            )}
             {activeCall.call_type === 'video' ? (
               <div className="relative h-72 bg-black/60">
                 {/* Remote video — large */}
