@@ -2059,6 +2059,30 @@ export default function ProfileContent() {
           )}
         </AlertDialogContent>
       </AlertDialog>
+      <SpecificUsersPicker
+        open={pickerFor !== null}
+        title={pickerFor === 'status' ? 'Who can see your Status' : 'Who can see your Profile Photo'}
+        description="Only people you pick below will be able to see it."
+        ownerId={user?.id || ''}
+        initialSelected={pickerFor === 'status' ? statusAllowed : profilePhotoAllowed}
+        onClose={() => setPickerFor(null)}
+        onSave={async (ids) => {
+          try {
+            if (pickerFor === 'status') {
+              await updateProfile({ status_allowed_viewers: ids });
+              setStatusAllowed(ids);
+              toast.success('Status allowed list updated');
+            } else {
+              await updateProfile({ profile_photo_allowed_viewers: ids });
+              setProfilePhotoAllowed(ids);
+              invalidateVisibleAvatar();
+              toast.success('Profile photo allowed list updated');
+            }
+          } catch (e: any) {
+            toast.error(e?.message || 'Failed to save');
+          }
+        }}
+      />
     </div>
   );
 }
