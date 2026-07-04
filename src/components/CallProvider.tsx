@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Volume2, VolumeX, Bluetooth, Ear, Headphones } from 'lucide-react';
+import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Volume2, VolumeX, Bluetooth, Ear, Headphones, Minimize2, Maximize2 } from 'lucide-react';
 import { SwitchCamera } from 'lucide-react';
 import { acquireCallWakeLock, setCallAudioRoute } from '@/lib/native-bridge';
 import { sendCallPush } from '@/lib/fcm-push.functions';
@@ -82,6 +82,9 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   const [audioRoute, setAudioRoute] = useState<'earpiece' | 'speaker' | 'bluetooth'>('speaker');
   const [bluetoothAvailable, setBluetoothAvailable] = useState(false);
   const [showAudioMenu, setShowAudioMenu] = useState(false);
+  // When true, the call collapses to a small floating pill so the user can
+  // interact with the chat / rest of the app while the call keeps running.
+  const [minimized, setMinimized] = useState(false);
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const activeCallRef = useRef<CallRow | null>(null);
@@ -96,6 +99,11 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   const ringTimerRef = useRef<any>(null);
   const durationTimerRef = useRef<any>(null);
   const ringtoneRef = useRef<HTMLAudioElement | null>(null);
+  // iOS PWA workaround: keep a silent audio element playing throughout the
+  // call. Safari suspends WebRTC audio (including the outbound microphone)
+  // when the PWA loses foreground / screen locks. Any actively playing
+  // <audio> element keeps the audio session alive so the mic keeps flowing.
+  const silentAudioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => { activeCallRef.current = activeCall; }, [activeCall]);
   useEffect(() => { callDurationRef.current = callDuration; }, [callDuration]);
