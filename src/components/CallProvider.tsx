@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Volume2, VolumeX, Bluetooth, Ear, Headphones } from 'lucide-react';
+import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Volume2, VolumeX, Bluetooth, Ear, Headphones, Minimize2, Maximize2 } from 'lucide-react';
 import { SwitchCamera } from 'lucide-react';
 import { acquireCallWakeLock, setCallAudioRoute } from '@/lib/native-bridge';
 import { sendCallPush } from '@/lib/fcm-push.functions';
@@ -82,6 +82,9 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   const [audioRoute, setAudioRoute] = useState<'earpiece' | 'speaker' | 'bluetooth'>('speaker');
   const [bluetoothAvailable, setBluetoothAvailable] = useState(false);
   const [showAudioMenu, setShowAudioMenu] = useState(false);
+  // When true, the call collapses to a small floating pill so the user can
+  // interact with the chat / rest of the app while the call keeps running.
+  const [minimized, setMinimized] = useState(false);
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const activeCallRef = useRef<CallRow | null>(null);
@@ -96,9 +99,82 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   const ringTimerRef = useRef<any>(null);
   const durationTimerRef = useRef<any>(null);
   const ringtoneRef = useRef<HTMLAudioElement | null>(null);
+  // iOS PWA workaround: keep a silent audio element playing throughout the
+  // call. Safari suspends WebRTC audio (including the outbound microphone)
+  // when the PWA loses foreground / screen locks. Any actively playing
+  // <audio> element keeps the audio session alive so the mic keeps flowing.
+  const silentAudioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => { activeCallRef.current = activeCall; }, [activeCall]);
   useEffect(() => { callDurationRef.current = callDuration; }, [callDuration]);
+
+  // iOS PWA background-audio keep-alive.
+  // On installed iOS PWAs, once the screen locks or the app leaves the
+  // foreground, Safari suspends the WebRTC audio graph — the microphone
+  // effectively goes silent to the remote peer even though the peer
+  // connection stays "connected". Keeping any HTMLMediaElement actively
+  // playing (even inaudible silence) keeps the audio session hot so both
+  // capture and playback continue. Media Session API also tells iOS this
+  // is an active call, which further discourages suspension.
+  useEffect(() => {
+    if (!activeCall) {
+      if (silentAudioRef.current) {
+        try { silentAudioRef.current.pause(); } catch {}
+        silentAudioRef.current.src = '';
+        silentAudioRef.current = null;
+      }
+      if ('mediaSession' in navigator) {
+        try {
+          (navigator as any).mediaSession.playbackState = 'none';
+          (navigator as any).mediaSession.metadata = null;
+        } catch {}
+      }
+      return;
+    }
+
+    // ~1s of true silence (44.1kHz mono, 16-bit PCM) inside a WAV container.
+    // Loops seamlessly; totally inaudible.
+    const SILENT_WAV = 'data:audio/wav;base64,UklGRiQFAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAFAAA' + 'A'.repeat(1600);
+    try {
+      const audio = new Audio(SILENT_WAV);
+      audio.loop = true;
+      audio.preload = 'auto';
+      audio.crossOrigin = 'anonymous';
+      (audio as any).playsInline = true;
+      audio.setAttribute('playsinline', '');
+      audio.volume = 0.0001; // effectively silent but non-zero keeps sessions alive
+      audio.play().catch(() => {});
+      silentAudioRef.current = audio;
+    } catch {}
+
+    if ('mediaSession' in navigator) {
+      try {
+        const ms: any = (navigator as any).mediaSession;
+        ms.metadata = new (window as any).MediaMetadata({
+          title: 'VibTribe Call',
+          artist: remoteName || 'In call',
+          album: 'VibTribe',
+        });
+        ms.playbackState = 'playing';
+        const noop = () => {};
+        try { ms.setActionHandler('play', noop); } catch {}
+        try { ms.setActionHandler('pause', noop); } catch {}
+        try { ms.setActionHandler('stop', () => endCall('ended')); } catch {}
+      } catch {}
+    }
+
+    // If iOS pauses the silent element when the tab is backgrounded, restart
+    // it as soon as we regain any lifecycle signal.
+    const kick = () => { silentAudioRef.current?.play().catch(() => {}); };
+    document.addEventListener('visibilitychange', kick);
+    window.addEventListener('focus', kick);
+    window.addEventListener('pageshow', kick);
+    return () => {
+      document.removeEventListener('visibilitychange', kick);
+      window.removeEventListener('focus', kick);
+      window.removeEventListener('pageshow', kick);
+    };
+  }, [activeCall, remoteName]);
 
   // Detect whether a Bluetooth audio device is currently connected so we can
   // show the Bluetooth option only when it's actually available.
@@ -198,6 +274,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     setCallDuration(0);
     setMicMuted(false); setSpeakerOff(false); setVideoOff(false);
     setShowAudioMenu(false);
+    setMinimized(false);
   }, [supabase]);
 
   const endCall = useCallback(async (finalStatus: 'ended' | 'declined' | 'missed' = 'ended') => {
@@ -703,10 +780,56 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   return (
     <CallContext.Provider value={{ startCall }}>
       {children}
-      {activeCall && (
+      {activeCall && minimized && (
+        <div className="fixed top-3 right-3 z-[100] flex items-center gap-2 rounded-full bg-neutral-900/95 text-white shadow-2xl border border-white/10 backdrop-blur-md pl-3 pr-1 py-1">
+          <button
+            onClick={() => setMinimized(false)}
+            className="flex items-center gap-2"
+            aria-label="Expand call"
+          >
+            <span className={`w-2.5 h-2.5 rounded-full ${callState === 'connected' ? 'bg-green-400 animate-pulse' : 'bg-yellow-400 animate-pulse'}`} />
+            <span className="text-xs font-medium max-w-[110px] truncate">{remoteName}</span>
+            <span className="text-xs text-white/70 tabular-nums">
+              {callState === 'connected' ? fmt(callDuration) : callState === 'connecting' ? '...' : 'ring'}
+            </span>
+            <span className="ml-1 w-7 h-7 rounded-full bg-white/10 flex items-center justify-center">
+              <Maximize2 size={13} />
+            </span>
+          </button>
+          <button
+            onClick={() => { playEndCallClick(); endCall('ended'); }}
+            aria-label="End call"
+            className="w-8 h-8 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center"
+          >
+            <PhoneOff size={14} />
+          </button>
+          {/* Keep the remote audio element mounted while minimized so the
+              call keeps flowing even with the full UI hidden. */}
+          {activeCall.call_type === 'voice' && (
+            <audio ref={remoteAudioRef} autoPlay playsInline muted={speakerOff} className="hidden" />
+          )}
+          {activeCall.call_type === 'video' && (
+            <>
+              <video ref={remoteVideoRef} autoPlay playsInline muted={speakerOff} className="hidden" />
+              <video ref={localVideoRef} autoPlay muted playsInline className="hidden" />
+            </>
+          )}
+        </div>
+      )}
+      {activeCall && !minimized && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
           <div className="relative w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl"
                style={{ background: 'linear-gradient(135deg, #0a0a1f 0%, #1a0a2e 50%, #0a1a2e 100%)' }}>
+            {/* Minimize button — lets the user access chat while the call keeps running */}
+            {(role === 'caller' || callState !== 'ringing') && (
+              <button
+                onClick={() => setMinimized(true)}
+                aria-label="Minimize call"
+                className="absolute top-3 left-3 z-10 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center backdrop-blur-md"
+              >
+                <Minimize2 size={16} />
+              </button>
+            )}
             {activeCall.call_type === 'video' ? (
               <div className="relative h-72 bg-black/60">
                 {/* Remote video — large */}
