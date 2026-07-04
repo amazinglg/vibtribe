@@ -896,14 +896,23 @@ export default function CallProvider({ children }: { children: React.ReactNode }
       {activeCall && minimized && (
         <div className="fixed top-3 right-3 z-[100] flex items-center gap-2 rounded-full bg-neutral-900/95 text-white shadow-2xl border border-white/10 backdrop-blur-md pl-3 pr-1 py-1">
           <button
-            onClick={() => setMinimized(false)}
+            onClick={() => {
+              setMinimized(false);
+              if (micStatus === 'failed') void recoverMicrophone('user:pill');
+            }}
             className="flex items-center gap-2"
             aria-label="Expand call"
           >
-            <span className={`w-2.5 h-2.5 rounded-full ${callState === 'connected' ? 'bg-green-400 animate-pulse' : 'bg-yellow-400 animate-pulse'}`} />
+            {micStatus === 'failed' ? (
+              <AlertTriangle size={14} className="text-amber-400" />
+            ) : micStatus === 'recovering' ? (
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
+            ) : (
+              <span className={`w-2.5 h-2.5 rounded-full ${callState === 'connected' ? 'bg-green-400 animate-pulse' : 'bg-yellow-400 animate-pulse'}`} />
+            )}
             <span className="text-xs font-medium max-w-[110px] truncate">{remoteName}</span>
             <span className="text-xs text-white/70 tabular-nums">
-              {callState === 'connected' ? fmt(callDuration) : callState === 'connecting' ? '...' : 'ring'}
+              {micStatus === 'failed' ? 'mic' : micStatus === 'recovering' ? '…' : callState === 'connected' ? fmt(callDuration) : callState === 'connecting' ? '...' : 'ring'}
             </span>
             <span className="ml-1 w-7 h-7 rounded-full bg-white/10 flex items-center justify-center">
               <Maximize2 size={13} />
