@@ -436,6 +436,7 @@ export default function ChatWindowPanel() {
   const { permissions, requestMicrophone, requestCamera, requestMicAndCamera, requestStorage } = usePermissions();
   const [profile, setProfile] = React.useState<{ full_name?: string } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -466,7 +467,15 @@ export default function ChatWindowPanel() {
     // On chat-open, if we captured a first-unread message, scroll to it.
     // Otherwise (no unread, or a new message just arrived), scroll to bottom.
     const scrollToBottom = () => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
+      // Prefer directly pinning the scroll container: it works even when
+      // the end sentinel hasn't reached its final position yet (late-loading
+      // media, fonts, reactions). Fall back to scrollIntoView.
+      const el = messagesContainerRef.current;
+      if (el) {
+        el.scrollTop = el.scrollHeight;
+      } else {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
+      }
     };
     const unreadId = chatChanged ? firstUnreadIdRef.current : null;
     if (unreadId) {
@@ -484,9 +493,24 @@ export default function ChatWindowPanel() {
       scrollToBottom();
       return;
     }
+    // Pin to bottom immediately, then re-pin as late-loading content (images,
+    // audio waveforms, reactions) expands the list. On chat-open we also
+    // watch the container with a ResizeObserver for ~1s so the view stays
+    // stuck to the newest message even if a big image decodes late.
     scrollToBottom();
-    const t = setTimeout(scrollToBottom, 50);
-    return () => clearTimeout(t);
+    const timers = [0, 50, 150, 350, 700, 1200].map(ms => setTimeout(scrollToBottom, ms));
+    let ro: ResizeObserver | undefined;
+    let roStop: ReturnType<typeof setTimeout> | undefined;
+    if (chatChanged && typeof ResizeObserver !== 'undefined' && messagesContainerRef.current) {
+      ro = new ResizeObserver(() => scrollToBottom());
+      ro.observe(messagesContainerRef.current);
+      roStop = setTimeout(() => ro?.disconnect(), 1500);
+    }
+    return () => {
+      timers.forEach(clearTimeout);
+      if (roStop) clearTimeout(roStop);
+      ro?.disconnect();
+    };
   }, [messages, selectedChatId]);
 
   useEffect(() => {
@@ -2267,7 +2291,7 @@ export default function ChatWindowPanel() {
       )}
 
       {/* Messages Area */}
-      {(!trustLock.enabled || trustLockProtected === true) && <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
+      {(!trustLock.enabled || trustLockProtected === true) && <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
         {loading ? (
           <div className="flex flex-col gap-3">
             {[1, 2, 3].map(i => (
