@@ -8,6 +8,7 @@ import { appConfirm } from '@/components/ui/AppDialog';
 import ImageCropModal from '@/components/ImageCropModal';
 import MarkSecureModal from '@/components/MarkSecureModal';
 import { isCapacitorWrapper, pickNativeImage, pickNativeImages } from '@/lib/native-bridge';
+import { pruneOldAvatars } from '@/lib/avatar-cleanup';
 
 interface Props {
   chatId: string;
@@ -329,6 +330,8 @@ export default function TribeDetailsSheet({ chatId, isOpen, onClose, onLeft }: P
       const { error: updErr } = await supabase.from('chats').update({ avatar_url: url }).eq('id', chatId);
       if (updErr) throw updErr;
       setTribe(prev => prev ? { ...prev, avatar_url: url } : prev);
+      const keep = path.split('/').pop() || '';
+      void pruneOldAvatars(`${user!.id}/tribes/${chatId}`, keep);
       try {
         window.dispatchEvent(new CustomEvent('vt-tribe-avatar-updated', {
           detail: { chatId, avatarUrl: url },

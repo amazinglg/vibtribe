@@ -11,6 +11,7 @@ import ImageCropModal from '@/components/ImageCropModal';
 import { EMOJI_CATEGORIES, type EmojiCategoryKey } from '@/lib/emojis';
 import { appConfirm } from '@/components/ui/AppDialog';
 import { VIBTRIBE_EMOJI_MAP } from '@/lib/vibtribe-emojis';
+import { pruneOldAvatars } from '@/lib/avatar-cleanup';
 
 export const BROADCAST_CHAT_ID = '__vibtribe_broadcast__';
 const FALLBACK_LOGO = '/assets/images/app_logo.png';
@@ -75,6 +76,8 @@ export default function BroadcastChatPanel() {
       const { error: rpcErr } = await supabase.rpc('set_broadcast_avatar', { _url: url });
       if (rpcErr) throw rpcErr;
       setBroadcastAvatar(url);
+      const keep = path.split('/').pop() || '';
+      void pruneOldAvatars('broadcast', keep);
       toast.success('Broadcast avatar updated');
     } catch (e: any) {
       toast.error(e?.message || 'Could not update avatar');
