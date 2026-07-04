@@ -779,10 +779,56 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   return (
     <CallContext.Provider value={{ startCall }}>
       {children}
-      {activeCall && (
+      {activeCall && minimized && (
+        <div className="fixed top-3 right-3 z-[100] flex items-center gap-2 rounded-full bg-neutral-900/95 text-white shadow-2xl border border-white/10 backdrop-blur-md pl-3 pr-1 py-1">
+          <button
+            onClick={() => setMinimized(false)}
+            className="flex items-center gap-2"
+            aria-label="Expand call"
+          >
+            <span className={`w-2.5 h-2.5 rounded-full ${callState === 'connected' ? 'bg-green-400 animate-pulse' : 'bg-yellow-400 animate-pulse'}`} />
+            <span className="text-xs font-medium max-w-[110px] truncate">{remoteName}</span>
+            <span className="text-xs text-white/70 tabular-nums">
+              {callState === 'connected' ? fmt(callDuration) : callState === 'connecting' ? '...' : 'ring'}
+            </span>
+            <span className="ml-1 w-7 h-7 rounded-full bg-white/10 flex items-center justify-center">
+              <Maximize2 size={13} />
+            </span>
+          </button>
+          <button
+            onClick={() => { playEndCallClick(); endCall('ended'); }}
+            aria-label="End call"
+            className="w-8 h-8 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center"
+          >
+            <PhoneOff size={14} />
+          </button>
+          {/* Keep the remote audio element mounted while minimized so the
+              call keeps flowing even with the full UI hidden. */}
+          {activeCall.call_type === 'voice' && (
+            <audio ref={remoteAudioRef} autoPlay playsInline muted={speakerOff} className="hidden" />
+          )}
+          {activeCall.call_type === 'video' && (
+            <>
+              <video ref={remoteVideoRef} autoPlay playsInline muted={speakerOff} className="hidden" />
+              <video ref={localVideoRef} autoPlay muted playsInline className="hidden" />
+            </>
+          )}
+        </div>
+      )}
+      {activeCall && !minimized && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
           <div className="relative w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl"
                style={{ background: 'linear-gradient(135deg, #0a0a1f 0%, #1a0a2e 50%, #0a1a2e 100%)' }}>
+            {/* Minimize button — lets the user access chat while the call keeps running */}
+            {(role === 'caller' || callState !== 'ringing') && (
+              <button
+                onClick={() => setMinimized(true)}
+                aria-label="Minimize call"
+                className="absolute top-3 left-3 z-10 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center backdrop-blur-md"
+              >
+                <Minimize2 size={16} />
+              </button>
+            )}
             {activeCall.call_type === 'video' ? (
               <div className="relative h-72 bg-black/60">
                 {/* Remote video — large */}
