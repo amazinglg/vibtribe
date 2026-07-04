@@ -27,18 +27,12 @@ export default function MinorGuardianGate() {
       path.startsWith('/reset-password')
     ) return;
 
-    let isMinor = false;
-    const dob = (profile as any).dob;
-    if (dob) {
-      const d = new Date(dob);
-      const today = new Date();
-      let age = today.getFullYear() - d.getFullYear();
-      const m = today.getMonth() - d.getMonth();
-      if (m < 0 || (m === 0 && today.getDate() < d.getDate())) age--;
-      isMinor = age < 18;
-    }
+    // Only redirect when the account is explicitly pending guardian consent.
+    // Being a minor alone is not enough — once consent is recorded server-side
+    // the status flips to 'active' and the user must be allowed through, even
+    // though their DOB still makes them <18.
     const pending = (profile as any).account_status === 'pending_guardian';
-    if (!isMinor && !pending) return;
+    if (!pending) return;
 
     toast.info("You're under 18 — please complete guardian consent to keep using VibTribe.");
     navigate({ to: '/guardian-setup' as any });
