@@ -259,6 +259,9 @@ export default function ProfileContent() {
       const { data: pub } = supabase.storage.from('profile-photos').getPublicUrl(path);
       const url = `${pub.publicUrl}?v=${Date.now()}`;
       await updateProfile({ avatar_url: url });
+      // Reclaim storage: remove prior avatar versions in this user's folder
+      const keep = path.split('/').pop() || '';
+      void pruneOldAvatars(user.id, keep);
       toast.success('Profile photo updated');
     } catch (e: any) {
       toast.error(e.message || 'Failed to upload photo');
