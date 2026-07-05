@@ -351,6 +351,7 @@ export default function LandingPage() {
             <Link to="/data-notice" className="hover:text-foreground transition-colors">Data Notice</Link>
             <Link to="/subprocessors" className="hover:text-foreground transition-colors">Subprocessors</Link>
             <Link to="/child-safety" className="hover:text-foreground transition-colors">Child Safety</Link>
+            <Link to="/help/reporting" className="hover:text-foreground transition-colors">Reporting</Link>
             <span>© {new Date().getFullYear()}</span>
           </div>
         </div>
