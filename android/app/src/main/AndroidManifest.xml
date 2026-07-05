@@ -79,6 +79,13 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
+
+        <!-- Persistent ongoing-call notification + keeps the WebRTC process
+             alive when the user backgrounds the app during a call. -->
+        <service
+            android:name=".OngoingCallService"
+            android:exported="false"
+            android:foregroundServiceType="microphone|camera" />
     </application>
 
     <!-- Permissions -->

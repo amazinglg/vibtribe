@@ -47,6 +47,7 @@ public class MainActivity extends BridgeActivity {
     private PermissionRequest pendingMediaRequest = null;
     private volatile boolean trustLockEnabled = false;
     private volatile boolean trustLockBridgeInstalled = false;
+    private volatile boolean callBridgeInstalled = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,6 +71,7 @@ public class MainActivity extends BridgeActivity {
     protected void load() {
         WebView webView = findViewById(com.getcapacitor.android.R.id.webview);
         installTrustLockBridge(webView);
+        installCallBridge(webView);
         super.load();
     }
 
@@ -99,6 +101,67 @@ public class MainActivity extends BridgeActivity {
             }
         } catch (Exception e) {
             Log.w(TRUST_LOCK_TAG, "window.VtTrustLock JavascriptInterface install failed", e);
+        }
+    }
+
+    private void installCallBridge(WebView webView) {
+        try {
+            if (!callBridgeInstalled && webView != null) {
+                webView.addJavascriptInterface(new CallBridge(MainActivity.this), "VtCall");
+                callBridgeInstalled = true;
+                Log.i("VibTribeCall", "window.VtCall JavascriptInterface installed");
+            }
+        } catch (Exception e) {
+            Log.w("VibTribeCall", "window.VtCall JavascriptInterface install failed", e);
+        }
+    }
+
+    /** JS bridge that starts/stops the persistent ongoing-call foreground service. */
+    public static class CallBridge {
+        private final MainActivity activity;
+        CallBridge(MainActivity a) { this.activity = a; }
+
+        @JavascriptInterface
+        public void start(String callId, String callerName, String callType, String chatId, boolean muted) {
+            try {
+                Intent i = new Intent(activity, OngoingCallService.class);
+                i.setAction(OngoingCallService.ACTION_START);
+                i.putExtra(OngoingCallService.EXTRA_CALL_ID, callId);
+                i.putExtra(OngoingCallService.EXTRA_CHAT_ID, chatId);
+                i.putExtra(OngoingCallService.EXTRA_CALLER_NAME, callerName);
+                i.putExtra(OngoingCallService.EXTRA_CALL_TYPE, callType);
+                i.putExtra(OngoingCallService.EXTRA_MUTED, muted);
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    activity.startForegroundService(i);
+                } else {
+                    activity.startService(i);
+                }
+            } catch (Exception e) {
+                Log.w("VibTribeCall", "start ongoing-call service failed", e);
+            }
+        }
+
+        @JavascriptInterface
+        public void updateMute(boolean muted) {
+            try {
+                Intent i = new Intent(activity, OngoingCallService.class);
+                i.setAction(OngoingCallService.ACTION_UPDATE);
+                i.putExtra(OngoingCallService.EXTRA_MUTED, muted);
+                activity.startService(i);
+            } catch (Exception e) {
+                Log.w("VibTribeCall", "update ongoing-call service failed", e);
+            }
+        }
+
+        @JavascriptInterface
+        public void stop() {
+            try {
+                Intent i = new Intent(activity, OngoingCallService.class);
+                i.setAction(OngoingCallService.ACTION_STOP);
+                activity.startService(i);
+            } catch (Exception e) {
+                Log.w("VibTribeCall", "stop ongoing-call service failed", e);
+            }
         }
     }
 

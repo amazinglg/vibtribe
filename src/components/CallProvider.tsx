@@ -3,7 +3,7 @@ import React, { createContext, useContext, useEffect, useRef, useState, useCallb
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Volume2, Ear, ShieldCheck, ChevronDown, MoreVertical, Maximize2, AlertTriangle, SwitchCamera } from 'lucide-react';
-import { acquireCallWakeLock, setCallAudioRoute } from '@/lib/native-bridge';
+import { acquireCallWakeLock, setCallAudioRoute, startOngoingCallNotification, updateOngoingCallNotification, stopOngoingCallNotification } from '@/lib/native-bridge';
 import { sendCallPush } from '@/lib/fcm-push.functions';
 
 type CallType = 'voice' | 'video';
@@ -73,6 +73,12 @@ export default function CallProvider({ children }: { children: React.ReactNode }
 
   const [remoteName, setRemoteName] = useState('User');
   const [remoteAvatar, setRemoteAvatar] = useState('U');
+  const [remoteAvatarUrl, setRemoteAvatarUrl] = useState<string | null>(null);
+  // Video-call view swap: false = remote in main, self in PiP; true = swapped.
+  const [viewSwapped, setViewSwapped] = useState(false);
+  // Whether the remote peer has an active video track (used to decide when
+  // to show the avatar backdrop instead of a black rectangle).
+  const [remoteVideoLive, setRemoteVideoLive] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
   const [micMuted, setMicMuted] = useState(false);
   const [videoOff, setVideoOff] = useState(false);
@@ -117,6 +123,26 @@ export default function CallProvider({ children }: { children: React.ReactNode }
 
   useEffect(() => { activeCallRef.current = activeCall; }, [activeCall]);
   useEffect(() => { callDurationRef.current = callDuration; }, [callDuration]);
+
+  // Post / update the persistent Android ongoing-call notification whenever
+  // the call reaches the connected state (with mute + end actions), so the
+  // user can control the call from the notification tray and Android keeps
+  // the WebView alive (paired with the OngoingCallService foreground service).
+  useEffect(() => {
+    if (!activeCall) return;
+    if (callState !== 'connected') return;
+    startOngoingCallNotification({
+      callId: activeCall.id,
+      chatId: activeCall.chat_id,
+      callerName: remoteName,
+      callType: activeCall.call_type,
+      muted: micMuted,
+    });
+  }, [activeCall, callState, remoteName, micMuted]);
+  useEffect(() => {
+    if (!activeCall || callState !== 'connected') return;
+    updateOngoingCallNotification({ muted: micMuted });
+  }, [micMuted, activeCall, callState]);
 
   // iOS PWA background-audio keep-alive.
   // On installed iOS PWAs, once the screen locks or the app leaves the
@@ -265,6 +291,10 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     setMicMuted(false); setVideoOff(false);
     setMinimized(false);
     setMicStatus('ok');
+    setRemoteAvatarUrl(null);
+    setRemoteVideoLive(false);
+    setViewSwapped(false);
+    try { stopOngoingCallNotification(); } catch {}
   }, [supabase]);
 
   const endCall = useCallback(async (finalStatus: 'ended' | 'declined' | 'missed' = 'ended') => {
@@ -334,6 +364,17 @@ export default function CallProvider({ children }: { children: React.ReactNode }
       requestAnimationFrame(() => {
         if (remoteVideoRef.current) remoteVideoRef.current.srcObject = remoteStream;
         if (remoteAudioRef.current) remoteAudioRef.current.srcObject = remoteStream;
+      });
+      // Track whether the remote has a video track so we can hide the
+      // avatar backdrop the moment their camera comes through.
+      const hasVideo = remoteStream.getVideoTracks().some(t => t.readyState === 'live');
+      setRemoteVideoLive(hasVideo);
+      remoteStream.getVideoTracks().forEach((t) => {
+        try {
+          t.addEventListener('ended', () => setRemoteVideoLive(remoteStream.getVideoTracks().some(v => v.readyState === 'live')));
+          t.addEventListener('mute', () => setRemoteVideoLive(false));
+          t.addEventListener('unmute', () => setRemoteVideoLive(true));
+        } catch {}
       });
     };
     pc.onicecandidate = (e) => {
@@ -619,7 +660,12 @@ export default function CallProvider({ children }: { children: React.ReactNode }
       setRole('caller');
       setCallState('ringing');
       setRemoteName(opts.calleeName || 'User');
-      setRemoteAvatar((opts.calleeAvatar || opts.calleeName?.[0] || 'U').slice(0, 1).toUpperCase());
+      {
+        const av = opts.calleeAvatar || '';
+        const isUrl = /^(https?:|data:|blob:)/i.test(av);
+        setRemoteAvatarUrl(isUrl ? av : null);
+        setRemoteAvatar(((opts.calleeName?.[0] || 'U')).slice(0, 1).toUpperCase());
+      }
 
       // Fire native push so the callee's phone rings even when the app is killed.
       // Fire-and-forget — never block call setup on push delivery.
@@ -704,16 +750,19 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     if (!row || row.status !== 'ringing' || row.callee_id !== user.id) return;
 
     let callerName = 'Unknown'; let callerAvatar = 'U';
+    let callerAvatarUrl: string | null = null;
     try {
       const { data: p } = await supabase
         .from('user_profiles').select('full_name, avatar_url').eq('id', row.caller_id).maybeSingle();
       if (p?.full_name) { callerName = p.full_name; callerAvatar = p.full_name[0]?.toUpperCase() || 'U'; }
+      if (p?.avatar_url) callerAvatarUrl = p.avatar_url;
     } catch {}
     setActiveCall(row);
     setRole('callee');
     setCallState('ringing');
     setRemoteName(callerName);
     setRemoteAvatar(callerAvatar);
+    setRemoteAvatarUrl(callerAvatarUrl);
     playRingtone('incoming');
     ringTimerRef.current = setTimeout(async () => {
       try {
@@ -743,6 +792,35 @@ export default function CallProvider({ children }: { children: React.ReactNode }
       const answerId = params.get('answerCall');
       const callId = params.get('call');
       const declineId = params.get('declineCall');
+      const muteId = params.get('muteCall');
+      const endId = params.get('endCall');
+    if (endId) {
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('endCall');
+        window.history.replaceState({}, '', url.toString());
+      } catch {}
+      const cur = activeCallRef.current;
+      if (cur && cur.id === endId) { void endCall('ended'); }
+      return;
+    }
+    if (muteId) {
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('muteCall');
+        window.history.replaceState({}, '', url.toString());
+      } catch {}
+      const cur = activeCallRef.current;
+      if (cur && cur.id === muteId) {
+        // Force toggle mic
+        setMicMuted((m) => {
+          const next = !m;
+          localStreamRef.current?.getAudioTracks().forEach((t) => { t.enabled = !next; });
+          return next;
+        });
+      }
+      return;
+    }
     if (declineId) {
       // Lockscreen ringer "Decline" tapped — mark the call declined and clear the param.
       supabase.from('calls')
@@ -957,15 +1035,38 @@ export default function CallProvider({ children }: { children: React.ReactNode }
         >
           {/* Full-bleed remote video for video calls */}
           {activeCall.call_type === 'video' && (
-            <video
-              ref={remoteVideoRef}
-              autoPlay
-              playsInline
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-          )}
-          {activeCall.call_type === 'video' && callState !== 'connected' && (
-            <div className="absolute inset-0 bg-black/60" />
+            <>
+              {/* Main stage: remote video (or self if swapped) */}
+              <video
+                ref={viewSwapped ? localVideoRef : remoteVideoRef}
+                autoPlay
+                playsInline
+                muted={viewSwapped}
+                className="absolute inset-0 w-full h-full object-cover"
+                style={{ transform: viewSwapped && cameraFacing === 'user' ? 'scaleX(-1)' : undefined }}
+              />
+              {/* Avatar backdrop when remote video isn't visible yet (pre-answer)
+                  or the peer disabled their camera — so the user never sees a
+                  bare black rectangle. */}
+              {(!viewSwapped && (!remoteVideoLive || callState !== 'connected')) && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center"
+                  style={{ background: 'radial-gradient(ellipse at center, #1a0333 0%, #0a0118 60%, #050010 100%)' }}
+                >
+                  <div className="w-36 h-36 rounded-full overflow-hidden bg-gradient-to-br from-purple-600 to-purple-900 flex items-center justify-center text-5xl font-bold shadow-[0_0_60px_rgba(168,85,247,0.5)]">
+                    {remoteAvatarUrl ? (
+                      <img src={remoteAvatarUrl} alt={remoteName} className="w-full h-full object-cover" />
+                    ) : (
+                      <span>{remoteAvatar}</span>
+                    )}
+                  </div>
+                </div>
+              )}
+              {viewSwapped && videoOff && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/80 text-white/70 text-sm">
+                  Your camera is off
+                </div>
+              )}
+            </>
           )}
 
           {/* Top bar */}
@@ -1020,7 +1121,11 @@ export default function CallProvider({ children }: { children: React.ReactNode }
                   <span className="absolute w-52 h-52 rounded-full border border-purple-500/30 animate-vt-ring" style={{ animationDelay: '0.4s' }} />
                   <span className="absolute w-40 h-40 rounded-full border border-purple-500/40 animate-vt-ring" style={{ animationDelay: '0.8s' }} />
                   <div className="relative w-32 h-32 rounded-full overflow-hidden bg-gradient-to-br from-purple-600 to-purple-900 flex items-center justify-center text-4xl font-bold shadow-[0_0_60px_rgba(168,85,247,0.5)]">
-                    {remoteAvatar}
+                    {remoteAvatarUrl ? (
+                      <img src={remoteAvatarUrl} alt={remoteName} className="w-full h-full object-cover" />
+                    ) : (
+                      <span>{remoteAvatar}</span>
+                    )}
                   </div>
                 </div>
                 {/* Waveform */}
@@ -1042,11 +1147,42 @@ export default function CallProvider({ children }: { children: React.ReactNode }
               </>
             ) : (
               // Video: PiP self-view bottom-right
-              !videoOff && (
-                <div className="absolute bottom-6 right-4 w-28 h-40 rounded-2xl overflow-hidden border-2 border-white/40 bg-black shadow-2xl">
-                  <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
-                </div>
-              )
+              <button
+                onClick={() => setViewSwapped((s) => !s)}
+                aria-label="Swap views"
+                className="absolute bottom-6 right-4 w-28 h-40 rounded-2xl overflow-hidden border-2 border-white/40 bg-black shadow-2xl active:scale-95 transition-transform"
+              >
+                {viewSwapped ? (
+                  // PiP shows remote when swapped
+                  remoteVideoLive ? (
+                    <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-purple-600 to-purple-900 flex items-center justify-center text-2xl font-bold text-white">
+                      {remoteAvatarUrl ? (
+                        <img src={remoteAvatarUrl} alt={remoteName} className="w-full h-full object-cover" />
+                      ) : (
+                        <span>{remoteAvatar}</span>
+                      )}
+                    </div>
+                  )
+                ) : (
+                  // PiP shows self when not swapped
+                  !videoOff ? (
+                    <video
+                      ref={localVideoRef}
+                      autoPlay
+                      muted
+                      playsInline
+                      className="w-full h-full object-cover"
+                      style={{ transform: cameraFacing === 'user' ? 'scaleX(-1)' : undefined }}
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-black/70 flex items-center justify-center text-[10px] text-white/60 text-center px-1">
+                      Camera off
+                    </div>
+                  )
+                )}
+              </button>
             )}
           </div>
 
