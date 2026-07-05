@@ -124,6 +124,26 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   useEffect(() => { activeCallRef.current = activeCall; }, [activeCall]);
   useEffect(() => { callDurationRef.current = callDuration; }, [callDuration]);
 
+  // Post / update the persistent Android ongoing-call notification whenever
+  // the call reaches the connected state (with mute + end actions), so the
+  // user can control the call from the notification tray and Android keeps
+  // the WebView alive (paired with the OngoingCallService foreground service).
+  useEffect(() => {
+    if (!activeCall) return;
+    if (callState !== 'connected') return;
+    startOngoingCallNotification({
+      callId: activeCall.id,
+      chatId: activeCall.chat_id,
+      callerName: remoteName,
+      callType: activeCall.call_type,
+      muted: micMuted,
+    });
+  }, [activeCall, callState, remoteName, micMuted]);
+  useEffect(() => {
+    if (!activeCall || callState !== 'connected') return;
+    updateOngoingCallNotification({ muted: micMuted });
+  }, [micMuted, activeCall, callState]);
+
   // iOS PWA background-audio keep-alive.
   // On installed iOS PWAs, once the screen locks or the app leaves the
   // foreground, Safari suspends the WebRTC audio graph — the microphone
