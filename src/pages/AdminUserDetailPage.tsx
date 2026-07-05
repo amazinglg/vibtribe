@@ -25,7 +25,7 @@ export default function AdminUserDetailPage() {
   const [loadingData, setLoadingData] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
-  const [editForm, setEditForm] = useState({ full_name: '', email: '', mobile_number: '', country_code: '+91' });
+  const [editForm, setEditForm] = useState({ full_name: '', real_email: '', mobile_number: '', country_code: '+91' });
   const [secureChatCount, setSecureChatCount] = useState<number | null>(null);
   const [guardian, setGuardian] = useState<any>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -257,7 +257,7 @@ export default function AdminUserDetailPage() {
           </div>
           {!locked && !isSelf && (
             <button
-              onClick={() => { setEditForm({ full_name: target.full_name || '', email: target.real_email || target.email || '', mobile_number: target.mobile_number || '', country_code: target.country_code || '+91' }); setEditOpen(true); }}
+              onClick={() => { setEditForm({ full_name: target.full_name || '', real_email: target.real_email || '', mobile_number: target.mobile_number || '', country_code: target.country_code || '+91' }); setEditOpen(true); }}
               className="px-3 py-2 rounded-xl glass border border-border text-foreground hover:border-primary/40 transition-all flex items-center gap-1.5 text-xs font-semibold"
             >
               <Pencil size={13} /> Edit
@@ -637,9 +637,9 @@ export default function AdminUserDetailPage() {
               <button onClick={() => setEditOpen(false)} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground"><X size={16} /></button>
             </div>
             <div className="space-y-3">
-              {(['full_name', 'email', 'mobile_number'] as const).map(field => (
+              {(['full_name', 'real_email', 'mobile_number'] as const).map(field => (
                 <div key={field}>
-                  <label className="text-xs text-muted-foreground mb-1 block capitalize">{field.replace('_', ' ')}</label>
+                  <label className="text-xs text-muted-foreground mb-1 block capitalize">{field === 'real_email' ? 'Email' : field.replace('_', ' ')}</label>
                   <input
                     type="text"
                     value={editForm[field]}
