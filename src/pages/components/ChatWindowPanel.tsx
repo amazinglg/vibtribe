@@ -24,6 +24,7 @@ import EncryptionPinModal from '@/components/EncryptionPinModal';
 import { TrustLockProvider } from '@/contexts/TrustLockContext';
 import ForwardMessageModal from '@/components/ForwardMessageModal';
 import { appConfirm } from '@/components/ui/AppDialog';
+import ReportContentSheet, { type ReportType } from '@/components/ReportContentSheet';
 
 interface Message {
   id: string;
@@ -420,6 +421,13 @@ export default function ChatWindowPanel() {
   const [tribeTotalMembers, setTribeTotalMembers] = useState(0);
   const [actionMsg, setActionMsg] = useState<Message | null>(null);
   const [reactionPickerMsg, setReactionPickerMsg] = useState<Message | null>(null);
+  const [reportTarget, setReportTarget] = useState<null | {
+    reportType: ReportType;
+    reportedUserId?: string;
+    chatId?: string;
+    messageId?: string;
+    snapshot?: any;
+  }>(null);
   const [forwardTexts, setForwardTexts] = useState<string[] | null>(null);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
