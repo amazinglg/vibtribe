@@ -244,6 +244,11 @@ function ReportCard({
     } catch { toast.error('Could not copy') }
   }
 
+  const wrappedDecision = (status: 'true_positive' | 'false_positive' | 'dismissed', action?: 'none' | 'suspend_user' | 'ban_user' | 'delete_content' | 'dismiss') => {
+    setOverriding(false)
+    onDecision(status, action)
+  }
+
   useEffect(() => {
     if (!expanded || !media?.path) return
     let cancelled = false
@@ -370,22 +375,22 @@ function ReportCard({
               </div>
 
               <div className="flex flex-wrap gap-2">
-                <button disabled={saving} onClick={() => onDecision('true_positive', 'none')} className="px-3 py-2 rounded-xl bg-red-500/15 text-red-400 border border-red-500/30 text-xs font-semibold flex items-center gap-1 hover:bg-red-500/25 disabled:opacity-50">
+                <button disabled={saving} onClick={() => wrappedDecision('true_positive', 'none')} className="px-3 py-2 rounded-xl bg-red-500/15 text-red-400 border border-red-500/30 text-xs font-semibold flex items-center gap-1 hover:bg-red-500/25 disabled:opacity-50">
                   <CheckCircle2 size={12} /> True Positive
                 </button>
-                <button disabled={saving} onClick={() => onDecision('false_positive', 'none')} className="px-3 py-2 rounded-xl bg-vt-green/15 text-vt-green border border-vt-green/30 text-xs font-semibold flex items-center gap-1 hover:bg-vt-green/25 disabled:opacity-50">
+                <button disabled={saving} onClick={() => wrappedDecision('false_positive', 'none')} className="px-3 py-2 rounded-xl bg-vt-green/15 text-vt-green border border-vt-green/30 text-xs font-semibold flex items-center gap-1 hover:bg-vt-green/25 disabled:opacity-50">
                   <XCircle size={12} /> False Positive
                 </button>
-                <button disabled={saving || !r.reported_user_id} onClick={() => onDecision('true_positive', 'suspend_user')} className="px-3 py-2 rounded-xl bg-orange-500/15 text-orange-400 border border-orange-500/30 text-xs font-semibold flex items-center gap-1 hover:bg-orange-500/25 disabled:opacity-50">
+                <button disabled={saving || !r.reported_user_id} onClick={() => wrappedDecision('true_positive', 'suspend_user')} className="px-3 py-2 rounded-xl bg-orange-500/15 text-orange-400 border border-orange-500/30 text-xs font-semibold flex items-center gap-1 hover:bg-orange-500/25 disabled:opacity-50">
                   <UserX size={12} /> Suspend User
                 </button>
-                <button disabled={saving || !r.reported_user_id} onClick={() => onDecision('true_positive', 'ban_user')} className="px-3 py-2 rounded-xl bg-red-500/15 text-red-400 border border-red-500/30 text-xs font-semibold flex items-center gap-1 hover:bg-red-500/25 disabled:opacity-50">
+                <button disabled={saving || !r.reported_user_id} onClick={() => wrappedDecision('true_positive', 'ban_user')} className="px-3 py-2 rounded-xl bg-red-500/15 text-red-400 border border-red-500/30 text-xs font-semibold flex items-center gap-1 hover:bg-red-500/25 disabled:opacity-50">
                   <Ban size={12} /> Ban User
                 </button>
-                <button disabled={saving} onClick={() => onDecision('true_positive', 'delete_content')} className="px-3 py-2 rounded-xl bg-muted text-foreground border border-border text-xs font-semibold flex items-center gap-1 hover:bg-muted/70 disabled:opacity-50">
+                <button disabled={saving} onClick={() => wrappedDecision('true_positive', 'delete_content')} className="px-3 py-2 rounded-xl bg-muted text-foreground border border-border text-xs font-semibold flex items-center gap-1 hover:bg-muted/70 disabled:opacity-50">
                   <Trash2 size={12} /> Mark Content Deleted
                 </button>
-                <button disabled={saving} onClick={() => onDecision('dismissed', 'dismiss')} className="ml-auto px-3 py-2 rounded-xl bg-muted text-muted-foreground text-xs font-semibold hover:text-foreground disabled:opacity-50">
+                <button disabled={saving} onClick={() => wrappedDecision('dismissed', 'dismiss')} className="ml-auto px-3 py-2 rounded-xl bg-muted text-muted-foreground text-xs font-semibold hover:text-foreground disabled:opacity-50">
                   Dismiss
                 </button>
               </div>
