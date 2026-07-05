@@ -257,6 +257,25 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     }
   }, [videoOff, activeCall]);
 
+  // Re-bind local + remote streams whenever the main/PiP swap flips.
+  // React remounts the <video> elements with different refs on toggle,
+  // so their srcObject must be reattached or the swapped tile stays blank.
+  useEffect(() => {
+    if (!activeCall || activeCall.call_type !== 'video') return;
+    requestAnimationFrame(() => {
+      const local = localStreamRef.current;
+      const remote = remoteStreamRef.current;
+      if (local && localVideoRef.current && localVideoRef.current.srcObject !== local) {
+        localVideoRef.current.srcObject = local;
+        localVideoRef.current.play?.().catch(() => {});
+      }
+      if (remote && remoteVideoRef.current && remoteVideoRef.current.srcObject !== remote) {
+        remoteVideoRef.current.srcObject = remote;
+        remoteVideoRef.current.play?.().catch(() => {});
+      }
+    });
+  }, [viewSwapped, activeCall, videoOff]);
+
   const cleanup = useCallback(() => {
     try { pcRef.current?.close(); } catch {}
     pcRef.current = null;
