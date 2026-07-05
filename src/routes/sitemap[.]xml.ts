@@ -18,6 +18,7 @@ export const Route = createFileRoute("/sitemap.xml")({
           { path: "/about", changefreq: "monthly", priority: "0.6" },
           { path: "/data-notice", changefreq: "monthly", priority: "0.5" },
           { path: "/subprocessors", changefreq: "monthly", priority: "0.4" },
+          { path: "/child-safety", changefreq: "monthly", priority: "0.6" },
           { path: "/download/android", changefreq: "weekly", priority: "0.8" },
           { path: "/download/ios", changefreq: "weekly", priority: "0.6" },
           { path: "/blog/vibtribe-vs-signal-vs-telegram", changefreq: "monthly", priority: "0.7" },

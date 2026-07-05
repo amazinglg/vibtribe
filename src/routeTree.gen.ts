@@ -25,6 +25,7 @@ import { Route as FeaturesRouteImport } from './routes/features'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as DataNoticeRouteImport } from './routes/data-notice'
 import { Route as CompleteProfileRouteImport } from './routes/complete-profile'
+import { Route as ChildSafetyRouteImport } from './routes/child-safety'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
@@ -138,6 +139,11 @@ const DataNoticeRoute = DataNoticeRouteImport.update({
 const CompleteProfileRoute = CompleteProfileRouteImport.update({
   id: '/complete-profile',
   path: '/complete-profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChildSafetyRoute = ChildSafetyRouteImport.update({
+  id: '/child-safety',
+  path: '/child-safety',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -329,6 +335,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
+  '/child-safety': typeof ChildSafetyRoute
   '/complete-profile': typeof CompleteProfileRoute
   '/data-notice': typeof DataNoticeRoute
   '/faq': typeof FaqRoute
@@ -380,6 +387,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/child-safety': typeof ChildSafetyRoute
   '/complete-profile': typeof CompleteProfileRoute
   '/data-notice': typeof DataNoticeRoute
   '/faq': typeof FaqRoute
@@ -433,6 +441,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
+  '/child-safety': typeof ChildSafetyRoute
   '/complete-profile': typeof CompleteProfileRoute
   '/data-notice': typeof DataNoticeRoute
   '/faq': typeof FaqRoute
@@ -487,6 +496,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/admin'
+    | '/child-safety'
     | '/complete-profile'
     | '/data-notice'
     | '/faq'
@@ -538,6 +548,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about'
+    | '/child-safety'
     | '/complete-profile'
     | '/data-notice'
     | '/faq'
@@ -590,6 +601,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/admin'
+    | '/child-safety'
     | '/complete-profile'
     | '/data-notice'
     | '/faq'
@@ -643,6 +655,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   AdminRoute: typeof AdminRouteWithChildren
+  ChildSafetyRoute: typeof ChildSafetyRoute
   CompleteProfileRoute: typeof CompleteProfileRoute
   DataNoticeRoute: typeof DataNoticeRoute
   FaqRoute: typeof FaqRoute
@@ -799,6 +812,13 @@ declare module '@tanstack/react-router' {
       path: '/complete-profile'
       fullPath: '/complete-profile'
       preLoaderRoute: typeof CompleteProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/child-safety': {
+      id: '/child-safety'
+      path: '/child-safety'
+      fullPath: '/child-safety'
+      preLoaderRoute: typeof ChildSafetyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -1064,6 +1084,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   AdminRoute: AdminRouteWithChildren,
+  ChildSafetyRoute: ChildSafetyRoute,
   CompleteProfileRoute: CompleteProfileRoute,
   DataNoticeRoute: DataNoticeRoute,
   FaqRoute: FaqRoute,
