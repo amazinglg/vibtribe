@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { Shield, Users, Activity, Search, Ban, Trash2, RefreshCw, AlertTriangle, CheckCircle2, ArrowLeft, KeyRound, Pencil, X, Save, Ticket, UserX, UserCheck, Send, LogOut, ChevronRight, Circle, ArrowUpDown, Filter, Lock, Globe, AtSign, Rocket } from 'lucide-react';
+import { Shield, Users, Activity, Search, Ban, Trash2, RefreshCw, AlertTriangle, CheckCircle2, ArrowLeft, KeyRound, Pencil, X, Save, Ticket, UserX, UserCheck, Send, LogOut, ChevronRight, Circle, ArrowUpDown, Filter, Lock, Globe, AtSign, Rocket, ShieldAlert } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLayout from '@/components/AppLayout';
 import { createClient } from '@/lib/supabase/client';
@@ -98,6 +98,7 @@ export default function AdminPage() {
   const [ticketSearch, setTicketSearch] = useState('');
   const [ticketFilter, setTicketFilter] = useState<'all' | 'open' | 'inprocess' | 'solved'>('all');
   const [unreadTickets, setUnreadTickets] = useState(0);
+  const [pendingReports, setPendingReports] = useState(0);
   const [forceLogoutLoading, setForceLogoutLoading] = useState<string | null>(null);
   const [userFilter, setUserFilter] = useState<'all' | 'active' | 'suspended' | 'blocked' | 'admins' | 'online' | 'under_age' | 'incomplete_signup'>('all');
   const [userSort, setUserSort] = useState<'recent' | 'name' | 'lastActive'>('recent');
@@ -109,6 +110,24 @@ export default function AdminPage() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const replyFn = useServerFn(replyToTicket);
   const deleteFn = useServerFn(deleteTicket);
+
+  // Live pending-report count for the Reports tab badge (master admin only).
+  useEffect(() => {
+    if (!isMaster) return;
+    const load = async () => {
+      const { count } = await supabase
+        .from('content_reports' as any)
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'pending');
+      setPendingReports(count || 0);
+    };
+    load();
+    const ch = supabase
+      .channel('admin-reports-badge')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'content_reports' }, () => load())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [isMaster]);
 
   const loadThread = async (ticketId: string) => {
     setLoadingThread(true);
