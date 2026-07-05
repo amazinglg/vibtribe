@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Trash2, Lock, Users, UserPlus, MessageSquare, Phone, Check, Pin, PinOff, Ban, BellOff, Bell, Clock, BadgeCheck } from 'lucide-react';
+import { Search, Plus, Trash2, Lock, Users, UserPlus, MessageSquare, Phone, Check, Pin, PinOff, Ban, BellOff, Bell, Clock, BadgeCheck, Flag } from 'lucide-react';
 import MarkSecureModal from '@/components/MarkSecureModal';
 import ContactsPanel from '@/components/ContactsPanel';
 import CreateGroupModal from '@/components/CreateGroupModal';
@@ -14,6 +14,7 @@ import { BROADCAST_CHAT_ID } from './BroadcastChatPanel';
 import { useT } from '@/contexts/LanguageContext';
 import { isNativeWrapper, requestNativeContactsPermission } from '@/lib/native-bridge';
 import { appConfirm, appAlert } from '@/components/ui/AppDialog';
+import ReportContentSheet, { type ReportType } from '@/components/ReportContentSheet';
 const BROADCAST_LOGO = '/assets/images/app_logo.png';
 
 interface Chat {
