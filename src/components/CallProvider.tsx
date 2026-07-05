@@ -791,18 +791,27 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     return () => window.removeEventListener('vt-incoming-call', onIncomingPush);
   }, [user?.id, supabase, handleIncomingCall]);
 
-  // Callee accept handler
-  const acceptCall = async () => {
-    if (!activeCall || role !== 'callee') return;
+  // Callee accept handler. Accepts either the current activeCall from state
+  // (user tapped Accept in the in-app sheet) or an explicit row (auto-answer
+  // from the native full-screen incoming-call notification).
+  const acceptCall = async (row?: CallRow) => {
+    const call = row || activeCall;
+    if (!call) return;
+    if (!row && role !== 'callee') return;
     if (ringTimerRef.current) { clearTimeout(ringTimerRef.current); ringTimerRef.current = null; }
     if (ringtoneRef.current) { try { ringtoneRef.current.pause(); } catch {} ringtoneRef.current = null; }
+    if (row) {
+      // Auto-answer path: ensure state reflects the accepted call.
+      setActiveCall(call);
+      setRole('callee');
+    }
     setCallState('connecting');
 
     // Set up channel and peer
-    const channel = supabase.channel(`call:${activeCall.id}`, { config: { broadcast: { ack: false } } });
+    const channel = supabase.channel(`call:${call.id}`, { config: { broadcast: { ack: false } } });
     channelRef.current = channel;
-    const pc = setupPeerConnection(activeCall, false);
-    const stream = await acquireMedia(activeCall.call_type).catch(() => null);
+    const pc = setupPeerConnection(call, false);
+    const stream = await acquireMedia(call.call_type).catch(() => null);
     if (stream) addTracksToPC(pc, stream);
 
     channel.on('broadcast', { event: 'offer' }, async ({ payload }) => {
@@ -821,12 +830,12 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     await channel.subscribe();
 
     // Mark accepted (this triggers caller to send offer)
-    await supabase.from('calls').update({ status: 'accepted', accepted_at: new Date().toISOString() }).eq('id', activeCall.id);
+    await supabase.from('calls').update({ status: 'accepted', accepted_at: new Date().toISOString() }).eq('id', call.id);
 
     // Listen for hangup
     const statusChan = supabase
-      .channel(`call-status:${activeCall.id}:callee`)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'calls', filter: `id=eq.${activeCall.id}` }, ({ new: r }: any) => {
+      .channel(`call-status:${call.id}:callee`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'calls', filter: `id=eq.${call.id}` }, ({ new: r }: any) => {
         if (['ended', 'declined', 'missed'].includes(r.status)) {
           cleanup(); setActiveCall(null); setRole(null);
         }
