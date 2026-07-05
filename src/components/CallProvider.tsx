@@ -271,6 +271,10 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     setMicMuted(false); setVideoOff(false);
     setMinimized(false);
     setMicStatus('ok');
+    setRemoteAvatarUrl(null);
+    setRemoteVideoLive(false);
+    setViewSwapped(false);
+    try { stopOngoingCallNotification(); } catch {}
   }, [supabase]);
 
   const endCall = useCallback(async (finalStatus: 'ended' | 'declined' | 'missed' = 'ended') => {
@@ -636,7 +640,12 @@ export default function CallProvider({ children }: { children: React.ReactNode }
       setRole('caller');
       setCallState('ringing');
       setRemoteName(opts.calleeName || 'User');
-      setRemoteAvatar((opts.calleeAvatar || opts.calleeName?.[0] || 'U').slice(0, 1).toUpperCase());
+      {
+        const av = opts.calleeAvatar || '';
+        const isUrl = /^(https?:|data:|blob:)/i.test(av);
+        setRemoteAvatarUrl(isUrl ? av : null);
+        setRemoteAvatar(((opts.calleeName?.[0] || 'U')).slice(0, 1).toUpperCase());
+      }
 
       // Fire native push so the callee's phone rings even when the app is killed.
       // Fire-and-forget — never block call setup on push delivery.
@@ -721,16 +730,19 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     if (!row || row.status !== 'ringing' || row.callee_id !== user.id) return;
 
     let callerName = 'Unknown'; let callerAvatar = 'U';
+    let callerAvatarUrl: string | null = null;
     try {
       const { data: p } = await supabase
         .from('user_profiles').select('full_name, avatar_url').eq('id', row.caller_id).maybeSingle();
       if (p?.full_name) { callerName = p.full_name; callerAvatar = p.full_name[0]?.toUpperCase() || 'U'; }
+      if (p?.avatar_url) callerAvatarUrl = p.avatar_url;
     } catch {}
     setActiveCall(row);
     setRole('callee');
     setCallState('ringing');
     setRemoteName(callerName);
     setRemoteAvatar(callerAvatar);
+    setRemoteAvatarUrl(callerAvatarUrl);
     playRingtone('incoming');
     ringTimerRef.current = setTimeout(async () => {
       try {
