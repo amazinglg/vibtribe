@@ -598,7 +598,7 @@ export default function AdminPage() {
 
         {/* Tabs — single-line, horizontally scrollable on small screens */}
         <div className="flex gap-1 p-1 bg-muted rounded-xl mb-6 w-full sm:w-fit overflow-x-auto no-scrollbar">
-          {(['overview', 'users', ...(isMaster ? ['tribes' as const] : []), 'support', 'marketing' as const, ...(isMaster ? ['permissions' as const, 'premium' as const, 'reports' as const] : [])] as const).map(tab => (
+          {(['overview', 'users', ...(isMaster ? ['tribes' as const] : []), 'support', 'marketing' as const, ...(isMaster ? ['permissions' as const, 'premium' as const, 'reports' as const, 'appeals' as const] : [])] as const).map(tab => (
             <button
               key={tab}
               onClick={() => {
@@ -606,11 +606,12 @@ export default function AdminPage() {
                 if (tab === 'permissions') { router({ to: '/admin/permissions' }); return; }
                 if (tab === 'premium') { router({ to: '/admin/premium-users' }); return; }
                 if (tab === 'reports') { router({ to: '/admin/reports' }); return; }
+                if (tab === 'appeals') { router({ to: '/admin/appeals' }); return; }
                 setActiveTab(tab);
               }}
               className={`relative flex-shrink-0 px-2.5 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold capitalize transition-all whitespace-nowrap ${activeTab === tab ? 'gradient-primary text-white' : 'text-muted-foreground hover:text-foreground'}`}
             >
-              {tab === 'support' ? 'Support' : tab === 'tribes' ? 'Tribes' : tab === 'marketing' ? 'Marketing' : tab === 'permissions' ? 'Permissions' : tab === 'premium' ? 'Premium' : tab === 'reports' ? 'Reports' : tab}
+              {tab === 'support' ? 'Support' : tab === 'tribes' ? 'Tribes' : tab === 'marketing' ? 'Marketing' : tab === 'permissions' ? 'Permissions' : tab === 'premium' ? 'Premium' : tab === 'reports' ? 'Reports' : tab === 'appeals' ? 'Appeals' : tab}
               {tab === 'support' && unreadTickets > 0 && (
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
                   {unreadTickets > 9 ? '9+' : unreadTickets}
@@ -619,6 +620,11 @@ export default function AdminPage() {
               {tab === 'reports' && pendingReports > 0 && (
                 <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
                   {pendingReports > 9 ? '9+' : pendingReports}
+                </span>
+              )}
+              {tab === 'appeals' && pendingAppeals > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                  {pendingAppeals > 9 ? '9+' : pendingAppeals}
                 </span>
               )}
             </button>
