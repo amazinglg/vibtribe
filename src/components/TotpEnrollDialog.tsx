@@ -80,8 +80,18 @@ export default function TotpEnrollDialog({ open, onClose, onEnabled }: { open: b
 
   if (typeof document === 'undefined') return null;
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-start sm:items-center justify-center bg-black/70 backdrop-blur-sm p-3 overflow-y-auto" onClick={cancelEnrollment}>
-      <div className="glass-strong rounded-3xl border border-border w-full max-w-md p-5 sm:p-6 max-h-[92vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-3 overflow-y-auto"
+      style={{
+        paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)',
+        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)',
+      }}
+      onClick={cancelEnrollment}
+    >
+      <div
+        className="glass-strong rounded-3xl border border-border w-full max-w-md p-5 sm:p-6 max-h-[calc(100vh-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px)-24px)] overflow-y-auto my-auto"
+        onClick={e => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-xl bg-primary/15 text-primary flex items-center justify-center"><Shield size={16} /></div>
