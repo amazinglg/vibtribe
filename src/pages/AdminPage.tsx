@@ -99,6 +99,7 @@ export default function AdminPage() {
   const [ticketFilter, setTicketFilter] = useState<'all' | 'open' | 'inprocess' | 'solved'>('all');
   const [unreadTickets, setUnreadTickets] = useState(0);
   const [pendingReports, setPendingReports] = useState(0);
+  const [pendingAppeals, setPendingAppeals] = useState(0);
   const [forceLogoutLoading, setForceLogoutLoading] = useState<string | null>(null);
   const [userFilter, setUserFilter] = useState<'all' | 'active' | 'suspended' | 'blocked' | 'admins' | 'online' | 'under_age' | 'incomplete_signup'>('all');
   const [userSort, setUserSort] = useState<'recent' | 'name' | 'lastActive'>('recent');
@@ -125,6 +126,24 @@ export default function AdminPage() {
     const ch = supabase
       .channel('admin-reports-badge')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'content_reports' }, () => load())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [isMaster]);
+
+  // Live pending-appeal count for the Appeals tab badge (master admin only).
+  useEffect(() => {
+    if (!isMaster) return;
+    const load = async () => {
+      const { count } = await supabase
+        .from('report_appeals' as any)
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'pending');
+      setPendingAppeals(count || 0);
+    };
+    load();
+    const ch = supabase
+      .channel('admin-appeals-badge')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'report_appeals' }, () => load())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [isMaster]);
