@@ -74,8 +74,11 @@ export default function ChatListPanel() {
       appAlert({ title: 'Could not block user', message: e?.message || 'Please try again.' });
     }
   };
-  const CHATS_CACHE_KEY = 'vt_chats_cache_v1';
-  const PINS_KEY = 'vt_pinned_chats_v1';
+  const { selectedChatId, setSelectedChatId } = useChatStore();
+  const { user, profile } = useAuth();
+  const supabase = createClient();
+  const CHATS_CACHE_KEY = user?.id ? `vt_chats_cache_v1_${user.id}` : 'vt_chats_cache_v1__anon';
+  const PINS_KEY = user?.id ? `vt_pinned_chats_v1_${user.id}` : 'vt_pinned_chats_v1__anon';
   const [pinnedIds, setPinnedIds] = useState<string[]>(() => {
     if (typeof window === 'undefined') return [];
     try { return JSON.parse(localStorage.getItem(PINS_KEY) || '[]'); } catch { return []; }
