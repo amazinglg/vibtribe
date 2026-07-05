@@ -43,6 +43,7 @@ import { Route as AdminReportsRouteImport } from './routes/admin.reports'
 import { Route as AdminPremiumUsersRouteImport } from './routes/admin.premium-users'
 import { Route as AdminPermissionsRouteImport } from './routes/admin.permissions'
 import { Route as AdminMarketingRouteImport } from './routes/admin.marketing'
+import { Route as AdminAppealsRouteImport } from './routes/admin.appeals'
 import { Route as TribeJoinCodeRouteImport } from './routes/tribe.join.$code'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as ApiPublicTrackApkDownloadRouteImport } from './routes/api/public/track-apk-download'
@@ -237,6 +238,11 @@ const AdminMarketingRoute = AdminMarketingRouteImport.update({
   path: '/marketing',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminAppealsRoute = AdminAppealsRouteImport.update({
+  id: '/appeals',
+  path: '/appeals',
+  getParentRoute: () => AdminRoute,
+} as any)
 const TribeJoinCodeRoute = TribeJoinCodeRouteImport.update({
   id: '/tribe/join/$code',
   path: '/tribe/join/$code',
@@ -358,6 +364,7 @@ export interface FileRoutesByFullPath {
   '/subprocessors': typeof SubprocessorsRoute
   '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/admin/appeals': typeof AdminAppealsRoute
   '/admin/marketing': typeof AdminMarketingRoute
   '/admin/permissions': typeof AdminPermissionsRoute
   '/admin/premium-users': typeof AdminPremiumUsersRoute
@@ -411,6 +418,7 @@ export interface FileRoutesByTo {
   '/subprocessors': typeof SubprocessorsRoute
   '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/admin/appeals': typeof AdminAppealsRoute
   '/admin/marketing': typeof AdminMarketingRoute
   '/admin/permissions': typeof AdminPermissionsRoute
   '/admin/premium-users': typeof AdminPremiumUsersRoute
@@ -466,6 +474,7 @@ export interface FileRoutesById {
   '/subprocessors': typeof SubprocessorsRoute
   '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/admin/appeals': typeof AdminAppealsRoute
   '/admin/marketing': typeof AdminMarketingRoute
   '/admin/permissions': typeof AdminPermissionsRoute
   '/admin/premium-users': typeof AdminPremiumUsersRoute
@@ -522,6 +531,7 @@ export interface FileRouteTypes {
     | '/subprocessors'
     | '/terms'
     | '/unsubscribe'
+    | '/admin/appeals'
     | '/admin/marketing'
     | '/admin/permissions'
     | '/admin/premium-users'
@@ -575,6 +585,7 @@ export interface FileRouteTypes {
     | '/subprocessors'
     | '/terms'
     | '/unsubscribe'
+    | '/admin/appeals'
     | '/admin/marketing'
     | '/admin/permissions'
     | '/admin/premium-users'
@@ -629,6 +640,7 @@ export interface FileRouteTypes {
     | '/subprocessors'
     | '/terms'
     | '/unsubscribe'
+    | '/admin/appeals'
     | '/admin/marketing'
     | '/admin/permissions'
     | '/admin/premium-users'
@@ -952,6 +964,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminMarketingRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/appeals': {
+      id: '/admin/appeals'
+      path: '/appeals'
+      fullPath: '/admin/appeals'
+      preLoaderRoute: typeof AdminAppealsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/tribe/join/$code': {
       id: '/tribe/join/$code'
       path: '/tribe/join/$code'
@@ -1082,6 +1101,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminAppealsRoute: typeof AdminAppealsRoute
   AdminMarketingRoute: typeof AdminMarketingRoute
   AdminPermissionsRoute: typeof AdminPermissionsRoute
   AdminPremiumUsersRoute: typeof AdminPremiumUsersRoute
@@ -1091,6 +1111,7 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminAppealsRoute: AdminAppealsRoute,
   AdminMarketingRoute: AdminMarketingRoute,
   AdminPermissionsRoute: AdminPermissionsRoute,
   AdminPremiumUsersRoute: AdminPremiumUsersRoute,
