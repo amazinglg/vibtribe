@@ -1,7 +1,7 @@
 import React from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import {
-  ArrowLeft, ShieldCheck, Ban, Users, Flag, Gavel, Handshake, Mail,
+  ArrowLeft, ShieldCheck, Ban, Users, Flag, Gavel, Handshake, Mail, ShieldQuestion,
 } from 'lucide-react';
 import AppLogo from '@/components/ui/AppLogo';
 import Wordmark from '@/components/ui/Wordmark';
