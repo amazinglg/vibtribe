@@ -1019,17 +1019,28 @@ export default function ChatListPanel() {
             <button
               onClick={() => {
                 const c = chats.find(c => c.id === contextMenu.chatId);
+                const isTribe = !!(c as any)?.is_group;
                 setReportTarget({
-                  reportType: 'chat',
+                  reportType: isTribe ? 'tribe' : 'chat',
                   reportedUserId: contextMenu.participantId,
                   chatId: contextMenu.chatId,
-                  snapshot: { chatMeta: { id: contextMenu.chatId, name: c?.name || 'Chat' } },
+                  snapshot: {
+                    chatMeta: {
+                      id: contextMenu.chatId,
+                      name: c?.name || (isTribe ? 'Tribe' : 'Chat'),
+                      type: isTribe ? 'group' : '1:1',
+                    },
+                  },
                 });
                 setContextMenu(null);
               }}
               className="flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 w-full text-left transition-colors"
             >
-              <Flag size={14} /> Report {contextMenu.participantId ? 'user' : 'chat'}
+              <Flag size={14} /> Report {(() => {
+                const c = chats.find(c => c.id === contextMenu.chatId);
+                if ((c as any)?.is_group) return 'tribe';
+                return contextMenu.participantId ? 'user' : 'chat';
+              })()}
             </button>
           )}
           {!contextMenu.isBroadcast && (
