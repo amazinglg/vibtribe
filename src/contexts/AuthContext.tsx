@@ -289,6 +289,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         localStorage.removeItem(`vt_pin_last_verified_${user.id}`);
       }
     } catch {}
+    // Clear user-scoped and any legacy shared caches so the next signed-in
+    // user never sees the previous user's chats, drafts, pins or contacts.
+    try {
+      if (typeof window !== 'undefined') {
+        const uid = user?.id;
+        const dropKeys = (storage: Storage) => {
+          const rm: string[] = [];
+          for (let i = 0; i < storage.length; i++) {
+            const k = storage.key(i);
+            if (!k) continue;
+            if (
+              k === 'vt_chats_cache_v1' ||
+              k === 'vt_pinned_chats_v1' ||
+              k === 'vt:chat-drafts' ||
+              (uid && (k.endsWith(`_${uid}`) || k.includes(`_${uid}_`))) ||
+              k.startsWith('vt_chats_cache_v1_') ||
+              k.startsWith('vt_pinned_chats_v1_') ||
+              k.startsWith('vt:chat-drafts_') ||
+              k.startsWith('vt_nickname_') ||
+              k.startsWith('vt_contacts_cache_')
+            ) rm.push(k);
+          }
+          rm.forEach(k => storage.removeItem(k));
+        };
+        dropKeys(localStorage);
+        dropKeys(sessionStorage);
+      }
+    } catch {}
     // Remove this device's session row so it disappears from the Devices tab.
     try {
       if (user?.id) {
@@ -299,6 +327,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const { error } = await supabase.auth.signOut({ scope: 'global' });
     if (error) throw error;
     setProfile(null);
+    // Hard reload guarantees no in-memory React state from the previous user
+    // (chat lists, contacts, drafts) leaks into the next session.
+    if (typeof window !== 'undefined') {
+      window.location.replace('/sign-in');
+    }
   };
 
   // Update profile
