@@ -30,6 +30,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as HelpReportingRouteImport } from './routes/help.reporting'
 import { Route as GuardianConsentTokenRouteImport } from './routes/guardian-consent.$token'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as DownloadIosRouteImport } from './routes/download.ios'
@@ -168,6 +169,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminRoute,
+} as any)
+const HelpReportingRoute = HelpReportingRouteImport.update({
+  id: '/help/reporting',
+  path: '/help/reporting',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const GuardianConsentTokenRoute = GuardianConsentTokenRouteImport.update({
   id: '/guardian-consent/$token',
@@ -385,6 +391,7 @@ export interface FileRoutesByFullPath {
   '/download/ios': typeof DownloadIosRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/guardian-consent/$token': typeof GuardianConsentTokenRoute
+  '/help/reporting': typeof HelpReportingRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
@@ -440,6 +447,7 @@ export interface FileRoutesByTo {
   '/download/ios': typeof DownloadIosRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/guardian-consent/$token': typeof GuardianConsentTokenRoute
+  '/help/reporting': typeof HelpReportingRoute
   '/admin': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
@@ -497,6 +505,7 @@ export interface FileRoutesById {
   '/download/ios': typeof DownloadIosRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/guardian-consent/$token': typeof GuardianConsentTokenRoute
+  '/help/reporting': typeof HelpReportingRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
@@ -555,6 +564,7 @@ export interface FileRouteTypes {
     | '/download/ios'
     | '/email/unsubscribe'
     | '/guardian-consent/$token'
+    | '/help/reporting'
     | '/admin/'
     | '/admin/user/$userId'
     | '/api/public/auth-login'
@@ -610,6 +620,7 @@ export interface FileRouteTypes {
     | '/download/ios'
     | '/email/unsubscribe'
     | '/guardian-consent/$token'
+    | '/help/reporting'
     | '/admin'
     | '/admin/user/$userId'
     | '/api/public/auth-login'
@@ -666,6 +677,7 @@ export interface FileRouteTypes {
     | '/download/ios'
     | '/email/unsubscribe'
     | '/guardian-consent/$token'
+    | '/help/reporting'
     | '/admin/'
     | '/admin/user/$userId'
     | '/api/public/auth-login'
@@ -718,6 +730,7 @@ export interface RootRouteChildren {
   DownloadIosRoute: typeof DownloadIosRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   GuardianConsentTokenRoute: typeof GuardianConsentTokenRoute
+  HelpReportingRoute: typeof HelpReportingRoute
   ApiPublicAuthLoginRoute: typeof ApiPublicAuthLoginRoute
   ApiPublicAuthOtpRoute: typeof ApiPublicAuthOtpRoute
   ApiPublicDownloadApkRoute: typeof ApiPublicDownloadApkRoute
@@ -885,6 +898,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/help/reporting': {
+      id: '/help/reporting'
+      path: '/help/reporting'
+      fullPath: '/help/reporting'
+      preLoaderRoute: typeof HelpReportingRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/guardian-consent/$token': {
       id: '/guardian-consent/$token'
@@ -1173,6 +1193,7 @@ const rootRouteChildren: RootRouteChildren = {
   DownloadIosRoute: DownloadIosRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   GuardianConsentTokenRoute: GuardianConsentTokenRoute,
+  HelpReportingRoute: HelpReportingRoute,
   ApiPublicAuthLoginRoute: ApiPublicAuthLoginRoute,
   ApiPublicAuthOtpRoute: ApiPublicAuthOtpRoute,
   ApiPublicDownloadApkRoute: ApiPublicDownloadApkRoute,
