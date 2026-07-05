@@ -1016,6 +1016,23 @@ export default function ChatListPanel() {
             </button>
           )}
           {!contextMenu.isBroadcast && (
+            <button
+              onClick={() => {
+                const c = chats.find(c => c.id === contextMenu.chatId);
+                setReportTarget({
+                  reportType: 'chat',
+                  reportedUserId: contextMenu.participantId,
+                  chatId: contextMenu.chatId,
+                  snapshot: { chatMeta: { id: contextMenu.chatId, name: c?.name || 'Chat' } },
+                });
+                setContextMenu(null);
+              }}
+              className="flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 w-full text-left transition-colors"
+            >
+              <Flag size={14} /> Report {contextMenu.participantId ? 'user' : 'chat'}
+            </button>
+          )}
+          {!contextMenu.isBroadcast && (
             <button onClick={() => handleDeleteChat(contextMenu.chatId)} className="flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 w-full text-left transition-colors">
               <Trash2 size={14} /> Delete Chat
             </button>
