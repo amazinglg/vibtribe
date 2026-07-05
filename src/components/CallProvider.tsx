@@ -3,7 +3,7 @@ import React, { createContext, useContext, useEffect, useRef, useState, useCallb
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Volume2, Ear, ShieldCheck, ChevronDown, MoreVertical, Maximize2, AlertTriangle, SwitchCamera } from 'lucide-react';
-import { acquireCallWakeLock, setCallAudioRoute } from '@/lib/native-bridge';
+import { acquireCallWakeLock, setCallAudioRoute, startOngoingCallNotification, updateOngoingCallNotification, stopOngoingCallNotification } from '@/lib/native-bridge';
 import { sendCallPush } from '@/lib/fcm-push.functions';
 
 type CallType = 'voice' | 'video';
@@ -73,6 +73,12 @@ export default function CallProvider({ children }: { children: React.ReactNode }
 
   const [remoteName, setRemoteName] = useState('User');
   const [remoteAvatar, setRemoteAvatar] = useState('U');
+  const [remoteAvatarUrl, setRemoteAvatarUrl] = useState<string | null>(null);
+  // Video-call view swap: false = remote in main, self in PiP; true = swapped.
+  const [viewSwapped, setViewSwapped] = useState(false);
+  // Whether the remote peer has an active video track (used to decide when
+  // to show the avatar backdrop instead of a black rectangle).
+  const [remoteVideoLive, setRemoteVideoLive] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
   const [micMuted, setMicMuted] = useState(false);
   const [videoOff, setVideoOff] = useState(false);
@@ -334,6 +340,17 @@ export default function CallProvider({ children }: { children: React.ReactNode }
       requestAnimationFrame(() => {
         if (remoteVideoRef.current) remoteVideoRef.current.srcObject = remoteStream;
         if (remoteAudioRef.current) remoteAudioRef.current.srcObject = remoteStream;
+      });
+      // Track whether the remote has a video track so we can hide the
+      // avatar backdrop the moment their camera comes through.
+      const hasVideo = remoteStream.getVideoTracks().some(t => t.readyState === 'live');
+      setRemoteVideoLive(hasVideo);
+      remoteStream.getVideoTracks().forEach((t) => {
+        try {
+          t.addEventListener('ended', () => setRemoteVideoLive(remoteStream.getVideoTracks().some(v => v.readyState === 'live')));
+          t.addEventListener('mute', () => setRemoteVideoLive(false));
+          t.addEventListener('unmute', () => setRemoteVideoLive(true));
+        } catch {}
       });
     };
     pc.onicecandidate = (e) => {
