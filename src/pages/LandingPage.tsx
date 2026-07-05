@@ -350,6 +350,7 @@ export default function LandingPage() {
             <Link to="/privacy" className="hover:text-foreground transition-colors">{t('landing.footer.privacy')}</Link>
             <Link to="/data-notice" className="hover:text-foreground transition-colors">Data Notice</Link>
             <Link to="/subprocessors" className="hover:text-foreground transition-colors">Subprocessors</Link>
+            <Link to="/child-safety" className="hover:text-foreground transition-colors">Child Safety</Link>
             <span>© {new Date().getFullYear()}</span>
           </div>
         </div>
