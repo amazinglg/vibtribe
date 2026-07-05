@@ -1,5 +1,6 @@
 // @ts-nocheck
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Shield, Copy, Check, Loader2, AlertCircle, KeyRound } from 'lucide-react';
 import QRCode from 'qrcode';
 import { toast } from 'sonner';
@@ -77,8 +78,9 @@ export default function TotpEnrollDialog({ open, onClose, onEnabled }: { open: b
 
   if (!open) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-3" onClick={cancelEnrollment}>
+  if (typeof document === 'undefined') return null;
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-start sm:items-center justify-center bg-black/70 backdrop-blur-sm p-3 overflow-y-auto" onClick={cancelEnrollment}>
       <div className="glass-strong rounded-3xl border border-border w-full max-w-md p-5 sm:p-6 max-h-[92vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
@@ -167,6 +169,7 @@ export default function TotpEnrollDialog({ open, onClose, onEnabled }: { open: b
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
