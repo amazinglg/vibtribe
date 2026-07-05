@@ -2,8 +2,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Volume2, VolumeX, Bluetooth, Ear, Headphones, Minimize2, Maximize2, AlertTriangle } from 'lucide-react';
-import { SwitchCamera } from 'lucide-react';
+import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Volume2, Ear, ShieldCheck, ChevronDown, MoreVertical, Maximize2, AlertTriangle, SwitchCamera } from 'lucide-react';
 import { acquireCallWakeLock, setCallAudioRoute } from '@/lib/native-bridge';
 import { sendCallPush } from '@/lib/fcm-push.functions';
 
@@ -76,12 +75,9 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   const [remoteAvatar, setRemoteAvatar] = useState('U');
   const [callDuration, setCallDuration] = useState(0);
   const [micMuted, setMicMuted] = useState(false);
-  const [speakerOff, setSpeakerOff] = useState(false);
   const [videoOff, setVideoOff] = useState(false);
   const [cameraFacing, setCameraFacing] = useState<'user' | 'environment'>('user');
-  const [audioRoute, setAudioRoute] = useState<'earpiece' | 'speaker' | 'bluetooth'>('speaker');
-  const [bluetoothAvailable, setBluetoothAvailable] = useState(false);
-  const [showAudioMenu, setShowAudioMenu] = useState(false);
+  const [audioRoute, setAudioRoute] = useState<'earpiece' | 'speaker'>('earpiece');
   // When true, the call collapses to a small floating pill so the user can
   // interact with the chat / rest of the app while the call keeps running.
   const [minimized, setMinimized] = useState(false);
@@ -286,8 +282,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     durationTimerRef.current = null;
     if (ringtoneRef.current) { try { ringtoneRef.current.pause(); } catch {} ringtoneRef.current = null; }
     setCallDuration(0);
-    setMicMuted(false); setSpeakerOff(false); setVideoOff(false);
-    setShowAudioMenu(false);
+    setMicMuted(false); setVideoOff(false);
     setMinimized(false);
     setMicStatus('ok');
   }, [supabase]);
