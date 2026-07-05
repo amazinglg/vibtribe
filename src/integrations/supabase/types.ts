@@ -442,6 +442,78 @@ export type Database = {
         }
         Relationships: []
       }
+      content_reports: {
+        Row: {
+          action_taken: string | null
+          chat_id: string | null
+          comments: string | null
+          created_at: string
+          id: string
+          message_id: string | null
+          moderated_at: string | null
+          moderator_id: string | null
+          moderator_notes: string | null
+          priority: number
+          reason: Database["public"]["Enums"]["report_reason"]
+          report_type: Database["public"]["Enums"]["report_type"]
+          reported_user_id: string | null
+          reported_user_name: string | null
+          reporter_id: string
+          reporter_name: string | null
+          snapshot: Json
+          status: Database["public"]["Enums"]["report_status"]
+          status_id: string | null
+          target_ref: string | null
+          updated_at: string
+        }
+        Insert: {
+          action_taken?: string | null
+          chat_id?: string | null
+          comments?: string | null
+          created_at?: string
+          id?: string
+          message_id?: string | null
+          moderated_at?: string | null
+          moderator_id?: string | null
+          moderator_notes?: string | null
+          priority?: number
+          reason: Database["public"]["Enums"]["report_reason"]
+          report_type: Database["public"]["Enums"]["report_type"]
+          reported_user_id?: string | null
+          reported_user_name?: string | null
+          reporter_id: string
+          reporter_name?: string | null
+          snapshot?: Json
+          status?: Database["public"]["Enums"]["report_status"]
+          status_id?: string | null
+          target_ref?: string | null
+          updated_at?: string
+        }
+        Update: {
+          action_taken?: string | null
+          chat_id?: string | null
+          comments?: string | null
+          created_at?: string
+          id?: string
+          message_id?: string | null
+          moderated_at?: string | null
+          moderator_id?: string | null
+          moderator_notes?: string | null
+          priority?: number
+          reason?: Database["public"]["Enums"]["report_reason"]
+          report_type?: Database["public"]["Enums"]["report_type"]
+          reported_user_id?: string | null
+          reported_user_name?: string | null
+          reporter_id?: string
+          reporter_name?: string | null
+          snapshot?: Json
+          status?: Database["public"]["Enums"]["report_status"]
+          status_id?: string | null
+          target_ref?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       data_export_requests: {
         Row: {
           byte_size: number | null
@@ -894,6 +966,47 @@ export type Database = {
             columns: ["sender_id"]
             isOneToOne: false
             referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      moderation_audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          ip: string | null
+          moderator_id: string
+          moderator_name: string | null
+          notes: string | null
+          report_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          ip?: string | null
+          moderator_id: string
+          moderator_name?: string | null
+          notes?: string | null
+          report_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          ip?: string | null
+          moderator_id?: string
+          moderator_name?: string | null
+          notes?: string | null
+          report_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "moderation_audit_log_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "content_reports"
             referencedColumns: ["id"]
           },
         ]
@@ -2627,6 +2740,37 @@ export type Database = {
     Enums: {
       chat_type: "normal" | "secure" | "dual_normal" | "dual_secure"
       message_status: "sent" | "delivered" | "read"
+      report_reason:
+        | "child_safety"
+        | "nudity_sexual"
+        | "harassment_bullying"
+        | "hate_speech"
+        | "violence"
+        | "spam"
+        | "scam_fraud"
+        | "fake_profile"
+        | "impersonation"
+        | "terrorism"
+        | "illegal_activity"
+        | "self_harm"
+        | "privacy_violation"
+        | "copyright"
+        | "other"
+      report_status:
+        | "pending"
+        | "true_positive"
+        | "false_positive"
+        | "dismissed"
+      report_type:
+        | "message"
+        | "image"
+        | "video"
+        | "file"
+        | "audio"
+        | "profile"
+        | "chat"
+        | "status"
+        | "tribe"
       ticket_status: "open" | "inprocess" | "solved"
       user_status: "active" | "suspended" | "inactive" | "pending_guardian"
     }
@@ -2758,6 +2902,40 @@ export const Constants = {
     Enums: {
       chat_type: ["normal", "secure", "dual_normal", "dual_secure"],
       message_status: ["sent", "delivered", "read"],
+      report_reason: [
+        "child_safety",
+        "nudity_sexual",
+        "harassment_bullying",
+        "hate_speech",
+        "violence",
+        "spam",
+        "scam_fraud",
+        "fake_profile",
+        "impersonation",
+        "terrorism",
+        "illegal_activity",
+        "self_harm",
+        "privacy_violation",
+        "copyright",
+        "other",
+      ],
+      report_status: [
+        "pending",
+        "true_positive",
+        "false_positive",
+        "dismissed",
+      ],
+      report_type: [
+        "message",
+        "image",
+        "video",
+        "file",
+        "audio",
+        "profile",
+        "chat",
+        "status",
+        "tribe",
+      ],
       ticket_status: ["open", "inprocess", "solved"],
       user_status: ["active", "suspended", "inactive", "pending_guardian"],
     },
