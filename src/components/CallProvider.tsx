@@ -73,11 +73,17 @@ export default function CallProvider({ children }: { children: React.ReactNode }
 
   const [remoteName, setRemoteName] = useState('User');
   const [remoteAvatar, setRemoteAvatar] = useState('U');
+  // Full avatar URL for the remote party (nullable). When present we render
+  // a real image; otherwise we fall back to the single-letter initial.
+  const [remoteAvatarUrl, setRemoteAvatarUrl] = useState<string | null>(null);
   const [callDuration, setCallDuration] = useState(0);
   const [micMuted, setMicMuted] = useState(false);
   const [videoOff, setVideoOff] = useState(false);
   const [cameraFacing, setCameraFacing] = useState<'user' | 'environment'>('user');
   const [audioRoute, setAudioRoute] = useState<'earpiece' | 'speaker'>('earpiece');
+  // Video call: when true, self-view is on the main stage and remote is in
+  // the PiP. Tap on the small tile to swap.
+  const [viewSwapped, setViewSwapped] = useState(false);
   // When true, the call collapses to a small floating pill so the user can
   // interact with the chat / rest of the app while the call keeps running.
   const [minimized, setMinimized] = useState(false);
@@ -157,6 +163,10 @@ export default function CallProvider({ children }: { children: React.ReactNode }
       silentAudioRef.current = audio;
     } catch {}
 
+    // NOTE: intentionally do NOT register MediaSession action handlers.
+    // Registering play/pause/stop causes Android/Chrome to expose "mute"
+    // and "stop" chips inside the media-style notification in the tray,
+    // which is not the UX we want for an active call.
     if ('mediaSession' in navigator) {
       try {
         const ms: any = (navigator as any).mediaSession;
@@ -166,10 +176,14 @@ export default function CallProvider({ children }: { children: React.ReactNode }
           album: 'VibTribe',
         });
         ms.playbackState = 'playing';
-        const noop = () => {};
-        try { ms.setActionHandler('play', noop); } catch {}
-        try { ms.setActionHandler('pause', noop); } catch {}
-        try { ms.setActionHandler('stop', () => endCall('ended')); } catch {}
+        // Explicitly clear any previously registered handlers.
+        try { ms.setActionHandler('play', null); } catch {}
+        try { ms.setActionHandler('pause', null); } catch {}
+        try { ms.setActionHandler('stop', null); } catch {}
+        try { ms.setActionHandler('seekbackward', null); } catch {}
+        try { ms.setActionHandler('seekforward', null); } catch {}
+        try { ms.setActionHandler('previoustrack', null); } catch {}
+        try { ms.setActionHandler('nexttrack', null); } catch {}
       } catch {}
     }
 
@@ -264,6 +278,8 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     setCallDuration(0);
     setMicMuted(false); setVideoOff(false);
     setMinimized(false);
+    setViewSwapped(false);
+    setRemoteAvatarUrl(null);
     setMicStatus('ok');
   }, [supabase]);
 
@@ -619,7 +635,15 @@ export default function CallProvider({ children }: { children: React.ReactNode }
       setRole('caller');
       setCallState('ringing');
       setRemoteName(opts.calleeName || 'User');
-      setRemoteAvatar((opts.calleeAvatar || opts.calleeName?.[0] || 'U').slice(0, 1).toUpperCase());
+      // If calleeAvatar looks like a URL, store it; otherwise use initial.
+      const av = opts.calleeAvatar || '';
+      if (/^https?:\/\//i.test(av) || av.startsWith('/') || av.startsWith('data:')) {
+        setRemoteAvatarUrl(av);
+        setRemoteAvatar((opts.calleeName?.[0] || 'U').toUpperCase());
+      } else {
+        setRemoteAvatarUrl(null);
+        setRemoteAvatar((av || opts.calleeName?.[0] || 'U').slice(0, 1).toUpperCase());
+      }
 
       // Fire native push so the callee's phone rings even when the app is killed.
       // Fire-and-forget — never block call setup on push delivery.
@@ -704,16 +728,19 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     if (!row || row.status !== 'ringing' || row.callee_id !== user.id) return;
 
     let callerName = 'Unknown'; let callerAvatar = 'U';
+    let callerAvatarUrl: string | null = null;
     try {
       const { data: p } = await supabase
         .from('user_profiles').select('full_name, avatar_url').eq('id', row.caller_id).maybeSingle();
       if (p?.full_name) { callerName = p.full_name; callerAvatar = p.full_name[0]?.toUpperCase() || 'U'; }
+      if (p?.avatar_url) callerAvatarUrl = p.avatar_url;
     } catch {}
     setActiveCall(row);
     setRole('callee');
     setCallState('ringing');
     setRemoteName(callerName);
     setRemoteAvatar(callerAvatar);
+    setRemoteAvatarUrl(callerAvatarUrl);
     playRingtone('incoming');
     ringTimerRef.current = setTimeout(async () => {
       try {
@@ -777,6 +804,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
               const name = p?.full_name || 'Unknown';
               setRemoteName(name);
               setRemoteAvatar((name[0] || 'U').toUpperCase());
+              setRemoteAvatarUrl(p?.avatar_url || null);
               void acceptCall(data);
             });
         });
