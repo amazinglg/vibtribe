@@ -740,7 +740,8 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     const handleCallUrl = () => {
       if (activeCallRef.current) return;
       const params = new URLSearchParams(window.location.search);
-      const callId = params.get('call') || params.get('answerCall');
+      const answerId = params.get('answerCall');
+      const callId = params.get('call');
       const declineId = params.get('declineCall');
     if (declineId) {
       // Lockscreen ringer "Decline" tapped — mark the call declined and clear the param.
@@ -758,6 +759,29 @@ export default function CallProvider({ children }: { children: React.ReactNode }
         });
       return;
     }
+    if (answerId) {
+      // Lockscreen ringer "Accept" tapped — auto-answer the call without
+      // requiring a second tap inside the app.
+      supabase.from('calls').select('*').eq('id', answerId).eq('callee_id', user.id)
+        .in('status', ['ringing', 'accepted']).maybeSingle()
+        .then(({ data }) => {
+          try {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('answerCall');
+            window.history.replaceState({}, '', url.toString());
+          } catch {}
+          if (!data) return;
+          // Populate remote-party display info, then join immediately.
+          supabase.from('user_profiles').select('full_name, avatar_url').eq('id', data.caller_id).maybeSingle()
+            .then(({ data: p }) => {
+              const name = p?.full_name || 'Unknown';
+              setRemoteName(name);
+              setRemoteAvatar((name[0] || 'U').toUpperCase());
+              void acceptCall(data);
+            });
+        });
+      return;
+    }
     if (!callId) return;
     supabase.from('calls').select('*').eq('id', callId).eq('callee_id', user.id).eq('status', 'ringing').maybeSingle()
       .then(({ data }) => {
@@ -765,7 +789,6 @@ export default function CallProvider({ children }: { children: React.ReactNode }
         try {
           const url = new URL(window.location.href);
           url.searchParams.delete('call');
-          url.searchParams.delete('answerCall');
           window.history.replaceState({}, '', url.toString());
         } catch {}
       });
