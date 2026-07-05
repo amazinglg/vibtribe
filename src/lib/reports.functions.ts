@@ -222,13 +222,40 @@ export const moderateReport = createServerFn({ method: 'POST' })
       notes: data.notes ?? null,
     })
 
+    // Fetch the report so we can notify the reporter (and the reported user when an
+    // enforcement action was taken).
+    const { data: report } = await supabaseAdmin
+      .from('content_reports')
+      .select('reporter_id, reported_user_id, report_type, reason')
+      .eq('id', data.reportId)
+      .single()
+
+    // Notify the reporter about the outcome.
+    if (report?.reporter_id) {
+      const outcomeLabel =
+        data.status === 'true_positive'
+          ? 'Action taken'
+          : data.status === 'false_positive'
+            ? 'No violation found'
+            : 'Report closed'
+      const actionLabel = {
+        none: 'Report reviewed — no further action needed.',
+        delete_content: 'The reported content has been removed.',
+        suspend_user: 'The reported account has been suspended.',
+        ban_user: 'The reported account has been permanently banned.',
+        dismiss: 'Your report was reviewed and closed.',
+      }[data.action]
+      await supabaseAdmin.from('notifications').insert({
+        user_id: report.reporter_id,
+        type: 'report_reviewed',
+        title: `Report reviewed: ${outcomeLabel}`,
+        body: `${actionLabel} Thank you for helping keep VibTribe safe.`,
+        link: '/help/reporting',
+      })
+    }
+
     // If action affects the reported user, apply it.
     if (data.action === 'suspend_user' || data.action === 'ban_user') {
-      const { data: report } = await supabaseAdmin
-        .from('content_reports')
-        .select('reported_user_id')
-        .eq('id', data.reportId)
-        .single()
       if (report?.reported_user_id) {
         await supabaseAdmin
           .from('user_profiles')
@@ -237,6 +264,16 @@ export const moderateReport = createServerFn({ method: 'POST' })
             account_status: 'suspended' as const,
           } as any)
           .eq('id', report.reported_user_id)
+
+        // Let the reported user know their account was actioned, and provide an
+        // appeal link keyed to this report.
+        await supabaseAdmin.from('notifications').insert({
+          user_id: report.reported_user_id,
+          type: 'moderation_action',
+          title: data.action === 'ban_user' ? 'Your account has been banned' : 'Your account has been suspended',
+          body: 'A moderator has taken action on your account for a Community Guidelines violation. You can appeal this decision if you believe it was made in error.',
+          link: `/appeal/${data.reportId}`,
+        })
       }
     }
 
