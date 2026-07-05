@@ -1100,6 +1100,17 @@ export default function ChatListPanel() {
         />
       )}
 
+      {reportTarget && (
+        <ReportContentSheet
+          open={!!reportTarget}
+          onClose={() => setReportTarget(null)}
+          reportType={reportTarget.reportType}
+          reportedUserId={reportTarget.reportedUserId}
+          chatId={reportTarget.chatId}
+          snapshot={reportTarget.snapshot}
+        />
+      )}
+
       {createGroupOpen && (
         <CreateGroupModal
           isOpen={createGroupOpen}
