@@ -1017,29 +1017,51 @@ export default function ChatListPanel() {
           )}
           {!contextMenu.isBroadcast && (
             <button
-              onClick={() => {
+              onClick={async () => {
                 const c = chats.find(c => c.id === contextMenu.chatId);
                 const isTribe = !!(c as any)?.is_group;
-                setReportTarget({
-                  reportType: isTribe ? 'tribe' : 'chat',
-                  reportedUserId: contextMenu.participantId,
-                  chatId: contextMenu.chatId,
-                  snapshot: {
-                    chatMeta: {
-                      id: contextMenu.chatId,
-                      name: c?.name || (isTribe ? 'Tribe' : 'Chat'),
-                      type: isTribe ? 'group' : '1:1',
+                const chatId = contextMenu.chatId;
+                const participantId = contextMenu.participantId;
+                setContextMenu(null);
+                // For 1:1 chats, report the user directly (with their profile snapshot)
+                // rather than sending a bare "chat" report with no useful evidence.
+                if (!isTribe && participantId) {
+                  let profileSnap: any = undefined;
+                  try {
+                    const { data: p } = await supabase
+                      .from('user_profiles')
+                      .select('id, full_name, username, avatar_url')
+                      .eq('id', participantId)
+                      .maybeSingle();
+                    if (p) profileSnap = { id: p.id, full_name: p.full_name, username: p.username, avatar_url: p.avatar_url };
+                  } catch {}
+                  setReportTarget({
+                    reportType: 'profile',
+                    reportedUserId: participantId,
+                    chatId,
+                    snapshot: {
+                      profile: profileSnap,
+                      chatMeta: { id: chatId, name: c?.name || 'Chat', type: '1:1' },
                     },
+                  });
+                  return;
+                }
+                // Tribes: report the whole tribe.
+                setReportTarget({
+                  reportType: 'tribe',
+                  reportedUserId: participantId,
+                  chatId,
+                  snapshot: {
+                    chatMeta: { id: chatId, name: c?.name || 'Tribe', type: 'group' },
                   },
                 });
-                setContextMenu(null);
               }}
               className="flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 w-full text-left transition-colors"
             >
               <Flag size={14} /> Report {(() => {
                 const c = chats.find(c => c.id === contextMenu.chatId);
                 if ((c as any)?.is_group) return 'tribe';
-                return contextMenu.participantId ? 'user' : 'chat';
+                return 'user';
               })()}
             </button>
           )}

@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { createPortal } from 'react-dom'
-import { X, ShieldAlert, Loader2 } from 'lucide-react'
+import { X, ShieldAlert, Loader2, Info } from 'lucide-react'
 import { toast } from 'sonner'
 import { useServerFn } from '@tanstack/react-start'
 import { submitReport } from '@/lib/reports.functions'
@@ -121,6 +121,14 @@ export default function ReportContentSheet(props: ReportContentSheetProps) {
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-3">
+          {(reportType === 'chat' || reportType === 'tribe' || reportType === 'profile') && !snapshot?.mediaBase64 && !snapshot?.text && (
+            <div className="mb-3 rounded-xl border border-vt-amber/30 bg-vt-amber/10 p-3 text-[11px] text-vt-amber flex items-start gap-2 leading-relaxed">
+              <Info size={13} className="mt-0.5 flex-shrink-0" />
+              <span>
+                For faster action, <strong>long-press the specific message</strong> that broke the rules and report it directly — that attaches the exact evidence our moderators need. This {submitLabel} report will be reviewed even without a message, but may take longer.
+              </span>
+            </div>
+          )}
           <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Reason</p>
           <div className="space-y-1.5">
             {REASONS.map((r) => (

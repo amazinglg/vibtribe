@@ -4,7 +4,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { useServerFn } from '@tanstack/react-start'
 import {
   ArrowLeft, ShieldAlert, Loader2, Search, Filter, RefreshCw, AlertTriangle,
-  Ban, UserX, Trash2, CheckCircle2, XCircle, FileText, Download,
+  Ban, UserX, Trash2, CheckCircle2, XCircle, FileText, Download, Copy, Check, RotateCcw,
 } from 'lucide-react'
 import AppLayout from '@/components/AppLayout'
 import { useAuth } from '@/contexts/AuthContext'
@@ -231,7 +231,23 @@ function ReportCard({
   const isPending = r.status === 'pending'
   const priority = r.priority >= 10
   const [mediaUrl, setMediaUrl] = useState<string | null>(null)
+  const [overriding, setOverriding] = useState(false)
+  const [copied, setCopied] = useState(false)
   const media = r.snapshot?.media
+
+  const copyId = async () => {
+    try {
+      await navigator.clipboard.writeText(r.id)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+      toast.success('Report ID copied')
+    } catch { toast.error('Could not copy') }
+  }
+
+  const wrappedDecision = (status: 'true_positive' | 'false_positive' | 'dismissed', action?: 'none' | 'suspend_user' | 'ban_user' | 'delete_content' | 'dismiss') => {
+    setOverriding(false)
+    onDecision(status, action)
+  }
 
   useEffect(() => {
     if (!expanded || !media?.path) return
@@ -262,6 +278,9 @@ function ReportCard({
             {priority && <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 font-bold">HIGH PRIORITY</span>}
             <span className={`ml-auto text-[10px] px-2 py-0.5 rounded-full font-semibold capitalize ${decisionColor}`}>{r.status.replace('_', ' ')}</span>
           </div>
+          <p className="text-[10px] text-muted-foreground mt-1 font-mono truncate">
+            #{r.id.slice(0, 8)}
+          </p>
           <p className="text-xs text-muted-foreground mt-1 truncate">
             <span className="text-foreground/80">{r.reporter_name || 'Reporter'}</span>
             {' → '}
@@ -276,10 +295,22 @@ function ReportCard({
 
       {expanded && (
         <div className="border-t border-border p-4 space-y-4 bg-muted/20">
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-[11px]">
-            <div><p className="text-muted-foreground uppercase">Report ID</p><p className="text-foreground font-mono truncate">{r.id.slice(0, 8)}…</p></div>
-            <div><p className="text-muted-foreground uppercase">Reason</p><p className="text-foreground">{REASON_LABELS[r.reason] || r.reason}</p></div>
-            <div><p className="text-muted-foreground uppercase">Priority</p><p className="text-foreground">{priority ? 'High' : 'Normal'}</p></div>
+          <div className="space-y-3 text-[11px]">
+            <div>
+              <p className="text-muted-foreground uppercase mb-1">Report ID</p>
+              <button
+                onClick={copyId}
+                title="Copy full ID"
+                className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-card/60 border border-border text-foreground font-mono text-[11px] hover:bg-muted transition-colors max-w-full"
+              >
+                <span className="break-all text-left">{r.id}</span>
+                {copied ? <Check size={12} className="text-vt-green flex-shrink-0" /> : <Copy size={12} className="text-muted-foreground flex-shrink-0" />}
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><p className="text-muted-foreground uppercase">Reason</p><p className="text-foreground">{REASON_LABELS[r.reason] || r.reason}</p></div>
+              <div><p className="text-muted-foreground uppercase">Priority</p><p className="text-foreground">{priority ? 'High' : 'Normal'}</p></div>
+            </div>
           </div>
 
           {r.comments && (
@@ -328,45 +359,64 @@ function ReportCard({
             </div>
           )}
 
-          {isPending ? (
+          {isPending || overriding ? (
             <>
               <div>
-                <label className="text-[11px] uppercase text-muted-foreground">Moderator notes</label>
+                <label className="text-[11px] uppercase text-muted-foreground">
+                  Moderator notes {overriding && <span className="text-vt-amber normal-case">· Override previous decision</span>}
+                </label>
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value.slice(0, 4000))}
                   rows={2}
-                  placeholder="Add notes for the audit log (optional)…"
+                  placeholder={overriding ? 'Why are you overriding the previous decision? (recommended)' : 'Add notes for the audit log (optional)…'}
                   className="mt-1 w-full px-3 py-2 bg-input border border-border rounded-xl text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
                 />
               </div>
 
               <div className="flex flex-wrap gap-2">
-                <button disabled={saving} onClick={() => onDecision('true_positive', 'none')} className="px-3 py-2 rounded-xl bg-red-500/15 text-red-400 border border-red-500/30 text-xs font-semibold flex items-center gap-1 hover:bg-red-500/25 disabled:opacity-50">
+                <button disabled={saving} onClick={() => wrappedDecision('true_positive', 'none')} className="px-3 py-2 rounded-xl bg-red-500/15 text-red-400 border border-red-500/30 text-xs font-semibold flex items-center gap-1 hover:bg-red-500/25 disabled:opacity-50">
                   <CheckCircle2 size={12} /> True Positive
                 </button>
-                <button disabled={saving} onClick={() => onDecision('false_positive', 'none')} className="px-3 py-2 rounded-xl bg-vt-green/15 text-vt-green border border-vt-green/30 text-xs font-semibold flex items-center gap-1 hover:bg-vt-green/25 disabled:opacity-50">
+                <button disabled={saving} onClick={() => wrappedDecision('false_positive', 'none')} className="px-3 py-2 rounded-xl bg-vt-green/15 text-vt-green border border-vt-green/30 text-xs font-semibold flex items-center gap-1 hover:bg-vt-green/25 disabled:opacity-50">
                   <XCircle size={12} /> False Positive
                 </button>
-                <button disabled={saving || !r.reported_user_id} onClick={() => onDecision('true_positive', 'suspend_user')} className="px-3 py-2 rounded-xl bg-orange-500/15 text-orange-400 border border-orange-500/30 text-xs font-semibold flex items-center gap-1 hover:bg-orange-500/25 disabled:opacity-50">
+                <button disabled={saving || !r.reported_user_id} onClick={() => wrappedDecision('true_positive', 'suspend_user')} className="px-3 py-2 rounded-xl bg-orange-500/15 text-orange-400 border border-orange-500/30 text-xs font-semibold flex items-center gap-1 hover:bg-orange-500/25 disabled:opacity-50">
                   <UserX size={12} /> Suspend User
                 </button>
-                <button disabled={saving || !r.reported_user_id} onClick={() => onDecision('true_positive', 'ban_user')} className="px-3 py-2 rounded-xl bg-red-500/15 text-red-400 border border-red-500/30 text-xs font-semibold flex items-center gap-1 hover:bg-red-500/25 disabled:opacity-50">
+                <button disabled={saving || !r.reported_user_id} onClick={() => wrappedDecision('true_positive', 'ban_user')} className="px-3 py-2 rounded-xl bg-red-500/15 text-red-400 border border-red-500/30 text-xs font-semibold flex items-center gap-1 hover:bg-red-500/25 disabled:opacity-50">
                   <Ban size={12} /> Ban User
                 </button>
-                <button disabled={saving} onClick={() => onDecision('true_positive', 'delete_content')} className="px-3 py-2 rounded-xl bg-muted text-foreground border border-border text-xs font-semibold flex items-center gap-1 hover:bg-muted/70 disabled:opacity-50">
+                <button disabled={saving} onClick={() => wrappedDecision('true_positive', 'delete_content')} className="px-3 py-2 rounded-xl bg-muted text-foreground border border-border text-xs font-semibold flex items-center gap-1 hover:bg-muted/70 disabled:opacity-50">
                   <Trash2 size={12} /> Mark Content Deleted
                 </button>
-                <button disabled={saving} onClick={() => onDecision('dismissed', 'dismiss')} className="ml-auto px-3 py-2 rounded-xl bg-muted text-muted-foreground text-xs font-semibold hover:text-foreground disabled:opacity-50">
+                <button disabled={saving} onClick={() => wrappedDecision('dismissed', 'dismiss')} className="ml-auto px-3 py-2 rounded-xl bg-muted text-muted-foreground text-xs font-semibold hover:text-foreground disabled:opacity-50">
                   Dismiss
                 </button>
               </div>
+              {overriding && (
+                <button
+                  onClick={() => setOverriding(false)}
+                  className="text-[11px] text-muted-foreground hover:text-foreground underline"
+                >
+                  Cancel override
+                </button>
+              )}
             </>
           ) : (
             <div className="text-[11px] text-muted-foreground space-y-0.5">
               <p>Decision: <span className="text-foreground font-semibold capitalize">{r.status.replace('_', ' ')}</span> {r.action_taken && r.action_taken !== 'none' && <>· action: <span className="text-foreground">{r.action_taken.replace('_', ' ')}</span></>}</p>
               <p>Reviewed at: {r.moderated_at ? new Date(r.moderated_at).toLocaleString() : '—'}</p>
               {r.moderator_notes && <p className="mt-2 whitespace-pre-wrap">Notes: {r.moderator_notes}</p>}
+              <div className="pt-3">
+                <button
+                  onClick={() => setOverriding(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-vt-amber/15 text-vt-amber border border-vt-amber/30 text-xs font-semibold hover:bg-vt-amber/25 transition-colors"
+                >
+                  <RotateCcw size={12} /> Change / Override decision
+                </button>
+                <p className="text-[10px] text-muted-foreground mt-1.5">A new audit-log entry will be recorded.</p>
+              </div>
             </div>
           )}
         </div>
