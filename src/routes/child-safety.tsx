@@ -160,6 +160,31 @@ function ChildSafetyPage() {
           </p>
         </Card>
 
+        <Card icon={<Flag size={20} />} title="Reporting & Moderation System">
+          <p>
+            VibTribe is built around a Trust Lock architecture: messages, media, and status posts are protected end-to-end and are not routinely accessible to VibTribe staff. Because of that, moderation happens on an opt-in basis — through user reports.
+          </p>
+          <ul className="list-disc pl-5 mt-3 space-y-1.5">
+            <li><b>In-app reporting</b> — every message, photo, video, voice note, file, status, chat, and profile has a Report option.</li>
+            <li><b>Explicit consent snapshot</b> — when you submit a report, only that specific piece of content is decrypted and stored as evidence for review, alongside metadata about the reported user and chat. Nothing else is unlocked.</li>
+            <li><b>Master-admin review</b> — reports are reviewed by trained moderators. High-priority categories (Child Safety, CSAE, Grooming) are queued for immediate review.</li>
+            <li><b>Enforcement actions</b> — depending on the outcome, moderators may remove the reported content, suspend the account, or permanently ban the account. Confirmed child-safety violations are removed immediately and reported to the appropriate authorities.</li>
+            <li><b>Retention</b> — evidence snapshots are retained only as long as required for review, legal obligations, and audit trails.</li>
+          </ul>
+          <p className="mt-3">
+            Learn more in our <Link to="/help/reporting" className="text-primary hover:underline">How reporting works</Link> help article.
+          </p>
+        </Card>
+
+        <Card icon={<ShieldQuestion size={20} />} title="Appeals">
+          <p>
+            If your account or content was actioned and you believe the decision was made in error, you can appeal it. When we take action, we send an in-app notification with a link to submit an appeal. A moderator will re-review your case and respond in-app.
+          </p>
+          <p className="mt-3">
+            One pending appeal is allowed per decision. Approving an appeal reverses the underlying action (for example, restoring a suspended account).
+          </p>
+        </Card>
+
         <section className="text-center pt-4">
           <p className="text-xs text-muted-foreground">Last Updated: July 2026</p>
           <p className="mt-3 text-xs text-muted-foreground">
