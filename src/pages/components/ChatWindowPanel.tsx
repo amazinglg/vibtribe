@@ -356,16 +356,17 @@ export default function ChatWindowPanel() {
   // Per-chat draft persistence: keep typed-but-unsent text per chat until the user
   // either sends it or clears the box themselves. Survives chat switches and reloads.
   const draftsRef = useRef<Record<string, string>>({});
-  const draftsHydrated = useRef(false);
-  if (!draftsHydrated.current) {
+  const draftsHydrated = useRef<string | null>(null);
+  const draftsKey = user?.id ? `vt:chat-drafts_${user.id}` : 'vt:chat-drafts__anon';
+  if (draftsHydrated.current !== draftsKey) {
     try {
-      const raw = typeof window !== 'undefined' ? window.localStorage.getItem('vt:chat-drafts') : null;
-      if (raw) draftsRef.current = JSON.parse(raw) || {};
-    } catch {}
-    draftsHydrated.current = true;
+      const raw = typeof window !== 'undefined' ? window.localStorage.getItem(draftsKey) : null;
+      draftsRef.current = raw ? (JSON.parse(raw) || {}) : {};
+    } catch { draftsRef.current = {}; }
+    draftsHydrated.current = draftsKey;
   }
   const persistDrafts = () => {
-    try { window.localStorage.setItem('vt:chat-drafts', JSON.stringify(draftsRef.current)); } catch {}
+    try { window.localStorage.setItem(draftsKey, JSON.stringify(draftsRef.current)); } catch {}
   };
   const [showInfo, setShowInfo] = useState(false);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
