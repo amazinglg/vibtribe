@@ -526,6 +526,51 @@ export async function nativeHaptic(style: 'light' | 'medium' | 'heavy' = 'light'
   } catch {}
 }
 
+/**
+ * Post / update the persistent Android ongoing-call notification and start
+ * the OngoingCallService foreground service. The service keeps the app
+ * process alive when the user leaves the app so the WebRTC connection does
+ * not freeze. Notification exposes Mute + End actions that route back into
+ * the app via `?muteCall=<id>` / `?endCall=<id>` URLs.
+ *
+ * Safe no-op on web / iOS.
+ */
+export function startOngoingCallNotification(opts: {
+  callId: string;
+  chatId?: string | null;
+  callerName: string;
+  callType: 'voice' | 'video';
+  muted?: boolean;
+}): void {
+  try {
+    const bridge = (window as any)?.VtCall;
+    if (!bridge || typeof bridge.start !== 'function') return;
+    bridge.start(
+      opts.callId,
+      opts.callerName || 'In call',
+      opts.callType || 'voice',
+      opts.chatId || '',
+      !!opts.muted,
+    );
+  } catch {}
+}
+
+export function updateOngoingCallNotification(opts: { muted?: boolean }): void {
+  try {
+    const bridge = (window as any)?.VtCall;
+    if (!bridge || typeof bridge.updateMute !== 'function') return;
+    bridge.updateMute(!!opts.muted);
+  } catch {}
+}
+
+export function stopOngoingCallNotification(): void {
+  try {
+    const bridge = (window as any)?.VtCall;
+    if (!bridge || typeof bridge.stop !== 'function') return;
+    bridge.stop();
+  } catch {}
+}
+
 type AndroidTrustLockPlugin = {
   enable: () => Promise<{ enabled: boolean }>;
   disable: () => Promise<{ enabled: boolean }>;
