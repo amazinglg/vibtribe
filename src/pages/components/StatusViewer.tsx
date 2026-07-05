@@ -417,6 +417,25 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
           </div>
         )}
       </div>
+      {reporting && (
+        <ReportContentSheet
+          open={reporting}
+          onClose={() => { setReporting(false); setPaused(false); }}
+          reportType="status"
+          reportedUserId={contact.userId}
+          statusId={story?.id}
+          snapshot={{
+            status: {
+              id: story?.id,
+              content: story?.content,
+              media_type: story?.type,
+              background_color: story?.bg,
+            },
+            text: story?.content || undefined,
+            profile: { full_name: contact.name },
+          }}
+        />
+      )}
     </div>
   );
 
