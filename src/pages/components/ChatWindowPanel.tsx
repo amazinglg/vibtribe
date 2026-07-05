@@ -3068,6 +3068,40 @@ export default function ChatWindowPanel() {
                 <span className="ml-auto text-[10px] text-muted-foreground">removes for everyone</span>
               </button>
             )}
+            {actionMsg.senderId !== user?.id && (
+              <button
+                onClick={() => {
+                  const raw = (actionMsg?.text || '').toString();
+                  let type: ReportType = 'message';
+                  let envelope: any = null;
+                  if (raw.startsWith('__media__:')) {
+                    try { envelope = JSON.parse(raw.slice('__media__:'.length)); } catch {}
+                    if (envelope?.type === 'image') type = 'image';
+                    else if (envelope?.type === 'video') type = 'video';
+                    else if (envelope?.type === 'audio') type = 'audio';
+                    else if (envelope?.type) type = 'file';
+                  }
+                  setReportTarget({
+                    reportType: type,
+                    reportedUserId: actionMsg.senderId,
+                    chatId: selectedChatId || undefined,
+                    messageId: actionMsg.id,
+                    snapshot: {
+                      text: envelope
+                        ? `[${envelope.type || 'media'}] ${envelope.name || ''} (${envelope.mime || ''})`
+                        : raw,
+                      messageType: actionMsg.messageType,
+                      createdAt: actionMsg.createdAt,
+                    },
+                  });
+                  setActionMsg(null);
+                }}
+                className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-red-400 border-t border-border"
+              >
+                🚩 Report
+                <span className="ml-auto text-[10px] text-muted-foreground">Trust &amp; Safety</span>
+              </button>
+            )}
             <button
               onClick={() => setActionMsg(null)}
               className="w-full text-center px-4 py-3 text-sm hover:bg-muted transition-colors text-muted-foreground border-t border-border"
@@ -3076,6 +3110,18 @@ export default function ChatWindowPanel() {
             </button>
           </div>
         </div>
+      )}
+
+      {reportTarget && (
+        <ReportContentSheet
+          open={!!reportTarget}
+          onClose={() => setReportTarget(null)}
+          reportType={reportTarget.reportType}
+          reportedUserId={reportTarget.reportedUserId}
+          chatId={reportTarget.chatId}
+          messageId={reportTarget.messageId}
+          snapshot={reportTarget.snapshot}
+        />
       )}
 
       {reactionPickerMsg && (
