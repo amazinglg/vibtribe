@@ -39,6 +39,7 @@ import { Route as BlogVibtribeVsSignalVsTelegramRouteImport } from './routes/blo
 import { Route as BlogSelfDestructingMessagesGuideRouteImport } from './routes/blog.self-destructing-messages-guide'
 import { Route as BlogPrivateVaultMessagingRouteImport } from './routes/blog.private-vault-messaging'
 import { Route as BlogEndToEndEncryptionExplainedRouteImport } from './routes/blog.end-to-end-encryption-explained'
+import { Route as AdminReportsRouteImport } from './routes/admin.reports'
 import { Route as AdminPremiumUsersRouteImport } from './routes/admin.premium-users'
 import { Route as AdminPermissionsRouteImport } from './routes/admin.permissions'
 import { Route as AdminMarketingRouteImport } from './routes/admin.marketing'
@@ -216,6 +217,11 @@ const BlogEndToEndEncryptionExplainedRoute =
     path: '/blog/end-to-end-encryption-explained',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AdminReportsRoute = AdminReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminPremiumUsersRoute = AdminPremiumUsersRouteImport.update({
   id: '/premium-users',
   path: '/premium-users',
@@ -355,6 +361,7 @@ export interface FileRoutesByFullPath {
   '/admin/marketing': typeof AdminMarketingRoute
   '/admin/permissions': typeof AdminPermissionsRoute
   '/admin/premium-users': typeof AdminPremiumUsersRoute
+  '/admin/reports': typeof AdminReportsRoute
   '/blog/end-to-end-encryption-explained': typeof BlogEndToEndEncryptionExplainedRoute
   '/blog/private-vault-messaging': typeof BlogPrivateVaultMessagingRoute
   '/blog/self-destructing-messages-guide': typeof BlogSelfDestructingMessagesGuideRoute
@@ -407,6 +414,7 @@ export interface FileRoutesByTo {
   '/admin/marketing': typeof AdminMarketingRoute
   '/admin/permissions': typeof AdminPermissionsRoute
   '/admin/premium-users': typeof AdminPremiumUsersRoute
+  '/admin/reports': typeof AdminReportsRoute
   '/blog/end-to-end-encryption-explained': typeof BlogEndToEndEncryptionExplainedRoute
   '/blog/private-vault-messaging': typeof BlogPrivateVaultMessagingRoute
   '/blog/self-destructing-messages-guide': typeof BlogSelfDestructingMessagesGuideRoute
@@ -461,6 +469,7 @@ export interface FileRoutesById {
   '/admin/marketing': typeof AdminMarketingRoute
   '/admin/permissions': typeof AdminPermissionsRoute
   '/admin/premium-users': typeof AdminPremiumUsersRoute
+  '/admin/reports': typeof AdminReportsRoute
   '/blog/end-to-end-encryption-explained': typeof BlogEndToEndEncryptionExplainedRoute
   '/blog/private-vault-messaging': typeof BlogPrivateVaultMessagingRoute
   '/blog/self-destructing-messages-guide': typeof BlogSelfDestructingMessagesGuideRoute
@@ -516,6 +525,7 @@ export interface FileRouteTypes {
     | '/admin/marketing'
     | '/admin/permissions'
     | '/admin/premium-users'
+    | '/admin/reports'
     | '/blog/end-to-end-encryption-explained'
     | '/blog/private-vault-messaging'
     | '/blog/self-destructing-messages-guide'
@@ -568,6 +578,7 @@ export interface FileRouteTypes {
     | '/admin/marketing'
     | '/admin/permissions'
     | '/admin/premium-users'
+    | '/admin/reports'
     | '/blog/end-to-end-encryption-explained'
     | '/blog/private-vault-messaging'
     | '/blog/self-destructing-messages-guide'
@@ -621,6 +632,7 @@ export interface FileRouteTypes {
     | '/admin/marketing'
     | '/admin/permissions'
     | '/admin/premium-users'
+    | '/admin/reports'
     | '/blog/end-to-end-encryption-explained'
     | '/blog/private-vault-messaging'
     | '/blog/self-destructing-messages-guide'
@@ -912,6 +924,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogEndToEndEncryptionExplainedRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/reports': {
+      id: '/admin/reports'
+      path: '/reports'
+      fullPath: '/admin/reports'
+      preLoaderRoute: typeof AdminReportsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/premium-users': {
       id: '/admin/premium-users'
       path: '/premium-users'
@@ -1066,6 +1085,7 @@ interface AdminRouteChildren {
   AdminMarketingRoute: typeof AdminMarketingRoute
   AdminPermissionsRoute: typeof AdminPermissionsRoute
   AdminPremiumUsersRoute: typeof AdminPremiumUsersRoute
+  AdminReportsRoute: typeof AdminReportsRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminUserUserIdRoute: typeof AdminUserUserIdRoute
 }
@@ -1074,6 +1094,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminMarketingRoute: AdminMarketingRoute,
   AdminPermissionsRoute: AdminPermissionsRoute,
   AdminPremiumUsersRoute: AdminPremiumUsersRoute,
+  AdminReportsRoute: AdminReportsRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminUserUserIdRoute: AdminUserUserIdRoute,
 }
