@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Trash2, Lock, Users, UserPlus, MessageSquare, Phone, Check, Pin, PinOff, Ban, BellOff, Bell, Clock, BadgeCheck } from 'lucide-react';
+import { Search, Plus, Trash2, Lock, Users, UserPlus, MessageSquare, Phone, Check, Pin, PinOff, Ban, BellOff, Bell, Clock, BadgeCheck, Flag } from 'lucide-react';
 import MarkSecureModal from '@/components/MarkSecureModal';
 import ContactsPanel from '@/components/ContactsPanel';
 import CreateGroupModal from '@/components/CreateGroupModal';
@@ -14,6 +14,7 @@ import { BROADCAST_CHAT_ID } from './BroadcastChatPanel';
 import { useT } from '@/contexts/LanguageContext';
 import { isNativeWrapper, requestNativeContactsPermission } from '@/lib/native-bridge';
 import { appConfirm, appAlert } from '@/components/ui/AppDialog';
+import ReportContentSheet, { type ReportType } from '@/components/ReportContentSheet';
 const BROADCAST_LOGO = '/assets/images/app_logo.png';
 
 interface Chat {
@@ -53,6 +54,12 @@ export default function ChatListPanel() {
     participantId?: string;
   } | null>(null);
   const [muteFor, setMuteFor] = useState<{ chatId: string; chatName: string } | null>(null);
+  const [reportTarget, setReportTarget] = useState<null | {
+    reportType: ReportType;
+    reportedUserId?: string;
+    chatId?: string;
+    snapshot?: any;
+  }>(null);
   const [mutedIds, setMutedIds] = useState<Set<string>>(new Set());
 
   const handleBlockFromList = async (chatId: string, participantId: string | undefined, name: string) => {
@@ -1009,6 +1016,23 @@ export default function ChatListPanel() {
             </button>
           )}
           {!contextMenu.isBroadcast && (
+            <button
+              onClick={() => {
+                const c = chats.find(c => c.id === contextMenu.chatId);
+                setReportTarget({
+                  reportType: 'chat',
+                  reportedUserId: contextMenu.participantId,
+                  chatId: contextMenu.chatId,
+                  snapshot: { chatMeta: { id: contextMenu.chatId, name: c?.name || 'Chat' } },
+                });
+                setContextMenu(null);
+              }}
+              className="flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 w-full text-left transition-colors"
+            >
+              <Flag size={14} /> Report {contextMenu.participantId ? 'user' : 'chat'}
+            </button>
+          )}
+          {!contextMenu.isBroadcast && (
             <button onClick={() => handleDeleteChat(contextMenu.chatId)} className="flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 w-full text-left transition-colors">
               <Trash2 size={14} /> Delete Chat
             </button>
@@ -1073,6 +1097,17 @@ export default function ChatListPanel() {
         <ContactsPanel
           onClose={() => setContactsOpen(false)}
           onStartChat={handleContactStartChat}
+        />
+      )}
+
+      {reportTarget && (
+        <ReportContentSheet
+          open={!!reportTarget}
+          onClose={() => setReportTarget(null)}
+          reportType={reportTarget.reportType}
+          reportedUserId={reportTarget.reportedUserId}
+          chatId={reportTarget.chatId}
+          snapshot={reportTarget.snapshot}
         />
       )}
 

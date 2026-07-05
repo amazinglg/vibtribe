@@ -1,11 +1,12 @@
 // @ts-nocheck
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Heart, Send, Pause, Play, Eye } from 'lucide-react';
+import { X, Heart, Send, Pause, Play, Eye, Flag } from 'lucide-react';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { StatusMedia } from '@/components/StatusMedia';
+import ReportContentSheet from '@/components/ReportContentSheet';
 
 interface Story {
   id: string;
@@ -47,6 +48,7 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
   const [viewers, setViewers] = useState<{ id: string; name: string; avatar_url: string | null; viewed_at: string }[]>([]);
   const [showViewers, setShowViewers] = useState(false);
   const [liking, setLiking] = useState(false);
+  const [reporting, setReporting] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const progressRef = useRef(0);
   const DURATION = 5000;
@@ -272,6 +274,17 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
             >
               {paused ? <Play size={18} /> : <Pause size={18} />}
             </button>
+            {!isOwner && contact.userId && (
+              <button
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => { e.stopPropagation(); setPaused(true); setReporting(true); }}
+                className="relative z-50 p-1.5 text-white/80 hover:text-red-400 transition-colors"
+                aria-label="Report status"
+                title="Report status"
+              >
+                <Flag size={18} />
+              </button>
+            )}
           </div>
         </div>
 
@@ -404,6 +417,25 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
           </div>
         )}
       </div>
+      {reporting && (
+        <ReportContentSheet
+          open={reporting}
+          onClose={() => { setReporting(false); setPaused(false); }}
+          reportType="status"
+          reportedUserId={contact.userId}
+          statusId={story?.id}
+          snapshot={{
+            status: {
+              id: story?.id,
+              content: story?.content,
+              media_type: story?.type,
+              background_color: story?.bg,
+            },
+            text: story?.content || undefined,
+            profile: { full_name: contact.name },
+          }}
+        />
+      )}
     </div>
   );
 
