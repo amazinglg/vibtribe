@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useRef, useEffect } from 'react';
-import { Phone, Video, Paperclip, Mic, MicOff, Send, Lock, CheckCheck, Check, ArrowLeft, Info, Trash2, ShieldCheck, Ban, ShieldOff, X, Image, FileText, Camera, VideoOff, PhoneOff, Volume2, VolumeX, Timer, MoreVertical, UserPlus, Smile, KeyRound, Shield, ShieldAlert, Plus } from 'lucide-react';
+import { Phone, Video, Paperclip, Mic, MicOff, Send, Lock, CheckCheck, Check, ArrowLeft, Info, Trash2, ShieldCheck, Ban, ShieldOff, X, Image, FileText, Camera, VideoOff, PhoneOff, Volume2, VolumeX, Timer, MoreVertical, UserPlus, Smile, KeyRound, Shield, ShieldAlert, Plus, Flag } from 'lucide-react';
 import { useChatStore } from '@/store/chatStore';
 import MarkSecureModal from '@/components/MarkSecureModal';
 import { useAuth } from '@/contexts/AuthContext';
@@ -2183,6 +2183,34 @@ export default function ChatWindowPanel() {
                     Leave tribe
                   </button>
                 )}
+                <div className="border-t border-border" />
+                <button
+                  onClick={() => {
+                    setShowMoreMenu(false);
+                    if (chatType === 'group') {
+                      setReportTarget({
+                        reportType: 'tribe',
+                        chatId: (chatId as any) || undefined,
+                        snapshot: { chatMeta: { id: (chatId as any) || undefined, name: contact?.name || 'Tribe', type: 'group' } },
+                      });
+                    } else {
+                      setReportTarget({
+                        reportType: 'profile',
+                        reportedUserId: (contact as any)?.userId || (contact as any)?.id,
+                        snapshot: {
+                          profile: {
+                            id: (contact as any)?.userId || (contact as any)?.id,
+                            full_name: contact?.name,
+                          },
+                        },
+                      });
+                    }
+                  }}
+                  className="w-full text-left px-3 py-2.5 text-sm hover:bg-red-500/10 transition-colors flex items-center gap-3 text-red-400"
+                >
+                  <Flag size={16} />
+                  {chatType === 'group' ? 'Report tribe' : `Report ${contact?.name || 'user'}`}
+                </button>
               </div>
             )}
           </div>

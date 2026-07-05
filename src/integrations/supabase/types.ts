@@ -1151,6 +1151,53 @@ export type Database = {
         }
         Relationships: []
       }
+      report_appeals: {
+        Row: {
+          appellant_id: string
+          created_at: string
+          id: string
+          reason: string
+          report_id: string
+          reviewed_at: string | null
+          reviewer_id: string | null
+          reviewer_notes: string | null
+          status: Database["public"]["Enums"]["appeal_status"]
+          updated_at: string
+        }
+        Insert: {
+          appellant_id: string
+          created_at?: string
+          id?: string
+          reason: string
+          report_id: string
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          reviewer_notes?: string | null
+          status?: Database["public"]["Enums"]["appeal_status"]
+          updated_at?: string
+        }
+        Update: {
+          appellant_id?: string
+          created_at?: string
+          id?: string
+          reason?: string
+          report_id?: string
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          reviewer_notes?: string | null
+          status?: Database["public"]["Enums"]["appeal_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_appeals_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "content_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       role_permissions: {
         Row: {
           allowed: boolean
@@ -2738,6 +2785,7 @@ export type Database = {
       }
     }
     Enums: {
+      appeal_status: "pending" | "approved" | "rejected"
       chat_type: "normal" | "secure" | "dual_normal" | "dual_secure"
       message_status: "sent" | "delivered" | "read"
       report_reason:
@@ -2900,6 +2948,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      appeal_status: ["pending", "approved", "rejected"],
       chat_type: ["normal", "secure", "dual_normal", "dual_secure"],
       message_status: ["sent", "delivered", "read"],
       report_reason: [

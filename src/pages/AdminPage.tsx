@@ -99,6 +99,7 @@ export default function AdminPage() {
   const [ticketFilter, setTicketFilter] = useState<'all' | 'open' | 'inprocess' | 'solved'>('all');
   const [unreadTickets, setUnreadTickets] = useState(0);
   const [pendingReports, setPendingReports] = useState(0);
+  const [pendingAppeals, setPendingAppeals] = useState(0);
   const [forceLogoutLoading, setForceLogoutLoading] = useState<string | null>(null);
   const [userFilter, setUserFilter] = useState<'all' | 'active' | 'suspended' | 'blocked' | 'admins' | 'online' | 'under_age' | 'incomplete_signup'>('all');
   const [userSort, setUserSort] = useState<'recent' | 'name' | 'lastActive'>('recent');
@@ -125,6 +126,24 @@ export default function AdminPage() {
     const ch = supabase
       .channel('admin-reports-badge')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'content_reports' }, () => load())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [isMaster]);
+
+  // Live pending-appeal count for the Appeals tab badge (master admin only).
+  useEffect(() => {
+    if (!isMaster) return;
+    const load = async () => {
+      const { count } = await supabase
+        .from('report_appeals' as any)
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'pending');
+      setPendingAppeals(count || 0);
+    };
+    load();
+    const ch = supabase
+      .channel('admin-appeals-badge')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'report_appeals' }, () => load())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [isMaster]);
@@ -579,7 +598,7 @@ export default function AdminPage() {
 
         {/* Tabs — single-line, horizontally scrollable on small screens */}
         <div className="flex gap-1 p-1 bg-muted rounded-xl mb-6 w-full sm:w-fit overflow-x-auto no-scrollbar">
-          {(['overview', 'users', ...(isMaster ? ['tribes' as const] : []), 'support', 'marketing' as const, ...(isMaster ? ['permissions' as const, 'premium' as const, 'reports' as const] : [])] as const).map(tab => (
+          {(['overview', 'users', ...(isMaster ? ['tribes' as const] : []), 'support', 'marketing' as const, ...(isMaster ? ['permissions' as const, 'premium' as const, 'reports' as const, 'appeals' as const] : [])] as const).map(tab => (
             <button
               key={tab}
               onClick={() => {
@@ -587,11 +606,12 @@ export default function AdminPage() {
                 if (tab === 'permissions') { router({ to: '/admin/permissions' }); return; }
                 if (tab === 'premium') { router({ to: '/admin/premium-users' }); return; }
                 if (tab === 'reports') { router({ to: '/admin/reports' }); return; }
+                if (tab === 'appeals') { router({ to: '/admin/appeals' }); return; }
                 setActiveTab(tab);
               }}
               className={`relative flex-shrink-0 px-2.5 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold capitalize transition-all whitespace-nowrap ${activeTab === tab ? 'gradient-primary text-white' : 'text-muted-foreground hover:text-foreground'}`}
             >
-              {tab === 'support' ? 'Support' : tab === 'tribes' ? 'Tribes' : tab === 'marketing' ? 'Marketing' : tab === 'permissions' ? 'Permissions' : tab === 'premium' ? 'Premium' : tab === 'reports' ? 'Reports' : tab}
+              {tab === 'support' ? 'Support' : tab === 'tribes' ? 'Tribes' : tab === 'marketing' ? 'Marketing' : tab === 'permissions' ? 'Permissions' : tab === 'premium' ? 'Premium' : tab === 'reports' ? 'Reports' : tab === 'appeals' ? 'Appeals' : tab}
               {tab === 'support' && unreadTickets > 0 && (
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
                   {unreadTickets > 9 ? '9+' : unreadTickets}
@@ -600,6 +620,11 @@ export default function AdminPage() {
               {tab === 'reports' && pendingReports > 0 && (
                 <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
                   {pendingReports > 9 ? '9+' : pendingReports}
+                </span>
+              )}
+              {tab === 'appeals' && pendingAppeals > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                  {pendingAppeals > 9 ? '9+' : pendingAppeals}
                 </span>
               )}
             </button>

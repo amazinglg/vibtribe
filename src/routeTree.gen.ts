@@ -30,6 +30,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as HelpReportingRouteImport } from './routes/help.reporting'
 import { Route as GuardianConsentTokenRouteImport } from './routes/guardian-consent.$token'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as DownloadIosRouteImport } from './routes/download.ios'
@@ -39,10 +40,12 @@ import { Route as BlogVibtribeVsSignalVsTelegramRouteImport } from './routes/blo
 import { Route as BlogSelfDestructingMessagesGuideRouteImport } from './routes/blog.self-destructing-messages-guide'
 import { Route as BlogPrivateVaultMessagingRouteImport } from './routes/blog.private-vault-messaging'
 import { Route as BlogEndToEndEncryptionExplainedRouteImport } from './routes/blog.end-to-end-encryption-explained'
+import { Route as AppealReportIdRouteImport } from './routes/appeal.$reportId'
 import { Route as AdminReportsRouteImport } from './routes/admin.reports'
 import { Route as AdminPremiumUsersRouteImport } from './routes/admin.premium-users'
 import { Route as AdminPermissionsRouteImport } from './routes/admin.permissions'
 import { Route as AdminMarketingRouteImport } from './routes/admin.marketing'
+import { Route as AdminAppealsRouteImport } from './routes/admin.appeals'
 import { Route as TribeJoinCodeRouteImport } from './routes/tribe.join.$code'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as ApiPublicTrackApkDownloadRouteImport } from './routes/api/public/track-apk-download'
@@ -167,6 +170,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
+const HelpReportingRoute = HelpReportingRouteImport.update({
+  id: '/help/reporting',
+  path: '/help/reporting',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GuardianConsentTokenRoute = GuardianConsentTokenRouteImport.update({
   id: '/guardian-consent/$token',
   path: '/guardian-consent/$token',
@@ -217,6 +225,11 @@ const BlogEndToEndEncryptionExplainedRoute =
     path: '/blog/end-to-end-encryption-explained',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AppealReportIdRoute = AppealReportIdRouteImport.update({
+  id: '/appeal/$reportId',
+  path: '/appeal/$reportId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminReportsRoute = AdminReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
@@ -235,6 +248,11 @@ const AdminPermissionsRoute = AdminPermissionsRouteImport.update({
 const AdminMarketingRoute = AdminMarketingRouteImport.update({
   id: '/marketing',
   path: '/marketing',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAppealsRoute = AdminAppealsRouteImport.update({
+  id: '/appeals',
+  path: '/appeals',
   getParentRoute: () => AdminRoute,
 } as any)
 const TribeJoinCodeRoute = TribeJoinCodeRouteImport.update({
@@ -358,10 +376,12 @@ export interface FileRoutesByFullPath {
   '/subprocessors': typeof SubprocessorsRoute
   '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/admin/appeals': typeof AdminAppealsRoute
   '/admin/marketing': typeof AdminMarketingRoute
   '/admin/permissions': typeof AdminPermissionsRoute
   '/admin/premium-users': typeof AdminPremiumUsersRoute
   '/admin/reports': typeof AdminReportsRoute
+  '/appeal/$reportId': typeof AppealReportIdRoute
   '/blog/end-to-end-encryption-explained': typeof BlogEndToEndEncryptionExplainedRoute
   '/blog/private-vault-messaging': typeof BlogPrivateVaultMessagingRoute
   '/blog/self-destructing-messages-guide': typeof BlogSelfDestructingMessagesGuideRoute
@@ -371,6 +391,7 @@ export interface FileRoutesByFullPath {
   '/download/ios': typeof DownloadIosRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/guardian-consent/$token': typeof GuardianConsentTokenRoute
+  '/help/reporting': typeof HelpReportingRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
@@ -411,10 +432,12 @@ export interface FileRoutesByTo {
   '/subprocessors': typeof SubprocessorsRoute
   '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/admin/appeals': typeof AdminAppealsRoute
   '/admin/marketing': typeof AdminMarketingRoute
   '/admin/permissions': typeof AdminPermissionsRoute
   '/admin/premium-users': typeof AdminPremiumUsersRoute
   '/admin/reports': typeof AdminReportsRoute
+  '/appeal/$reportId': typeof AppealReportIdRoute
   '/blog/end-to-end-encryption-explained': typeof BlogEndToEndEncryptionExplainedRoute
   '/blog/private-vault-messaging': typeof BlogPrivateVaultMessagingRoute
   '/blog/self-destructing-messages-guide': typeof BlogSelfDestructingMessagesGuideRoute
@@ -424,6 +447,7 @@ export interface FileRoutesByTo {
   '/download/ios': typeof DownloadIosRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/guardian-consent/$token': typeof GuardianConsentTokenRoute
+  '/help/reporting': typeof HelpReportingRoute
   '/admin': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
@@ -466,10 +490,12 @@ export interface FileRoutesById {
   '/subprocessors': typeof SubprocessorsRoute
   '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/admin/appeals': typeof AdminAppealsRoute
   '/admin/marketing': typeof AdminMarketingRoute
   '/admin/permissions': typeof AdminPermissionsRoute
   '/admin/premium-users': typeof AdminPremiumUsersRoute
   '/admin/reports': typeof AdminReportsRoute
+  '/appeal/$reportId': typeof AppealReportIdRoute
   '/blog/end-to-end-encryption-explained': typeof BlogEndToEndEncryptionExplainedRoute
   '/blog/private-vault-messaging': typeof BlogPrivateVaultMessagingRoute
   '/blog/self-destructing-messages-guide': typeof BlogSelfDestructingMessagesGuideRoute
@@ -479,6 +505,7 @@ export interface FileRoutesById {
   '/download/ios': typeof DownloadIosRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/guardian-consent/$token': typeof GuardianConsentTokenRoute
+  '/help/reporting': typeof HelpReportingRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
@@ -522,10 +549,12 @@ export interface FileRouteTypes {
     | '/subprocessors'
     | '/terms'
     | '/unsubscribe'
+    | '/admin/appeals'
     | '/admin/marketing'
     | '/admin/permissions'
     | '/admin/premium-users'
     | '/admin/reports'
+    | '/appeal/$reportId'
     | '/blog/end-to-end-encryption-explained'
     | '/blog/private-vault-messaging'
     | '/blog/self-destructing-messages-guide'
@@ -535,6 +564,7 @@ export interface FileRouteTypes {
     | '/download/ios'
     | '/email/unsubscribe'
     | '/guardian-consent/$token'
+    | '/help/reporting'
     | '/admin/'
     | '/admin/user/$userId'
     | '/api/public/auth-login'
@@ -575,10 +605,12 @@ export interface FileRouteTypes {
     | '/subprocessors'
     | '/terms'
     | '/unsubscribe'
+    | '/admin/appeals'
     | '/admin/marketing'
     | '/admin/permissions'
     | '/admin/premium-users'
     | '/admin/reports'
+    | '/appeal/$reportId'
     | '/blog/end-to-end-encryption-explained'
     | '/blog/private-vault-messaging'
     | '/blog/self-destructing-messages-guide'
@@ -588,6 +620,7 @@ export interface FileRouteTypes {
     | '/download/ios'
     | '/email/unsubscribe'
     | '/guardian-consent/$token'
+    | '/help/reporting'
     | '/admin'
     | '/admin/user/$userId'
     | '/api/public/auth-login'
@@ -629,10 +662,12 @@ export interface FileRouteTypes {
     | '/subprocessors'
     | '/terms'
     | '/unsubscribe'
+    | '/admin/appeals'
     | '/admin/marketing'
     | '/admin/permissions'
     | '/admin/premium-users'
     | '/admin/reports'
+    | '/appeal/$reportId'
     | '/blog/end-to-end-encryption-explained'
     | '/blog/private-vault-messaging'
     | '/blog/self-destructing-messages-guide'
@@ -642,6 +677,7 @@ export interface FileRouteTypes {
     | '/download/ios'
     | '/email/unsubscribe'
     | '/guardian-consent/$token'
+    | '/help/reporting'
     | '/admin/'
     | '/admin/user/$userId'
     | '/api/public/auth-login'
@@ -684,6 +720,7 @@ export interface RootRouteChildren {
   SubprocessorsRoute: typeof SubprocessorsRoute
   TermsRoute: typeof TermsRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
+  AppealReportIdRoute: typeof AppealReportIdRoute
   BlogEndToEndEncryptionExplainedRoute: typeof BlogEndToEndEncryptionExplainedRoute
   BlogPrivateVaultMessagingRoute: typeof BlogPrivateVaultMessagingRoute
   BlogSelfDestructingMessagesGuideRoute: typeof BlogSelfDestructingMessagesGuideRoute
@@ -693,6 +730,7 @@ export interface RootRouteChildren {
   DownloadIosRoute: typeof DownloadIosRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   GuardianConsentTokenRoute: typeof GuardianConsentTokenRoute
+  HelpReportingRoute: typeof HelpReportingRoute
   ApiPublicAuthLoginRoute: typeof ApiPublicAuthLoginRoute
   ApiPublicAuthOtpRoute: typeof ApiPublicAuthOtpRoute
   ApiPublicDownloadApkRoute: typeof ApiPublicDownloadApkRoute
@@ -861,6 +899,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/help/reporting': {
+      id: '/help/reporting'
+      path: '/help/reporting'
+      fullPath: '/help/reporting'
+      preLoaderRoute: typeof HelpReportingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/guardian-consent/$token': {
       id: '/guardian-consent/$token'
       path: '/guardian-consent/$token'
@@ -924,6 +969,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogEndToEndEncryptionExplainedRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/appeal/$reportId': {
+      id: '/appeal/$reportId'
+      path: '/appeal/$reportId'
+      fullPath: '/appeal/$reportId'
+      preLoaderRoute: typeof AppealReportIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/reports': {
       id: '/admin/reports'
       path: '/reports'
@@ -950,6 +1002,13 @@ declare module '@tanstack/react-router' {
       path: '/marketing'
       fullPath: '/admin/marketing'
       preLoaderRoute: typeof AdminMarketingRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/appeals': {
+      id: '/admin/appeals'
+      path: '/appeals'
+      fullPath: '/admin/appeals'
+      preLoaderRoute: typeof AdminAppealsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/tribe/join/$code': {
@@ -1082,6 +1141,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminAppealsRoute: typeof AdminAppealsRoute
   AdminMarketingRoute: typeof AdminMarketingRoute
   AdminPermissionsRoute: typeof AdminPermissionsRoute
   AdminPremiumUsersRoute: typeof AdminPremiumUsersRoute
@@ -1091,6 +1151,7 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminAppealsRoute: AdminAppealsRoute,
   AdminMarketingRoute: AdminMarketingRoute,
   AdminPermissionsRoute: AdminPermissionsRoute,
   AdminPremiumUsersRoute: AdminPremiumUsersRoute,
@@ -1122,6 +1183,7 @@ const rootRouteChildren: RootRouteChildren = {
   SubprocessorsRoute: SubprocessorsRoute,
   TermsRoute: TermsRoute,
   UnsubscribeRoute: UnsubscribeRoute,
+  AppealReportIdRoute: AppealReportIdRoute,
   BlogEndToEndEncryptionExplainedRoute: BlogEndToEndEncryptionExplainedRoute,
   BlogPrivateVaultMessagingRoute: BlogPrivateVaultMessagingRoute,
   BlogSelfDestructingMessagesGuideRoute: BlogSelfDestructingMessagesGuideRoute,
@@ -1131,6 +1193,7 @@ const rootRouteChildren: RootRouteChildren = {
   DownloadIosRoute: DownloadIosRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   GuardianConsentTokenRoute: GuardianConsentTokenRoute,
+  HelpReportingRoute: HelpReportingRoute,
   ApiPublicAuthLoginRoute: ApiPublicAuthLoginRoute,
   ApiPublicAuthOtpRoute: ApiPublicAuthOtpRoute,
   ApiPublicDownloadApkRoute: ApiPublicDownloadApkRoute,
