@@ -629,8 +629,8 @@ export default function AdminUserDetailPage() {
       </div>
 
       {/* Edit Modal */}
-      {editOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      {editOpen && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
           <div className="glass-strong rounded-2xl border border-border p-6 w-full max-w-sm">
             <div className="flex items-center justify-between mb-5">
               <h3 className="font-bold text-foreground">Edit User Info</h3>
@@ -668,12 +668,13 @@ export default function AdminUserDetailPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
 
       {/* Offboarding reason dialog */}
-      {deleteOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      {deleteOpen && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
           <div className="glass-strong rounded-2xl border border-red-500/40 p-6 w-full max-w-md">
             <div className="flex items-start gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-red-500/15 text-red-400 flex items-center justify-center">
@@ -739,7 +740,8 @@ export default function AdminUserDetailPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </AppLayout>
   );
