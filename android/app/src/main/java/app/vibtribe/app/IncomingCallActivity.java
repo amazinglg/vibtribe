@@ -96,7 +96,7 @@ public class IncomingCallActivity extends Activity {
         Intent intent = new Intent(this, MainActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         Uri data = Uri.parse("https://www.vibtribe.in/?"
-                + (accept ? "call=" : "declineCall=") + (callId == null ? "" : callId)
+                + (accept ? "answerCall=" : "declineCall=") + (callId == null ? "" : callId)
                 + (chatId != null && !chatId.isEmpty() ? "&chat=" + chatId : ""));
         intent.setData(data);
         intent.setAction(Intent.ACTION_VIEW);
