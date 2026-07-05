@@ -234,8 +234,8 @@ export const moderateReport = createServerFn({ method: 'POST' })
           .from('user_profiles')
           .update({
             is_suspended: true,
-            account_status: data.action === 'ban_user' ? 'blocked' : 'suspended',
-          })
+            account_status: 'suspended' as const,
+          } as any)
           .eq('id', report.reported_user_id)
       }
     }
