@@ -54,6 +54,12 @@ export default function ChatListPanel() {
     participantId?: string;
   } | null>(null);
   const [muteFor, setMuteFor] = useState<{ chatId: string; chatName: string } | null>(null);
+  const [reportTarget, setReportTarget] = useState<null | {
+    reportType: ReportType;
+    reportedUserId?: string;
+    chatId?: string;
+    snapshot?: any;
+  }>(null);
   const [mutedIds, setMutedIds] = useState<Set<string>>(new Set());
 
   const handleBlockFromList = async (chatId: string, participantId: string | undefined, name: string) => {
