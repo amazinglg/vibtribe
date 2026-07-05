@@ -792,6 +792,35 @@ export default function CallProvider({ children }: { children: React.ReactNode }
       const answerId = params.get('answerCall');
       const callId = params.get('call');
       const declineId = params.get('declineCall');
+      const muteId = params.get('muteCall');
+      const endId = params.get('endCall');
+    if (endId) {
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('endCall');
+        window.history.replaceState({}, '', url.toString());
+      } catch {}
+      const cur = activeCallRef.current;
+      if (cur && cur.id === endId) { void endCall('ended'); }
+      return;
+    }
+    if (muteId) {
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('muteCall');
+        window.history.replaceState({}, '', url.toString());
+      } catch {}
+      const cur = activeCallRef.current;
+      if (cur && cur.id === muteId) {
+        // Force toggle mic
+        setMicMuted((m) => {
+          const next = !m;
+          localStreamRef.current?.getAudioTracks().forEach((t) => { t.enabled = !next; });
+          return next;
+        });
+      }
+      return;
+    }
     if (declineId) {
       // Lockscreen ringer "Decline" tapped — mark the call declined and clear the param.
       supabase.from('calls')
