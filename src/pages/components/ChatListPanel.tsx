@@ -111,9 +111,6 @@ export default function ChatListPanel() {
   const [contactsLoading, setContactsLoading] = useState(false);
   const [contactsSearch, setContactsSearch] = useState('');
   const [inviteTarget, setInviteTarget] = useState<any | null>(null);
-  const { selectedChatId, setSelectedChatId } = useChatStore();
-  const { user, profile } = useAuth();
-  const supabase = createClient();
   const [broadcastPreview, setBroadcastPreview] = useState<{ content: string; created_at: string } | null>(null);
   const [broadcastUnread, setBroadcastUnread] = useState(0);
   const [broadcastAvatar, setBroadcastAvatar] = useState<string>(BROADCAST_LOGO);
