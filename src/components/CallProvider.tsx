@@ -1121,7 +1121,11 @@ export default function CallProvider({ children }: { children: React.ReactNode }
                   <span className="absolute w-52 h-52 rounded-full border border-purple-500/30 animate-vt-ring" style={{ animationDelay: '0.4s' }} />
                   <span className="absolute w-40 h-40 rounded-full border border-purple-500/40 animate-vt-ring" style={{ animationDelay: '0.8s' }} />
                   <div className="relative w-32 h-32 rounded-full overflow-hidden bg-gradient-to-br from-purple-600 to-purple-900 flex items-center justify-center text-4xl font-bold shadow-[0_0_60px_rgba(168,85,247,0.5)]">
-                    {remoteAvatar}
+                    {remoteAvatarUrl ? (
+                      <img src={remoteAvatarUrl} alt={remoteName} className="w-full h-full object-cover" />
+                    ) : (
+                      <span>{remoteAvatar}</span>
+                    )}
                   </div>
                 </div>
                 {/* Waveform */}
