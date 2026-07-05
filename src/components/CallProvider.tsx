@@ -1035,15 +1035,38 @@ export default function CallProvider({ children }: { children: React.ReactNode }
         >
           {/* Full-bleed remote video for video calls */}
           {activeCall.call_type === 'video' && (
-            <video
-              ref={remoteVideoRef}
-              autoPlay
-              playsInline
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-          )}
-          {activeCall.call_type === 'video' && callState !== 'connected' && (
-            <div className="absolute inset-0 bg-black/60" />
+            <>
+              {/* Main stage: remote video (or self if swapped) */}
+              <video
+                ref={viewSwapped ? localVideoRef : remoteVideoRef}
+                autoPlay
+                playsInline
+                muted={viewSwapped}
+                className="absolute inset-0 w-full h-full object-cover"
+                style={{ transform: viewSwapped && cameraFacing === 'user' ? 'scaleX(-1)' : undefined }}
+              />
+              {/* Avatar backdrop when remote video isn't visible yet (pre-answer)
+                  or the peer disabled their camera — so the user never sees a
+                  bare black rectangle. */}
+              {(!viewSwapped && (!remoteVideoLive || callState !== 'connected')) && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center"
+                  style={{ background: 'radial-gradient(ellipse at center, #1a0333 0%, #0a0118 60%, #050010 100%)' }}
+                >
+                  <div className="w-36 h-36 rounded-full overflow-hidden bg-gradient-to-br from-purple-600 to-purple-900 flex items-center justify-center text-5xl font-bold shadow-[0_0_60px_rgba(168,85,247,0.5)]">
+                    {remoteAvatarUrl ? (
+                      <img src={remoteAvatarUrl} alt={remoteName} className="w-full h-full object-cover" />
+                    ) : (
+                      <span>{remoteAvatar}</span>
+                    )}
+                  </div>
+                </div>
+              )}
+              {viewSwapped && videoOff && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/80 text-white/70 text-sm">
+                  Your camera is off
+                </div>
+              )}
+            </>
           )}
 
           {/* Top bar */}
@@ -1120,11 +1143,42 @@ export default function CallProvider({ children }: { children: React.ReactNode }
               </>
             ) : (
               // Video: PiP self-view bottom-right
-              !videoOff && (
-                <div className="absolute bottom-6 right-4 w-28 h-40 rounded-2xl overflow-hidden border-2 border-white/40 bg-black shadow-2xl">
-                  <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
-                </div>
-              )
+              <button
+                onClick={() => setViewSwapped((s) => !s)}
+                aria-label="Swap views"
+                className="absolute bottom-6 right-4 w-28 h-40 rounded-2xl overflow-hidden border-2 border-white/40 bg-black shadow-2xl active:scale-95 transition-transform"
+              >
+                {viewSwapped ? (
+                  // PiP shows remote when swapped
+                  remoteVideoLive ? (
+                    <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-purple-600 to-purple-900 flex items-center justify-center text-2xl font-bold text-white">
+                      {remoteAvatarUrl ? (
+                        <img src={remoteAvatarUrl} alt={remoteName} className="w-full h-full object-cover" />
+                      ) : (
+                        <span>{remoteAvatar}</span>
+                      )}
+                    </div>
+                  )
+                ) : (
+                  // PiP shows self when not swapped
+                  !videoOff ? (
+                    <video
+                      ref={localVideoRef}
+                      autoPlay
+                      muted
+                      playsInline
+                      className="w-full h-full object-cover"
+                      style={{ transform: cameraFacing === 'user' ? 'scaleX(-1)' : undefined }}
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-black/70 flex items-center justify-center text-[10px] text-white/60 text-center px-1">
+                      Camera off
+                    </div>
+                  )
+                )}
+              </button>
             )}
           </div>
 
