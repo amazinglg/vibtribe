@@ -4,28 +4,18 @@ import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware'
 
 export type DeviceInfo = {
   userId: string
-  label: 'Android App' | 'iOS PWA' | 'iOS Web' | 'Android Web' | 'Web'
+  label: 'Android App' | 'iOS PWA' | 'Web'
   version: string | null
   lastSeenAt: string | null
 }
 
 function classify(platform: string | null, ua: string | null, appVersion: string | null): { label: DeviceInfo['label']; version: string | null } {
   const u = (ua || '').toLowerCase()
-  const isWebView = /\bwv\b/.test(u) || / version\/\d[\d.]* chrome\//.test(u) && /android/.test(u) && /\bwv\b/.test(u)
-  const isIOS = /iphone|ipad|ipod/.test(u) || /mac os x/.test(u) && /mobile/.test(u)
-  const isAndroid = /android/.test(u) || platform === 'android'
-
-  // Native Android APK reports platform='android' AND contains 'wv' in UA.
-  if (platform === 'android' && /\bwv\b/.test(u)) {
-    return { label: 'Android App', version: appVersion || null }
-  }
-  if (isIOS) {
-    // iOS PWA runs in standalone mode; UA alone can't tell. Treat mobile Safari as iOS PWA candidate.
-    return { label: 'iOS PWA', version: null }
-  }
-  if (isAndroid) {
-    return { label: 'Android Web', version: null }
-  }
+  // Capacitor sets platform='android' or 'ios' for native wrappers.
+  if (platform === 'android') return { label: 'Android App', version: appVersion || null }
+  if (platform === 'ios') return { label: 'iOS PWA', version: appVersion || null }
+  // Web fallback — iOS Safari / iPadOS Safari counts as iOS PWA per spec.
+  if (/iphone|ipad|ipod/.test(u)) return { label: 'iOS PWA', version: null }
   return { label: 'Web', version: null }
 }
 
