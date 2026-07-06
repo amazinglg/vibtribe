@@ -6,6 +6,8 @@ import MarkSecureModal from '@/components/MarkSecureModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { getOrCreateKeyPair, encryptMessage, decryptMessage, isEncrypted, encryptBytes, encryptBytesWithRandomKey, hasLocalPrivateKey, encryptGroupMessage, decryptGroupMessageForMe, isGroupEncrypted, type GroupMember } from '@/lib/encryption';
+import { decryptBytes, decryptBytesWithKey } from '@/lib/encryption';
+import { signChatMediaUrl } from '@/lib/chat-media-url';
 import EncryptedMedia from '@/components/EncryptedMedia';
 import ChatMediaImg from '@/components/ChatMediaImg';
 import { getPreferredNickname } from '@/components/SecureVaultModal';
@@ -1768,7 +1770,7 @@ export default function ChatWindowPanel() {
   // Calls now start immediately — the browser's native permission prompt handles mic/camera.
   const handleVoiceCallClick = async () => {
     if (!contact?.userId) return;
-    const callRow = await startCall({ calleeId: contact.userId, chatId: selectedChatId, type: 'voice', calleeName: contact.name, calleeAvatar: contact.avatar });
+    const callRow = await startCall({ calleeId: contact.userId, chatId: selectedChatId, type: 'voice', calleeName: contact.name, calleeAvatar: contact.avatarUrl || contact.avatar });
     if (callRow?.id) {
       const callerName = profile?.full_name || 'Someone';
       sendPushNotification(supabase, {
@@ -1782,7 +1784,7 @@ export default function ChatWindowPanel() {
 
   const handleVideoCallClick = async () => {
     if (!contact?.userId) return;
-    const callRow = await startCall({ calleeId: contact.userId, chatId: selectedChatId, type: 'video', calleeName: contact.name, calleeAvatar: contact.avatar });
+    const callRow = await startCall({ calleeId: contact.userId, chatId: selectedChatId, type: 'video', calleeName: contact.name, calleeAvatar: contact.avatarUrl || contact.avatar });
     if (callRow?.id) {
       const callerName = profile?.full_name || 'Someone';
       sendPushNotification(supabase, {
@@ -1801,7 +1803,7 @@ export default function ChatWindowPanel() {
       // Start real WebRTC video call
       let callRow: any = null;
       if (contact?.userId) {
-        callRow = await startCall({ calleeId: contact.userId, chatId: selectedChatId, type: 'video', calleeName: contact.name, calleeAvatar: contact.avatar });
+        callRow = await startCall({ calleeId: contact.userId, chatId: selectedChatId, type: 'video', calleeName: contact.name, calleeAvatar: contact.avatarUrl || contact.avatar });
       }
       // Also send push notification (best-effort)
       if (contact?.userId && callRow?.id) {
@@ -1822,7 +1824,7 @@ export default function ChatWindowPanel() {
       await requestMicrophone();
       let callRow: any = null;
       if (contact?.userId) {
-        callRow = await startCall({ calleeId: contact.userId, chatId: selectedChatId, type: 'voice', calleeName: contact.name, calleeAvatar: contact.avatar });
+        callRow = await startCall({ calleeId: contact.userId, chatId: selectedChatId, type: 'voice', calleeName: contact.name, calleeAvatar: contact.avatarUrl || contact.avatar });
       }
       if (contact?.userId && callRow?.id) {
         const callerName = profile?.full_name || 'Someone';
@@ -1847,7 +1849,7 @@ export default function ChatWindowPanel() {
     // Still allow call to proceed — browser will prompt natively
     if (contact?.userId) {
       const t = pendingCall === 'video' ? 'video' : 'voice';
-      startCall({ calleeId: contact.userId, chatId: selectedChatId, type: t, calleeName: contact.name, calleeAvatar: contact.avatar });
+      startCall({ calleeId: contact.userId, chatId: selectedChatId, type: t, calleeName: contact.name, calleeAvatar: contact.avatarUrl || contact.avatar });
     }
     setPendingCall(null);
   };
@@ -2408,7 +2410,7 @@ export default function ChatWindowPanel() {
                     </div>
                     {isMe && contact?.userId && (
                       <button
-                        onClick={() => startCall({ calleeId: contact.userId!, chatId: selectedChatId, type: callKind as 'voice'|'video', calleeName: contact.name, calleeAvatar: contact.avatar })}
+                        onClick={() => startCall({ calleeId: contact.userId!, chatId: selectedChatId, type: callKind as 'voice'|'video', calleeName: contact.name, calleeAvatar: contact.avatarUrl || contact.avatar })}
                         className="ml-2 px-3 py-1 rounded-lg bg-primary/15 text-primary text-xs font-semibold hover:bg-primary/25 transition-all">
                         Call back
                       </button>
@@ -3098,7 +3100,7 @@ export default function ChatWindowPanel() {
             )}
             {actionMsg.senderId !== user?.id && (
               <button
-                onClick={() => {
+                onClick={async () => {
                   const raw = (actionMsg?.text || '').toString();
                   let type: ReportType = 'message';
                   let envelope: any = null;
@@ -3108,6 +3110,38 @@ export default function ChatWindowPanel() {
                     else if (envelope?.type === 'video') type = 'video';
                     else if (envelope?.type === 'audio') type = 'audio';
                     else if (envelope?.type) type = 'file';
+                  }
+                  // For media reports, try to decrypt the actual content so moderators
+                  // can review the exact image/video/audio/file the user flagged.
+                  let mediaFields: { mediaBase64?: string; mediaMime?: string; mediaName?: string } = {};
+                  if (envelope?.url && (type === 'image' || type === 'video' || type === 'audio' || type === 'file')) {
+                    try {
+                      const signed = await signChatMediaUrl(envelope.url);
+                      const res = await fetch(signed);
+                      if (res.ok) {
+                        const cipher = await res.arrayBuffer();
+                        const plain = envelope.k
+                          ? await decryptBytesWithKey(cipher, envelope.k)
+                          : contactPubKeyRef.current
+                            ? await decryptBytes(cipher, contactPubKeyRef.current)
+                            : null;
+                        if (plain) {
+                          // Cap at ~10MB to keep server payload safe.
+                          const MAX = 10 * 1024 * 1024;
+                          const bytes = plain.byteLength > MAX ? plain.slice(0, MAX) : plain;
+                          let bin = '';
+                          const view = new Uint8Array(bytes);
+                          for (let i = 0; i < view.length; i++) bin += String.fromCharCode(view[i]);
+                          mediaFields = {
+                            mediaBase64: btoa(bin),
+                            mediaMime: envelope.mime || 'application/octet-stream',
+                            mediaName: envelope.name || `evidence`,
+                          };
+                        }
+                      }
+                    } catch (e) {
+                      console.warn('[report] media decrypt failed', e);
+                    }
                   }
                   setReportTarget({
                     reportType: type,
@@ -3120,6 +3154,7 @@ export default function ChatWindowPanel() {
                         : raw,
                       messageType: actionMsg.messageType,
                       createdAt: actionMsg.createdAt,
+                      ...mediaFields,
                     },
                   });
                   setActionMsg(null);

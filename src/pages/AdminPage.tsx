@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { useServerFn } from '@tanstack/react-start';
 import { replyToTicket, deleteTicket } from '@/lib/support.functions';
 import { publishAppRelease } from '@/lib/app-release.functions';
+import { getLatestDevices, type DeviceInfo } from '@/lib/admin-devices.functions';
 import TribeDetailsSheet from '@/components/TribeDetailsSheet';
 
 interface PlatformUser {
@@ -72,6 +73,8 @@ export default function AdminPage() {
   const supabase = createClient();
   const isMaster = !!profile?.is_master_admin || profile?.role === 'master_admin';
   const publishReleaseFn = useServerFn(publishAppRelease);
+  const loadDevicesFn = useServerFn(getLatestDevices);
+  const [devices, setDevices] = useState<Record<string, DeviceInfo>>({});
   const [releasing, setReleasing] = useState(false);
   const [confirmRelease, setConfirmRelease] = useState(false);
   const [users, setUsers] = useState<PlatformUser[]>([]);
@@ -266,6 +269,16 @@ export default function AdminPage() {
         onlineNow: onlineCount,
         apkDownloads: 0,
       });
+
+      // Fetch latest device per user (best-effort; admin-only)
+      try {
+        const list = await loadDevicesFn({ data: { userIds: allUsers.map((u: any) => u.id) } });
+        const map: Record<string, DeviceInfo> = {};
+        for (const d of list || []) map[d.userId] = d;
+        setDevices(map);
+      } catch (e) {
+        // Non-fatal
+      }
 
       // APK downloads — total clicks since launch
       try {
@@ -822,6 +835,24 @@ export default function AdminPage() {
                           {online ? 'Online now' : `Last active ${relTime(u.last_seen)}`}
                           <span className="text-muted-foreground/30">·</span>
                           <span>Joined {new Date(u.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</span>
+                          {devices[u.id] && (
+                            <>
+                              <span className="text-muted-foreground/30">·</span>
+                              <span
+                                className={`px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide ${
+                                  devices[u.id].label === 'Android App'
+                                    ? 'bg-vt-green/15 text-vt-green'
+                                    : devices[u.id].label === 'iOS PWA'
+                                      ? 'bg-blue-500/15 text-blue-400'
+                                      : 'bg-muted text-muted-foreground'
+                                }`}
+                                title={`Last device: ${devices[u.id].label}${devices[u.id].version ? ' ' + devices[u.id].version : ''}`}
+                              >
+                                {devices[u.id].label}
+                                {devices[u.id].version ? ` v${devices[u.id].version}` : ''}
+                              </span>
+                            </>
+                          )}
                         </p>
                       </div>
                       <div className="flex flex-col items-end gap-1 flex-shrink-0">
