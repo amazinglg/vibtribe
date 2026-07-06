@@ -1768,7 +1768,7 @@ export default function ChatWindowPanel() {
   // Calls now start immediately — the browser's native permission prompt handles mic/camera.
   const handleVoiceCallClick = async () => {
     if (!contact?.userId) return;
-    const callRow = await startCall({ calleeId: contact.userId, chatId: selectedChatId, type: 'voice', calleeName: contact.name, calleeAvatar: contact.avatar });
+    const callRow = await startCall({ calleeId: contact.userId, chatId: selectedChatId, type: 'voice', calleeName: contact.name, calleeAvatar: contact.avatarUrl || contact.avatar });
     if (callRow?.id) {
       const callerName = profile?.full_name || 'Someone';
       sendPushNotification(supabase, {
@@ -1782,7 +1782,7 @@ export default function ChatWindowPanel() {
 
   const handleVideoCallClick = async () => {
     if (!contact?.userId) return;
-    const callRow = await startCall({ calleeId: contact.userId, chatId: selectedChatId, type: 'video', calleeName: contact.name, calleeAvatar: contact.avatar });
+    const callRow = await startCall({ calleeId: contact.userId, chatId: selectedChatId, type: 'video', calleeName: contact.name, calleeAvatar: contact.avatarUrl || contact.avatar });
     if (callRow?.id) {
       const callerName = profile?.full_name || 'Someone';
       sendPushNotification(supabase, {
@@ -1801,7 +1801,7 @@ export default function ChatWindowPanel() {
       // Start real WebRTC video call
       let callRow: any = null;
       if (contact?.userId) {
-        callRow = await startCall({ calleeId: contact.userId, chatId: selectedChatId, type: 'video', calleeName: contact.name, calleeAvatar: contact.avatar });
+        callRow = await startCall({ calleeId: contact.userId, chatId: selectedChatId, type: 'video', calleeName: contact.name, calleeAvatar: contact.avatarUrl || contact.avatar });
       }
       // Also send push notification (best-effort)
       if (contact?.userId && callRow?.id) {
@@ -1822,7 +1822,7 @@ export default function ChatWindowPanel() {
       await requestMicrophone();
       let callRow: any = null;
       if (contact?.userId) {
-        callRow = await startCall({ calleeId: contact.userId, chatId: selectedChatId, type: 'voice', calleeName: contact.name, calleeAvatar: contact.avatar });
+        callRow = await startCall({ calleeId: contact.userId, chatId: selectedChatId, type: 'voice', calleeName: contact.name, calleeAvatar: contact.avatarUrl || contact.avatar });
       }
       if (contact?.userId && callRow?.id) {
         const callerName = profile?.full_name || 'Someone';
@@ -1847,7 +1847,7 @@ export default function ChatWindowPanel() {
     // Still allow call to proceed — browser will prompt natively
     if (contact?.userId) {
       const t = pendingCall === 'video' ? 'video' : 'voice';
-      startCall({ calleeId: contact.userId, chatId: selectedChatId, type: t, calleeName: contact.name, calleeAvatar: contact.avatar });
+      startCall({ calleeId: contact.userId, chatId: selectedChatId, type: t, calleeName: contact.name, calleeAvatar: contact.avatarUrl || contact.avatar });
     }
     setPendingCall(null);
   };
@@ -2408,7 +2408,7 @@ export default function ChatWindowPanel() {
                     </div>
                     {isMe && contact?.userId && (
                       <button
-                        onClick={() => startCall({ calleeId: contact.userId!, chatId: selectedChatId, type: callKind as 'voice'|'video', calleeName: contact.name, calleeAvatar: contact.avatar })}
+                        onClick={() => startCall({ calleeId: contact.userId!, chatId: selectedChatId, type: callKind as 'voice'|'video', calleeName: contact.name, calleeAvatar: contact.avatarUrl || contact.avatar })}
                         className="ml-2 px-3 py-1 rounded-lg bg-primary/15 text-primary text-xs font-semibold hover:bg-primary/25 transition-all">
                         Call back
                       </button>
