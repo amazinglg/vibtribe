@@ -3100,7 +3100,7 @@ export default function ChatWindowPanel() {
             )}
             {actionMsg.senderId !== user?.id && (
               <button
-                onClick={() => {
+                onClick={async () => {
                   const raw = (actionMsg?.text || '').toString();
                   let type: ReportType = 'message';
                   let envelope: any = null;
@@ -3110,6 +3110,38 @@ export default function ChatWindowPanel() {
                     else if (envelope?.type === 'video') type = 'video';
                     else if (envelope?.type === 'audio') type = 'audio';
                     else if (envelope?.type) type = 'file';
+                  }
+                  // For media reports, try to decrypt the actual content so moderators
+                  // can review the exact image/video/audio/file the user flagged.
+                  let mediaFields: { mediaBase64?: string; mediaMime?: string; mediaName?: string } = {};
+                  if (envelope?.url && (type === 'image' || type === 'video' || type === 'audio' || type === 'file')) {
+                    try {
+                      const signed = await signChatMediaUrl(envelope.url);
+                      const res = await fetch(signed);
+                      if (res.ok) {
+                        const cipher = await res.arrayBuffer();
+                        const plain = envelope.k
+                          ? await decryptBytesWithKey(cipher, envelope.k)
+                          : contactPubKeyRef.current
+                            ? await decryptBytes(cipher, contactPubKeyRef.current)
+                            : null;
+                        if (plain) {
+                          // Cap at ~10MB to keep server payload safe.
+                          const MAX = 10 * 1024 * 1024;
+                          const bytes = plain.byteLength > MAX ? plain.slice(0, MAX) : plain;
+                          let bin = '';
+                          const view = new Uint8Array(bytes);
+                          for (let i = 0; i < view.length; i++) bin += String.fromCharCode(view[i]);
+                          mediaFields = {
+                            mediaBase64: btoa(bin),
+                            mediaMime: envelope.mime || 'application/octet-stream',
+                            mediaName: envelope.name || `evidence`,
+                          };
+                        }
+                      }
+                    } catch (e) {
+                      console.warn('[report] media decrypt failed', e);
+                    }
                   }
                   setReportTarget({
                     reportType: type,
@@ -3122,6 +3154,7 @@ export default function ChatWindowPanel() {
                         : raw,
                       messageType: actionMsg.messageType,
                       createdAt: actionMsg.createdAt,
+                      ...mediaFields,
                     },
                   });
                   setActionMsg(null);
