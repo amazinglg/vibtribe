@@ -6,6 +6,8 @@ import MarkSecureModal from '@/components/MarkSecureModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { getOrCreateKeyPair, encryptMessage, decryptMessage, isEncrypted, encryptBytes, encryptBytesWithRandomKey, hasLocalPrivateKey, encryptGroupMessage, decryptGroupMessageForMe, isGroupEncrypted, type GroupMember } from '@/lib/encryption';
+import { decryptBytes, decryptBytesWithKey } from '@/lib/encryption';
+import { signChatMediaUrl } from '@/lib/chat-media-url';
 import EncryptedMedia from '@/components/EncryptedMedia';
 import ChatMediaImg from '@/components/ChatMediaImg';
 import { getPreferredNickname } from '@/components/SecureVaultModal';
