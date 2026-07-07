@@ -210,7 +210,30 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
       }
     }
     const { applyAvatarPrivacy } = await import('@/lib/visible-avatars');
-    setContacts(await applyAvatarPrivacy(result, 'userId', 'avatarUrl'));
+    const withAvatars = await applyAvatarPrivacy(result, 'userId', 'avatarUrl');
+    // Merge with any contacts already loaded (e.g. saved contacts from account).
+    // Never replace outright — otherwise saved contacts vanish after sync.
+    setContacts(prev => {
+      const byKey = new Map<string, Contact>();
+      for (const c of [...withAvatars, ...prev]) {
+        const key = c.userId || c.phone;
+        if (!key) continue;
+        const existing = byKey.get(key);
+        // Prefer the entry that has richer platform info.
+        if (!existing) { byKey.set(key, c); continue; }
+        byKey.set(key, {
+          ...existing,
+          ...c,
+          onPlatform: existing.onPlatform || c.onPlatform,
+          userId: existing.userId || c.userId,
+          avatarUrl: existing.avatarUrl || c.avatarUrl,
+          isVerified: existing.isVerified || c.isVerified,
+          name: c.name || existing.name,
+          phone: c.phone || existing.phone,
+        });
+      }
+      return Array.from(byKey.values());
+    });
     setLoading(false);
   };
 
