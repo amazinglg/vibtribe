@@ -573,6 +573,9 @@ export function stopOngoingCallNotification(): void {
     const bridge = (window as any)?.VtCall;
     if (!bridge || typeof bridge.stop !== 'function') return;
     bridge.stop();
+    // Restore the WebView's audio mode to MODE_NORMAL so ringtones and
+    // media playback go back through the loudspeaker after the call ends.
+    try { if (typeof bridge.resetAudioMode === 'function') bridge.resetAudioMode(); } catch {}
   } catch {}
 }
 
