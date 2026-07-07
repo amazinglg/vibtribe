@@ -70,7 +70,7 @@ function formatPreviewText(raw: string | null | undefined): string {
 
 // Renders plain text with auto-detected URLs as clickable links.
 // Supports http(s)://, www., and bare domain.tld links.
-const URL_RE = /((?:https?:\/\/|www\.)[^\s<>"']+|\b[a-z0-9-]+\.(?:com|net|org|io|ai|co|app|in|dev|me|xyz|gg|so|to|tv|info|app)(?:\/[^\s<>"']*)?)/gi;
+const URL_RE = /((?:https?:\/\/|www\.)[^\s<>"']+|\b(?:[a-z0-9-]+\.)+(?:com|net|org|io|ai|co|app|in|dev|me|xyz|gg|so|to|tv|info)(?:\/[^\s<>"']*)?)/gi;
 
 /**
  * Detect "solo emoji" messages — a single emoji and nothing else (no text,
@@ -2885,9 +2885,9 @@ export default function ChatWindowPanel() {
           name="chat-message"
           rows={1}
           autoComplete="off"
-          autoCorrect="on"
+          autoCorrect="off"
           autoCapitalize="sentences"
-          spellCheck={true}
+          spellCheck={false}
           data-form-type="other"
           data-lpignore="true"
           data-1p-ignore="true"

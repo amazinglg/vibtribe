@@ -5,6 +5,7 @@ import android.app.DownloadManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.Bundle;
@@ -120,6 +121,32 @@ public class MainActivity extends BridgeActivity {
     public static class CallBridge {
         private final MainActivity activity;
         CallBridge(MainActivity a) { this.activity = a; }
+
+        @JavascriptInterface
+        public void setSpeakerOn(boolean on) {
+            try {
+                AudioManager am = (AudioManager) activity.getSystemService(Context.AUDIO_SERVICE);
+                if (am == null) return;
+                // MODE_IN_COMMUNICATION is the correct mode for VoIP/WebRTC calls;
+                // it enables the earpiece as the default output when speaker is off.
+                am.setMode(AudioManager.MODE_IN_COMMUNICATION);
+                am.setSpeakerphoneOn(on);
+            } catch (Exception e) {
+                Log.w("VibTribeCall", "setSpeakerOn failed", e);
+            }
+        }
+
+        @JavascriptInterface
+        public void resetAudioMode() {
+            try {
+                AudioManager am = (AudioManager) activity.getSystemService(Context.AUDIO_SERVICE);
+                if (am == null) return;
+                am.setSpeakerphoneOn(false);
+                am.setMode(AudioManager.MODE_NORMAL);
+            } catch (Exception e) {
+                Log.w("VibTribeCall", "resetAudioMode failed", e);
+            }
+        }
 
         @JavascriptInterface
         public void start(String callId, String callerName, String callType, String chatId, boolean muted) {
