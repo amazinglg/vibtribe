@@ -2880,10 +2880,10 @@ export default function ChatWindowPanel() {
         >
           <Smile size={20} />
         </button>
-        <input
-          ref={inputRef}
-          type="text"
+        <textarea
+          ref={inputRef as any}
           name="chat-message"
+          rows={1}
           autoComplete="off"
           autoCorrect="on"
           autoCapitalize="sentences"
@@ -2893,27 +2893,36 @@ export default function ChatWindowPanel() {
           data-1p-ignore="true"
           enterKeyHint="send"
           value={inputText}
-          onChange={e => setInputText(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()}
+          onChange={e => {
+            setInputText(e.target.value);
+            const ta = e.currentTarget;
+            ta.style.height = 'auto';
+            ta.style.height = Math.min(ta.scrollHeight, 140) + 'px';
+          }}
+          onKeyDown={e => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              sendMessage();
+              const ta = e.currentTarget;
+              requestAnimationFrame(() => { ta.style.height = 'auto'; });
+            }
+          }}
           placeholder={e2eEnabled ? t('chat.typeEncrypted') : t('chat.type')}
-          className="flex-1 min-w-0 bg-input border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+          className="flex-1 min-w-0 bg-input border border-border rounded-2xl px-3 py-2.5 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all resize-none leading-5 max-h-[140px] overflow-y-auto"
+          style={{ height: 40 }}
         />
-        {inputText.trim() ? (
-          <button
-            onClick={() => sendMessage()}
-            className="p-2.5 gradient-primary rounded-xl text-white hover:opacity-90 transition-all glow-primary flex-shrink-0"
-            aria-label="Send"
-          >
-            <Send size={18} />
-          </button>
-        ) : (
-          <button
-            className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-all flex-shrink-0"
-            aria-label="Record voice"
-          >
-            <Mic size={20} />
-          </button>
-        )}
+        <button
+          onClick={() => {
+            sendMessage();
+            const ta = inputRef.current as unknown as HTMLTextAreaElement | null;
+            if (ta) requestAnimationFrame(() => { ta.style.height = '40px'; });
+          }}
+          disabled={!inputText.trim() && pendingAttachments.length === 0}
+          className="p-2.5 gradient-primary rounded-xl text-white hover:opacity-90 transition-all glow-primary flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+          aria-label="Send"
+        >
+          <Send size={18} />
+        </button>
       </div>}
 
       {secureModalOpen && (
