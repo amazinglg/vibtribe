@@ -1013,11 +1013,11 @@ export default function CallProvider({ children }: { children: React.ReactNode }
           {/* Keep the remote audio element mounted while minimized so the
               call keeps flowing even with the full UI hidden. */}
           {activeCall.call_type === 'voice' && (
-            <audio ref={remoteAudioRef} autoPlay playsInline muted={speakerOff} className="hidden" />
+            <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
           )}
           {activeCall.call_type === 'video' && (
             <>
-              <video ref={remoteVideoRef} autoPlay playsInline muted={speakerOff} className="hidden" />
+              <video ref={remoteVideoRef} autoPlay playsInline className="hidden" />
               <video ref={localVideoRef} autoPlay muted playsInline className="hidden" />
             </>
           )}
