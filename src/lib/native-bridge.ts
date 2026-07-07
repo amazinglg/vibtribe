@@ -503,9 +503,14 @@ export async function setCallAudioRoute(route: 'speaker' | 'earpiece' | 'bluetoo
     // so the OS routes WebRTC audio correctly based on whether a video track
     // is present. We expose this hook for future native plugin wiring.
     document.documentElement.setAttribute('data-call-audio', route);
-    // If a native Android bridge exposes audio routing, use it. This lets us
-    // switch between earpiece / loudspeaker / bluetooth SCO at runtime.
+    // Native Android AudioManager bridge (exposed by MainActivity.CallBridge).
+    // Without this, WebRTC audio defaults to the loudspeaker even when the
+    // UI says "earpiece" — because the WebView's audio mode is MODE_NORMAL.
     const w = window as any;
+    const vtCall = w.VtCall;
+    if (vtCall && typeof vtCall.setSpeakerOn === 'function' && route !== 'bluetooth') {
+      vtCall.setSpeakerOn(route === 'speaker');
+    }
     const bridge = w.AndroidCallAudio || w.AndroidAudio;
     if (bridge) {
       if (route === 'speaker' && typeof bridge.setSpeakerOn === 'function') bridge.setSpeakerOn(true);
