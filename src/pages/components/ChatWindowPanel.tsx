@@ -672,6 +672,62 @@ export default function ChatWindowPanel() {
     persistDrafts();
   }, [inputText, selectedChatId]);
 
+  // Heartbeat "I am actively viewing this chat" so server-side push logic can
+  // suppress notifications for the conversation the user is already looking at.
+  // Row is written while the chat window is mounted AND the tab is visible.
+  // Cleared on unmount / chat switch / tab hidden.
+  useEffect(() => {
+    if (!selectedChatId || !user) return;
+    let cancelled = false;
+    let interval: number | null = null;
+
+    const write = async () => {
+      if (cancelled) return;
+      try {
+        await supabase.from('user_active_chat').upsert({
+          user_id: user.id,
+          chat_id: selectedChatId,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id' });
+      } catch {}
+    };
+    const clear = async () => {
+      try {
+        await supabase.from('user_active_chat').upsert({
+          user_id: user.id,
+          chat_id: null,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id' });
+      } catch {}
+    };
+
+    const start = () => {
+      if (interval != null) return;
+      void write();
+      interval = window.setInterval(write, 20_000);
+    };
+    const stop = () => {
+      if (interval != null) { window.clearInterval(interval); interval = null; }
+    };
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') start();
+      else { stop(); void clear(); }
+    };
+
+    if (document.visibilityState === 'visible') start();
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('pagehide', clear);
+
+    return () => {
+      cancelled = true;
+      stop();
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('pagehide', clear);
+      void clear();
+    };
+  }, [selectedChatId, user]);
+
   // On unmount, expire seen messages for current chat if mode is 'after_seen'.
   useEffect(() => {
     return () => {
