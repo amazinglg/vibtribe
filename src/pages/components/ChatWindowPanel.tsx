@@ -351,7 +351,7 @@ function CallModal({
 export default function ChatWindowPanel() {
   const { t } = useT();
   const { selectedChatId, setSelectedChatId } = useChatStore();
-  const { user } = useAuth();
+  const { user, profile: myProfile } = useAuth();
   const { startCall } = useCall();
   const supabase = createClient();
   const [messages, setMessages] = useState<Message[]>([]);
