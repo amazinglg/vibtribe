@@ -1751,10 +1751,10 @@ export default function ChatWindowPanel() {
 
   // Premium users and the master admin bypass the 1-hour delete-for-everyone window.
   const canDeleteForEveryoneUnlimited = (() => {
-    if (!profile) return false;
-    if (profile.is_master_admin) return true;
-    if (!profile.is_premium) return false;
-    const exp = profile.premium_expires_at ? new Date(profile.premium_expires_at).getTime() : null;
+    if (!myProfile) return false;
+    if (myProfile.is_master_admin) return true;
+    if (!myProfile.is_premium) return false;
+    const exp = myProfile.premium_expires_at ? new Date(myProfile.premium_expires_at).getTime() : null;
     return exp === null || exp > Date.now();
   })();
   const canDeleteForEveryone = (iso?: string) => canDeleteForEveryoneUnlimited || isWithinHour(iso);
