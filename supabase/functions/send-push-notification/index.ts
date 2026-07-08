@@ -120,6 +120,24 @@ serve(async (req) => {
       }
     }
 
+    // Suppress when the recipient is actively viewing this exact chat in the
+    // foreground (heartbeat < 35s old). Applies to messages only, not calls.
+    if (chatId && body.type !== 'voice_call' && body.type !== 'video_call') {
+      try {
+        const { data: active } = await admin
+          .from('user_active_chat')
+          .select('chat_id, updated_at')
+          .eq('user_id', recipientId)
+          .maybeSingle();
+        if (active && active.chat_id === chatId && active.updated_at
+            && Date.now() - new Date(active.updated_at).getTime() < 35_000) {
+          return json({ sent: 0, skipped: 'active_viewer' });
+        }
+      } catch (e) {
+        console.warn('[push] active-viewer check failed', e);
+      }
+    }
+
     const { data: subscriptions, error: subError } = await admin
       .from('push_subscriptions')
       .select('endpoint,p256dh,auth')
