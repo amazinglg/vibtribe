@@ -351,7 +351,7 @@ function CallModal({
 export default function ChatWindowPanel() {
   const { t } = useT();
   const { selectedChatId, setSelectedChatId } = useChatStore();
-  const { user } = useAuth();
+  const { user, profile: myProfile } = useAuth();
   const { startCall } = useCall();
   const supabase = createClient();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -1748,6 +1748,16 @@ export default function ChatWindowPanel() {
     if (!iso) return false;
     return (Date.now() - new Date(iso).getTime()) < 60 * 60 * 1000;
   };
+
+  // Premium users and the master admin bypass the 1-hour delete-for-everyone window.
+  const canDeleteForEveryoneUnlimited = (() => {
+    if (!myProfile) return false;
+    if (myProfile.is_master_admin) return true;
+    if (!myProfile.is_premium) return false;
+    const exp = myProfile.premium_expires_at ? new Date(myProfile.premium_expires_at).getTime() : null;
+    return exp === null || exp > Date.now();
+  })();
+  const canDeleteForEveryone = (iso?: string) => canDeleteForEveryoneUnlimited || isWithinHour(iso);
 
   const handleLongPressStart = (msg: Message) => {
     if (msg.deletedForEveryone) return;
@@ -3147,11 +3157,11 @@ export default function ChatWindowPanel() {
             {actionMsg.senderId === user?.id && (
               <button
                 onClick={() => deleteForEveryone(actionMsg.id)}
-                disabled={!isWithinHour(actionMsg.createdAt)}
+                disabled={!canDeleteForEveryone(actionMsg.createdAt)}
                 className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-red-400 border-t border-border disabled:opacity-40"
               >
                 🗑️ Delete for everyone
-                {!isWithinHour(actionMsg.createdAt) && <span className="ml-auto text-[10px] text-muted-foreground">past 1 hour</span>}
+                {!canDeleteForEveryone(actionMsg.createdAt) && <span className="ml-auto text-[10px] text-muted-foreground">past 1 hour</span>}
               </button>
             )}
             {chatType === 'group' && tribeRole === 'leader' && (
