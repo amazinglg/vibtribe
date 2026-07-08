@@ -3157,11 +3157,11 @@ export default function ChatWindowPanel() {
             {actionMsg.senderId === user?.id && (
               <button
                 onClick={() => deleteForEveryone(actionMsg.id)}
-                disabled={!isWithinHour(actionMsg.createdAt)}
+                disabled={!canDeleteForEveryone(actionMsg.createdAt)}
                 className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-red-400 border-t border-border disabled:opacity-40"
               >
                 🗑️ Delete for everyone
-                {!isWithinHour(actionMsg.createdAt) && <span className="ml-auto text-[10px] text-muted-foreground">past 1 hour</span>}
+                {!canDeleteForEveryone(actionMsg.createdAt) && <span className="ml-auto text-[10px] text-muted-foreground">past 1 hour</span>}
               </button>
             )}
             {chatType === 'group' && tribeRole === 'leader' && (
