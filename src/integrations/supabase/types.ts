@@ -1570,6 +1570,24 @@ export type Database = {
           },
         ]
       }
+      user_active_chat: {
+        Row: {
+          chat_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          chat_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          chat_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_consents: {
         Row: {
           created_at: string
