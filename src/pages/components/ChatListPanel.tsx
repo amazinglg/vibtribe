@@ -321,6 +321,10 @@ export default function ChatListPanel() {
     // to update without needing to close and reopen the app.
     const onSecureChanged = () => { loadChats(); };
     window.addEventListener('vt-secure-changed', onSecureChanged);
+    // Immediate refresh when the current user just sent a message — we don't
+    // want the sender waiting on realtime to see their chat move up.
+    const onMessageSent = () => { loadChats(); };
+    window.addEventListener('vt-message-sent', onMessageSent);
     // iOS PWA + Android WebView: realtime websockets can silently disconnect
     // when the app goes to background. Use visibility/focus + a 30s polling
     // fallback to keep the list fresh even when realtime is wedged.
@@ -337,6 +341,7 @@ export default function ChatListPanel() {
       window.removeEventListener('vt-network-online', onResume);
       window.removeEventListener('vt-tribe-avatar-updated', onResume);
       window.removeEventListener('vt-secure-changed', onSecureChanged);
+      window.removeEventListener('vt-message-sent', onMessageSent);
       document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('focus', onVisibility);
       clearInterval(poll);
