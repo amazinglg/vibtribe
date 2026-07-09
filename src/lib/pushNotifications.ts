@@ -103,13 +103,27 @@ async function persistSubscription(
 export async function ensurePushSubscription(supabase: any, userId: string): Promise<boolean> {
   if (!canRequestWebPush() || !userId) return false;
 
-  const permission = Notification.permission === 'default'
-    ? await Notification.requestPermission()
-    : Notification.permission;
+  // iOS 16.4+ PWA: `Notification.requestPermission()` MUST be triggered by
+  // a user gesture. If we call it from an auto effect on 'default', Safari
+  // silently returns 'denied' and permanently blocks the prompt until the
+  // PWA is reinstalled. So only auto-request on non-iOS; on iOS require the
+  // permission to already be 'granted' (a UI button should have triggered
+  // the prompt beforehand).
+  let permission = Notification.permission;
+  if (permission === 'default') {
+    if (isIosDevice()) {
+      console.info('[push] iOS PWA: waiting for user gesture to request permission');
+      return false;
+    }
+    permission = await Notification.requestPermission();
+  }
   if (permission !== 'granted') return false;
 
   const publicKey = await getVapidPublicKey(supabase);
-  if (!publicKey) return false;
+  if (!publicKey) {
+    console.warn('[push] no VAPID public key available');
+    return false;
+  }
   await seedVapidKeyToServiceWorker(publicKey);
 
   const registration = await navigator.serviceWorker.ready;
@@ -134,13 +148,20 @@ export async function ensurePushSubscription(supabase: any, userId: string): Pro
   }
 
   if (!subscription) {
-    subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: base64UrlToUint8Array(publicKey) as BufferSource,
-    });
+    try {
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: base64UrlToUint8Array(publicKey) as BufferSource,
+      });
+    } catch (err) {
+      console.error('[push] pushManager.subscribe failed', err);
+      return false;
+    }
   }
 
-  return persistSubscription(supabase, userId, subscription.toJSON());
+  const ok = await persistSubscription(supabase, userId, subscription.toJSON());
+  if (!ok) console.warn('[push] persistSubscription upsert failed');
+  return ok;
 }
 
 // Listen for the SW's `pushsubscriptionchange` notification and persist the

@@ -14,6 +14,7 @@ interface UserRow {
   id: string;
   full_name: string;
   mobile_number?: string;
+  avatar_url?: string | null;
 }
 
 export default function CreateGroupModal({ isOpen, onClose, onCreated }: Props) {
@@ -29,11 +30,32 @@ export default function CreateGroupModal({ isOpen, onClose, onCreated }: Props) 
   useEffect(() => {
     if (!isOpen || !user) return;
     (async () => {
-      const { data } = await (supabase as any)
-        .rpc('list_recent_public_users', { _limit: 100 });
-      setUsers((data || []).map((u: any) => ({
-        id: u.id, full_name: u.full_name, mobile_number: u.mobile_number,
-      })));
+      // PRIVACY: only load contacts the current user has saved themselves.
+      // Never surface arbitrary platform users here — that would leak other
+      // users' contacts into tribe creation.
+      const { data: saved } = await supabase
+        .from('contacts')
+        .select('contact_id, contact_name')
+        .eq('user_id', user.id);
+      const ids = [...new Set((saved || []).map((s: any) => s.contact_id).filter(Boolean))];
+      if (ids.length === 0) { setUsers([]); return; }
+      const { data: profiles } = await supabase
+        .from('user_profiles')
+        .select('id, full_name, mobile_number, avatar_url')
+        .in('id', ids);
+      const pMap = new Map((profiles || []).map((p: any) => [p.id, p]));
+      const list: UserRow[] = (saved || [])
+        .map((s: any) => {
+          const p = pMap.get(s.contact_id);
+          return {
+            id: s.contact_id,
+            full_name: s.contact_name || p?.full_name || 'Contact',
+            mobile_number: p?.mobile_number,
+            avatar_url: p?.avatar_url,
+          };
+        })
+        .sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
+      setUsers(list);
     })();
   }, [isOpen, user]);
 

@@ -182,6 +182,13 @@ export function usePermissions() {
       const result = await Notification.requestPermission();
       const status: PermissionStatus = result === 'granted' ? 'granted' : 'denied';
       setPermissions(p => ({ ...p, notifications: status }));
+      // Web-push subscription must be created inside the same user gesture
+      // that granted permission on iOS PWA — otherwise Safari sometimes
+      // drops the subscribe() call. Fire an event so ServiceWorkerRegistration
+      // immediately runs ensurePushSubscription().
+      if (result === 'granted' && typeof window !== 'undefined') {
+        try { window.dispatchEvent(new Event('vt-notif-granted')); } catch {}
+      }
       return { granted: result === 'granted', status };
     } catch {
       setPermissions(p => ({ ...p, notifications: 'denied' }));

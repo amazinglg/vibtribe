@@ -103,10 +103,16 @@ export default function ServiceWorkerRegistration() {
     };
     window.addEventListener('focus', onFocusOrVisible);
     document.addEventListener('visibilitychange', onFocusOrVisible);
+    // Fired by usePermissions() the moment the user grants notification
+    // permission via a button gesture — critical for iOS PWA where the
+    // subscribe() call must follow the grant promptly.
+    const onNotifGranted = () => { subscriptionSavedRef.current = false; setupPush(); };
+    window.addEventListener('vt-notif-granted', onNotifGranted);
     const detachChange = attachPushSubscriptionChangeListener(supabase, () => userIdRef.current);
     return () => {
       window.removeEventListener('focus', onFocusOrVisible);
       document.removeEventListener('visibilitychange', onFocusOrVisible);
+      window.removeEventListener('vt-notif-granted', onNotifGranted);
       detachChange();
     };
   }, [user]);

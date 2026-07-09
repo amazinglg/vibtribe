@@ -24,7 +24,11 @@ serve(async (req) => {
   try {
     const publicKey = Deno.env.get('VAPID_PUBLIC_KEY') || '';
     const privateKey = Deno.env.get('VAPID_PRIVATE_KEY') || '';
-    const subject = Deno.env.get('VAPID_SUBJECT') || 'mailto:support@vibetribe.in';
+    // NOTE: iOS/APNs rejects pushes whose VAPID `sub` claim points at a
+    // non-existent domain. Default MUST match the real production domain
+    // (vibtribe.in — was a typo `vibetribe.in` before which caused APNs
+    // to silently drop iOS PWA pushes).
+    const subject = Deno.env.get('VAPID_SUBJECT') || 'mailto:support@vibtribe.in';
     const body = await req.json().catch(() => ({}));
 
     if (body.action === 'getPublicKey') {
@@ -169,12 +173,15 @@ serve(async (req) => {
           // No `topic`: FCM/APNs use it to COLLAPSE notifications with the same value,
           // which made later chat messages silently overwrite earlier ones on Android
           // when the device was offline/locked. Each push must show independently.
-          { TTL: 86400, urgency: 'high' }
+          // iOS APNs caps TTL and prefers shorter values for message pushes.
+          // 12h is plenty and avoids APNs dropping the push as "too long".
+          { TTL: 43200, urgency: 'high' }
         );
         sent += 1;
       } catch (error: any) {
         const status = error?.statusCode;
         const bodyMsg = String(error?.body || error?.message || '');
+        console.warn('[push] delivery error', { status, bodyMsg, endpoint: sub.endpoint?.slice(0, 60) });
         // Stale-subscription detection:
         //  - 404/410           → endpoint gone (Chrome/FCM + Firefox)
         //  - 401              → FCM rejects the VAPID JWT (key was rotated)

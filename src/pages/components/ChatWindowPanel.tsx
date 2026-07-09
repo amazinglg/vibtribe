@@ -1311,6 +1311,13 @@ export default function ChatWindowPanel() {
       if (data) {
         setMessages(prev => prev.map(m => m.id === tempId ? { ...m, id: data.id, status: 'delivered', createdAt: data.created_at } : m));
         await supabase.from('chats').update({ updated_at: new Date().toISOString() }).eq('id', selectedChatId);
+        // Nudge the chat list to reorder immediately, without waiting for the
+        // realtime round-trip (which can lag 1–3s on mobile/PWAs).
+        try {
+          window.dispatchEvent(new CustomEvent('vt-message-sent', {
+            detail: { chatId: selectedChatId, preview: text, at: Date.now() },
+          }));
+        } catch {}
         if (contact?.userId) {
           const senderName = profile?.full_name || 'Someone';
           await sendPushNotification(supabase, {
