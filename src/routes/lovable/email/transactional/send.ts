@@ -304,7 +304,6 @@ export const Route = createFileRoute("/lovable/email/transactional/send")({
             purpose: 'transactional',
             label: templateName,
             idempotency_key: idempotencyKey,
-            unsubscribe_token: unsubscribeToken,
             queued_at: new Date().toISOString(),
           },
         })
