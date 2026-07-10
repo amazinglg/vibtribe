@@ -1,16 +1,15 @@
 import React from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { ArrowLeft, ShieldCheck, Heart, Compass, Sparkles, Quote, Calendar, Target, Users, Lock } from 'lucide-react';
+import { ArrowLeft, ShieldCheck, Compass, Sparkles, Calendar, Target, Users, Lock } from 'lucide-react';
 import AppLogo from '@/components/ui/AppLogo';
 import Wordmark from '@/components/ui/Wordmark';
-import founderImg from '@/assets/founder-richa.png.asset.json';
 
 export const Route = createFileRoute('/about')({
   head: () => ({
     meta: [
-      { title: 'About VibTribe — Our Story, Vision & Co-Founder' },
-      { name: 'description', content: 'Learn about VibTribe — founded in June 2026 by Richa. Our mission, values, and a personal note from our co-founder on building a private, vibrant social messaging platform.' },
-      { property: 'og:title', content: 'About VibTribe — Our Story, Vision & Co-Founder' },
+      { title: 'About VibTribe — Our Story & Vision' },
+      { name: 'description', content: 'Learn about VibTribe — a privacy-first social messaging platform. Our mission, values, and vision for private, vibrant communication.' },
+      { property: 'og:title', content: 'About VibTribe — Our Story & Vision' },
       { property: 'og:description', content: 'The story, values and vision behind VibTribe — a privacy-first social messaging platform.' },
     ],
   }),
@@ -67,20 +66,13 @@ function AboutPage() {
 
       {/* Story / Founded */}
       <section className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 pb-12 sm:pb-16">
-        <div className="grid sm:grid-cols-3 gap-4">
+        <div className="grid sm:grid-cols-2 gap-4">
           <div className="glass rounded-2xl border border-border p-5">
             <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center mb-3 glow-primary">
               <Calendar size={18} className="text-white" />
             </div>
             <h3 className="font-bold text-foreground mb-1">Founded in June 2026</h3>
             <p className="text-sm text-muted-foreground">Born out of a need for a chat experience that puts people, not advertisers, at the center.</p>
-          </div>
-          <div className="glass rounded-2xl border border-border p-5">
-            <div className="w-10 h-10 rounded-xl gradient-pink flex items-center justify-center mb-3">
-              <Heart size={18} className="text-white" />
-            </div>
-            <h3 className="font-bold text-foreground mb-1">Co-Founder — Richa</h3>
-            <p className="text-sm text-muted-foreground">Co-Founder &amp; product lead, on a mission to make private, joyful communication the default.</p>
           </div>
           <div className="glass rounded-2xl border border-border p-5">
             <div className="w-10 h-10 rounded-xl gradient-cyan flex items-center justify-center mb-3">
@@ -145,68 +137,6 @@ function AboutPage() {
               <li className="flex gap-2"><span className="text-primary">•</span> Transparent policies and honest communication.</li>
               <li className="flex gap-2"><span className="text-primary">•</span> Long-term trust over short-term metrics.</li>
             </ul>
-          </div>
-        </div>
-      </section>
-
-      {/* Co-Founder's Note */}
-      <section className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24">
-        <div className="text-center mb-8">
-          <span className="text-[11px] font-bold uppercase tracking-widest text-primary">Co-Founder&apos;s Note</span>
-          <h2 className="font-extrabold text-2xl sm:text-3xl lg:text-4xl tracking-tight mt-2">A message from Richa</h2>
-        </div>
-
-        <div className="relative rounded-[2rem] overflow-hidden border border-border glass-strong">
-          {/* Decorative glow */}
-          <div className="pointer-events-none absolute -top-24 -right-24 w-72 h-72 gradient-pink rounded-full blur-3xl opacity-30" />
-          <div className="pointer-events-none absolute -bottom-24 -left-24 w-72 h-72 gradient-primary rounded-full blur-3xl opacity-25" />
-
-          <div className="relative grid lg:grid-cols-5 gap-0">
-            {/* Photo */}
-            <div className="lg:col-span-2 relative">
-              <div className="relative h-72 sm:h-96 lg:h-full min-h-[20rem] overflow-hidden">
-                <img
-                  src={founderImg.url}
-                  alt="Richa, Co-Founder of VibTribe"
-                  className="absolute inset-0 w-full h-full object-cover object-center"
-                />
-                {/* Gradient blend into the card on desktop */}
-                <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-background/10 to-transparent lg:bg-gradient-to-r lg:from-transparent lg:via-transparent lg:to-background/70" />
-                {/* Name plate */}
-                <div className="absolute bottom-4 left-4 right-4 lg:right-auto flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl gradient-primary flex items-center justify-center glow-primary">
-                    <Quote size={20} className="text-white" />
-                  </div>
-                  <div>
-                    <div className="text-white font-extrabold text-lg leading-tight drop-shadow">Richa</div>
-                    <div className="text-xs text-white/80">Co-Founder, VibTribe</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Note */}
-            <div className="lg:col-span-3 p-6 sm:p-10 relative">
-              <Quote size={48} className="text-primary/30 mb-3" />
-              <p className="text-base sm:text-lg leading-relaxed text-foreground/90 mb-4">
-                I started <Wordmark className="text-base sm:text-lg" /> because I believe the place where we talk to the people we love
-                shouldn&apos;t feel like a place we&apos;re being watched. Every message, every memory, every late-night voice note —
-                it deserves a home that respects it.
-              </p>
-              <p className="text-sm sm:text-base leading-relaxed text-muted-foreground mb-4">
-                We are a small, deeply committed team building something that we wish existed for ourselves, our families,
-                and our friends. A space that is private, expressive, and unapologetically human. No ads. No tracking.
-                No compromises on the things that matter.
-              </p>
-              <p className="text-sm sm:text-base leading-relaxed text-muted-foreground mb-6">
-                Thank you for trusting us early. We&apos;re only getting started — and the future we&apos;re building is one where
-                your tribe, your moments, and your voice always stay yours.
-              </p>
-              <div className="flex items-center gap-3">
-                <div className="h-px flex-1 bg-gradient-to-r from-primary/40 to-transparent" />
-                <span className="font-display italic text-lg text-gradient-primary font-bold">— Richa</span>
-              </div>
-            </div>
           </div>
         </div>
       </section>
