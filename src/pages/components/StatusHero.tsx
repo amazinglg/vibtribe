@@ -345,7 +345,7 @@ export default function StatusHero() {
                     className="fixed inset-0 z-[95]"
                     onClick={(e) => { e.stopPropagation(); setShowVisibility(false); }}
                   />
-                <div className="absolute left-0 right-0 bottom-full mb-1 max-h-[60vh] overflow-y-auto glass-strong rounded-xl border border-border shadow-card py-1 z-[100] float-up"
+                <div className="absolute left-0 right-0 top-full mt-1 max-h-[60vh] overflow-y-auto glass-strong rounded-xl border border-border shadow-card py-1 z-[100] float-up"
                      onClick={(e) => e.stopPropagation()}>
                   <p className="px-3 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                     Who can see this status?
