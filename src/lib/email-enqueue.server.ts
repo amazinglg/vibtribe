@@ -122,7 +122,6 @@ export async function enqueueTransactionalEmail(
       purpose: 'transactional',
       label: opts.templateName,
       idempotency_key: idempotencyKey,
-      unsubscribe_token: unsubscribeToken,
       queued_at: new Date().toISOString(),
     },
   })
