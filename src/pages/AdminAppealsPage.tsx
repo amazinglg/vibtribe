@@ -29,8 +29,9 @@ type AppealRow = {
 
 export default function AdminAppealsPage() {
   const navigate = useNavigate()
-  const { profile, loading } = useAuth()
-  const isMaster = !!profile?.is_master_admin
+  const { profile, loading, hasPermission } = useAuth()
+  const canView = typeof hasPermission === 'function' && (hasPermission('appeals.view') || hasPermission('appeals.manage'))
+  const canManage = typeof hasPermission === 'function' && hasPermission('appeals.manage')
   const [tab, setTab] = useState<'pending' | 'reviewed'>('pending')
   const [rows, setRows] = useState<AppealRow[]>([])
   const [busy, setBusy] = useState(false)
@@ -51,18 +52,18 @@ export default function AdminAppealsPage() {
   }, [tab])
 
   useEffect(() => {
-    if (!loading && !isMaster) navigate({ to: '/admin' })
-  }, [loading, isMaster, navigate])
+    if (!loading && !canView) navigate({ to: '/admin' })
+  }, [loading, canView, navigate])
 
   useEffect(() => {
-    if (!isMaster) return
+    if (!canView) return
     load()
     const ch = supabase
       .channel('admin-appeals')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'report_appeals' }, () => load())
       .subscribe()
     return () => { supabase.removeChannel(ch) }
-  }, [isMaster, load])
+  }, [canView, load])
 
   async function handleDecide(id: string, decision: 'approved' | 'rejected') {
     try {
@@ -78,7 +79,7 @@ export default function AdminAppealsPage() {
   const pendingCount = useMemo(() => rows.filter((r) => r.status === 'pending').length, [rows])
 
   if (loading) return null
-  if (!isMaster) return null
+  if (!canView) return null
 
   return (
     <AppLayout>
@@ -145,7 +146,7 @@ export default function AdminAppealsPage() {
                     Original action: {r.content_reports?.action_taken || 'none'} · Submitted {new Date(r.created_at).toLocaleString()}
                   </p>
 
-                  {r.status === 'pending' ? (
+                  {r.status === 'pending' && canManage ? (
                     <div className="mt-3 space-y-2">
                       <textarea
                         placeholder="Optional review notes (visible to user)"

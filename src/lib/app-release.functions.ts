@@ -27,6 +27,11 @@ export const publishAppRelease = createServerFn({ method: 'POST' })
     if (!actor || (actor.role !== 'admin' && actor.role !== 'master_admin' && !actor.is_master_admin)) {
       throw new Error('Admin access required')
     }
+    const { data: allowed } = await supabaseAdmin.rpc('has_permission', {
+      _user_id: context.userId,
+      _permission_key: 'releases.publish',
+    })
+    if (!allowed) throw new Error('Release publish permission required')
 
     const version = data.version || `r-${Date.now()}`
     const { data: row, error } = await (supabaseAdmin as any)

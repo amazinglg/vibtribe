@@ -74,7 +74,7 @@ function buildBodyHtml(name: string, deadline: Date): string {
 export const sendMissingTermsReminder = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    // Master-admin / admin only
+    // Admin only, governed by the permission matrix.
     const { data: actor } = await supabaseAdmin
       .from('user_profiles')
       .select('is_master_admin, role')
@@ -83,6 +83,11 @@ export const sendMissingTermsReminder = createServerFn({ method: 'POST' })
     if (!actor || (!actor.is_master_admin && actor.role !== 'admin')) {
       throw new Error('Admin access required')
     }
+    const { data: allowed } = await supabaseAdmin.rpc('has_permission', {
+      _user_id: context.userId,
+      _permission_key: 'legal.reminder',
+    })
+    if (!allowed) throw new Error('Policy reminder permission required')
 
     const { data: targets, error } = await supabaseAdmin
       .from('user_profiles')

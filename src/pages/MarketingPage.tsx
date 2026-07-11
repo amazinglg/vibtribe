@@ -26,8 +26,12 @@ const BRAND_HELP_EMAIL = 'help.vibtribe.in@gmail.com'
 
 export default function MarketingPage() {
   const router = useNavigate()
-  const { user, profile, loading, isAdmin } = useAuth()
-  const canAccess = !!profile?.is_master_admin || profile?.role === 'admin' || (typeof isAdmin === 'function' ? isAdmin() : !!isAdmin)
+  const { user, profile, loading, hasPermission } = useAuth()
+  const canAccess = typeof hasPermission === 'function' && hasPermission('marketing.view')
+  const canCreate = typeof hasPermission === 'function' && hasPermission('marketing.create')
+  const canSend = typeof hasPermission === 'function' && hasPermission('marketing.send')
+  const canDelete = typeof hasPermission === 'function' && hasPermission('marketing.delete')
+  const canSendPolicyReminder = typeof hasPermission === 'function' && hasPermission('legal.reminder')
 
   const listFn = useServerFn(listCampaigns)
   const saveFn = useServerFn(saveCampaign)
@@ -102,6 +106,7 @@ export default function MarketingPage() {
   }
 
   function startNew() {
+    if (!canCreate) { toast.error('Create campaign permission required'); return }
     setEditingId(null)
     setSubject(''); setPreheader(''); setContentHtml('<p>Hi there,</p>\n<p>Write your update here.</p>')
     setBannerUrl(''); setAudience('opted_in'); setAudienceCount(null)
@@ -109,6 +114,7 @@ export default function MarketingPage() {
   }
 
   async function editDraft(c: any) {
+    if (!canCreate) { toast.error('Create campaign permission required'); return }
     // Always fetch the latest version from the server so we don't open a
     // stale (already-deleted) draft and then fail on send with "Campaign not found".
     try {
@@ -140,6 +146,7 @@ export default function MarketingPage() {
   useEffect(() => { if (view === 'compose') refreshAudience() }, [audience, view])
 
   async function handleSave(silent = false): Promise<string | null> {
+    if (!canCreate) { toast.error('Create campaign permission required'); return null }
     if (!subject.trim()) { toast.error('Subject is required'); return null }
     if (!contentHtml.trim()) { toast.error('Email body is required'); return null }
     setSaving(true)
@@ -162,6 +169,7 @@ export default function MarketingPage() {
   }
 
   async function handleSendTest() {
+    if (!canSend) { toast.error('Send campaign permission required'); return }
     const id = editingId || await handleSave(true)
     if (!id) return
     const adminEmail = (profile as any)?.real_email || (profile as any)?.email
@@ -176,6 +184,7 @@ export default function MarketingPage() {
   }
 
   async function handleSendAll() {
+    if (!canSend) { toast.error('Send campaign permission required'); return }
     const id = editingId || await handleSave(true)
     if (!id) return
     setSending(true); setConfirmSend(false)
@@ -197,6 +206,7 @@ export default function MarketingPage() {
   }
 
   async function handleDelete(c: any) {
+    if (!canDelete) { toast.error('Delete campaign permission required'); return }
     const prev = campaigns
     setCampaigns(cs => cs.filter(x => x.id !== c.id)) // optimistic
     setConfirmDeleteCampaign(null)
@@ -289,7 +299,7 @@ export default function MarketingPage() {
           return (
             <div className="space-y-6">
               <div className="flex items-center justify-end gap-2">
-                <button
+                {canSendPolicyReminder && <button
                   onClick={async () => {
                     if (sendingPolicyReminder) return
                     if (!confirm('Send a Terms & Privacy acceptance reminder (in-app + email) to every user who has NOT yet accepted? They will have 15 days to accept before offboarding.')) return
@@ -309,10 +319,10 @@ export default function MarketingPage() {
                 >
                   {sendingPolicyReminder ? <Loader2 size={16} className="animate-spin" /> : <AlertTriangle size={16} />}
                   Send T&amp;C / Privacy Reminder
-                </button>
-                <button onClick={startNew} className="gradient-primary text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 glow-primary">
+                </button>}
+                {canCreate && <button onClick={startNew} className="gradient-primary text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 glow-primary">
                   <Plus size={16} /> New Campaign
-                </button>
+                </button>}
               </div>
 
               {/* DRAFTS */}
@@ -335,13 +345,13 @@ export default function MarketingPage() {
                           Last edited {fmt(c.updated_at || c.created_at)} · by {c.created_by_name}
                         </p>
                       </div>
-                      <button onClick={() => editDraft(c)} title="Edit & send"
+                      {canCreate && <button onClick={() => editDraft(c)} title="Edit & send"
                         className="p-2 rounded-lg bg-primary/15 text-primary hover:bg-primary/25" aria-label="Edit draft">
                         <Pencil size={14} />
-                      </button>
-                      <button onClick={() => setConfirmDeleteCampaign(c)} className="p-2 text-muted-foreground hover:text-red-400" aria-label="Delete draft">
+                      </button>}
+                      {canDelete && <button onClick={() => setConfirmDeleteCampaign(c)} className="p-2 text-muted-foreground hover:text-red-400" aria-label="Delete draft">
                         <Trash2 size={14} />
-                      </button>
+                      </button>}
                     </div>
                   ))}
                 </div>
@@ -394,9 +404,9 @@ export default function MarketingPage() {
                                 <button onClick={() => openReport(c)} className="px-2 py-1 text-xs rounded-lg bg-muted hover:bg-primary/20 hover:text-primary inline-flex items-center gap-1">
                                   <Eye size={12} /> Report
                                 </button>
-                                <button onClick={() => setConfirmDeleteCampaign(c)} className="p-1.5 ml-1 text-muted-foreground hover:text-red-400 align-middle">
+                                {canDelete && <button onClick={() => setConfirmDeleteCampaign(c)} className="p-1.5 ml-1 text-muted-foreground hover:text-red-400 align-middle">
                                   <Trash2 size={14} />
-                                </button>
+                                </button>}
                               </td>
                             </tr>
                           ))}
@@ -478,15 +488,15 @@ export default function MarketingPage() {
               </div>
 
               <div className="flex gap-2">
-                <button onClick={handleSave} disabled={saving}
+                <button onClick={handleSave} disabled={saving || !canCreate}
                   className="flex-1 px-4 py-2.5 bg-muted hover:bg-muted/70 rounded-xl text-sm font-semibold">
                   {saving ? 'Saving…' : 'Save Draft'}
                 </button>
-                <button onClick={handleSendTest} disabled={sending}
+                <button onClick={handleSendTest} disabled={sending || !canSend}
                   className="flex-1 px-4 py-2.5 bg-vt-cyan/20 text-vt-cyan border border-vt-cyan/40 hover:bg-vt-cyan/30 rounded-xl text-sm font-semibold flex items-center justify-center gap-2">
                   {sending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />} Send Test to Me
                 </button>
-                <button onClick={() => setConfirmSend(true)} disabled={sending || audienceCount === 0}
+                <button onClick={() => setConfirmSend(true)} disabled={sending || audienceCount === 0 || !canSend}
                   className="flex-1 gradient-primary text-white rounded-xl text-sm font-semibold glow-primary py-2.5 flex items-center justify-center gap-2">
                   <Send size={14} /> Send to All
                 </button>

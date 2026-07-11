@@ -17,6 +17,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
+  const [permissions, setPermissions] = useState<Set<string>>(new Set());
   const supabase = createClient();
 
   useEffect(() => {
@@ -58,6 +59,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         ).catch(() => {});
       } else {
         setProfile(null);
+        setPermissions(new Set());
         stopPresenceHeartbeat();
         stopSessionHeartbeat();
       }
@@ -194,6 +196,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { data } = await supabase.rpc('get_my_full_profile');
       const row = Array.isArray(data) ? data[0] : data;
       setProfile(row ?? null);
+      if (!row) {
+        setPermissions(new Set());
+        return;
+      }
+      if (row.is_master_admin || row.role === 'master_admin') {
+        const { data: keys } = await supabase.from('permission_keys').select('key');
+        setPermissions(new Set((keys ?? []).map((k: any) => k.key)));
+        return;
+      }
+      const { data: rolePerms } = await supabase
+        .from('role_permissions')
+        .select('permission_key, allowed')
+        .eq('role_key', row.role || 'user')
+        .eq('allowed', true);
+      setPermissions(new Set((rolePerms ?? []).map((p: any) => p.permission_key)));
     } catch {}
   };
 
@@ -327,6 +344,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const { error } = await supabase.auth.signOut({ scope: 'global' });
     if (error) throw error;
     setProfile(null);
+    setPermissions(new Set());
     // Hard reload guarantees no in-memory React state from the previous user
     // (chat lists, contacts, drafts) leaks into the next session.
     if (typeof window !== 'undefined') {
@@ -378,6 +396,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const isAdmin = () => profile?.role === 'admin' || profile?.role === 'master_admin' || !!profile?.is_master_admin;
+  const hasPermission = (key: string) => !!profile?.is_master_admin || profile?.role === 'master_admin' || permissions.has(key);
 
   const value = {
     user,
@@ -395,6 +414,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     getUserProfile,
     fetchProfile,
     isAdmin,
+    permissions: Array.from(permissions),
+    hasPermission,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

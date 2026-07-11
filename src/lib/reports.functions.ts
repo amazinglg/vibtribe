@@ -166,13 +166,15 @@ export const getEvidenceSignedUrl = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ path: z.string().min(1) }).parse(input))
   .handler(async ({ data, context }) => {
-    // Verify master admin before generating a signed URL.
-    const { data: prof } = await supabaseAdmin
-      .from('user_profiles')
-      .select('is_master_admin')
-      .eq('id', context.userId)
-      .single()
-    if (!prof?.is_master_admin) throw new Error('Forbidden')
+    const { data: allowed } = await supabaseAdmin.rpc('has_permission', {
+      _user_id: context.userId,
+      _permission_key: 'reports.view',
+    })
+    const { data: manageAllowed } = await supabaseAdmin.rpc('has_permission', {
+      _user_id: context.userId,
+      _permission_key: 'reports.manage',
+    })
+    if (!allowed && !manageAllowed) throw new Error('Forbidden')
 
     const { data: signed, error } = await supabaseAdmin.storage
       .from(BUCKET)
@@ -200,7 +202,11 @@ export const moderateReport = createServerFn({ method: 'POST' })
       .select('is_master_admin, full_name, username')
       .eq('id', context.userId)
       .single()
-    if (!prof?.is_master_admin) throw new Error('Forbidden')
+    const { data: allowed } = await supabaseAdmin.rpc('has_permission', {
+      _user_id: context.userId,
+      _permission_key: 'reports.manage',
+    })
+    if (!allowed) throw new Error('Forbidden')
 
     const { error: updErr } = await supabaseAdmin
       .from('content_reports')
@@ -217,7 +223,7 @@ export const moderateReport = createServerFn({ method: 'POST' })
     await supabaseAdmin.from('moderation_audit_log').insert({
       report_id: data.reportId,
       moderator_id: context.userId,
-      moderator_name: prof.full_name || prof.username || 'Master Admin',
+      moderator_name: prof?.full_name || prof?.username || 'Moderator',
       action: `${data.status}:${data.action}`,
       notes: data.notes ?? null,
     })

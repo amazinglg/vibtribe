@@ -54,8 +54,9 @@ const REASON_LABELS: Record<string, string> = {
 
 export default function AdminReportsPage() {
   const navigate = useNavigate()
-  const { user, profile, loading } = useAuth()
-  const isMaster = !!profile?.is_master_admin
+  const { user, profile, loading, hasPermission } = useAuth()
+  const canView = typeof hasPermission === 'function' && (hasPermission('reports.view') || hasPermission('reports.manage'))
+  const canManage = typeof hasPermission === 'function' && hasPermission('reports.manage')
   const [tab, setTab] = useState<'pending' | 'reviewed'>('pending')
   const [rows, setRows] = useState<ReportRow[]>([])
   const [busy, setBusy] = useState(true)
@@ -71,21 +72,21 @@ export default function AdminReportsPage() {
   useEffect(() => {
     if (loading) return
     if (!user) { navigate({ to: '/sign-in', replace: true }); return }
-    if (!isMaster) { navigate({ to: '/admin', replace: true }); return }
+    if (!canView) { navigate({ to: '/admin', replace: true }); return }
     load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, tab])
 
   // Realtime — refresh on any change
   useEffect(() => {
-    if (!isMaster) return
+    if (!canView) return
     const ch = supabase
       .channel('admin-reports')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'content_reports' }, () => load())
       .subscribe()
     return () => { supabase.removeChannel(ch) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isMaster, tab])
+  }, [canView, tab])
 
   const load = useCallback(async () => {
     setBusy(true)
@@ -207,6 +208,7 @@ export default function AdminReportsPage() {
                 onDecision={(status, action) => handleDecision(r, status, action)}
                 saving={savingId === r.id}
                 signUrl={signUrl}
+                canManage={canManage}
               />
             ))}
           </div>
@@ -217,7 +219,7 @@ export default function AdminReportsPage() {
 }
 
 function ReportCard({
-  report: r, expanded, onToggle, notes, setNotes, onDecision, saving, signUrl,
+  report: r, expanded, onToggle, notes, setNotes, onDecision, saving, signUrl, canManage,
 }: {
   report: ReportRow
   expanded: boolean
@@ -227,6 +229,7 @@ function ReportCard({
   onDecision: (status: 'true_positive' | 'false_positive' | 'dismissed', action?: 'none' | 'suspend_user' | 'ban_user' | 'delete_content' | 'dismiss') => void
   saving: boolean
   signUrl: (input: any) => Promise<any>
+  canManage: boolean
 }) {
   const isPending = r.status === 'pending'
   const priority = r.priority >= 10
@@ -359,7 +362,7 @@ function ReportCard({
             </div>
           )}
 
-          {isPending || overriding ? (
+          {canManage && (isPending || overriding) ? (
             <>
               <div>
                 <label className="text-[11px] uppercase text-muted-foreground">
@@ -408,7 +411,7 @@ function ReportCard({
               <p>Decision: <span className="text-foreground font-semibold capitalize">{r.status.replace('_', ' ')}</span> {r.action_taken && r.action_taken !== 'none' && <>· action: <span className="text-foreground">{r.action_taken.replace('_', ' ')}</span></>}</p>
               <p>Reviewed at: {r.moderated_at ? new Date(r.moderated_at).toLocaleString() : '—'}</p>
               {r.moderator_notes && <p className="mt-2 whitespace-pre-wrap">Notes: {r.moderator_notes}</p>}
-              <div className="pt-3">
+              {canManage && <div className="pt-3">
                 <button
                   onClick={() => setOverriding(true)}
                   className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-vt-amber/15 text-vt-amber border border-vt-amber/30 text-xs font-semibold hover:bg-vt-amber/25 transition-colors"
@@ -416,7 +419,7 @@ function ReportCard({
                   <RotateCcw size={12} /> Change / Override decision
                 </button>
                 <p className="text-[10px] text-muted-foreground mt-1.5">A new audit-log entry will be recorded.</p>
-              </div>
+              </div>}
             </div>
           )}
         </div>

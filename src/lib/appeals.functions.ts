@@ -66,12 +66,11 @@ export const reviewAppeal = createServerFn({ method: 'POST' })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { data: prof } = await supabaseAdmin
-      .from('user_profiles')
-      .select('is_master_admin')
-      .eq('id', context.userId)
-      .single()
-    if (!prof?.is_master_admin) throw new Error('Forbidden')
+    const { data: allowed } = await supabaseAdmin.rpc('has_permission', {
+      _user_id: context.userId,
+      _permission_key: 'appeals.manage',
+    })
+    if (!allowed) throw new Error('Forbidden')
 
     const { data: appeal, error: aErr } = await supabaseAdmin
       .from('report_appeals' as any)
