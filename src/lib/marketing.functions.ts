@@ -11,7 +11,7 @@ import {
 
 // ---------- shared helpers (server-only) ----------
 
-async function assertAdmin(userId: string) {
+async function assertAdmin(userId: string, permissionKey = 'marketing.view') {
   const { data, error } = await supabaseAdmin
     .from('user_profiles')
     .select('is_master_admin, role')
@@ -20,6 +20,11 @@ async function assertAdmin(userId: string) {
   if (error || !data || (!data.is_master_admin && data.role !== 'admin')) {
     throw new Error('Admin access required')
   }
+  const { data: allowed } = await supabaseAdmin.rpc('has_permission', {
+    _user_id: userId,
+    _permission_key: permissionKey,
+  })
+  if (!allowed) throw new Error('Permission required')
 }
 
 function buildUnsubUrl(token: string): string {
@@ -102,7 +107,7 @@ const CampaignDraft = z.object({
 export const listCampaigns = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await assertAdmin(context.userId)
+    await assertAdmin(context.userId, 'marketing.view')
     const { data } = await supabaseAdmin
       .from('email_campaigns')
       .select('*')
@@ -123,7 +128,7 @@ export const getCampaign = createServerFn({ method: 'GET' })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.userId)
+    await assertAdmin(context.userId, 'marketing.view')
     const { data: campaign } = await supabaseAdmin
       .from('email_campaigns').select('*').eq('id', data.id).maybeSingle()
     if (!campaign) throw new Error('Campaign not found')
@@ -140,7 +145,7 @@ export const saveCampaign = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => CampaignDraft.parse(d))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.userId)
+    await assertAdmin(context.userId, 'marketing.create')
     const row = {
       subject: data.subject,
       preheader: data.preheader || null,
@@ -168,7 +173,7 @@ export const previewAudienceSize = createServerFn({ method: 'POST' })
     z.object({ audienceFilter: z.object({ type: z.literal('opted_in') }) }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.userId)
+    await assertAdmin(context.userId, 'marketing.view')
     const aud = await fetchAudience(data.audienceFilter)
     return { count: aud.length }
   })
@@ -179,7 +184,7 @@ export const sendTestEmail = createServerFn({ method: 'POST' })
     z.object({ campaignId: z.string().uuid(), toEmail: z.string().email() }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.userId)
+    await assertAdmin(context.userId, 'marketing.send')
     const { data: c } = await supabaseAdmin
       .from('email_campaigns').select('*').eq('id', data.campaignId).maybeSingle()
     if (!c) throw new Error('Campaign not found')
@@ -221,7 +226,7 @@ export const sendCampaign = createServerFn({ method: 'POST' })
     z.object({ campaignId: z.string().uuid() }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.userId)
+    await assertAdmin(context.userId, 'marketing.send')
     const { data: c } = await supabaseAdmin
       .from('email_campaigns').select('*').eq('id', data.campaignId).maybeSingle()
     if (!c) throw new Error('Campaign not found')
@@ -321,7 +326,7 @@ export const deleteCampaign = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.userId)
+    await assertAdmin(context.userId, 'marketing.delete')
     const { data: campaign, error: fetchError } = await supabaseAdmin
       .from('email_campaigns')
       .select('id,status')
