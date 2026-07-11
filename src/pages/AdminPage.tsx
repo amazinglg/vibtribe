@@ -69,9 +69,10 @@ const TICKET_STATUS_CONFIG = {
 
 export default function AdminPage() {
   const router = useNavigate();
-  const { user, profile, isAdmin, loading } = useAuth();
+  const { user, profile, isAdmin, loading, hasPermission } = useAuth();
   const supabase = createClient();
   const isMaster = !!profile?.is_master_admin || profile?.role === 'master_admin';
+  const can = (key: string) => !!isMaster || (typeof hasPermission === 'function' && hasPermission(key));
   const publishReleaseFn = useServerFn(publishAppRelease);
   const loadDevicesFn = useServerFn(getLatestDevices);
   const [devices, setDevices] = useState<Record<string, DeviceInfo>>({});
@@ -117,7 +118,7 @@ export default function AdminPage() {
 
   // Live pending-report count for the Reports tab badge (master admin only).
   useEffect(() => {
-    if (!isMaster) return;
+    if (!can('reports.view')) return;
     const load = async () => {
       const { count } = await supabase
         .from('content_reports' as any)
@@ -131,11 +132,11 @@ export default function AdminPage() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'content_reports' }, () => load())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [isMaster]);
+  }, [profile]);
 
   // Live pending-appeal count for the Appeals tab badge (master admin only).
   useEffect(() => {
-    if (!isMaster) return;
+    if (!can('appeals.view')) return;
     const load = async () => {
       const { count } = await supabase
         .from('report_appeals' as any)
@@ -149,7 +150,7 @@ export default function AdminPage() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'report_appeals' }, () => load())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [isMaster]);
+  }, [profile]);
 
   const loadThread = async (ticketId: string) => {
     setLoadingThread(true);
@@ -611,7 +612,17 @@ export default function AdminPage() {
 
         {/* Tabs — single-line, horizontally scrollable on small screens */}
         <div className="flex gap-1 p-1 bg-muted rounded-xl mb-6 w-full sm:w-fit overflow-x-auto no-scrollbar">
-          {(['overview', 'users', ...(isMaster ? ['tribes' as const] : []), 'support', 'marketing' as const, ...(isMaster ? ['permissions' as const, 'premium' as const, 'reports' as const, 'appeals' as const] : [])] as const).map(tab => (
+          {([
+            ...(can('overview.view') ? ['overview' as const] : []),
+            ...(can('users.view') ? ['users' as const] : []),
+            ...(can('tribes.view') ? ['tribes' as const] : []),
+            ...(can('support.view') ? ['support' as const] : []),
+            ...(can('marketing.view') ? ['marketing' as const] : []),
+            ...(can('permissions.view') ? ['permissions' as const] : []),
+            ...(can('premium.view') || can('premium.manage') ? ['premium' as const] : []),
+            ...(can('reports.view') || can('reports.manage') ? ['reports' as const] : []),
+            ...(can('appeals.view') || can('appeals.manage') ? ['appeals' as const] : []),
+          ] as const).map(tab => (
             <button
               key={tab}
               onClick={() => {
@@ -708,7 +719,7 @@ export default function AdminPage() {
             </div>
 
             {/* Force Update Release — admin & master admin only */}
-            {isAdmin && (
+            {can('releases.publish') && (
               <div className="glass rounded-2xl border border-border p-5">
                 <div className="flex items-start gap-3 mb-3">
                   <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center flex-shrink-0">

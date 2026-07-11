@@ -9,7 +9,8 @@ import { toast } from 'sonner'
 
 export default function AdminPremiumUsersPage() {
   const navigate = useNavigate()
-  const { user, profile, loading, isAdmin } = useAuth()
+  const { user, profile, loading, hasPermission } = useAuth()
+  const canView = typeof hasPermission === 'function' && (hasPermission('premium.view') || hasPermission('premium.manage'))
   const [rows, setRows] = useState<any[]>([])
   const [busy, setBusy] = useState(true)
   const [query, setQuery] = useState('')
@@ -17,7 +18,7 @@ export default function AdminPremiumUsersPage() {
   useEffect(() => {
     if (loading) return
     if (!user) { navigate({ to: '/sign-in', replace: true }); return }
-    if (!isAdmin?.()) { navigate({ to: '/', replace: true }); return }
+    if (!canView) { navigate({ to: '/admin', replace: true }); return }
     refresh()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading])
