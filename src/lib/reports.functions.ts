@@ -223,7 +223,7 @@ export const moderateReport = createServerFn({ method: 'POST' })
     await supabaseAdmin.from('moderation_audit_log').insert({
       report_id: data.reportId,
       moderator_id: context.userId,
-      moderator_name: prof.full_name || prof.username || 'Master Admin',
+      moderator_name: prof?.full_name || prof?.username || 'Moderator',
       action: `${data.status}:${data.action}`,
       notes: data.notes ?? null,
     })
