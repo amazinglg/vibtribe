@@ -41,6 +41,7 @@ import { Route as BlogSelfDestructingMessagesGuideRouteImport } from './routes/b
 import { Route as BlogPrivateVaultMessagingRouteImport } from './routes/blog.private-vault-messaging'
 import { Route as BlogEndToEndEncryptionExplainedRouteImport } from './routes/blog.end-to-end-encryption-explained'
 import { Route as AppealReportIdRouteImport } from './routes/appeal.$reportId'
+import { Route as AppealOffboardingTokenRouteImport } from './routes/appeal-offboarding.$token'
 import { Route as AdminReportsRouteImport } from './routes/admin.reports'
 import { Route as AdminPremiumUsersRouteImport } from './routes/admin.premium-users'
 import { Route as AdminPermissionsRouteImport } from './routes/admin.permissions'
@@ -230,6 +231,11 @@ const AppealReportIdRoute = AppealReportIdRouteImport.update({
   path: '/appeal/$reportId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppealOffboardingTokenRoute = AppealOffboardingTokenRouteImport.update({
+  id: '/appeal-offboarding/$token',
+  path: '/appeal-offboarding/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminReportsRoute = AdminReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
@@ -381,6 +387,7 @@ export interface FileRoutesByFullPath {
   '/admin/permissions': typeof AdminPermissionsRoute
   '/admin/premium-users': typeof AdminPremiumUsersRoute
   '/admin/reports': typeof AdminReportsRoute
+  '/appeal-offboarding/$token': typeof AppealOffboardingTokenRoute
   '/appeal/$reportId': typeof AppealReportIdRoute
   '/blog/end-to-end-encryption-explained': typeof BlogEndToEndEncryptionExplainedRoute
   '/blog/private-vault-messaging': typeof BlogPrivateVaultMessagingRoute
@@ -437,6 +444,7 @@ export interface FileRoutesByTo {
   '/admin/permissions': typeof AdminPermissionsRoute
   '/admin/premium-users': typeof AdminPremiumUsersRoute
   '/admin/reports': typeof AdminReportsRoute
+  '/appeal-offboarding/$token': typeof AppealOffboardingTokenRoute
   '/appeal/$reportId': typeof AppealReportIdRoute
   '/blog/end-to-end-encryption-explained': typeof BlogEndToEndEncryptionExplainedRoute
   '/blog/private-vault-messaging': typeof BlogPrivateVaultMessagingRoute
@@ -495,6 +503,7 @@ export interface FileRoutesById {
   '/admin/permissions': typeof AdminPermissionsRoute
   '/admin/premium-users': typeof AdminPremiumUsersRoute
   '/admin/reports': typeof AdminReportsRoute
+  '/appeal-offboarding/$token': typeof AppealOffboardingTokenRoute
   '/appeal/$reportId': typeof AppealReportIdRoute
   '/blog/end-to-end-encryption-explained': typeof BlogEndToEndEncryptionExplainedRoute
   '/blog/private-vault-messaging': typeof BlogPrivateVaultMessagingRoute
@@ -554,6 +563,7 @@ export interface FileRouteTypes {
     | '/admin/permissions'
     | '/admin/premium-users'
     | '/admin/reports'
+    | '/appeal-offboarding/$token'
     | '/appeal/$reportId'
     | '/blog/end-to-end-encryption-explained'
     | '/blog/private-vault-messaging'
@@ -610,6 +620,7 @@ export interface FileRouteTypes {
     | '/admin/permissions'
     | '/admin/premium-users'
     | '/admin/reports'
+    | '/appeal-offboarding/$token'
     | '/appeal/$reportId'
     | '/blog/end-to-end-encryption-explained'
     | '/blog/private-vault-messaging'
@@ -667,6 +678,7 @@ export interface FileRouteTypes {
     | '/admin/permissions'
     | '/admin/premium-users'
     | '/admin/reports'
+    | '/appeal-offboarding/$token'
     | '/appeal/$reportId'
     | '/blog/end-to-end-encryption-explained'
     | '/blog/private-vault-messaging'
@@ -720,6 +732,7 @@ export interface RootRouteChildren {
   SubprocessorsRoute: typeof SubprocessorsRoute
   TermsRoute: typeof TermsRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
+  AppealOffboardingTokenRoute: typeof AppealOffboardingTokenRoute
   AppealReportIdRoute: typeof AppealReportIdRoute
   BlogEndToEndEncryptionExplainedRoute: typeof BlogEndToEndEncryptionExplainedRoute
   BlogPrivateVaultMessagingRoute: typeof BlogPrivateVaultMessagingRoute
@@ -976,6 +989,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppealReportIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/appeal-offboarding/$token': {
+      id: '/appeal-offboarding/$token'
+      path: '/appeal-offboarding/$token'
+      fullPath: '/appeal-offboarding/$token'
+      preLoaderRoute: typeof AppealOffboardingTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/reports': {
       id: '/admin/reports'
       path: '/reports'
@@ -1183,6 +1203,7 @@ const rootRouteChildren: RootRouteChildren = {
   SubprocessorsRoute: SubprocessorsRoute,
   TermsRoute: TermsRoute,
   UnsubscribeRoute: UnsubscribeRoute,
+  AppealOffboardingTokenRoute: AppealOffboardingTokenRoute,
   AppealReportIdRoute: AppealReportIdRoute,
   BlogEndToEndEncryptionExplainedRoute: BlogEndToEndEncryptionExplainedRoute,
   BlogPrivateVaultMessagingRoute: BlogPrivateVaultMessagingRoute,
