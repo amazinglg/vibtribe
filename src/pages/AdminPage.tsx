@@ -1219,7 +1219,7 @@ export default function AdminPage() {
 
       {/* Tribes Tab content */}
       {activeTab === 'tribes' && isMaster && (
-        <div className="max-w-screen-2xl mx-auto px-4 lg:px-8 pb-28 lg:pb-6 flex flex-col gap-4">
+        <div className="max-w-screen-2xl mx-auto px-4 lg:px-8 pb-28 lg:pb-6 flex flex-col gap-4 -mt-28 lg:mt-0">
           <div className="glass rounded-2xl border border-border p-3 sm:p-4 space-y-3">
             <div className="flex flex-col sm:flex-row gap-2">
               <div className="relative flex-1">
