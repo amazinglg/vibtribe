@@ -19,6 +19,7 @@ import { template as incompleteSignupReminder } from './incomplete-signup-remind
 import { template as offboardingGeneral } from './offboarding-general'
 import { template as offboardingTermsBreach } from './offboarding-terms-breach'
 import { template as offboardingIncompleteSignup } from './offboarding-incomplete-signup'
+import { template as sadToSeeYouGo } from './sad-to-see-you-go'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'otp-code': otpCode,
@@ -31,4 +32,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'offboarding-general': offboardingGeneral,
   'offboarding-terms-breach': offboardingTermsBreach,
   'offboarding-incomplete-signup': offboardingIncompleteSignup,
+  'sad-to-see-you-go': sadToSeeYouGo,
 }
