@@ -712,16 +712,45 @@ export default function ProfileContent() {
   const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [deletingAccount, setDeletingAccount] = useState(false);
+  const [deleteReasonKey, setDeleteReasonKey] = useState<string>('');
+  const [deleteReasonText, setDeleteReasonText] = useState<string>('');
+
+  const DELETE_REASONS: Array<{ key: string; label: string }> = [
+    { key: 'not_using', label: "I'm not using the app anymore" },
+    { key: 'privacy_concerns', label: 'I have privacy or security concerns' },
+    { key: 'too_many_notifications', label: 'Too many notifications / distractions' },
+    { key: 'found_alternative', label: 'I found a better alternative' },
+    { key: 'duplicate_account', label: 'I have another account I use instead' },
+    { key: 'not_useful', label: "It's not useful for me" },
+    { key: 'other', label: 'Other (please specify)' },
+  ];
 
   const handleDeleteAccount = async () => {
     if (deleteConfirmText.trim().toUpperCase() !== 'DELETE') {
       toast.error('Type DELETE to confirm');
       return;
     }
+    if (!deleteReasonKey) {
+      toast.error('Please select a reason for leaving');
+      return;
+    }
+    if (deleteReasonKey === 'other' && deleteReasonText.trim().length < 3) {
+      toast.error('Please tell us a little about why you\'re leaving');
+      return;
+    }
     setDeletingAccount(true);
     try {
-      const { error } = await supabase.rpc('delete_my_account' as any);
-      if (error) throw error;
+      const reasonLabel =
+        DELETE_REASONS.find((r) => r.key === deleteReasonKey)?.label ||
+        'Unspecified';
+      const { selfDeleteAccount } = await import('@/lib/self-delete.functions');
+      await selfDeleteAccount({
+        data: {
+          reasonKey: deleteReasonKey,
+          reasonLabel,
+          reasonText: deleteReasonText.trim() || undefined,
+        },
+      });
       toast.success('Your account has been permanently deleted');
       try { await supabase.auth.signOut({ scope: 'global' }); } catch {}
       if (typeof window !== 'undefined') window.location.href = '/sign-in';
