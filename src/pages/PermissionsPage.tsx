@@ -107,6 +107,10 @@ export default function PermissionsPage() {
     })
     try {
       await setGroupFn({ data: { roleKey, permissionKeys: permKeys, allowed: next } })
+      toast.success(next ? 'Permission enabled' : 'Permission disabled', {
+        description: 'Change is live for this role immediately.',
+        duration: 1600,
+      })
     } catch (e: any) {
       setAssignments(a => {
         const copy = { ...a }
