@@ -2363,6 +2363,10 @@ export type Database = {
       can_view_status_owner: { Args: { _owner_id: string }; Returns: boolean }
       cancel_totp_enrollment: { Args: never; Returns: undefined }
       check_otp_rate_limit: { Args: { _email: string }; Returns: number }
+      claim_push_subscription: {
+        Args: { _auth: string; _endpoint: string; _p256dh: string }
+        Returns: undefined
+      }
       cleanup_expired_statuses: { Args: never; Returns: undefined }
       cleanup_expired_statuses_for_user: { Args: never; Returns: number }
       compute_mobile_hash: { Args: { _mobile: string }; Returns: string }
