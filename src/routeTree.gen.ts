@@ -45,6 +45,7 @@ import { Route as AppealOffboardingTokenRouteImport } from './routes/appeal-offb
 import { Route as AdminReportsRouteImport } from './routes/admin.reports'
 import { Route as AdminPremiumUsersRouteImport } from './routes/admin.premium-users'
 import { Route as AdminPermissionsRouteImport } from './routes/admin.permissions'
+import { Route as AdminOffboardingAppealsRouteImport } from './routes/admin.offboarding-appeals'
 import { Route as AdminMarketingRouteImport } from './routes/admin.marketing'
 import { Route as AdminDeletedUsersRouteImport } from './routes/admin.deleted-users'
 import { Route as AdminAppealsRouteImport } from './routes/admin.appeals'
@@ -252,6 +253,11 @@ const AdminPermissionsRoute = AdminPermissionsRouteImport.update({
   path: '/permissions',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminOffboardingAppealsRoute = AdminOffboardingAppealsRouteImport.update({
+  id: '/offboarding-appeals',
+  path: '/offboarding-appeals',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminMarketingRoute = AdminMarketingRouteImport.update({
   id: '/marketing',
   path: '/marketing',
@@ -391,6 +397,7 @@ export interface FileRoutesByFullPath {
   '/admin/appeals': typeof AdminAppealsRoute
   '/admin/deleted-users': typeof AdminDeletedUsersRoute
   '/admin/marketing': typeof AdminMarketingRoute
+  '/admin/offboarding-appeals': typeof AdminOffboardingAppealsRoute
   '/admin/permissions': typeof AdminPermissionsRoute
   '/admin/premium-users': typeof AdminPremiumUsersRoute
   '/admin/reports': typeof AdminReportsRoute
@@ -449,6 +456,7 @@ export interface FileRoutesByTo {
   '/admin/appeals': typeof AdminAppealsRoute
   '/admin/deleted-users': typeof AdminDeletedUsersRoute
   '/admin/marketing': typeof AdminMarketingRoute
+  '/admin/offboarding-appeals': typeof AdminOffboardingAppealsRoute
   '/admin/permissions': typeof AdminPermissionsRoute
   '/admin/premium-users': typeof AdminPremiumUsersRoute
   '/admin/reports': typeof AdminReportsRoute
@@ -509,6 +517,7 @@ export interface FileRoutesById {
   '/admin/appeals': typeof AdminAppealsRoute
   '/admin/deleted-users': typeof AdminDeletedUsersRoute
   '/admin/marketing': typeof AdminMarketingRoute
+  '/admin/offboarding-appeals': typeof AdminOffboardingAppealsRoute
   '/admin/permissions': typeof AdminPermissionsRoute
   '/admin/premium-users': typeof AdminPremiumUsersRoute
   '/admin/reports': typeof AdminReportsRoute
@@ -570,6 +579,7 @@ export interface FileRouteTypes {
     | '/admin/appeals'
     | '/admin/deleted-users'
     | '/admin/marketing'
+    | '/admin/offboarding-appeals'
     | '/admin/permissions'
     | '/admin/premium-users'
     | '/admin/reports'
@@ -628,6 +638,7 @@ export interface FileRouteTypes {
     | '/admin/appeals'
     | '/admin/deleted-users'
     | '/admin/marketing'
+    | '/admin/offboarding-appeals'
     | '/admin/permissions'
     | '/admin/premium-users'
     | '/admin/reports'
@@ -687,6 +698,7 @@ export interface FileRouteTypes {
     | '/admin/appeals'
     | '/admin/deleted-users'
     | '/admin/marketing'
+    | '/admin/offboarding-appeals'
     | '/admin/permissions'
     | '/admin/premium-users'
     | '/admin/reports'
@@ -1029,6 +1041,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPermissionsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/offboarding-appeals': {
+      id: '/admin/offboarding-appeals'
+      path: '/offboarding-appeals'
+      fullPath: '/admin/offboarding-appeals'
+      preLoaderRoute: typeof AdminOffboardingAppealsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/marketing': {
       id: '/admin/marketing'
       path: '/marketing'
@@ -1183,6 +1202,7 @@ interface AdminRouteChildren {
   AdminAppealsRoute: typeof AdminAppealsRoute
   AdminDeletedUsersRoute: typeof AdminDeletedUsersRoute
   AdminMarketingRoute: typeof AdminMarketingRoute
+  AdminOffboardingAppealsRoute: typeof AdminOffboardingAppealsRoute
   AdminPermissionsRoute: typeof AdminPermissionsRoute
   AdminPremiumUsersRoute: typeof AdminPremiumUsersRoute
   AdminReportsRoute: typeof AdminReportsRoute
@@ -1194,6 +1214,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAppealsRoute: AdminAppealsRoute,
   AdminDeletedUsersRoute: AdminDeletedUsersRoute,
   AdminMarketingRoute: AdminMarketingRoute,
+  AdminOffboardingAppealsRoute: AdminOffboardingAppealsRoute,
   AdminPermissionsRoute: AdminPermissionsRoute,
   AdminPremiumUsersRoute: AdminPremiumUsersRoute,
   AdminReportsRoute: AdminReportsRoute,
