@@ -175,6 +175,7 @@ export function usePermissions() {
     }
     if (Notification.permission === 'granted') {
       setPermissions(p => ({ ...p, notifications: 'granted' }));
+      try { window.dispatchEvent(new Event('vt-notif-granted')); } catch {}
       return { granted: true, status: 'granted' };
     }
     try {
