@@ -3,7 +3,6 @@ import {
   isNativeWrapper,
   requestNativeCameraPermission,
   requestNativeContactsPermission,
-  registerNativePushNotifications,
   requestNativeMicrophonePermission,
   requestNativeStoragePermission,
 } from '@/lib/native-bridge';
