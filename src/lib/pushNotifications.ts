@@ -15,6 +15,7 @@ export type PushPayload = {
 
 const PUBLIC_KEY_CACHE = 'vt_vapid_public_key';
 const LAST_SYNC_CACHE = 'vt_push_last_subscription_sync_at';
+const SW_URL = '/sw.js?v=ios-push-v3';
 
 function isLovablePreviewHost(hostname: string): boolean {
   return hostname.startsWith('id-preview--')
@@ -91,9 +92,18 @@ export async function registerNewMessagePushServiceWorker(): Promise<ServiceWork
   }
 
   const existing = await navigator.serviceWorker.getRegistration('/');
-  const registration = existing || await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+  const registration = existing || await navigator.serviceWorker.register(SW_URL, { scope: '/', updateViaCache: 'none' });
   registration.update().catch(() => {});
   return registration;
+}
+
+function readCachedPublicKey(): string | null {
+  try { return localStorage.getItem(PUBLIC_KEY_CACHE) || sessionStorage.getItem(PUBLIC_KEY_CACHE); } catch { return null; }
+}
+
+function writeCachedPublicKey(key: string) {
+  try { localStorage.setItem(PUBLIC_KEY_CACHE, key); } catch {}
+  try { sessionStorage.setItem(PUBLIC_KEY_CACHE, key); } catch {}
 }
 
 async function getVapidPublicKey(supabase: any): Promise<string | null> {
@@ -101,10 +111,9 @@ async function getVapidPublicKey(supabase: any): Promise<string | null> {
     body: { action: 'getPublicKey' },
   });
   if (error || !data?.publicKey) {
-    const cached = sessionStorage.getItem(PUBLIC_KEY_CACHE);
-    return cached || null;
+    return readCachedPublicKey();
   }
-  sessionStorage.setItem(PUBLIC_KEY_CACHE, data.publicKey);
+  writeCachedPublicKey(data.publicKey);
   return data.publicKey;
 }
 

@@ -17,6 +17,17 @@ const json = (body: unknown, status = 200) => new Response(JSON.stringify(body),
 const safeText = (value: unknown, fallback = '') => String(value || fallback).slice(0, 160);
 const safePath = (value: unknown) => typeof value === 'string' && value.startsWith('/') && !value.startsWith('//') ? value : '/';
 
+function normalizeVapidSubject(value: string | null): string {
+  const subject = String(value || '').trim();
+  // APNs validates the VAPID `sub` claim strictly. A previous environment
+  // value used the misspelled domain `vibetribe.in`, which produces
+  // `BadJwtToken` on iOS PWA pushes. Always force the verified domain.
+  if (!subject || /vibetribe\.in/i.test(subject) || !/^(mailto:|https:\/\/)/i.test(subject)) {
+    return 'mailto:support@vibtribe.in';
+  }
+  return subject;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
@@ -28,7 +39,7 @@ serve(async (req) => {
     // non-existent domain. Default MUST match the real production domain
     // (vibtribe.in — was a typo `vibetribe.in` before which caused APNs
     // to silently drop iOS PWA pushes).
-    const subject = Deno.env.get('VAPID_SUBJECT') || 'mailto:support@vibtribe.in';
+    const subject = normalizeVapidSubject(Deno.env.get('VAPID_SUBJECT'));
     const body = await req.json().catch(() => ({}));
 
     if (body.action === 'getPublicKey') {
