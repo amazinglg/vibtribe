@@ -14,7 +14,7 @@ export type PushPayload = {
 };
 
 const PUBLIC_KEY_CACHE = 'vt_vapid_public_key';
-let lastSubscriptionSyncAt = 0;
+const LAST_SYNC_CACHE = 'vt_push_last_subscription_sync_at';
 
 function isLovablePreviewHost(hostname: string): boolean {
   return hostname.startsWith('id-preview--')
@@ -110,9 +110,18 @@ async function getVapidPublicKey(supabase: any): Promise<string | null> {
 
 async function seedVapidKeyToServiceWorker(key: string) {
   try {
-    const reg = await registerNewMessagePushServiceWorker() || await navigator.serviceWorker.ready;
+    await registerNewMessagePushServiceWorker();
+    const reg = await navigator.serviceWorker.ready;
     reg.active?.postMessage({ type: 'SET_VAPID_PUBLIC_KEY', key });
   } catch {}
+}
+
+function readLastSubscriptionSyncAt(): number {
+  try { return Number(localStorage.getItem(LAST_SYNC_CACHE) || '0') || 0; } catch { return 0; }
+}
+
+function writeLastSubscriptionSyncAt() {
+  try { localStorage.setItem(LAST_SYNC_CACHE, String(Date.now())); } catch {}
 }
 
 async function persistSubscription(
@@ -201,7 +210,7 @@ export async function ensurePushSubscription(supabase: any, userId: string): Pro
 
   const ok = await persistSubscription(supabase, userId, subscription.toJSON());
   if (!ok) console.warn('[push] persistSubscription upsert failed');
-  else lastSubscriptionSyncAt = Date.now();
+  else writeLastSubscriptionSyncAt();
   return ok;
 }
 
@@ -216,7 +225,7 @@ export async function requestWebPushPermissionAndSubscribe(supabase: any, userId
 }
 
 export function shouldRefreshPushSubscription(maxAgeMs = 5 * 60_000): boolean {
-  return Date.now() - lastSubscriptionSyncAt > maxAgeMs;
+  return Date.now() - readLastSubscriptionSyncAt() > maxAgeMs;
 }
 
 // Listen for the SW's `pushsubscriptionchange` notification and persist the
