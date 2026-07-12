@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { ensurePushSubscription, attachPushSubscriptionChangeListener } from '@/lib/pushNotifications';
+import { ensurePushSubscription, attachPushSubscriptionChangeListener, shouldRefreshPushSubscription } from '@/lib/pushNotifications';
 import { useChatStore } from '@/store/chatStore';
 
 // Ringtone audio context for incoming calls
@@ -88,9 +88,11 @@ export default function ServiceWorkerRegistration() {
 
   // Save push subscription when user logs in
   useEffect(() => {
-    if (!user || subscriptionSavedRef.current) return;
+    if (!user) return;
+    subscriptionSavedRef.current = false;
 
-    const setupPush = async () => {
+    const setupPush = async (force = false) => {
+      if (!force && subscriptionSavedRef.current) return;
       try {
         subscriptionSavedRef.current = await ensurePushSubscription(supabase, user.id);
       } catch {}
@@ -99,14 +101,14 @@ export default function ServiceWorkerRegistration() {
     setupPush();
 
     const onFocusOrVisible = () => {
-      if (document.visibilityState === 'visible') setupPush();
+      if (document.visibilityState === 'visible') setupPush(shouldRefreshPushSubscription());
     };
     window.addEventListener('focus', onFocusOrVisible);
     document.addEventListener('visibilitychange', onFocusOrVisible);
     // Fired by usePermissions() the moment the user grants notification
     // permission via a button gesture — critical for iOS PWA where the
     // subscribe() call must follow the grant promptly.
-    const onNotifGranted = () => { subscriptionSavedRef.current = false; setupPush(); };
+    const onNotifGranted = () => { subscriptionSavedRef.current = false; setupPush(true); };
     window.addEventListener('vt-notif-granted', onNotifGranted);
     const detachChange = attachPushSubscriptionChangeListener(supabase, () => userIdRef.current);
     return () => {
@@ -115,7 +117,7 @@ export default function ServiceWorkerRegistration() {
       window.removeEventListener('vt-notif-granted', onNotifGranted);
       detachChange();
     };
-  }, [user]);
+  }, [user?.id]);
 
   // Listen for SW messages (incoming call from push)
   useEffect(() => {

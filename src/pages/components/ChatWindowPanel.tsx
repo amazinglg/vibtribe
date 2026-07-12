@@ -704,7 +704,7 @@ export default function ChatWindowPanel() {
     const start = () => {
       if (interval != null) return;
       void write();
-      interval = window.setInterval(write, 20_000);
+      interval = window.setInterval(write, 8_000);
     };
     const stop = () => {
       if (interval != null) { window.clearInterval(interval); interval = null; }

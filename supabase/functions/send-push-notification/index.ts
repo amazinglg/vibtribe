@@ -124,8 +124,9 @@ serve(async (req) => {
       }
     }
 
-    // Suppress when the recipient is actively viewing this exact chat in the
-    // foreground (heartbeat < 35s old). Applies to messages only, not calls.
+    // Suppress only when the recipient has a very fresh foreground heartbeat.
+    // iOS PWAs do not always clear rows immediately when backgrounded, so keep
+    // this window short to avoid hiding real phone notifications.
     if (chatId && body.type !== 'voice_call' && body.type !== 'video_call') {
       try {
         const { data: active } = await admin
@@ -134,7 +135,7 @@ serve(async (req) => {
           .eq('user_id', recipientId)
           .maybeSingle();
         if (active && active.chat_id === chatId && active.updated_at
-            && Date.now() - new Date(active.updated_at).getTime() < 35_000) {
+            && Date.now() - new Date(active.updated_at).getTime() < 12_000) {
           return json({ sent: 0, skipped: 'active_viewer' });
         }
       } catch (e) {

@@ -214,6 +214,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } catch {}
   };
 
+  useEffect(() => {
+    if (!user?.id) return;
+    const refresh = () => {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
+      fetchProfile(user.id);
+    };
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', refresh);
+    const interval = window.setInterval(refresh, 60_000);
+    return () => {
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', refresh);
+      window.clearInterval(interval);
+    };
+  }, [user?.id]);
+
   // Helper: derive the auth email from a mobile number — uses ONLY the
   // last 10 digits (the local number, not the country code).
   const buildAuthEmail = (mobileNumber: string) => {
