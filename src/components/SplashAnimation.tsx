@@ -15,7 +15,7 @@ import splashVideo from '@/assets/splash.mp4.asset.json';
  * 4. Hard safety cap dismisses the splash no matter what.
  */
 const SESSION_KEY = 'vt_splash_shown';
-const BUFFER_GRACE_MS = 4000;   // if video can't start playing within 4s -> skip
+const BUFFER_GRACE_MS = 800;    // if video can't start playing within 800ms -> skip
 const SAFETY_CAP_MS   = 20000;  // absolute hard ceiling
 const FADE_MS         = 450;
 
@@ -32,6 +32,14 @@ export default function SplashAnimation() {
   useEffect(() => {
     try {
       if (sessionStorage.getItem(SESSION_KEY)) return;
+    } catch {}
+    // On native (Capacitor) the OS splash already covers cold boot — skip the
+    // JS splash video so users don't see a black screen while it buffers.
+    try {
+      if (document.documentElement.getAttribute('data-native') === 'capacitor') {
+        sessionStorage.setItem(SESSION_KEY, '1');
+        return;
+      }
     } catch {}
     setMounted(true);
   }, []);
