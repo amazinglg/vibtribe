@@ -66,6 +66,33 @@ export async function enqueueTransactionalEmail(
     return { ok: false, status: 'suppressed', messageId }
   }
 
+  // Get or create unsubscribe token — Lovable Email API requires it for
+  // transactional sends (missing_unsubscribe → 400).
+  let unsubscribeToken: string | undefined
+  {
+    const { data: existing } = await supabaseAdmin
+      .from('email_unsubscribe_tokens')
+      .select('token, used_at')
+      .eq('email', normalized)
+      .maybeSingle()
+    if (existing && !existing.used_at) {
+      unsubscribeToken = (existing as any).token
+    } else if (!existing) {
+      const bytes = new Uint8Array(32)
+      crypto.getRandomValues(bytes)
+      const newToken = Array.from(bytes).map((b) => b.toString(16).padStart(2, '0')).join('')
+      await supabaseAdmin
+        .from('email_unsubscribe_tokens')
+        .upsert({ token: newToken, email: normalized }, { onConflict: 'email', ignoreDuplicates: true })
+      const { data: stored } = await supabaseAdmin
+        .from('email_unsubscribe_tokens')
+        .select('token')
+        .eq('email', normalized)
+        .maybeSingle()
+      unsubscribeToken = (stored as any)?.token || newToken
+    }
+  }
+
   const element = React.createElement(template.component, opts.templateData || {})
   const html = await render(element)
   const text = await render(element, { plainText: true })
@@ -91,6 +118,7 @@ export async function enqueueTransactionalEmail(
     purpose: 'transactional',
     label: opts.templateName,
     idempotency_key: idempotencyKey,
+    unsubscribe_token: unsubscribeToken,
     queued_at: new Date().toISOString(),
   }
 
