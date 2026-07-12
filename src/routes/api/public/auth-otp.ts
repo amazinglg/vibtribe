@@ -184,6 +184,31 @@ export const Route = createFileRoute('/api/public/auth-otp')({
 
         // SEND SIGNUP OTP
         if (payload.action === 'send_signup') {
+          // Block list check (offboarded users cannot sign up again)
+          {
+            let mobileHash: string | null = null
+            if (payload.countryCode && payload.mobileNumber) {
+              const fullMobile = payload.mobileNumber.startsWith('+')
+                ? payload.mobileNumber
+                : `${payload.countryCode}${payload.mobileNumber}`
+              const { data: hashResult } = await supabase.rpc(
+                'compute_mobile_hash' as any,
+                { _mobile: fullMobile },
+              )
+              mobileHash = (hashResult as string) || null
+            }
+            const { data: isBlocked } = await supabase.rpc(
+              'is_signup_blocked' as any,
+              { _email: payload.email, _mobile_hash: mobileHash },
+            )
+            if (isBlocked === true) {
+              return jerr(
+                403,
+                'This account has been blocked from re-registering. If you believe this is a mistake, please use the appeal link that was sent to your email or contact support.',
+              )
+            }
+          }
+
           // Don't allow signup OTP to an email already linked to an account
           const { data: avail } = await supabase.rpc('is_real_email_available', { _email: payload.email })
           if (avail === false) return jerr(409, 'This email is already linked to an account')
@@ -276,6 +301,21 @@ export const Route = createFileRoute('/api/public/auth-otp')({
 
         // CREATE ACCOUNT (verifies signup OTP, then provisions user)
         if (payload.action === 'create_account') {
+          // Re-check block list (defence in depth against races)
+          {
+            const fullMobile = payload.mobileNumber.startsWith('+')
+              ? payload.mobileNumber
+              : `${payload.countryCode}${payload.mobileNumber}`
+            const { data: hashResult } = await supabase.rpc('compute_mobile_hash' as any, { _mobile: fullMobile })
+            const { data: isBlocked } = await supabase.rpc('is_signup_blocked' as any, {
+              _email: payload.email,
+              _mobile_hash: (hashResult as string) || null,
+            })
+            if (isBlocked === true) {
+              return jerr(403, 'This account has been blocked from re-registering.')
+            }
+          }
+
           const ok = await supabase.rpc('consume_email_otp', {
             _email: payload.email, _code: payload.code, _purpose: 'signup',
           })

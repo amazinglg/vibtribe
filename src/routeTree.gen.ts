@@ -41,10 +41,13 @@ import { Route as BlogSelfDestructingMessagesGuideRouteImport } from './routes/b
 import { Route as BlogPrivateVaultMessagingRouteImport } from './routes/blog.private-vault-messaging'
 import { Route as BlogEndToEndEncryptionExplainedRouteImport } from './routes/blog.end-to-end-encryption-explained'
 import { Route as AppealReportIdRouteImport } from './routes/appeal.$reportId'
+import { Route as AppealOffboardingTokenRouteImport } from './routes/appeal-offboarding.$token'
 import { Route as AdminReportsRouteImport } from './routes/admin.reports'
 import { Route as AdminPremiumUsersRouteImport } from './routes/admin.premium-users'
 import { Route as AdminPermissionsRouteImport } from './routes/admin.permissions'
+import { Route as AdminOffboardingAppealsRouteImport } from './routes/admin.offboarding-appeals'
 import { Route as AdminMarketingRouteImport } from './routes/admin.marketing'
+import { Route as AdminDeletedUsersRouteImport } from './routes/admin.deleted-users'
 import { Route as AdminAppealsRouteImport } from './routes/admin.appeals'
 import { Route as TribeJoinCodeRouteImport } from './routes/tribe.join.$code'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
@@ -230,6 +233,11 @@ const AppealReportIdRoute = AppealReportIdRouteImport.update({
   path: '/appeal/$reportId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppealOffboardingTokenRoute = AppealOffboardingTokenRouteImport.update({
+  id: '/appeal-offboarding/$token',
+  path: '/appeal-offboarding/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminReportsRoute = AdminReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
@@ -245,9 +253,19 @@ const AdminPermissionsRoute = AdminPermissionsRouteImport.update({
   path: '/permissions',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminOffboardingAppealsRoute = AdminOffboardingAppealsRouteImport.update({
+  id: '/offboarding-appeals',
+  path: '/offboarding-appeals',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminMarketingRoute = AdminMarketingRouteImport.update({
   id: '/marketing',
   path: '/marketing',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminDeletedUsersRoute = AdminDeletedUsersRouteImport.update({
+  id: '/deleted-users',
+  path: '/deleted-users',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminAppealsRoute = AdminAppealsRouteImport.update({
@@ -377,10 +395,13 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/admin/appeals': typeof AdminAppealsRoute
+  '/admin/deleted-users': typeof AdminDeletedUsersRoute
   '/admin/marketing': typeof AdminMarketingRoute
+  '/admin/offboarding-appeals': typeof AdminOffboardingAppealsRoute
   '/admin/permissions': typeof AdminPermissionsRoute
   '/admin/premium-users': typeof AdminPremiumUsersRoute
   '/admin/reports': typeof AdminReportsRoute
+  '/appeal-offboarding/$token': typeof AppealOffboardingTokenRoute
   '/appeal/$reportId': typeof AppealReportIdRoute
   '/blog/end-to-end-encryption-explained': typeof BlogEndToEndEncryptionExplainedRoute
   '/blog/private-vault-messaging': typeof BlogPrivateVaultMessagingRoute
@@ -433,10 +454,13 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/admin/appeals': typeof AdminAppealsRoute
+  '/admin/deleted-users': typeof AdminDeletedUsersRoute
   '/admin/marketing': typeof AdminMarketingRoute
+  '/admin/offboarding-appeals': typeof AdminOffboardingAppealsRoute
   '/admin/permissions': typeof AdminPermissionsRoute
   '/admin/premium-users': typeof AdminPremiumUsersRoute
   '/admin/reports': typeof AdminReportsRoute
+  '/appeal-offboarding/$token': typeof AppealOffboardingTokenRoute
   '/appeal/$reportId': typeof AppealReportIdRoute
   '/blog/end-to-end-encryption-explained': typeof BlogEndToEndEncryptionExplainedRoute
   '/blog/private-vault-messaging': typeof BlogPrivateVaultMessagingRoute
@@ -491,10 +515,13 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/admin/appeals': typeof AdminAppealsRoute
+  '/admin/deleted-users': typeof AdminDeletedUsersRoute
   '/admin/marketing': typeof AdminMarketingRoute
+  '/admin/offboarding-appeals': typeof AdminOffboardingAppealsRoute
   '/admin/permissions': typeof AdminPermissionsRoute
   '/admin/premium-users': typeof AdminPremiumUsersRoute
   '/admin/reports': typeof AdminReportsRoute
+  '/appeal-offboarding/$token': typeof AppealOffboardingTokenRoute
   '/appeal/$reportId': typeof AppealReportIdRoute
   '/blog/end-to-end-encryption-explained': typeof BlogEndToEndEncryptionExplainedRoute
   '/blog/private-vault-messaging': typeof BlogPrivateVaultMessagingRoute
@@ -550,10 +577,13 @@ export interface FileRouteTypes {
     | '/terms'
     | '/unsubscribe'
     | '/admin/appeals'
+    | '/admin/deleted-users'
     | '/admin/marketing'
+    | '/admin/offboarding-appeals'
     | '/admin/permissions'
     | '/admin/premium-users'
     | '/admin/reports'
+    | '/appeal-offboarding/$token'
     | '/appeal/$reportId'
     | '/blog/end-to-end-encryption-explained'
     | '/blog/private-vault-messaging'
@@ -606,10 +636,13 @@ export interface FileRouteTypes {
     | '/terms'
     | '/unsubscribe'
     | '/admin/appeals'
+    | '/admin/deleted-users'
     | '/admin/marketing'
+    | '/admin/offboarding-appeals'
     | '/admin/permissions'
     | '/admin/premium-users'
     | '/admin/reports'
+    | '/appeal-offboarding/$token'
     | '/appeal/$reportId'
     | '/blog/end-to-end-encryption-explained'
     | '/blog/private-vault-messaging'
@@ -663,10 +696,13 @@ export interface FileRouteTypes {
     | '/terms'
     | '/unsubscribe'
     | '/admin/appeals'
+    | '/admin/deleted-users'
     | '/admin/marketing'
+    | '/admin/offboarding-appeals'
     | '/admin/permissions'
     | '/admin/premium-users'
     | '/admin/reports'
+    | '/appeal-offboarding/$token'
     | '/appeal/$reportId'
     | '/blog/end-to-end-encryption-explained'
     | '/blog/private-vault-messaging'
@@ -720,6 +756,7 @@ export interface RootRouteChildren {
   SubprocessorsRoute: typeof SubprocessorsRoute
   TermsRoute: typeof TermsRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
+  AppealOffboardingTokenRoute: typeof AppealOffboardingTokenRoute
   AppealReportIdRoute: typeof AppealReportIdRoute
   BlogEndToEndEncryptionExplainedRoute: typeof BlogEndToEndEncryptionExplainedRoute
   BlogPrivateVaultMessagingRoute: typeof BlogPrivateVaultMessagingRoute
@@ -976,6 +1013,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppealReportIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/appeal-offboarding/$token': {
+      id: '/appeal-offboarding/$token'
+      path: '/appeal-offboarding/$token'
+      fullPath: '/appeal-offboarding/$token'
+      preLoaderRoute: typeof AppealOffboardingTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/reports': {
       id: '/admin/reports'
       path: '/reports'
@@ -997,11 +1041,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPermissionsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/offboarding-appeals': {
+      id: '/admin/offboarding-appeals'
+      path: '/offboarding-appeals'
+      fullPath: '/admin/offboarding-appeals'
+      preLoaderRoute: typeof AdminOffboardingAppealsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/marketing': {
       id: '/admin/marketing'
       path: '/marketing'
       fullPath: '/admin/marketing'
       preLoaderRoute: typeof AdminMarketingRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/deleted-users': {
+      id: '/admin/deleted-users'
+      path: '/deleted-users'
+      fullPath: '/admin/deleted-users'
+      preLoaderRoute: typeof AdminDeletedUsersRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/appeals': {
@@ -1142,7 +1200,9 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminAppealsRoute: typeof AdminAppealsRoute
+  AdminDeletedUsersRoute: typeof AdminDeletedUsersRoute
   AdminMarketingRoute: typeof AdminMarketingRoute
+  AdminOffboardingAppealsRoute: typeof AdminOffboardingAppealsRoute
   AdminPermissionsRoute: typeof AdminPermissionsRoute
   AdminPremiumUsersRoute: typeof AdminPremiumUsersRoute
   AdminReportsRoute: typeof AdminReportsRoute
@@ -1152,7 +1212,9 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAppealsRoute: AdminAppealsRoute,
+  AdminDeletedUsersRoute: AdminDeletedUsersRoute,
   AdminMarketingRoute: AdminMarketingRoute,
+  AdminOffboardingAppealsRoute: AdminOffboardingAppealsRoute,
   AdminPermissionsRoute: AdminPermissionsRoute,
   AdminPremiumUsersRoute: AdminPremiumUsersRoute,
   AdminReportsRoute: AdminReportsRoute,
@@ -1183,6 +1245,7 @@ const rootRouteChildren: RootRouteChildren = {
   SubprocessorsRoute: SubprocessorsRoute,
   TermsRoute: TermsRoute,
   UnsubscribeRoute: UnsubscribeRoute,
+  AppealOffboardingTokenRoute: AppealOffboardingTokenRoute,
   AppealReportIdRoute: AppealReportIdRoute,
   BlogEndToEndEncryptionExplainedRoute: BlogEndToEndEncryptionExplainedRoute,
   BlogPrivateVaultMessagingRoute: BlogPrivateVaultMessagingRoute,

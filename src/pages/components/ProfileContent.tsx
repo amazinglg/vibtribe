@@ -712,16 +712,45 @@ export default function ProfileContent() {
   const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [deletingAccount, setDeletingAccount] = useState(false);
+  const [deleteReasonKey, setDeleteReasonKey] = useState<string>('');
+  const [deleteReasonText, setDeleteReasonText] = useState<string>('');
+
+  const DELETE_REASONS: Array<{ key: string; label: string }> = [
+    { key: 'not_using', label: "I'm not using the app anymore" },
+    { key: 'privacy_concerns', label: 'I have privacy or security concerns' },
+    { key: 'too_many_notifications', label: 'Too many notifications / distractions' },
+    { key: 'found_alternative', label: 'I found a better alternative' },
+    { key: 'duplicate_account', label: 'I have another account I use instead' },
+    { key: 'not_useful', label: "It's not useful for me" },
+    { key: 'other', label: 'Other (please specify)' },
+  ];
 
   const handleDeleteAccount = async () => {
     if (deleteConfirmText.trim().toUpperCase() !== 'DELETE') {
       toast.error('Type DELETE to confirm');
       return;
     }
+    if (!deleteReasonKey) {
+      toast.error('Please select a reason for leaving');
+      return;
+    }
+    if (deleteReasonKey === 'other' && deleteReasonText.trim().length < 3) {
+      toast.error('Please tell us a little about why you\'re leaving');
+      return;
+    }
     setDeletingAccount(true);
     try {
-      const { error } = await supabase.rpc('delete_my_account' as any);
-      if (error) throw error;
+      const reasonLabel =
+        DELETE_REASONS.find((r) => r.key === deleteReasonKey)?.label ||
+        'Unspecified';
+      const { selfDeleteAccount } = await import('@/lib/self-delete.functions');
+      await selfDeleteAccount({
+        data: {
+          reasonKey: deleteReasonKey,
+          reasonLabel,
+          reasonText: deleteReasonText.trim() || undefined,
+        },
+      });
       toast.success('Your account has been permanently deleted');
       try { await supabase.auth.signOut({ scope: 'global' }); } catch {}
       if (typeof window !== 'undefined') window.location.href = '/sign-in';
@@ -1812,6 +1841,42 @@ export default function ProfileContent() {
                 <li>Your sign-in account itself — there is no going back</li>
               </ul>
             </div>
+            <div className="mb-4">
+              <p className="text-xs font-semibold text-foreground mb-2">Before you go — why are you leaving?</p>
+              <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
+                {DELETE_REASONS.map((r) => (
+                  <label
+                    key={r.key}
+                    className={`flex items-start gap-2 p-2 rounded-lg border cursor-pointer text-[12px] ${
+                      deleteReasonKey === r.key
+                        ? 'border-red-500/60 bg-red-500/10'
+                        : 'border-border bg-muted/30 hover:bg-muted/50'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="self_delete_reason"
+                      className="mt-0.5 accent-red-500"
+                      checked={deleteReasonKey === r.key}
+                      onChange={() => setDeleteReasonKey(r.key)}
+                      disabled={deletingAccount}
+                    />
+                    <span className="flex-1 text-foreground">{r.label}</span>
+                  </label>
+                ))}
+              </div>
+              {deleteReasonKey === 'other' && (
+                <textarea
+                  value={deleteReasonText}
+                  onChange={(e) => setDeleteReasonText(e.target.value)}
+                  rows={3}
+                  maxLength={2000}
+                  placeholder="Tell us why you're leaving…"
+                  disabled={deletingAccount}
+                  className="mt-2 w-full px-3 py-2 bg-input border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              )}
+            </div>
             <label className="block text-xs font-medium text-muted-foreground mb-1.5">
               Type <span className="font-bold text-red-400">DELETE</span> to confirm
             </label>
@@ -1825,7 +1890,7 @@ export default function ProfileContent() {
             />
             <div className="flex gap-2 mt-5">
               <button
-                onClick={() => setDeleteAccountOpen(false)}
+                onClick={() => { setDeleteAccountOpen(false); setDeleteReasonKey(''); setDeleteReasonText(''); setDeleteConfirmText(''); }}
                 disabled={deletingAccount}
                 className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold bg-muted text-foreground hover:bg-muted/70"
               >
@@ -1833,7 +1898,7 @@ export default function ProfileContent() {
               </button>
               <button
                 onClick={handleDeleteAccount}
-                disabled={deletingAccount || deleteConfirmText.trim().toUpperCase() !== 'DELETE'}
+                disabled={deletingAccount || deleteConfirmText.trim().toUpperCase() !== 'DELETE' || !deleteReasonKey}
                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-red-500 text-white hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {deletingAccount ? (

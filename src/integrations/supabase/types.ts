@@ -107,6 +107,42 @@ export type Database = {
         }
         Relationships: []
       }
+      blocked_signups: {
+        Row: {
+          blocked_at: string
+          email_lower: string | null
+          id: string
+          mobile_hash: string | null
+          notes: string | null
+          reason: string
+          source_user_id: string | null
+          unblocked_at: string | null
+          unblocked_by: string | null
+        }
+        Insert: {
+          blocked_at?: string
+          email_lower?: string | null
+          id?: string
+          mobile_hash?: string | null
+          notes?: string | null
+          reason?: string
+          source_user_id?: string | null
+          unblocked_at?: string | null
+          unblocked_by?: string | null
+        }
+        Update: {
+          blocked_at?: string
+          email_lower?: string | null
+          id?: string
+          mobile_hash?: string | null
+          notes?: string | null
+          reason?: string
+          source_user_id?: string | null
+          unblocked_at?: string | null
+          unblocked_by?: string | null
+        }
+        Relationships: []
+      }
       blocked_users: {
         Row: {
           blocked_user_id: string
@@ -544,6 +580,54 @@ export type Database = {
           id?: string
           status?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      deleted_users_log: {
+        Row: {
+          country_code: string | null
+          deleted_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          initiated_by: string
+          initiator_id: string | null
+          mobile_hash: string | null
+          mobile_number: string | null
+          original_user_id: string
+          reason_key: string
+          reason_text: string | null
+          terms_breach: boolean
+        }
+        Insert: {
+          country_code?: string | null
+          deleted_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          initiated_by: string
+          initiator_id?: string | null
+          mobile_hash?: string | null
+          mobile_number?: string | null
+          original_user_id: string
+          reason_key: string
+          reason_text?: string | null
+          terms_breach?: boolean
+        }
+        Update: {
+          country_code?: string | null
+          deleted_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          initiated_by?: string
+          initiator_id?: string | null
+          mobile_hash?: string | null
+          mobile_number?: string | null
+          original_user_id?: string
+          reason_key?: string
+          reason_text?: string | null
+          terms_breach?: boolean
         }
         Relationships: []
       }
@@ -1058,6 +1142,62 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      offboarding_appeals: {
+        Row: {
+          appellant_email: string | null
+          appellant_name: string | null
+          block_id: string | null
+          created_at: string
+          id: string
+          original_user_id: string | null
+          reason: string | null
+          reviewed_at: string | null
+          reviewer_id: string | null
+          reviewer_notes: string | null
+          status: string
+          submitted_at: string | null
+          token: string
+        }
+        Insert: {
+          appellant_email?: string | null
+          appellant_name?: string | null
+          block_id?: string | null
+          created_at?: string
+          id?: string
+          original_user_id?: string | null
+          reason?: string | null
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          reviewer_notes?: string | null
+          status?: string
+          submitted_at?: string | null
+          token: string
+        }
+        Update: {
+          appellant_email?: string | null
+          appellant_name?: string | null
+          block_id?: string | null
+          created_at?: string
+          id?: string
+          original_user_id?: string | null
+          reason?: string | null
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          reviewer_notes?: string | null
+          status?: string
+          submitted_at?: string | null
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offboarding_appeals_block_id_fkey"
+            columns: ["block_id"]
+            isOneToOne: false
+            referencedRelation: "blocked_signups"
             referencedColumns: ["id"]
           },
         ]
@@ -1986,7 +2126,15 @@ export type Database = {
       accept_privacy_and_terms: { Args: never; Returns: undefined }
       accept_terms: { Args: never; Returns: undefined }
       admin_delete_ticket: { Args: { _ticket_id: string }; Returns: undefined }
-      admin_delete_user: { Args: { _user_id: string }; Returns: undefined }
+      admin_delete_user: {
+        Args: {
+          _appeal_token?: string
+          _reason_key?: string
+          _reason_text?: string
+          _user_id: string
+        }
+        Returns: Json
+      }
       admin_get_guardian_consent: {
         Args: { _user_id: string }
         Returns: {
@@ -2207,6 +2355,10 @@ export type Database = {
         Args: { new_password: string; target_user_id: string }
         Returns: undefined
       }
+      admin_review_offboarding_appeal: {
+        Args: { _appeal_id: string; _decision: string; _notes?: string }
+        Returns: Json
+      }
       admin_revoke_premium: {
         Args: { _user_id: string }
         Returns: {
@@ -2384,7 +2536,10 @@ export type Database = {
         Returns: undefined
       }
       delete_message_for_me: { Args: { _msg_id: string }; Returns: undefined }
-      delete_my_account: { Args: never; Returns: undefined }
+      delete_my_account: {
+        Args: { _reason_key?: string; _reason_text?: string }
+        Returns: Json
+      }
       disable_totp: { Args: never; Returns: undefined }
       edit_my_message: {
         Args: { _msg_id: string; _new_content: string }
@@ -2620,6 +2775,10 @@ export type Database = {
       is_pending_guardian: { Args: { _user_id: string }; Returns: boolean }
       is_pinned_master_mobile: { Args: { _mobile: string }; Returns: boolean }
       is_real_email_available: { Args: { _email: string }; Returns: boolean }
+      is_signup_blocked: {
+        Args: { _email: string; _mobile_hash: string }
+        Returns: boolean
+      }
       is_tribe_admin: {
         Args: { _chat_id: string; _user_id: string }
         Returns: boolean
@@ -2661,6 +2820,15 @@ export type Database = {
           is_verified: boolean
           mobile_number: string
           profile_photo_visibility: string
+        }[]
+      }
+      lookup_offboarding_appeal: {
+        Args: { _token: string }
+        Returns: {
+          appellant_name: string
+          reviewed_at: string
+          reviewer_notes: string
+          status: string
         }[]
       }
       mark_guardian_reminded: { Args: { _id: string }; Returns: undefined }
@@ -2759,6 +2927,10 @@ export type Database = {
           guardian_email: string
           otp_code: string
         }[]
+      }
+      submit_offboarding_appeal: {
+        Args: { _reason: string; _token: string }
+        Returns: Json
       }
       tribe_change_privacy: {
         Args: { _chat_id: string; _privacy: string }
