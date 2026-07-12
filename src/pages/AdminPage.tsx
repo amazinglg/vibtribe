@@ -413,14 +413,24 @@ export default function AdminPage() {
   };
 
   const handleDeleteUser = async (userId: string) => {
-    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
+    if (!can('users.delete')) { toast.error('Delete user permission required'); return; }
+    const reasonInput = prompt(
+      'Delete this user? This cannot be undone.\n\nReason: type general, terms_breach, or incomplete_signup',
+      'general',
+    );
+    if (!reasonInput) return;
+    const reason = reasonInput.trim() as 'general' | 'terms_breach' | 'incomplete_signup';
+    if (!['general', 'terms_breach', 'incomplete_signup'].includes(reason)) {
+      toast.error('Use one of: general, terms_breach, incomplete_signup');
+      return;
+    }
     setActionLoading(userId);
     try {
       const { adminDeleteUser } = await import('@/lib/admin-users.functions');
-      await adminDeleteUser({ data: { userId } });
+      const result: any = await adminDeleteUser({ data: { userId, reason } });
       setUsers(prev => prev.filter(u => u.id !== userId));
       setSelectedUser(null);
-      toast.success('User deleted successfully');
+      toast.success(result?.emailed ? 'User deleted and email sent' : 'User deleted — email was not sent');
     } catch (e: any) {
       toast.error(e?.message || 'Failed to delete user');
     } finally {

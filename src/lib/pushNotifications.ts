@@ -14,6 +14,7 @@ export type PushPayload = {
 };
 
 const PUBLIC_KEY_CACHE = 'vt_vapid_public_key';
+let lastSubscriptionSyncAt = 0;
 
 function base64UrlToUint8Array(value: string): Uint8Array {
   const padding = '='.repeat((4 - (value.length % 4)) % 4);
@@ -56,19 +57,13 @@ export function canRequestWebPush(): boolean {
 }
 
 async function getVapidPublicKey(supabase: any): Promise<string | null> {
-  const cached = sessionStorage.getItem(PUBLIC_KEY_CACHE);
-  if (cached) return cached;
-
-  const envKey = import.meta.env.VITE_VAPID_PUBLIC_KEY || '';
-  if (envKey) {
-    sessionStorage.setItem(PUBLIC_KEY_CACHE, envKey);
-    return envKey;
-  }
-
   const { data, error } = await supabase.functions.invoke('send-push-notification', {
     body: { action: 'getPublicKey' },
   });
-  if (error || !data?.publicKey) return null;
+  if (error || !data?.publicKey) {
+    const cached = sessionStorage.getItem(PUBLIC_KEY_CACHE);
+    return cached || null;
+  }
   sessionStorage.setItem(PUBLIC_KEY_CACHE, data.publicKey);
   return data.publicKey;
 }
@@ -126,7 +121,10 @@ export async function ensurePushSubscription(supabase: any, userId: string): Pro
   }
   await seedVapidKeyToServiceWorker(publicKey);
 
-  const registration = await navigator.serviceWorker.ready;
+  const registration = await Promise.race([
+    navigator.serviceWorker.ready,
+    new Promise<ServiceWorkerRegistration>((_, reject) => window.setTimeout(() => reject(new Error('service worker not ready')), 8000)),
+  ]);
   await registration.update().catch(() => {});
   let subscription = await registration.pushManager.getSubscription();
 
@@ -161,7 +159,12 @@ export async function ensurePushSubscription(supabase: any, userId: string): Pro
 
   const ok = await persistSubscription(supabase, userId, subscription.toJSON());
   if (!ok) console.warn('[push] persistSubscription upsert failed');
+  else lastSubscriptionSyncAt = Date.now();
   return ok;
+}
+
+export function shouldRefreshPushSubscription(maxAgeMs = 5 * 60_000): boolean {
+  return Date.now() - lastSubscriptionSyncAt > maxAgeMs;
 }
 
 // Listen for the SW's `pushsubscriptionchange` notification and persist the

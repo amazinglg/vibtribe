@@ -256,9 +256,8 @@ export const sendMessagePush = createServerFn({ method: 'POST' })
       } catch (e) { /* fail-open */ }
     }
 
-    // Suppress when the recipient is actively viewing this exact chat in the
-    // foreground. Client heartbeats into user_active_chat every ~20s while the
-    // chat window is visible; a fresh row (< 35s old) means "already looking".
+    // Suppress only for a very fresh foreground heartbeat. Mobile PWAs may not
+    // clear rows immediately when backgrounded, so avoid a long stale window.
     if (chatId) {
       try {
         const { data: active } = await supabaseAdmin
@@ -267,7 +266,7 @@ export const sendMessagePush = createServerFn({ method: 'POST' })
           .eq('user_id', recipientId)
           .maybeSingle();
         if (active?.chat_id === chatId && active.updated_at
-            && Date.now() - new Date(active.updated_at).getTime() < 35_000) {
+            && Date.now() - new Date(active.updated_at).getTime() < 12_000) {
           return { sent: 0, activeViewer: true };
         }
       } catch (e) { /* fail-open */ }

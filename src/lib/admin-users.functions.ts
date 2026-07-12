@@ -42,8 +42,10 @@ export const adminDeleteUser = createServerFn({ method: 'POST' })
     const recipient = (target as any)?.real_email || (target as any)?.email || null
     const fullName = (target as any)?.full_name || null
 
-    // Enqueue offboarding email BEFORE deletion. Failure is non-fatal —
-    // audit is captured in email_send_log either way.
+    // Send offboarding email BEFORE deletion. Failure is non-fatal to deletion,
+    // but returned so the admin screen can show whether the notice went out.
+    let emailStatus: string | null = null
+    let emailError: string | null = null
     if (recipient) {
       const templateByReason: Record<string, string> = {
         general: 'offboarding-general',
@@ -52,13 +54,17 @@ export const adminDeleteUser = createServerFn({ method: 'POST' })
       }
       try {
         const { enqueueTransactionalEmail } = await import('@/lib/email-enqueue.server')
-        await enqueueTransactionalEmail({
+        const result = await enqueueTransactionalEmail({
           templateName: templateByReason[data.reason] || 'offboarding-general',
           recipientEmail: recipient,
           idempotencyKey: `offboarding-${data.userId}-${data.reason}`,
           templateData: { name: fullName || undefined },
         })
+        emailStatus = result.status
+        emailError = result.error || null
       } catch (e) {
+        emailStatus = 'error'
+        emailError = String((e as any)?.message || e)
         console.error('[adminDeleteUser] offboarding email enqueue failed', e)
       }
     }
@@ -71,5 +77,5 @@ export const adminDeleteUser = createServerFn({ method: 'POST' })
     const { error } = await supabaseAdmin.rpc('admin_delete_user', { _user_id: data.userId })
     if (error) throw new Error(error.message)
 
-    return { ok: true, emailed: !!recipient }
+    return { ok: true, emailed: !!recipient && emailStatus !== 'error' && emailStatus !== 'suppressed', emailStatus, emailError }
   })
