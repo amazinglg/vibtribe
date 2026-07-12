@@ -190,3 +190,135 @@ export const sendMissingTermsReminder = createServerFn({ method: 'POST' })
       failures,
     }
   })
+
+function buildFinishSignupBodyHtml(name: string, deadline: Date): string {
+  const dateStr = deadline.toLocaleDateString('en-IN', {
+    day: '2-digit', month: 'short', year: 'numeric',
+    timeZone: 'Asia/Kolkata',
+  })
+  const safeName = (name || 'there').replace(/[<>&"]/g, '')
+  return `
+    <p style="margin:0 0 16px 0;font-size:18px;font-weight:600;">Hi ${safeName},</p>
+    <p style="margin:0 0 16px 0;">
+      You created a <strong>VibTribe</strong> account but never finished setting up
+      your profile. It only takes a minute — pick a username, add a photo and your
+      6-digit encryption passcode, and you're in.
+    </p>
+    <div style="margin:24px 0;padding:16px 18px;border-radius:12px;background:#fff4e5;border:1px solid #f5c98a;color:#7a4a00;">
+      <p style="margin:0 0 6px 0;font-weight:700;">⚠️ Action required by ${dateStr}</p>
+      <p style="margin:0;font-size:14px;line-height:1.55;">
+        If you don't complete your sign-up within the next <strong>${OFFBOARD_DAYS} days</strong>,
+        your VibTribe account will be <strong>offboarded</strong> from the platform.
+        Don't worry — you're always welcome to sign up again whenever you're ready.
+      </p>
+    </div>
+    <p style="margin:24px 0 8px 0;text-align:center;">
+      <a href="https://www.vibtribe.in/complete-profile" style="display:inline-block;padding:12px 24px;border-radius:10px;background:#6366f1;color:#ffffff;text-decoration:none;font-weight:600;">Finish sign-up now</a>
+    </p>
+    <p style="margin:24px 0 0 0;font-size:13px;color:#6b6b6b;">
+      Already finished? You can safely ignore this email.
+    </p>
+  `
+}
+
+export const sendFinishSignupReminder = createServerFn({ method: 'POST' })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: actor } = await supabaseAdmin
+      .from('user_profiles')
+      .select('is_master_admin, role')
+      .eq('id', context.userId)
+      .maybeSingle()
+    if (!actor || (!actor.is_master_admin && actor.role !== 'admin')) {
+      throw new Error('Admin access required')
+    }
+    const { data: allowed } = await supabaseAdmin.rpc('has_permission', {
+      _user_id: context.userId,
+      _permission_key: 'legal.reminder',
+    })
+    if (!allowed) throw new Error('Reminder permission required')
+
+    const { data: targets, error } = await supabaseAdmin
+      .from('user_profiles')
+      .select('id, full_name, real_email, profile_completed')
+      .or('profile_completed.is.null,profile_completed.eq.false')
+    if (error) throw new Error(error.message)
+
+    const now = new Date()
+    const deadline = new Date(now.getTime() + OFFBOARD_DAYS * 86400_000)
+
+    let notified = 0
+    let emailed = 0
+    let emailFailed = 0
+    const failures: Array<{ id: string; email?: string | null; reason: string }> = []
+
+    const { data: suppressed } = await supabaseAdmin
+      .from('suppressed_emails')
+      .select('email')
+    const supSet = new Set((suppressed ?? []).map(s => s.email.toLowerCase()))
+
+    for (const u of targets ?? []) {
+      try {
+        await supabaseAdmin.from('notifications').insert({
+          user_id: u.id,
+          type: 'signup_incomplete',
+          title: 'Finish setting up your VibTribe account',
+          body: `Complete your profile before ${deadline.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' })} or your account will be offboarded. You can always sign up again later.`,
+          link: '/complete-profile',
+        })
+        notified++
+      } catch (e: any) {
+        failures.push({ id: u.id, reason: `notification: ${e?.message || 'unknown'}` })
+      }
+
+      const email = (u.real_email || '').trim().toLowerCase()
+      if (!email || !email.includes('@')) {
+        failures.push({ id: u.id, email, reason: 'no real email on file' })
+        continue
+      }
+      if (supSet.has(email)) {
+        failures.push({ id: u.id, email, reason: 'recipient is on suppression list' })
+        continue
+      }
+      try {
+        const token = await getOrCreateUnsubToken(email)
+        const unsubscribeUrl = buildUnsubUrl(token)
+        const subject = `Finish setting up your VibTribe account within ${OFFBOARD_DAYS} days`
+        const preheader = `Complete your profile or your account will be offboarded — you can always sign up again.`
+        const bodyHtml = buildFinishSignupBodyHtml(u.full_name || '', deadline)
+        const html = wrapCampaignHtml({
+          subject, preheader, bodyHtml, unsubscribeUrl, recipientEmail: email,
+        })
+        const result = await resendSend({
+          to: email, subject, html, text: htmlToText(html), unsubscribeUrl, preheader,
+        })
+        await supabaseAdmin.from('email_send_log').insert({
+          template_name: 'finish_signup_reminder',
+          recipient_email: email,
+          message_id: result.id || `finish-signup-${u.id}-${Date.now()}`,
+          status: result.ok ? 'sent' : 'failed',
+          error_message: result.ok ? null : (result.error || `HTTP ${result.status}`),
+          metadata: { user_id: u.id, deadline: deadline.toISOString() },
+        }).then(() => {}, () => {})
+        if (result.ok) emailed++
+        else {
+          emailFailed++
+          failures.push({ id: u.id, email, reason: `email: ${result.error || `HTTP ${result.status}`}` })
+        }
+        await new Promise(r => setTimeout(r, 120))
+      } catch (e: any) {
+        emailFailed++
+        failures.push({ id: u.id, email, reason: `email exception: ${e?.message || 'unknown'}` })
+      }
+    }
+
+    return {
+      ok: true,
+      total: targets?.length ?? 0,
+      notified,
+      emailed,
+      emailFailed,
+      deadline: deadline.toISOString(),
+      failures,
+    }
+  })
