@@ -126,7 +126,7 @@ function writeLastSubscriptionSyncAt() {
 
 async function persistSubscription(
   supabase: any,
-  userId: string,
+  _userId: string,
   json: PushSubscriptionJSON,
   previousEndpoint?: string | null,
 ): Promise<boolean> {
