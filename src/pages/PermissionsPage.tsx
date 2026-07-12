@@ -7,7 +7,8 @@ import {
   ArrowLeft, Shield, Plus, Trash2, Loader2, Lock, X, Search,
   ChevronDown, Check, Minus, Eye, Pencil, Users, MessageSquare,
   Megaphone, Bell, HardDrive, FileText, BarChart3, Settings,
-  Package, ShieldCheck, Mail, Tag,
+  Package, ShieldCheck, Mail, Tag, Flag, LayoutDashboard, KeyRound,
+  Crown, Monitor, UsersRound, ScrollText,
 } from 'lucide-react'
 import AppLayout from '@/components/AppLayout'
 import { useAuth } from '@/contexts/AuthContext'
@@ -19,15 +20,22 @@ const CATEGORY_META: Record<string, { icon: any; tint: string }> = {
   Users: { icon: Users, tint: 'from-blue-500/20 to-cyan-500/10 text-blue-400' },
   Chats: { icon: MessageSquare, tint: 'from-violet-500/20 to-fuchsia-500/10 text-violet-300' },
   Messages: { icon: MessageSquare, tint: 'from-violet-500/20 to-fuchsia-500/10 text-violet-300' },
+  Tribes: { icon: UsersRound, tint: 'from-indigo-500/20 to-blue-500/10 text-indigo-300' },
   Broadcasts: { icon: Megaphone, tint: 'from-pink-500/20 to-rose-500/10 text-pink-300' },
   Marketing: { icon: Megaphone, tint: 'from-pink-500/20 to-rose-500/10 text-pink-300' },
+  Moderation: { icon: Flag, tint: 'from-red-500/20 to-rose-500/10 text-red-300' },
   Notifications: { icon: Bell, tint: 'from-amber-500/20 to-orange-500/10 text-amber-300' },
+  Overview: { icon: LayoutDashboard, tint: 'from-fuchsia-500/20 to-violet-500/10 text-fuchsia-300' },
+  Permissions: { icon: KeyRound, tint: 'from-purple-500/20 to-fuchsia-500/10 text-purple-300' },
+  Premium: { icon: Crown, tint: 'from-yellow-500/20 to-amber-500/10 text-yellow-300' },
+  Sessions: { icon: Monitor, tint: 'from-teal-500/20 to-cyan-500/10 text-teal-300' },
   Storage: { icon: HardDrive, tint: 'from-emerald-500/20 to-teal-500/10 text-emerald-300' },
   Support: { icon: Mail, tint: 'from-sky-500/20 to-indigo-500/10 text-sky-300' },
   Tickets: { icon: Mail, tint: 'from-sky-500/20 to-indigo-500/10 text-sky-300' },
   Releases: { icon: Package, tint: 'from-purple-500/20 to-indigo-500/10 text-purple-300' },
   Roles: { icon: ShieldCheck, tint: 'from-red-500/20 to-orange-500/10 text-red-300' },
   Analytics: { icon: BarChart3, tint: 'from-lime-500/20 to-green-500/10 text-lime-300' },
+  Audit: { icon: ScrollText, tint: 'from-zinc-500/20 to-slate-500/10 text-zinc-300' },
   'Audit Logs': { icon: FileText, tint: 'from-zinc-500/20 to-slate-500/10 text-zinc-300' },
   Settings: { icon: Settings, tint: 'from-cyan-500/20 to-blue-500/10 text-cyan-300' },
 }
