@@ -339,20 +339,20 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="relative z-10 border-t border-border">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 flex flex-col sm:flex-row items-center sm:justify-between gap-6">
           <div className="flex items-center gap-2">
             <AppLogo size={24} />
             <Wordmark className="text-sm" />
             <span className="text-xs text-muted-foreground hidden sm:inline ml-2">— {t('landing.footer.tagline')}</span>
           </div>
-          <div className="flex items-center gap-5 text-xs text-muted-foreground">
+          <div className="grid grid-cols-2 gap-x-6 gap-y-2 w-full text-center text-xs text-muted-foreground sm:flex sm:w-auto sm:items-center sm:gap-5 sm:text-left">
             <Link to="/terms" className="hover:text-foreground transition-colors">{t('landing.footer.terms')}</Link>
             <Link to="/privacy" className="hover:text-foreground transition-colors">{t('landing.footer.privacy')}</Link>
             <Link to="/data-notice" className="hover:text-foreground transition-colors">Data Notice</Link>
             <Link to="/subprocessors" className="hover:text-foreground transition-colors">Subprocessors</Link>
             <Link to="/child-safety" className="hover:text-foreground transition-colors">Child Safety</Link>
             <Link to="/help/reporting" className="hover:text-foreground transition-colors">Reporting</Link>
-            <span>© {new Date().getFullYear()}</span>
+            <span className="col-span-2 sm:col-auto">© {new Date().getFullYear()}</span>
           </div>
         </div>
       </footer>
