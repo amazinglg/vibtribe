@@ -181,13 +181,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const handleAppPermAllow = async () => {
     setShowAppPermPrompt(false);
       if (user) localStorage.setItem(`vt_perms_requested_${user.id}`, '1');
-    // Notifications + storage can be requested in parallel.
-    // Microphone + camera need a user-gesture context too — fired right after click.
-    await Promise.all([
-      requestNotifications(),
-      requestStorage(),
-      requestMicAndCamera(),
-    ]);
+    // Ask for notifications first so iOS Home Screen can create the push
+    // subscription from this tap before camera/mic prompts take over.
+    await requestNotifications();
+    await requestStorage();
+    await requestMicAndCamera();
   };
 
   const handleAppPermDeny = () => {
