@@ -14,7 +14,23 @@ export type PushPayload = {
 };
 
 const PUBLIC_KEY_CACHE = 'vt_vapid_public_key';
-let lastSubscriptionSyncAt = 0;
+const LAST_SYNC_CACHE = 'vt_push_last_subscription_sync_at';
+
+function isLovablePreviewHost(hostname: string): boolean {
+  return hostname.startsWith('id-preview--')
+    || hostname.startsWith('preview--')
+    || hostname.endsWith('-dev.lovable.app')
+    || hostname === 'lovableproject.com'
+    || hostname.endsWith('.lovableproject.com')
+    || hostname === 'lovableproject-dev.com'
+    || hostname.endsWith('.lovableproject-dev.com')
+    || hostname === 'beta.lovable.dev'
+    || hostname.endsWith('.beta.lovable.dev');
+}
+
+function isFramed(): boolean {
+  try { return window.self !== window.top; } catch { return true; }
+}
 
 function base64UrlToUint8Array(value: string): Uint8Array {
   const padding = '='.repeat((4 - (value.length % 4)) % 4);
@@ -53,7 +69,31 @@ export function canRequestWebPush(): boolean {
   if (!isWebPushSupported()) return false;
   // On iOS, PushManager only works when launched from the Home Screen PWA.
   if (isIosDevice() && !isStandalonePwa()) return false;
+  if (isFramed() || isLovablePreviewHost(window.location.hostname)) return false;
   return true;
+}
+
+export async function registerNewMessagePushServiceWorker(): Promise<ServiceWorkerRegistration | null> {
+  if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return null;
+
+  if (isFramed() || isLovablePreviewHost(window.location.hostname)) {
+    try {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.filter((r) => new URL(r.scope).origin === window.location.origin).map((r) => r.unregister()));
+    } catch {}
+    try {
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.filter((k) => k.startsWith('vibtribe-')).map((k) => caches.delete(k)));
+      }
+    } catch {}
+    return null;
+  }
+
+  const existing = await navigator.serviceWorker.getRegistration('/');
+  const registration = existing || await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+  registration.update().catch(() => {});
+  return registration;
 }
 
 async function getVapidPublicKey(supabase: any): Promise<string | null> {
@@ -70,28 +110,36 @@ async function getVapidPublicKey(supabase: any): Promise<string | null> {
 
 async function seedVapidKeyToServiceWorker(key: string) {
   try {
+    await registerNewMessagePushServiceWorker();
     const reg = await navigator.serviceWorker.ready;
     reg.active?.postMessage({ type: 'SET_VAPID_PUBLIC_KEY', key });
   } catch {}
 }
 
+function readLastSubscriptionSyncAt(): number {
+  try { return Number(localStorage.getItem(LAST_SYNC_CACHE) || '0') || 0; } catch { return 0; }
+}
+
+function writeLastSubscriptionSyncAt() {
+  try { localStorage.setItem(LAST_SYNC_CACHE, String(Date.now())); } catch {}
+}
+
 async function persistSubscription(
   supabase: any,
-  userId: string,
+  _userId: string,
   json: PushSubscriptionJSON,
   previousEndpoint?: string | null,
 ): Promise<boolean> {
   if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) return false;
-  const { error } = await supabase.from('push_subscriptions').upsert({
-    user_id: userId,
-    endpoint: json.endpoint,
-    p256dh: json.keys.p256dh,
-    auth: json.keys.auth,
-    updated_at: new Date().toISOString(),
-  }, { onConflict: 'endpoint' });
+  const { error } = await (supabase as any).rpc('claim_push_subscription', {
+    _endpoint: json.endpoint,
+    _p256dh: json.keys.p256dh,
+    _auth: json.keys.auth,
+  });
   if (!error && previousEndpoint && previousEndpoint !== json.endpoint) {
     await supabase.from('push_subscriptions').delete().eq('endpoint', previousEndpoint);
   }
+  if (error) console.warn('[push] claim_push_subscription failed', error.message || error);
   return !error;
 }
 
@@ -121,8 +169,11 @@ export async function ensurePushSubscription(supabase: any, userId: string): Pro
   }
   await seedVapidKeyToServiceWorker(publicKey);
 
+  const registered = await registerNewMessagePushServiceWorker();
+  if (!registered) return false;
+
   const registration = await Promise.race([
-    navigator.serviceWorker.ready,
+    navigator.serviceWorker.ready.then((ready) => ready || registered),
     new Promise<ServiceWorkerRegistration>((_, reject) => window.setTimeout(() => reject(new Error('service worker not ready')), 8000)),
   ]);
   await registration.update().catch(() => {});
@@ -159,12 +210,22 @@ export async function ensurePushSubscription(supabase: any, userId: string): Pro
 
   const ok = await persistSubscription(supabase, userId, subscription.toJSON());
   if (!ok) console.warn('[push] persistSubscription upsert failed');
-  else lastSubscriptionSyncAt = Date.now();
+  else writeLastSubscriptionSyncAt();
   return ok;
 }
 
+export async function requestWebPushPermissionAndSubscribe(supabase: any, userId: string): Promise<boolean> {
+  if (!canRequestWebPush() || !userId) return false;
+  if (Notification.permission === 'default') {
+    const result = await Notification.requestPermission();
+    if (result !== 'granted') return false;
+  }
+  if (Notification.permission !== 'granted') return false;
+  return ensurePushSubscription(supabase, userId);
+}
+
 export function shouldRefreshPushSubscription(maxAgeMs = 5 * 60_000): boolean {
-  return Date.now() - lastSubscriptionSyncAt > maxAgeMs;
+  return Date.now() - readLastSubscriptionSyncAt() > maxAgeMs;
 }
 
 // Listen for the SW's `pushsubscriptionchange` notification and persist the

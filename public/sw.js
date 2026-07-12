@@ -1,12 +1,5 @@
-// Bump on every release so installed PWAs pick up the latest build
-// (auth/email branding, OTP throttling, profile + admin redesign, etc.).
-const CACHE_NAME = 'vibtribe-v21';
-const IMG_CACHE = 'vibtribe-images-v5';
-const STATIC_ASSETS = ['/', '/manifest.json', '/favicon.ico'];
-
-// Cached VAPID public key so `pushsubscriptionchange` can re-subscribe
-// without a live client window. Seeded via postMessage from the app on
-// first load and persisted in Cache Storage so it survives SW restarts.
+// Messaging-only service worker for VibTribe notifications.
+// Do not cache the app shell here: this worker exists only for Web Push.
 let VAPID_PUBLIC_KEY = null;
 const VAPID_CACHE = 'vibtribe-vapid-v1';
 const VAPID_CACHE_URL = '/__vapid_public_key__';
@@ -48,66 +41,14 @@ self.addEventListener('message', (event) => {
 });
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS)));
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    Promise.all([
-      caches.keys().then((names) => Promise.all(names.filter((name) => name !== CACHE_NAME && name !== IMG_CACHE).map((name) => caches.delete(name)))),
-      self.clients.claim(),
-    ])
-  );
-});
-
-self.addEventListener('fetch', (event) => {
-  const req = event.request;
-  if (req.method !== 'GET') return;
-  const url = new URL(req.url);
-  if (url.origin !== self.location.origin || url.pathname.startsWith('/api/')) return;
-
-  if (req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html')) {
-    // Network-first for HTML navigations; fall back to cached page, then the app shell ('/').
-    // NEVER fall back to /manifest.json — it would render raw JSON in the browser.
-    event.respondWith(
-      fetch(req)
-        .then((res) => {
-          if (res && res.status === 200 && res.type === 'basic') {
-            const copy = res.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put('/', copy)).catch(() => {});
-          }
-          return res;
-        })
-        .catch(() => caches.match(req).then((res) => res || caches.match('/')))
-    );
-    return;
-  }
-
-  // Images: stale-while-revalidate — fast paint, refresh in background
-  if (req.destination === 'image') {
-    event.respondWith(
-      caches.open(IMG_CACHE).then((cache) =>
-        cache.match(req).then((cached) => {
-          const network = fetch(req).then((res) => {
-            if (res && res.status === 200) cache.put(req, res.clone());
-            return res;
-          }).catch(() => cached);
-          return cached || network;
-        })
-      )
-    );
-    return;
-  }
-
-  event.respondWith(
-    caches.match(req).then((cached) => cached || fetch(req).then((res) => {
-      if (res && res.status === 200 && res.type === 'basic') {
-        const copy = res.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
-      }
-      return res;
-    }))
+    caches.keys()
+      .then((names) => Promise.all(names.filter((name) => name.startsWith('vibtribe-') && name !== VAPID_CACHE).map((name) => caches.delete(name))))
+      .then(() => self.clients.claim())
   );
 });
 
@@ -134,7 +75,7 @@ self.addEventListener('push', (event) => {
   const options = {
     body: data.body || (isCall ? 'Incoming VibTribe call' : 'You have a new message'),
     icon: '/icons/icon-192x192.png',
-    badge: '/favicon.ico',
+    badge: '/icons/icon-192x192.png',
     tag,
     renotify: true,
     requireInteraction: isCall,
@@ -148,10 +89,13 @@ self.addEventListener('push', (event) => {
   };
 
   event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      clientList.forEach((client) => client.postMessage(isCall ? { type: 'INCOMING_CALL', payload: data } : { type: 'PUSH_MESSAGE', payload: data }));
-      return self.registration.showNotification(title, options);
-    })
+    (async () => {
+      await self.registration.showNotification(title, options);
+      try {
+        const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+        clientList.forEach((client) => client.postMessage(isCall ? { type: 'INCOMING_CALL', payload: data } : { type: 'PUSH_MESSAGE', payload: data }));
+      } catch {}
+    })()
   );
 });
 
@@ -167,9 +111,6 @@ self.addEventListener('notificationclick', (event) => {
   const message = event.action === 'answer' ? { type: 'ANSWER_CALL', payload: data } : { type: 'OPEN_NOTIFICATION', payload: data };
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      // Prefer focusing an existing window and letting the SPA update via postMessage.
-      // Avoid client.navigate() — it triggers a full reload which loses the postMessage
-      // (and on iOS PWA often fails silently), so the user sees "nothing happens".
       const existing = clientList.find((c) => c.url.startsWith(self.location.origin));
       if (existing) {
         existing.postMessage(message);
