@@ -728,6 +728,33 @@ export default function AdminPage() {
               </div>
             </div>
 
+            {/* Trust & Safety shortcuts */}
+            <div className="glass rounded-2xl border border-border p-5">
+              <h2 className="font-bold text-base text-foreground mb-3">Trust &amp; Safety</h2>
+              <div className="grid grid-cols-2 gap-2">
+                <a href="/admin/reports" onClick={(e) => { e.preventDefault(); router({ to: '/admin/reports' }); }}
+                  className="p-3 rounded-xl bg-muted/40 hover:bg-muted/60 border border-border">
+                  <p className="text-sm font-semibold text-foreground">Reports</p>
+                  <p className="text-[11px] text-muted-foreground">User-reported content &amp; profiles</p>
+                </a>
+                <a href="/admin/appeals" onClick={(e) => { e.preventDefault(); router({ to: '/admin/appeals' }); }}
+                  className="p-3 rounded-xl bg-muted/40 hover:bg-muted/60 border border-border">
+                  <p className="text-sm font-semibold text-foreground">Report appeals</p>
+                  <p className="text-[11px] text-muted-foreground">Appeals against moderation actions</p>
+                </a>
+                <a href="/admin/offboarding-appeals" onClick={(e) => { e.preventDefault(); router({ to: '/admin/offboarding-appeals' }); }}
+                  className="p-3 rounded-xl bg-muted/40 hover:bg-muted/60 border border-border">
+                  <p className="text-sm font-semibold text-foreground">Offboarding appeals</p>
+                  <p className="text-[11px] text-muted-foreground">Removed users appealing their block</p>
+                </a>
+                <a href="/admin/deleted-users" onClick={(e) => { e.preventDefault(); router({ to: '/admin/deleted-users' }); }}
+                  className="p-3 rounded-xl bg-muted/40 hover:bg-muted/60 border border-border">
+                  <p className="text-sm font-semibold text-foreground">Deleted users</p>
+                  <p className="text-[11px] text-muted-foreground">Audit log of every removed account</p>
+                </a>
+              </div>
+            </div>
+
             {/* Force Update Release — admin & master admin only */}
             {can('releases.publish') && (
               <div className="glass rounded-2xl border border-border p-5">
