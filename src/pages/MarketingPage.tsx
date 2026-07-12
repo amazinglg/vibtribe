@@ -14,7 +14,7 @@ import {
   listCampaigns, saveCampaign, sendTestEmail, sendCampaign,
   previewAudienceSize, deleteCampaign, getCampaign,
 } from '@/lib/marketing.functions'
-import { sendMissingTermsReminder } from '@/lib/legal-notify.functions'
+import { sendMissingTermsReminder, sendFinishSignupReminder } from '@/lib/legal-notify.functions'
 import RichTextEditor from '@/components/RichTextEditor'
 import { supabase } from '@/integrations/supabase/client'
 
@@ -42,6 +42,8 @@ export default function MarketingPage() {
   const getFn = useServerFn(getCampaign)
   const sendPolicyReminderFn = useServerFn(sendMissingTermsReminder)
   const [sendingPolicyReminder, setSendingPolicyReminder] = useState(false)
+  const sendFinishSignupFn = useServerFn(sendFinishSignupReminder)
+  const [sendingFinishSignup, setSendingFinishSignup] = useState(false)
 
   const [campaigns, setCampaigns] = useState<any[]>([])
   const [loadingList, setLoadingList] = useState(true)
@@ -298,7 +300,28 @@ export default function MarketingPage() {
           const fmt = (d: string) => new Date(d).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })
           return (
             <div className="space-y-6">
-              <div className="flex items-center justify-end gap-2">
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                {canSendPolicyReminder && <button
+                  onClick={async () => {
+                    if (sendingFinishSignup) return
+                    if (!confirm('Send a "Finish sign-up" reminder (in-app + email) to every user who has NOT yet completed onboarding? They will have 15 days to finish before their account is offboarded.')) return
+                    setSendingFinishSignup(true)
+                    try {
+                      const r: any = await sendFinishSignupFn()
+                      toast.success(`Reminded ${r.total} user(s) — emailed ${r.emailed}, notified ${r.notified}${r.emailFailed ? `, ${r.emailFailed} email failures` : ''}.`)
+                    } catch (e: any) {
+                      toast.error(e?.message || 'Failed to send reminder')
+                    } finally {
+                      setSendingFinishSignup(false)
+                    }
+                  }}
+                  disabled={sendingFinishSignup}
+                  className="px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 bg-sky-500/15 text-sky-600 border border-sky-500/40 hover:bg-sky-500/25 disabled:opacity-60"
+                  title="Email + in-app notify every user who hasn't finished sign-up"
+                >
+                  {sendingFinishSignup ? <Loader2 size={16} className="animate-spin" /> : <Clock size={16} />}
+                  Finish Sign up Reminder
+                </button>}
                 {canSendPolicyReminder && <button
                   onClick={async () => {
                     if (sendingPolicyReminder) return
