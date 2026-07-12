@@ -12,12 +12,19 @@ async function purgeBucket(bucket: string, userId: string) {
   } catch {}
 }
 
+function generateAppealToken(): string {
+  const bytes = new Uint8Array(24)
+  crypto.getRandomValues(bytes)
+  return Array.from(bytes).map((b) => b.toString(16).padStart(2, '0')).join('')
+}
+
 export const adminDeleteUser = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
     z.object({
       userId: z.string().uuid(),
       reason: z.enum(['general', 'terms_breach', 'incomplete_signup']).default('general'),
+      reasonText: z.string().trim().max(4000).optional(),
     }).parse(input),
   )
   .handler(async ({ data, context }) => {
@@ -42,6 +49,15 @@ export const adminDeleteUser = createServerFn({ method: 'POST' })
     const recipient = (target as any)?.real_email || (target as any)?.email || null
     const fullName = (target as any)?.full_name || null
 
+    // For terms-breach offboarding, pre-generate an appeal token that we can
+    // both (a) embed in the email as an "Appeal" button URL, and (b) attach
+    // to the block row inside admin_delete_user so the public appeal page can
+    // resolve it later.
+    const appealToken = data.reason === 'terms_breach' ? generateAppealToken() : null
+    const appealUrl = appealToken
+      ? `https://www.vibtribe.in/appeal-offboarding/${appealToken}`
+      : undefined
+
     // Send offboarding email BEFORE deletion. Failure is non-fatal to deletion,
     // but returned so the admin screen can show whether the notice went out.
     let emailStatus: string | null = null
@@ -58,7 +74,7 @@ export const adminDeleteUser = createServerFn({ method: 'POST' })
           templateName: templateByReason[data.reason] || 'offboarding-general',
           recipientEmail: recipient,
           idempotencyKey: `offboarding-${data.userId}-${data.reason}`,
-          templateData: { name: fullName || undefined },
+          templateData: { name: fullName || undefined, appealUrl },
         })
         emailStatus = result.status
         emailError = result.error || null
@@ -73,8 +89,14 @@ export const adminDeleteUser = createServerFn({ method: 'POST' })
     await purgeBucket('profile-photos', data.userId)
     await purgeBucket('status-media', data.userId)
 
-    // Delete DB rows + auth user via SECURITY DEFINER RPC
-    const { error } = await supabaseAdmin.rpc('admin_delete_user', { _user_id: data.userId })
+    // Delete DB rows + auth user via SECURITY DEFINER RPC (logs deletion +
+    // registers block/appeal placeholder when reason = terms_breach)
+    const { error } = await supabaseAdmin.rpc('admin_delete_user' as any, {
+      _user_id: data.userId,
+      _reason_key: data.reason,
+      _reason_text: data.reasonText ?? null,
+      _appeal_token: appealToken,
+    })
     if (error) throw new Error(error.message)
 
     return { ok: true, emailed: !!recipient && emailStatus !== 'error' && emailStatus !== 'suppressed', emailStatus, emailError }
