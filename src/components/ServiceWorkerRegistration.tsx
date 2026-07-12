@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { ensurePushSubscription, attachPushSubscriptionChangeListener, shouldRefreshPushSubscription } from '@/lib/pushNotifications';
+import { ensurePushSubscription, attachPushSubscriptionChangeListener, shouldRefreshPushSubscription, registerNewMessagePushServiceWorker } from '@/lib/pushNotifications';
 import { useChatStore } from '@/store/chatStore';
 
 // Ringtone audio context for incoming calls
@@ -57,33 +57,9 @@ export default function ServiceWorkerRegistration() {
   const userIdRef = useRef<string | null>(null);
   userIdRef.current = user?.id ?? null;
 
-  // Register SW and subscribe to push
+  // Register the messaging service worker only in published/installed contexts.
   useEffect(() => {
-    if (!('serviceWorker' in navigator)) return;
-
-    // Never run the SW inside Lovable preview / iframe — it caches stale builds
-    // and causes the "sad face" render crash on revisit.
-    const isInIframe = (() => {
-      try { return window.self !== window.top; } catch { return true; }
-    })();
-    const host = window.location.hostname;
-    const isPreviewHost =
-      host.includes('id-preview--') ||
-      host.includes('-dev.lovable.app') ||
-      host.includes('lovableproject.com');
-
-    if (isInIframe || isPreviewHost) {
-      // Unregister any previously installed SW + clear caches so stale shells go away.
-      navigator.serviceWorker.getRegistrations().then((regs) => {
-        regs.forEach((r) => r.unregister());
-      }).catch(() => {});
-      if ('caches' in window) {
-        caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
-      }
-      return;
-    }
-
-    navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
+    registerNewMessagePushServiceWorker().catch(() => {});
   }, []);
 
   // Save push subscription when user logs in
@@ -108,7 +84,7 @@ export default function ServiceWorkerRegistration() {
     // Fired by usePermissions() the moment the user grants notification
     // permission via a button gesture — critical for iOS PWA where the
     // subscribe() call must follow the grant promptly.
-    const onNotifGranted = () => { subscriptionSavedRef.current = false; setupPush(true); };
+    const onNotifGranted = () => { subscriptionSavedRef.current = false; void setupPush(true); };
     window.addEventListener('vt-notif-granted', onNotifGranted);
     const detachChange = attachPushSubscriptionChangeListener(supabase, () => userIdRef.current);
     return () => {
