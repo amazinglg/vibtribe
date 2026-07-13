@@ -632,6 +632,7 @@ export default function AdminPage() {
             ...(can('premium.view') || can('premium.manage') ? ['premium' as const] : []),
             ...(can('reports.view') || can('reports.manage') ? ['reports' as const] : []),
             ...(can('appeals.view') || can('appeals.manage') ? ['appeals' as const] : []),
+            ...(can('appeals.view') || can('appeals.manage') || can('users.view') ? ['deleted' as const] : []),
           ] as const).map(tab => (
             <button
               key={tab}
@@ -641,11 +642,12 @@ export default function AdminPage() {
                 if (tab === 'premium') { router({ to: '/admin/premium-users' }); return; }
                 if (tab === 'reports') { router({ to: '/admin/reports' }); return; }
                 if (tab === 'appeals') { router({ to: '/admin/appeals' }); return; }
+                if (tab === 'deleted') { router({ to: '/admin/deleted-users' }); return; }
                 setActiveTab(tab);
               }}
               className={`relative flex-shrink-0 px-2.5 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold capitalize transition-all whitespace-nowrap ${activeTab === tab ? 'gradient-primary text-white' : 'text-muted-foreground hover:text-foreground'}`}
             >
-              {tab === 'support' ? 'Support' : tab === 'tribes' ? 'Tribes' : tab === 'marketing' ? 'Marketing' : tab === 'permissions' ? 'Permissions' : tab === 'premium' ? 'Premium' : tab === 'reports' ? 'Reports' : tab === 'appeals' ? 'Appeals' : tab}
+              {tab === 'support' ? 'Support' : tab === 'tribes' ? 'Tribes' : tab === 'marketing' ? 'Marketing' : tab === 'permissions' ? 'Permissions' : tab === 'premium' ? 'Premium' : tab === 'reports' ? 'Reports' : tab === 'appeals' ? 'Appeals' : tab === 'deleted' ? 'Deleted Users' : tab}
               {tab === 'support' && unreadTickets > 0 && (
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
                   {unreadTickets > 9 ? '9+' : unreadTickets}
