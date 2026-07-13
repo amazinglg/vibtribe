@@ -107,7 +107,7 @@ export default function PWAInstallBanner() {
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {isIOS
                     ? 'Tap to view iPhone install guide'
-                    : 'Tap to download the Android app (v1.2.2)'}
+                   : 'Tap to download the Android app (v2.1.2)'}
                 </p>
               </div>
               <span
