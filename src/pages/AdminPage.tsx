@@ -1036,7 +1036,7 @@ export default function AdminPage() {
         {selectedTicket && activeTab === 'support' && (
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4" onClick={() => setSelectedTicket(null)}>
             <div
-              className="glass-strong rounded-t-3xl sm:rounded-3xl border border-border w-full max-w-lg float-up flex flex-col gap-4 p-5 max-h-[90vh] overflow-y-auto"
+              className="glass-strong rounded-t-3xl sm:rounded-3xl border border-border w-full max-w-lg float-up flex flex-col gap-4 p-5 pb-28 lg:pb-5 max-h-[90vh] overflow-y-auto"
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-start justify-between gap-3">
