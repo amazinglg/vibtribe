@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { ArrowLeft, UserX, RefreshCw, Loader2, Search } from 'lucide-react'
+import { ArrowLeft, UserX, RefreshCw, Loader2, Search, Trash2 } from 'lucide-react'
 import AppLayout from '@/components/AppLayout'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/integrations/supabase/client'
@@ -28,6 +28,8 @@ export default function AdminDeletedUsersPage() {
   const [rows, setRows] = useState<Row[]>([])
   const [busy, setBusy] = useState(false)
   const [query, setQuery] = useState('')
+  const [confirmId, setConfirmId] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setBusy(true)
@@ -46,6 +48,20 @@ export default function AdminDeletedUsersPage() {
   }, [loading, isAdmin, navigate])
 
   useEffect(() => { if (isAdmin) load() }, [isAdmin, load])
+
+  async function handleDelete(id: string) {
+    setDeleting(id)
+    try {
+      const { error } = await supabase.rpc('admin_delete_deleted_user_log' as any, { _id: id })
+      if (error) throw error
+      toast.success('Entry permanently deleted')
+      setRows((rs) => rs.filter((r) => r.id !== id))
+      setConfirmId(null)
+    } catch (e: any) {
+      toast.error(e?.message || 'Could not delete entry')
+    }
+    setDeleting(null)
+  }
 
   const filtered = useMemo(() => {
     if (!query.trim()) return rows
@@ -124,6 +140,13 @@ export default function AdminDeletedUsersPage() {
                     </div>
                     <div className="text-right text-xs text-muted-foreground shrink-0">
                       {new Date(r.deleted_at).toLocaleString()}
+                      <button
+                        onClick={() => setConfirmId(r.id)}
+                        title="Permanently delete this entry"
+                        className="mt-2 inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-red-500/15 text-red-400 border border-red-500/30 hover:bg-red-500/25 text-[11px]"
+                      >
+                        <Trash2 size={11} /> Delete
+                      </button>
                     </div>
                   </div>
                   <div className="mt-2 text-xs">
@@ -135,6 +158,23 @@ export default function AdminDeletedUsersPage() {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {confirmId && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => !deleting && setConfirmId(null)}>
+              <div className="glass-strong rounded-2xl border border-border p-5 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+                <h3 className="font-bold text-foreground mb-2">Permanently delete this entry?</h3>
+                <p className="text-xs text-muted-foreground mb-4">
+                  This removes the audit record from the database entirely. This cannot be undone.
+                </p>
+                <div className="flex gap-2">
+                  <button onClick={() => setConfirmId(null)} disabled={!!deleting} className="flex-1 py-2 rounded-xl border border-border text-sm font-semibold hover:bg-muted disabled:opacity-50">Cancel</button>
+                  <button onClick={() => handleDelete(confirmId)} disabled={!!deleting} className="flex-1 py-2 rounded-xl bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50">
+                    {deleting && <Loader2 size={14} className="animate-spin" />} Delete
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>
