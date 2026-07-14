@@ -2125,6 +2125,11 @@ export type Database = {
       }
       accept_privacy_and_terms: { Args: never; Returns: undefined }
       accept_terms: { Args: never; Returns: undefined }
+      admin_delete_deleted_user_log: {
+        Args: { _id: string }
+        Returns: undefined
+      }
+      admin_delete_report: { Args: { _report_id: string }; Returns: undefined }
       admin_delete_ticket: { Args: { _ticket_id: string }; Returns: undefined }
       admin_delete_user: {
         Args: {

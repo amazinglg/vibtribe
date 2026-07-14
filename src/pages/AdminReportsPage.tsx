@@ -134,6 +134,17 @@ export default function AdminReportsPage() {
     }
   }
 
+  async function handleDeleteReport(id: string) {
+    try {
+      const { error } = await supabase.rpc('admin_delete_report' as any, { _report_id: id })
+      if (error) throw error
+      toast.success('Report permanently deleted')
+      setRows((rs) => rs.filter((r) => r.id !== id))
+    } catch (e: any) {
+      toast.error(e?.message || 'Could not delete report')
+    }
+  }
+
   return (
     <AppLayout>
       <div className="max-w-6xl mx-auto px-4 lg:px-8 py-6 pb-28 lg:pb-6">
@@ -206,6 +217,7 @@ export default function AdminReportsPage() {
                 notes={notesById[r.id] || ''}
                 setNotes={(v) => setNotesById((p) => ({ ...p, [r.id]: v }))}
                 onDecision={(status, action) => handleDecision(r, status, action)}
+                onDelete={() => handleDeleteReport(r.id)}
                 saving={savingId === r.id}
                 signUrl={signUrl}
                 canManage={canManage}
@@ -219,7 +231,7 @@ export default function AdminReportsPage() {
 }
 
 function ReportCard({
-  report: r, expanded, onToggle, notes, setNotes, onDecision, saving, signUrl, canManage,
+  report: r, expanded, onToggle, notes, setNotes, onDecision, onDelete, saving, signUrl, canManage,
 }: {
   report: ReportRow
   expanded: boolean
@@ -227,6 +239,7 @@ function ReportCard({
   notes: string
   setNotes: (v: string) => void
   onDecision: (status: 'true_positive' | 'false_positive' | 'dismissed', action?: 'none' | 'suspend_user' | 'ban_user' | 'delete_content' | 'dismiss') => void
+  onDelete: () => void
   saving: boolean
   signUrl: (input: any) => Promise<any>
   canManage: boolean
@@ -236,6 +249,7 @@ function ReportCard({
   const [mediaUrl, setMediaUrl] = useState<string | null>(null)
   const [overriding, setOverriding] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [confirmDel, setConfirmDel] = useState(false)
   const media = r.snapshot?.media
 
   const copyId = async () => {
@@ -418,10 +432,35 @@ function ReportCard({
                 >
                   <RotateCcw size={12} /> Change / Override decision
                 </button>
+                <button
+                  onClick={() => setConfirmDel(true)}
+                  className="ml-2 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-500/15 text-red-400 border border-red-500/30 text-xs font-semibold hover:bg-red-500/25 transition-colors"
+                >
+                  <Trash2 size={12} /> Delete permanently
+                </button>
                 <p className="text-[10px] text-muted-foreground mt-1.5">A new audit-log entry will be recorded.</p>
               </div>}
             </div>
           )}
+        </div>
+      )}
+      {confirmDel && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => setConfirmDel(false)}>
+          <div className="glass-strong rounded-2xl border border-border p-5 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-bold text-foreground mb-2">Permanently delete this report?</h3>
+            <p className="text-xs text-muted-foreground mb-4">
+              The report, its appeals, and its audit trail will be removed from the database entirely. This cannot be undone.
+            </p>
+            <div className="flex gap-2">
+              <button onClick={() => setConfirmDel(false)} className="flex-1 py-2 rounded-xl border border-border text-sm font-semibold hover:bg-muted">Cancel</button>
+              <button
+                onClick={() => { setConfirmDel(false); onDelete() }}
+                className="flex-1 py-2 rounded-xl bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 text-sm font-semibold"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
