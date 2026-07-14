@@ -134,6 +134,17 @@ export default function AdminReportsPage() {
     }
   }
 
+  async function handleDeleteReport(id: string) {
+    try {
+      const { error } = await supabase.rpc('admin_delete_report' as any, { _report_id: id })
+      if (error) throw error
+      toast.success('Report permanently deleted')
+      setRows((rs) => rs.filter((r) => r.id !== id))
+    } catch (e: any) {
+      toast.error(e?.message || 'Could not delete report')
+    }
+  }
+
   return (
     <AppLayout>
       <div className="max-w-6xl mx-auto px-4 lg:px-8 py-6 pb-28 lg:pb-6">
@@ -206,6 +217,7 @@ export default function AdminReportsPage() {
                 notes={notesById[r.id] || ''}
                 setNotes={(v) => setNotesById((p) => ({ ...p, [r.id]: v }))}
                 onDecision={(status, action) => handleDecision(r, status, action)}
+                onDelete={() => handleDeleteReport(r.id)}
                 saving={savingId === r.id}
                 signUrl={signUrl}
                 canManage={canManage}
