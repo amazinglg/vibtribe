@@ -3151,11 +3151,11 @@ export default function ChatWindowPanel() {
                   setEditText(actionMsg.text);
                   setActionMsg(null);
                 }}
-                disabled={!isWithinHour(actionMsg.createdAt)}
+                disabled={!canEditMessage(actionMsg.createdAt)}
                 className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground disabled:opacity-40"
               >
                 ✏️ Edit message
-                {!isWithinHour(actionMsg.createdAt) && <span className="ml-auto text-[10px] text-muted-foreground">expired</span>}
+                {!canEditMessage(actionMsg.createdAt) && <span className="ml-auto text-[10px] text-muted-foreground">expired</span>}
               </button>
             )}
             <button
