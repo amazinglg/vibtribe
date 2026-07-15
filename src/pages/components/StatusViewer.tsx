@@ -422,9 +422,33 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
                onPointerUp={(e) => e.stopPropagation()}
                onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-semibold text-white flex items-center gap-2"><Eye size={14}/> Viewed by {viewers.length}</p>
+              <p className="text-sm font-semibold text-white flex items-center gap-2">
+                <Eye size={14}/> Viewed by {viewers.length}
+                <span className="ml-2 flex items-center gap-1 text-pink-300"><Heart size={14} fill="currentColor"/> {likers.length}</span>
+              </p>
               <button onClick={() => { setShowViewers(false); setPaused(false); }} className="p-1.5 text-white/70 hover:text-white"><X size={16} /></button>
             </div>
+            {likers.length > 0 && (
+              <div className="mb-4">
+                <p className="text-[11px] uppercase tracking-wider text-pink-300 mb-2 flex items-center gap-1"><Heart size={11} fill="currentColor"/> Likes</p>
+                <ul className="space-y-2">
+                  {likers.map(l => (
+                    <li key={`like-${l.id}`} className="flex items-center gap-3 text-xs text-white/90">
+                      {l.avatar_url ? (
+                        <img src={l.avatar_url} alt={l.name} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center text-[11px] font-semibold flex-shrink-0">
+                          {(l.name?.[0] || '?').toUpperCase()}
+                        </div>
+                      )}
+                      <span className="flex-1 truncate">{l.name}</span>
+                      <Heart size={12} className="text-pink-400 flex-shrink-0" fill="currentColor" />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <p className="text-[11px] uppercase tracking-wider text-white/60 mb-2 flex items-center gap-1"><Eye size={11}/> Views</p>
             {viewers.length === 0 ? (
               <p className="text-xs text-white/60">No one has viewed this story yet.</p>
             ) : (
