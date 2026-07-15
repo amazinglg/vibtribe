@@ -1765,6 +1765,9 @@ export default function ChatWindowPanel() {
     return exp === null || exp > Date.now();
   })();
   const canDeleteForEveryone = (iso?: string) => canDeleteForEveryoneUnlimited || isWithinHour(iso);
+  // Premium users and the master admin can also edit messages beyond the
+  // default 1-hour edit window, as long as their premium is still active.
+  const canEditMessage = (iso?: string) => canDeleteForEveryoneUnlimited || isWithinHour(iso);
 
   const handleLongPressStart = (msg: Message) => {
     if (msg.deletedForEveryone) return;
