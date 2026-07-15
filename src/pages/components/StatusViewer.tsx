@@ -48,6 +48,8 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
   const [viewers, setViewers] = useState<{ id: string; name: string; avatar_url: string | null; viewed_at: string }[]>([]);
   const [showViewers, setShowViewers] = useState(false);
   const [liking, setLiking] = useState(false);
+  const [likers, setLikers] = useState<{ id: string; name: string; avatar_url: string | null }[]>([]);
+  const [hasLiked, setHasLiked] = useState(false);
   const [reporting, setReporting] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const progressRef = useRef(0);
@@ -90,7 +92,7 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
       .then(() => {});
   }, [story?.id, user?.id, isOwner]);
 
-  // Load viewers list for owner
+  // Load viewers + likers list for owner
   useEffect(() => {
     if (!isOwner || !story?.id) return;
     (async () => {
@@ -102,27 +104,60 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
 
       if (viewsError) {
         setViewers([]);
-        return;
+      } else {
+        const viewerIds = Array.from(new Set((viewRows || []).map((v: any) => v.viewer_id).filter(Boolean)));
+        const { data: profiles } = viewerIds.length > 0
+          ? await supabase.from('user_profiles').select('id, full_name, username, avatar_url').in('id', viewerIds)
+          : { data: [] };
+        const profileById = new Map((profiles || []).map((p: any) => [p.id, p]));
+        const viewersRaw = (viewRows || []).map((v: any) => ({
+          id: v.viewer_id,
+          name: profileById.get(v.viewer_id)?.full_name || profileById.get(v.viewer_id)?.username || 'Someone',
+          avatar_url: profileById.get(v.viewer_id)?.avatar_url || null,
+          viewed_at: v.viewed_at,
+        }));
+        try {
+          const { applyAvatarPrivacy } = await import('@/lib/visible-avatars');
+          setViewers(await applyAvatarPrivacy(viewersRaw, 'id' as any, 'avatar_url' as any));
+        } catch { setViewers(viewersRaw); }
       }
 
-      const viewerIds = Array.from(new Set((viewRows || []).map((v: any) => v.viewer_id).filter(Boolean)));
-      const { data: profiles } = viewerIds.length > 0
-        ? await supabase.from('user_profiles').select('id, full_name, username, avatar_url').in('id', viewerIds)
+      // Likers
+      const { data: likeRows } = await supabase
+        .from('status_likes' as any)
+        .select('liker_id, created_at')
+        .eq('status_id', story.id)
+        .order('created_at', { ascending: false });
+      const likerIds = Array.from(new Set((likeRows || []).map((l: any) => l.liker_id).filter(Boolean)));
+      const { data: lprofs } = likerIds.length > 0
+        ? await supabase.from('user_profiles').select('id, full_name, username, avatar_url').in('id', likerIds)
         : { data: [] };
-      const profileById = new Map((profiles || []).map((p: any) => [p.id, p]));
-
-      const viewersRaw = (viewRows || []).map((v: any) => ({
-        id: v.viewer_id,
-        name: profileById.get(v.viewer_id)?.full_name || profileById.get(v.viewer_id)?.username || 'Someone',
-        avatar_url: profileById.get(v.viewer_id)?.avatar_url || null,
-        viewed_at: v.viewed_at,
+      const lmap = new Map((lprofs || []).map((p: any) => [p.id, p]));
+      const likersRaw = (likeRows || []).map((l: any) => ({
+        id: l.liker_id,
+        name: lmap.get(l.liker_id)?.full_name || lmap.get(l.liker_id)?.username || 'Someone',
+        avatar_url: lmap.get(l.liker_id)?.avatar_url || null,
       }));
       try {
         const { applyAvatarPrivacy } = await import('@/lib/visible-avatars');
-        setViewers(await applyAvatarPrivacy(viewersRaw, 'id' as any, 'avatar_url' as any));
-      } catch { setViewers(viewersRaw); }
+        setLikers(await applyAvatarPrivacy(likersRaw, 'id' as any, 'avatar_url' as any));
+      } catch { setLikers(likersRaw); }
     })();
   }, [story?.id, isOwner]);
+
+  // Non-owners: know if the current viewer has already liked this story
+  useEffect(() => {
+    if (isOwner || !user?.id || !story?.id) { setHasLiked(false); return; }
+    (async () => {
+      const { data } = await supabase
+        .from('status_likes' as any)
+        .select('id')
+        .eq('status_id', story.id)
+        .eq('liker_id', user.id)
+        .maybeSingle();
+      setHasLiked(!!data);
+    })();
+  }, [story?.id, user?.id, isOwner]);
 
   const handleReply = async () => {
     if (!reply.trim() || sending) return;
@@ -167,35 +202,30 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
     setShowReactions(false);
   };
 
-  // ❤️ Like — fire a quick reaction message without opening reply composer
+  // ❤️ Like / unlike — recorded on the status itself, NOT sent as a chat message.
   const handleLike = async () => {
     if (liking || isOwner) return;
-    if (!user?.id || !contact.userId) { toast.error('Cannot react to this status'); return; }
+    if (!user?.id || !story?.id) { toast.error('Cannot react to this status'); return; }
     setLiking(true);
     try {
-      const { data: existing } = await supabase
-        .from('chats')
-        .select('id')
-        .or(`and(participant_one.eq.${user.id},participant_two.eq.${contact.userId}),and(participant_one.eq.${contact.userId},participant_two.eq.${user.id})`)
-        .maybeSingle();
-      let chatId = existing?.id as string | undefined;
-      if (!chatId) {
-        const { data: created } = await supabase
-          .from('chats')
-          .insert({ participant_one: user.id, participant_two: contact.userId, chat_type: 'normal' })
-          .select('id').single();
-        chatId = created?.id;
+      if (hasLiked) {
+        const { error } = await supabase
+          .from('status_likes' as any)
+          .delete()
+          .eq('status_id', story.id)
+          .eq('liker_id', user.id);
+        if (error) throw error;
+        setHasLiked(false);
+      } else {
+        const { error } = await supabase
+          .from('status_likes' as any)
+          .insert({ status_id: story.id, liker_id: user.id });
+        if (error && !String(error.message).includes('duplicate')) throw error;
+        setHasLiked(true);
+        toast.success(`Liked ${contact.name}'s status`);
       }
-      if (!chatId) throw new Error('Chat unavailable');
-      const quote = (story?.content || (story?.media_url ? '[media]' : '')).slice(0, 60);
-      await supabase.from('messages').insert({
-        chat_id: chatId, sender_id: user.id,
-        content: `❤️ Liked your status${quote ? ` ("${quote}")` : ''}`,
-        message_status: 'sent',
-      });
-      toast.success(`Liked ${contact.name}'s status`);
     } catch (e: any) {
-      toast.error(e?.message || 'Could not send like');
+      toast.error(e?.message || 'Could not update like');
     } finally {
       setLiking(false);
     }
@@ -352,10 +382,10 @@ export default function StatusViewer({ contact, onClose }: StatusViewerProps) {
               onPointerDown={(e) => e.stopPropagation()}
               onClick={(e) => { e.stopPropagation(); handleLike(); }}
               disabled={liking}
-              className="p-2.5 bg-black/40 border border-white/20 rounded-full text-white hover:bg-white/10 transition-all backdrop-blur-sm"
-              aria-label="Like status"
+              className={`p-2.5 border border-white/20 rounded-full text-white hover:bg-white/10 transition-all backdrop-blur-sm ${hasLiked ? 'bg-pink-500/40' : 'bg-black/40'}`}
+              aria-label={hasLiked ? 'Unlike status' : 'Like status'}
             >
-              <Heart size={18} />
+              <Heart size={18} fill={hasLiked ? 'currentColor' : 'none'} />
             </button>
 
             <button
