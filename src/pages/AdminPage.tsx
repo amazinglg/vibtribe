@@ -196,8 +196,13 @@ export default function AdminPage() {
     // isAdmin() reads from a not-yet-populated profile.
     if (!profile) return;
     if (!isAdmin?.()) { router({ to: '/', replace: true }); return; }
+    // Only run the heavy admin data load once per user session. Reruns
+    // caused by `profile` identity changes were flashing the whole panel
+    // back to a loading skeleton every few seconds. Manual refresh + the
+    // realtime badge subscriptions keep the panel up to date.
     loadData();
-  }, [user, loading, profile]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, loading, !!profile]);
 
   useEffect(() => {
     if (activeTab === 'support') loadTickets();
@@ -249,8 +254,8 @@ export default function AdminPage() {
     return () => { supabase.removeChannel(channel); };
   }, [user]);
 
-  const loadData = async () => {
-    setLoadingData(true);
+  const loadData = async (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) setLoadingData(true);
     try {
       // Use admin-only RPC — table SELECT is restricted to safe columns now.
       const { data: usersData } = await supabase.rpc('admin_list_user_profiles');
@@ -296,9 +301,12 @@ export default function AdminPage() {
         .eq('ticket_status', 'open');
       setUnreadTickets(count || 0);
     } catch (err: any) {
-      toast.error('Failed to load admin data');
+      toast.error('Admin panel failed to refresh — returning to home');
+      // If loading breaks, don't leave the user stuck on a half-rendered
+      // admin screen — send them back to the app.
+      router({ to: '/', replace: true });
     } finally {
-      setLoadingData(false);
+      if (!opts?.silent) setLoadingData(false);
     }
   };
 
