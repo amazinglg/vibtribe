@@ -1765,6 +1765,9 @@ export default function ChatWindowPanel() {
     return exp === null || exp > Date.now();
   })();
   const canDeleteForEveryone = (iso?: string) => canDeleteForEveryoneUnlimited || isWithinHour(iso);
+  // Premium users and the master admin can also edit messages beyond the
+  // default 1-hour edit window, as long as their premium is still active.
+  const canEditMessage = (iso?: string) => canDeleteForEveryoneUnlimited || isWithinHour(iso);
 
   const handleLongPressStart = (msg: Message) => {
     if (msg.deletedForEveryone) return;
@@ -3148,11 +3151,11 @@ export default function ChatWindowPanel() {
                   setEditText(actionMsg.text);
                   setActionMsg(null);
                 }}
-                disabled={!isWithinHour(actionMsg.createdAt)}
+                disabled={!canEditMessage(actionMsg.createdAt)}
                 className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground disabled:opacity-40"
               >
                 ✏️ Edit message
-                {!isWithinHour(actionMsg.createdAt) && <span className="ml-auto text-[10px] text-muted-foreground">expired</span>}
+                {!canEditMessage(actionMsg.createdAt) && <span className="ml-auto text-[10px] text-muted-foreground">expired</span>}
               </button>
             )}
             <button

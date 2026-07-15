@@ -1377,6 +1377,42 @@ export type Database = {
           },
         ]
       }
+      status_likes: {
+        Row: {
+          created_at: string
+          id: string
+          liker_id: string
+          status_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          liker_id: string
+          status_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          liker_id?: string
+          status_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "status_likes_liker_id_fkey"
+            columns: ["liker_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "status_likes_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "statuses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       status_views: {
         Row: {
           id: string
@@ -2531,6 +2567,10 @@ export type Database = {
       consume_email_otp: {
         Args: { _code: string; _email: string; _purpose: string }
         Returns: boolean
+      }
+      create_tribe: {
+        Args: { _member_ids: string[]; _name: string }
+        Returns: string
       }
       delete_email: {
         Args: { message_id: number; queue_name: string }

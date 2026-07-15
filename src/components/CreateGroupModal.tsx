@@ -82,28 +82,15 @@ export default function CreateGroupModal({ isOpen, onClose, onCreated }: Props) 
     if (!user) return;
     setCreating(true);
     try {
-      const { data: chat, error: chatErr } = await supabase
-        .from('chats')
-        .insert({
-          is_group: true,
-          name: name.trim(),
-          chat_type: 'normal',
-          created_by: user.id,
-          participant_one: user.id,
-          disappear_mode: '24h',
-        })
-        .select()
-        .single();
-      if (chatErr || !chat) throw chatErr;
-
-      const members = [user.id, ...Array.from(selected)].map(uid => ({
-        chat_id: chat.id,
-        user_id: uid,
-      }));
-      const { error: memErr } = await supabase.from('chat_members').insert(members);
-      if (memErr) throw memErr;
-
-      onCreated?.(chat.id);
+      // Use SECURITY DEFINER RPC — sidesteps RLS edge cases when creating a
+      // tribe (e.g. sessions where auth.uid() context differed from the
+      // client's user.id) and inserts creator+members atomically.
+      const { data: newChatId, error: rpcErr } = await supabase.rpc('create_tribe' as any, {
+        _name: name.trim(),
+        _member_ids: Array.from(selected),
+      });
+      if (rpcErr) throw rpcErr;
+      onCreated?.(newChatId as string);
       onClose();
       setName('');
       setSelected(new Set());
