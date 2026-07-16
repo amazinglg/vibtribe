@@ -544,6 +544,12 @@ export default function ChatWindowPanel() {
 
     if (selectedChatId && user) {
       loadChatData();
+      // Clear stale header/messages immediately so the previous chat's
+      // contact info doesn't briefly render while the new chat loads.
+      setContact(null);
+      setMessages([]);
+      setTribeRole(null);
+      contactPubKeyRef.current = null;
       const channel = supabase
         .channel(`chat-${selectedChatId}`)
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `chat_id=eq.${selectedChatId}` },
