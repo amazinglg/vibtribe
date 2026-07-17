@@ -132,13 +132,13 @@ export async function setupEncryptionWithPIN(userId: string, pin: string): Promi
 
   const publicKeyB64 = bufToB64(publicKeyBuf);
 
-  const { error } = await supabase.from('user_profiles').update({
-    public_key: publicKeyB64,
-    encrypted_private_key: bufToB64(encrypted),
-    key_salt: bufToB64(salt),
-    key_iv: bufToB64(iv),
-    key_setup_completed: true,
-  }).eq('id', userId);
+  const { error } = await supabase.rpc('set_my_encryption_material', {
+    _public_key: publicKeyB64,
+    _encrypted_private_key: bufToB64(encrypted),
+    _key_salt: bufToB64(salt),
+    _key_iv: bufToB64(iv),
+    _mark_setup: true,
+  });
   if (error) throw error;
 
   // Cache locally (importKey to get a non-extractable usable key)
@@ -206,11 +206,13 @@ export async function changeEncryptionPIN(userId: string, oldPin: string, newPin
   const newWrapKey = await deriveWrapKey(newPin, newSalt);
   const reEncrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: newIv }, newWrapKey, plainBuf);
 
-  const { error: upErr } = await supabase.from('user_profiles').update({
-    encrypted_private_key: bufToB64(reEncrypted),
-    key_salt: bufToB64(newSalt),
-    key_iv: bufToB64(newIv),
-  }).eq('id', userId);
+  const { error: upErr } = await supabase.rpc('set_my_encryption_material', {
+    _public_key: null as unknown as string,
+    _encrypted_private_key: bufToB64(reEncrypted),
+    _key_salt: bufToB64(newSalt),
+    _key_iv: bufToB64(newIv),
+    _mark_setup: false,
+  });
   if (upErr) throw upErr;
 }
 

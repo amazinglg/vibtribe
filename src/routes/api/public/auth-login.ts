@@ -89,12 +89,12 @@ export const Route = createFileRoute('/api/public/auth-login')({
             return Response.json({ requires_totp: true }, { status: 200 })
           }
           const { data: secret } = await admin
-            .from('user_profiles')
+            .from('user_profiles_private')
             .select('totp_secret')
             .eq('id', profile.id)
             .maybeSingle()
-          const ok = secret?.totp_secret
-            ? await verifyTotp(secret.totp_secret as string, totp)
+          const ok = (secret as any)?.totp_secret
+            ? await verifyTotp((secret as any).totp_secret as string, totp)
             : false
           if (!ok) {
             return Response.json(
