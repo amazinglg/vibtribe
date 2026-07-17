@@ -3623,6 +3623,12 @@ export default function ChatWindowPanel() {
                     }
                     setShowDeleteTribeConfirm(false);
                     setShowLeaveTribeConfirm(false);
+                    // Notify chat list to remove this chat immediately without
+                    // waiting for realtime (post-delete the user is no longer
+                    // a member so realtime may not deliver the DELETE row).
+                    try {
+                      window.dispatchEvent(new CustomEvent('vt-chat-removed', { detail: { chatId: selectedChatId } }));
+                    } catch {}
                     setSelectedChatId(null);
                   } catch (e: any) {
                     toast.error(e?.message || 'Action failed');

@@ -605,6 +605,7 @@ export default function TribeDetailsSheet({ chatId, isOpen, onClose, onLeft }: P
                 const { error } = await supabase.rpc('tribe_delete' as any, { _chat_id: chatId } as any);
                 if (error) { toast.error(error.message); return; }
                 toast.success('Tribe deleted');
+                try { window.dispatchEvent(new CustomEvent('vt-chat-removed', { detail: { chatId } })); } catch {}
                 onLeft?.();
                 onClose();
               }}
