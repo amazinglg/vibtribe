@@ -1844,7 +1844,6 @@ export type Database = {
           dob: string | null
           email: string
           email_marketing_opt_in: boolean
-          encrypted_private_key: string | null
           full_name: string
           id: string
           inactivity_final_warning_sent_at: string | null
@@ -1854,8 +1853,6 @@ export type Database = {
           is_premium: boolean
           is_suspended: boolean | null
           is_verified: boolean
-          key_iv: string | null
-          key_salt: string | null
           key_setup_completed: boolean
           last_seen: string | null
           login_attempts: number | null
@@ -1892,8 +1889,6 @@ export type Database = {
           terms_warning_sent_at: string | null
           totp_enabled: boolean
           totp_enabled_at: string | null
-          totp_pending_secret: string | null
-          totp_secret: string | null
           updated_at: string | null
           username: string | null
         }
@@ -1907,7 +1902,6 @@ export type Database = {
           dob?: string | null
           email: string
           email_marketing_opt_in?: boolean
-          encrypted_private_key?: string | null
           full_name?: string
           id: string
           inactivity_final_warning_sent_at?: string | null
@@ -1917,8 +1911,6 @@ export type Database = {
           is_premium?: boolean
           is_suspended?: boolean | null
           is_verified?: boolean
-          key_iv?: string | null
-          key_salt?: string | null
           key_setup_completed?: boolean
           last_seen?: string | null
           login_attempts?: number | null
@@ -1955,8 +1947,6 @@ export type Database = {
           terms_warning_sent_at?: string | null
           totp_enabled?: boolean
           totp_enabled_at?: string | null
-          totp_pending_secret?: string | null
-          totp_secret?: string | null
           updated_at?: string | null
           username?: string | null
         }
@@ -1970,7 +1960,6 @@ export type Database = {
           dob?: string | null
           email?: string
           email_marketing_opt_in?: boolean
-          encrypted_private_key?: string | null
           full_name?: string
           id?: string
           inactivity_final_warning_sent_at?: string | null
@@ -1980,8 +1969,6 @@ export type Database = {
           is_premium?: boolean
           is_suspended?: boolean | null
           is_verified?: boolean
-          key_iv?: string | null
-          key_salt?: string | null
           key_setup_completed?: boolean
           last_seen?: string | null
           login_attempts?: number | null
@@ -2018,12 +2005,48 @@ export type Database = {
           terms_warning_sent_at?: string | null
           totp_enabled?: boolean
           totp_enabled_at?: string | null
-          totp_pending_secret?: string | null
-          totp_secret?: string | null
           updated_at?: string | null
           username?: string | null
         }
         Relationships: []
+      }
+      user_profiles_private: {
+        Row: {
+          encrypted_private_key: string | null
+          id: string
+          key_iv: string | null
+          key_salt: string | null
+          totp_pending_secret: string | null
+          totp_secret: string | null
+          updated_at: string
+        }
+        Insert: {
+          encrypted_private_key?: string | null
+          id: string
+          key_iv?: string | null
+          key_salt?: string | null
+          totp_pending_secret?: string | null
+          totp_secret?: string | null
+          updated_at?: string
+        }
+        Update: {
+          encrypted_private_key?: string | null
+          id?: string
+          key_iv?: string | null
+          key_salt?: string | null
+          totp_pending_secret?: string | null
+          totp_secret?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_profiles_private_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_secure_chats: {
         Row: {
@@ -2224,7 +2247,6 @@ export type Database = {
           dob: string | null
           email: string
           email_marketing_opt_in: boolean
-          encrypted_private_key: string | null
           full_name: string
           id: string
           inactivity_final_warning_sent_at: string | null
@@ -2234,8 +2256,6 @@ export type Database = {
           is_premium: boolean
           is_suspended: boolean | null
           is_verified: boolean
-          key_iv: string | null
-          key_salt: string | null
           key_setup_completed: boolean
           last_seen: string | null
           login_attempts: number | null
@@ -2272,8 +2292,6 @@ export type Database = {
           terms_warning_sent_at: string | null
           totp_enabled: boolean
           totp_enabled_at: string | null
-          totp_pending_secret: string | null
-          totp_secret: string | null
           updated_at: string | null
           username: string | null
         }
@@ -2328,7 +2346,6 @@ export type Database = {
           dob: string | null
           email: string
           email_marketing_opt_in: boolean
-          encrypted_private_key: string | null
           full_name: string
           id: string
           inactivity_final_warning_sent_at: string | null
@@ -2338,8 +2355,6 @@ export type Database = {
           is_premium: boolean
           is_suspended: boolean | null
           is_verified: boolean
-          key_iv: string | null
-          key_salt: string | null
           key_setup_completed: boolean
           last_seen: string | null
           login_attempts: number | null
@@ -2376,8 +2391,6 @@ export type Database = {
           terms_warning_sent_at: string | null
           totp_enabled: boolean
           totp_enabled_at: string | null
-          totp_pending_secret: string | null
-          totp_secret: string | null
           updated_at: string | null
           username: string | null
         }[]
@@ -2412,7 +2425,6 @@ export type Database = {
           dob: string | null
           email: string
           email_marketing_opt_in: boolean
-          encrypted_private_key: string | null
           full_name: string
           id: string
           inactivity_final_warning_sent_at: string | null
@@ -2422,8 +2434,6 @@ export type Database = {
           is_premium: boolean
           is_suspended: boolean | null
           is_verified: boolean
-          key_iv: string | null
-          key_salt: string | null
           key_setup_completed: boolean
           last_seen: string | null
           login_attempts: number | null
@@ -2460,8 +2470,6 @@ export type Database = {
           terms_warning_sent_at: string | null
           totp_enabled: boolean
           totp_enabled_at: string | null
-          totp_pending_secret: string | null
-          totp_secret: string | null
           updated_at: string | null
           username: string | null
         }
@@ -2484,7 +2492,6 @@ export type Database = {
           dob: string | null
           email: string
           email_marketing_opt_in: boolean
-          encrypted_private_key: string | null
           full_name: string
           id: string
           inactivity_final_warning_sent_at: string | null
@@ -2494,8 +2501,6 @@ export type Database = {
           is_premium: boolean
           is_suspended: boolean | null
           is_verified: boolean
-          key_iv: string | null
-          key_salt: string | null
           key_setup_completed: boolean
           last_seen: string | null
           login_attempts: number | null
@@ -2532,8 +2537,6 @@ export type Database = {
           terms_warning_sent_at: string | null
           totp_enabled: boolean
           totp_enabled_at: string | null
-          totp_pending_secret: string | null
-          totp_secret: string | null
           updated_at: string | null
           username: string | null
         }
@@ -2658,7 +2661,6 @@ export type Database = {
           dob: string | null
           email: string
           email_marketing_opt_in: boolean
-          encrypted_private_key: string | null
           full_name: string
           id: string
           inactivity_final_warning_sent_at: string | null
@@ -2668,8 +2670,6 @@ export type Database = {
           is_premium: boolean
           is_suspended: boolean | null
           is_verified: boolean
-          key_iv: string | null
-          key_salt: string | null
           key_setup_completed: boolean
           last_seen: string | null
           login_attempts: number | null
@@ -2706,8 +2706,6 @@ export type Database = {
           terms_warning_sent_at: string | null
           totp_enabled: boolean
           totp_enabled_at: string | null
-          totp_pending_secret: string | null
-          totp_secret: string | null
           updated_at: string | null
           username: string | null
         }
@@ -2955,6 +2953,16 @@ export type Database = {
         }[]
       }
       set_broadcast_avatar: { Args: { _url: string }; Returns: undefined }
+      set_my_encryption_material: {
+        Args: {
+          _encrypted_private_key: string
+          _key_iv: string
+          _key_salt: string
+          _mark_setup?: boolean
+          _public_key: string
+        }
+        Returns: undefined
+      }
       set_user_consent: {
         Args: { _granted: boolean; _purpose: string; _source?: string }
         Returns: undefined
