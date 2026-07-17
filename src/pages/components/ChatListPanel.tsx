@@ -325,6 +325,17 @@ export default function ChatListPanel() {
     // want the sender waiting on realtime to see their chat move up.
     const onMessageSent = () => { loadChats(); };
     window.addEventListener('vt-message-sent', onMessageSent);
+    // Immediate refresh when a chat is deleted/left locally — after deletion
+    // the user is no longer a member so the realtime DELETE row may not be
+    // delivered under RLS. Also optimistically drop the row from state.
+    const onChatRemoved = (e: Event) => {
+      const chatId = (e as CustomEvent).detail?.chatId as string | undefined;
+      if (chatId) {
+        setChats((prev) => prev.filter((c: any) => c.id !== chatId));
+      }
+      loadChats();
+    };
+    window.addEventListener('vt-chat-removed', onChatRemoved);
     // iOS PWA + Android WebView: realtime websockets can silently disconnect
     // when the app goes to background. Use visibility/focus + a 30s polling
     // fallback to keep the list fresh even when realtime is wedged.
@@ -342,6 +353,7 @@ export default function ChatListPanel() {
       window.removeEventListener('vt-tribe-avatar-updated', onResume);
       window.removeEventListener('vt-secure-changed', onSecureChanged);
       window.removeEventListener('vt-message-sent', onMessageSent);
+      window.removeEventListener('vt-chat-removed', onChatRemoved);
       document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('focus', onVisibility);
       clearInterval(poll);
