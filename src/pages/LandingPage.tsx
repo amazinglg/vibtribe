@@ -437,7 +437,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="relative z-10 border-t border-border">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 flex flex-col sm:flex-row items-center sm:justify-between gap-6">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 pb-24 lg:pb-8 flex flex-col sm:flex-row items-center sm:justify-between gap-6">
           <div className="flex items-center gap-2">
             <AppLogo size={24} />
             <Wordmark className="text-sm" />
