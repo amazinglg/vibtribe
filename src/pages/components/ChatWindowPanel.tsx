@@ -1504,10 +1504,9 @@ export default function ChatWindowPanel() {
           type: picked.mime || picked.blob.type || 'application/octet-stream',
         });
       }
-      if (picked.dataUrl) {
-        const file = await dataUrlToFile(picked.dataUrl, picked.name);
-        return file ? new File([file], picked.name, { type: picked.mime || file.type }) : null;
-      }
+      // Prefer the file path when available — streaming a content:// URI
+      // through fetch avoids loading the entire file (esp. large videos)
+      // into memory as a base64 dataUrl, which crashes the WebView.
       if (picked.path) {
         let res: Response | null = null;
         try {
@@ -1524,6 +1523,21 @@ export default function ChatWindowPanel() {
           return new File([blob], picked.name, {
             type: picked.mime || blob.type || 'application/octet-stream',
           });
+        }
+      }
+      if (picked.dataUrl) {
+        // Fallback for pickers that only expose base64. Use fetch() to
+        // decode via the browser's native pipeline instead of atob(), which
+        // OOM-crashes on large binaries.
+        try {
+          const res = await fetch(picked.dataUrl);
+          const blob = await res.blob();
+          return new File([blob], picked.name, {
+            type: picked.mime || blob.type || 'application/octet-stream',
+          });
+        } catch {
+          const file = await dataUrlToFile(picked.dataUrl, picked.name);
+          return file ? new File([file], picked.name, { type: picked.mime || file.type }) : null;
         }
       }
     } catch (e) {
@@ -1592,7 +1606,10 @@ export default function ChatWindowPanel() {
         // Use the system file picker so users can choose photos OR videos.
         // Camera.getPhoto() is image-only — videos never appeared in the
         // gallery sheet before.
-        const picked = await pickNativeMedia({ multiple: true, readData: true });
+        // readData: false — receive a content:// path instead of a huge
+        // base64 dataUrl. Videos would otherwise crash the WebView while
+        // decoding a 50MB+ base64 string in memory.
+        const picked = await pickNativeMedia({ multiple: true, readData: false });
         if (!picked.length) return;
         const converted = await Promise.all(picked.map(async (p) => {
           const file = await nativePickedFileToFile(p);
