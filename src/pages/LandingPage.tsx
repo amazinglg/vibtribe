@@ -455,6 +455,17 @@ export default function LandingPage() {
         </div>
       </footer>
       <ContactFormModal open={contactOpen} onClose={() => setContactOpen(false)} external />
+
+      {/* Sticky mobile signup CTA — always in view on phones for 1-tap conversion. */}
+      <div className="lg:hidden fixed left-0 right-0 bottom-0 z-30 px-3 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-2 bg-gradient-to-t from-background via-background/95 to-transparent">
+        <Link
+          to="/sign-up"
+          className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl gradient-primary text-white text-sm font-semibold glow-primary shadow-lg shadow-primary/30"
+        >
+          Create your free account
+          <ArrowRight size={16} />
+        </Link>
+      </div>
     </div>
   );
 }
