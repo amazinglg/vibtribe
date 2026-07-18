@@ -201,26 +201,26 @@ export default function LandingPage() {
       {/* Comparison */}
       <section className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24">
         <div className="text-center mb-8">
-          <h2 className="font-bold text-2xl sm:text-4xl text-foreground mb-2">Why switch from WhatsApp or Telegram?</h2>
-          <p className="text-sm text-muted-foreground max-w-lg mx-auto">A quick side-by-side of what actually changes for you.</p>
+          <h2 className="font-bold text-2xl sm:text-4xl text-foreground mb-2">Why switch to VibTribe?</h2>
+          <p className="text-sm text-muted-foreground max-w-lg mx-auto">A quick side-by-side of how VibTribe compares to typical messaging apps.</p>
         </div>
 
         <div className="glass-strong rounded-3xl border border-border overflow-hidden">
-          <div className="grid grid-cols-4 text-xs sm:text-sm">
+          <div className="grid grid-cols-3 text-xs sm:text-sm">
             <div className="p-3 sm:p-4 font-semibold text-muted-foreground">What matters</div>
             <div className="p-3 sm:p-4 font-bold text-primary text-center">VibTribe</div>
-            <div className="p-3 sm:p-4 font-semibold text-muted-foreground text-center">WhatsApp</div>
-            <div className="p-3 sm:p-4 font-semibold text-muted-foreground text-center">Telegram</div>
+            <div className="p-3 sm:p-4 font-semibold text-muted-foreground text-center">Other messaging apps</div>
 
-            <CompareRow label="Ads inside the app" vt="No" other1="Yes*" other2="Yes" />
-            <CompareRow label="Your data sold or shared" vt="Never" other1="Meta-linked" other2="Partial" />
-            <CompareRow label="End-to-end encryption by default" vt="Yes" other1="Yes" other2="No" />
-            <CompareRow label="Hidden vault chats behind a PIN" vt="Yes" other1="No" other2="No" />
-            <CompareRow label="Screenshot &amp; screen-record protection" vt="Yes" other1="Partial" other2="No" />
-            <CompareRow label="Status disappears in 24h" vt="Yes" other1="Yes" other2="No" />
+            <CompareRow label="Ads inside the app" vt="No" other="Often" />
+            <CompareRow label="Your data sold or shared" vt="Never" other="Commonly" />
+            <CompareRow label="End-to-end encryption by default" vt="Yes" other="Varies" />
+            <CompareRow label="Hidden vault chats behind a PIN" vt="Yes" other="Rare" />
+            <CompareRow label="Screenshot &amp; screen-record protection" vt="Yes" other="Rare" />
+            <CompareRow label="Status disappears in 24h" vt="Yes" other="Varies" />
+            <CompareRow label="You hold your encryption keys" vt="Yes" other="Rare" />
           </div>
         </div>
-        <p className="text-[11px] text-muted-foreground text-center mt-3">*WhatsApp has begun showing ads inside the Updates tab.</p>
+        <p className="text-[11px] text-muted-foreground text-center mt-3">Comparison reflects common defaults across mainstream messaging apps.</p>
       </section>
 
       {/* Features — Bento */}
@@ -497,7 +497,7 @@ function TrustPill({ icon, label }: { icon: React.ReactNode; label: string }) {
   );
 }
 
-function CompareRow({ label, vt, other1, other2 }: { label: string; vt: string; other1: string; other2: string }) {
+function CompareRow({ label, vt, other }: { label: string; vt: string; other: string }) {
   const cell = (val: string, positive: boolean) => (
     <div className="p-3 sm:p-4 border-t border-border/60 text-center">
       {positive ? (
@@ -516,8 +516,7 @@ function CompareRow({ label, vt, other1, other2 }: { label: string; vt: string; 
     <>
       <div className="p-3 sm:p-4 border-t border-border/60 text-foreground/85 font-medium" dangerouslySetInnerHTML={{ __html: label }} />
       {cell(vt, positiveWords.includes(vt))}
-      {cell(other1, positiveWords.includes(other1))}
-      {cell(other2, positiveWords.includes(other2))}
+      {cell(other, positiveWords.includes(other))}
     </>
   );
 }
