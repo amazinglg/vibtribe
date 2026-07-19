@@ -171,30 +171,42 @@ export default function LandingPage() {
         </div>
 
         <div className="grid sm:grid-cols-3 gap-3 sm:gap-4 max-w-5xl mx-auto text-left">
-          <div className="glass rounded-2xl border border-border p-5">
-            <h3 className="font-bold text-foreground mb-1.5">Only you can read it</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">Every message, call and file is end-to-end encrypted on your device. Not even we can open them.</p>
-          </div>
-          <div className="glass rounded-2xl border border-border p-5">
-            <h3 className="font-bold text-foreground mb-1.5">A vault just for you</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">Move sensitive chats behind your personal PIN or pattern. Hidden from your chat list — visible only to you.</p>
-          </div>
-          <div className="glass rounded-2xl border border-border p-5">
-            <h3 className="font-bold text-foreground mb-1.5">Trust Lock</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">Turn on Trust Lock in any chat to block screenshots and screen recording. What&apos;s shared stays between you.</p>
-          </div>
-          <div className="glass rounded-2xl border border-border p-5">
-            <h3 className="font-bold text-foreground mb-1.5">Status that disappears</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">Share moments with the people who matter. Gone in 24 hours — no permanent profile grid to curate.</p>
-          </div>
-          <div className="glass rounded-2xl border border-border p-5">
-            <h3 className="font-bold text-foreground mb-1.5">Private group Tribes</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">Family and friend groups protected by a shared passcode. New members can&apos;t read older messages.</p>
-          </div>
-          <div className="glass rounded-2xl border border-border p-5">
-            <h3 className="font-bold text-foreground mb-1.5">Calls that stay yours</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">Crystal-clear voice &amp; video calls with the same end-to-end encryption. No recordings, no ads, no listening in.</p>
-          </div>
+          <WhyTile
+            icon={<ShieldCheck size={18} className="text-white" />}
+            title="Only you can read it"
+            desc="Every message, call and file is end-to-end encrypted on your device. Not even we can open them."
+            accent="primary"
+          />
+          <WhyTile
+            icon={<Lock size={18} className="text-white" />}
+            title="A vault just for you"
+            desc="Move sensitive chats behind your personal PIN or pattern. Hidden from your chat list — visible only to you."
+            accent="cyan"
+          />
+          <WhyTile
+            icon={<EyeOff size={18} className="text-white" />}
+            title="Trust Lock"
+            desc="Turn on Trust Lock in any chat to block screenshots and screen recording. What&apos;s shared stays between you."
+            accent="pink"
+          />
+          <WhyTile
+            icon={<Sparkles size={18} className="text-white" />}
+            title="Status that disappears"
+            desc="Share moments with the people who matter. Gone in 24 hours — no permanent profile grid to curate."
+            accent="amber"
+          />
+          <WhyTile
+            icon={<Users size={18} className="text-white" />}
+            title="Private group Tribes"
+            desc="Family and friend groups protected by a shared passcode. New members can&apos;t read older messages."
+            accent="green"
+          />
+          <WhyTile
+            icon={<PhoneCall size={18} className="text-white" />}
+            title="Calls that stay yours"
+            desc="Crystal-clear voice &amp; video calls with the same end-to-end encryption. No recordings, no ads, no listening in."
+            accent="violet"
+          />
         </div>
       </section>
 
