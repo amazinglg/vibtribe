@@ -170,39 +170,39 @@ export default function LandingPage() {
           </p>
         </div>
 
-        <div className="grid sm:grid-cols-3 gap-3 sm:gap-4 max-w-5xl mx-auto text-left">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-6xl mx-auto text-left perspective-1000">
           <WhyTile
-            icon={<ShieldCheck size={18} className="text-white" />}
+            icon={<ShieldCheck size={20} className="text-white" />}
             title="Only you can read it"
             desc="Every message, call and file is end-to-end encrypted on your device. Not even we can open them."
             accent="primary"
           />
           <WhyTile
-            icon={<Lock size={18} className="text-white" />}
+            icon={<Lock size={20} className="text-white" />}
             title="A vault just for you"
             desc="Move sensitive chats behind your personal PIN or pattern. Hidden from your chat list — visible only to you."
             accent="cyan"
           />
           <WhyTile
-            icon={<EyeOff size={18} className="text-white" />}
+            icon={<EyeOff size={20} className="text-white" />}
             title="Trust Lock"
             desc="Turn on Trust Lock in any chat to block screenshots and screen recording. What&apos;s shared stays between you."
             accent="pink"
           />
           <WhyTile
-            icon={<Sparkles size={18} className="text-white" />}
+            icon={<Sparkles size={20} className="text-white" />}
             title="Status that disappears"
             desc="Share moments with the people who matter. Gone in 24 hours — no permanent profile grid to curate."
             accent="amber"
           />
           <WhyTile
-            icon={<Users size={18} className="text-white" />}
+            icon={<Users size={20} className="text-white" />}
             title="Private group Tribes"
             desc="Family and friend groups protected by a shared passcode. New members can&apos;t read older messages."
             accent="green"
           />
           <WhyTile
-            icon={<PhoneCall size={18} className="text-white" />}
+            icon={<PhoneCall size={20} className="text-white" />}
             title="Calls that stay yours"
             desc="Crystal-clear voice &amp; video calls with the same end-to-end encryption. No recordings, no ads, no listening in."
             accent="violet"
@@ -558,24 +558,33 @@ function WhyTile({
   desc: string;
   accent: 'primary' | 'cyan' | 'pink' | 'amber' | 'green' | 'violet';
 }) {
-  const accentMap: Record<typeof accent, { gradient: string; glow: string; border: string }> = {
-    primary: { gradient: 'gradient-primary', glow: 'shadow-primary/25', border: 'border-primary/40' },
-    cyan: { gradient: 'gradient-cyan', glow: 'shadow-cyan-500/25', border: 'border-cyan-400/40' },
-    pink: { gradient: 'gradient-pink', glow: 'shadow-pink-500/25', border: 'border-pink-400/40' },
-    amber: { gradient: 'bg-gradient-to-br from-amber-500 to-orange-500', glow: 'shadow-amber-500/25', border: 'border-amber-400/40' },
-    green: { gradient: 'bg-gradient-to-br from-emerald-500 to-green-500', glow: 'shadow-emerald-500/25', border: 'border-emerald-400/40' },
-    violet: { gradient: 'bg-gradient-to-br from-violet-500 to-fuchsia-500', glow: 'shadow-violet-500/25', border: 'border-violet-400/40' },
+  const accentMap: Record<typeof accent, { gradient: string; iconGradient: string; text: string; border: string }> = {
+    primary: { gradient: 'from-violet-500/20 to-purple-500/10', iconGradient: 'gradient-primary', text: 'text-violet-400', border: 'border-violet-500/20' },
+    cyan: { gradient: 'from-cyan-500/20 to-blue-500/10', iconGradient: 'gradient-cyan', text: 'text-cyan-400', border: 'border-cyan-500/20' },
+    pink: { gradient: 'from-pink-500/20 to-rose-500/10', iconGradient: 'gradient-pink', text: 'text-pink-400', border: 'border-pink-500/20' },
+    amber: { gradient: 'from-amber-500/20 to-yellow-500/10', iconGradient: 'bg-gradient-to-br from-amber-500 to-orange-500', text: 'text-amber-400', border: 'border-amber-500/20' },
+    green: { gradient: 'from-emerald-500/20 to-teal-500/10', iconGradient: 'bg-gradient-to-br from-emerald-500 to-green-500', text: 'text-emerald-400', border: 'border-emerald-500/20' },
+    violet: { gradient: 'from-fuchsia-500/20 to-violet-500/10', iconGradient: 'bg-gradient-to-br from-violet-500 to-fuchsia-500', text: 'text-fuchsia-400', border: 'border-fuchsia-500/20' },
   };
   const a = accentMap[accent];
   return (
-    <div className={`relative glass rounded-2xl border ${a.border} p-5 overflow-hidden group hover:scale-[1.02] transition-transform duration-300 shadow-lg ${a.glow}`}>
-      <div className={`absolute -top-8 -right-8 w-28 h-28 ${a.gradient} rounded-full blur-3xl opacity-15 group-hover:opacity-25 transition-opacity`} />
-      <div className="relative">
-        <div className={`w-9 h-9 rounded-xl ${a.gradient} flex items-center justify-center mb-3 shadow-md`}>
-          {icon}
+    <div className="group relative h-full transition-all duration-500 [transform-style:preserve-3d] hover:[transform:rotateX(5deg)_rotateY(-5deg)_translateZ(20px)]">
+      {/* Hover halo border */}
+      <div className={`absolute -inset-px bg-gradient-to-br from-white/20 to-transparent rounded-3xl blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+      <div className="relative h-full bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-3xl p-6 sm:p-8 overflow-hidden shadow-2xl">
+        {/* Reflection sweep */}
+        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out" />
+        {/* Ambient backglow */}
+        <div className={`absolute -bottom-10 -right-10 w-32 h-32 bg-gradient-to-br ${a.gradient} rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+        <div className="relative">
+          <div className={`mb-5 inline-flex p-3 rounded-2xl bg-gradient-to-br ${a.gradient} ${a.border} border shadow-lg`}>
+            <div className={`w-8 h-8 rounded-xl ${a.iconGradient} flex items-center justify-center shadow-md`}>
+              {icon}
+            </div>
+          </div>
+          <h3 className="font-bold text-xl text-foreground mb-2">{title}</h3>
+          <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
         </div>
-        <h3 className="font-bold text-foreground mb-1.5">{title}</h3>
-        <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
       </div>
     </div>
   );
