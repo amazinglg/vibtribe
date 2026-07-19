@@ -164,7 +164,7 @@ export default function LandingPage() {
       <section id="why" className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24">
         <div className="text-center mb-10">
           <span className="text-[11px] font-bold uppercase tracking-widest text-primary">Why VibTribe</span>
-          <h2 className="font-bold text-2xl sm:text-4xl text-foreground mt-2 mb-2">Built for real conversations, not for ads.</h2>
+          <h2 className="font-bold text-2xl sm:text-4xl text-foreground mt-2 mb-2">Built for real conversations and Privacy, not for ads.</h2>
           <p className="text-sm text-muted-foreground max-w-xl mx-auto">
             Other messengers turned your chats into a data product. We took the opposite path — a modern, beautiful app where privacy is the default, not a setting you have to find.
           </p>
@@ -456,16 +456,6 @@ export default function LandingPage() {
       </footer>
       <ContactFormModal open={contactOpen} onClose={() => setContactOpen(false)} external />
 
-      {/* Sticky mobile signup CTA — always in view on phones for 1-tap conversion. */}
-      <div className="lg:hidden fixed left-0 right-0 bottom-0 z-30 px-3 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-2 bg-gradient-to-t from-background via-background/95 to-transparent">
-        <Link
-          to="/sign-up"
-          className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl gradient-primary text-white text-sm font-semibold glow-primary shadow-lg shadow-primary/30"
-        >
-          Create your free account
-          <ArrowRight size={16} />
-        </Link>
-      </div>
     </div>
   );
 }
