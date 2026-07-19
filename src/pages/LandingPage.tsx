@@ -170,39 +170,39 @@ export default function LandingPage() {
           </p>
         </div>
 
-        <div className="grid sm:grid-cols-3 gap-3 sm:gap-4 max-w-5xl mx-auto text-left">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-6xl mx-auto text-left perspective-1000">
           <WhyTile
-            icon={<ShieldCheck size={18} className="text-white" />}
+            icon={<ShieldCheck size={20} className="text-white" />}
             title="Only you can read it"
             desc="Every message, call and file is end-to-end encrypted on your device. Not even we can open them."
             accent="primary"
           />
           <WhyTile
-            icon={<Lock size={18} className="text-white" />}
+            icon={<Lock size={20} className="text-white" />}
             title="A vault just for you"
             desc="Move sensitive chats behind your personal PIN or pattern. Hidden from your chat list — visible only to you."
             accent="cyan"
           />
           <WhyTile
-            icon={<EyeOff size={18} className="text-white" />}
+            icon={<EyeOff size={20} className="text-white" />}
             title="Trust Lock"
             desc="Turn on Trust Lock in any chat to block screenshots and screen recording. What&apos;s shared stays between you."
             accent="pink"
           />
           <WhyTile
-            icon={<Sparkles size={18} className="text-white" />}
+            icon={<Sparkles size={20} className="text-white" />}
             title="Status that disappears"
             desc="Share moments with the people who matter. Gone in 24 hours — no permanent profile grid to curate."
             accent="amber"
           />
           <WhyTile
-            icon={<Users size={18} className="text-white" />}
+            icon={<Users size={20} className="text-white" />}
             title="Private group Tribes"
             desc="Family and friend groups protected by a shared passcode. New members can&apos;t read older messages."
             accent="green"
           />
           <WhyTile
-            icon={<PhoneCall size={18} className="text-white" />}
+            icon={<PhoneCall size={20} className="text-white" />}
             title="Calls that stay yours"
             desc="Crystal-clear voice &amp; video calls with the same end-to-end encryption. No recordings, no ads, no listening in."
             accent="violet"
