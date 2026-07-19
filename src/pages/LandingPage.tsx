@@ -547,3 +547,37 @@ function FaqItem({ q, a }: { q: string; a: string }) {
   );
 }
 
+function WhyTile({
+  icon,
+  title,
+  desc,
+  accent,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+  accent: 'primary' | 'cyan' | 'pink' | 'amber' | 'green' | 'violet';
+}) {
+  const accentMap: Record<typeof accent, { gradient: string; glow: string; border: string }> = {
+    primary: { gradient: 'gradient-primary', glow: 'shadow-primary/25', border: 'border-primary/40' },
+    cyan: { gradient: 'gradient-cyan', glow: 'shadow-cyan-500/25', border: 'border-cyan-400/40' },
+    pink: { gradient: 'gradient-pink', glow: 'shadow-pink-500/25', border: 'border-pink-400/40' },
+    amber: { gradient: 'bg-gradient-to-br from-amber-500 to-orange-500', glow: 'shadow-amber-500/25', border: 'border-amber-400/40' },
+    green: { gradient: 'bg-gradient-to-br from-emerald-500 to-green-500', glow: 'shadow-emerald-500/25', border: 'border-emerald-400/40' },
+    violet: { gradient: 'bg-gradient-to-br from-violet-500 to-fuchsia-500', glow: 'shadow-violet-500/25', border: 'border-violet-400/40' },
+  };
+  const a = accentMap[accent];
+  return (
+    <div className={`relative glass rounded-2xl border ${a.border} p-5 overflow-hidden group hover:scale-[1.02] transition-transform duration-300 shadow-lg ${a.glow}`}>
+      <div className={`absolute -top-8 -right-8 w-28 h-28 ${a.gradient} rounded-full blur-3xl opacity-15 group-hover:opacity-25 transition-opacity`} />
+      <div className="relative">
+        <div className={`w-9 h-9 rounded-xl ${a.gradient} flex items-center justify-center mb-3 shadow-md`}>
+          {icon}
+        </div>
+        <h3 className="font-bold text-foreground mb-1.5">{title}</h3>
+        <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
+      </div>
+    </div>
+  );
+}
+
