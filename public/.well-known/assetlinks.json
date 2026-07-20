@@ -3,19 +3,9 @@
     "relation": ["delegate_permission/common.handle_all_urls"],
     "target": {
       "namespace": "android_app",
-      "package_name": "app.vibtribe.twa",
-      "sha256_cert_fingerprints": [
-        "F6:0C:C5:C5:03:2D:C2:87:0F:53:44:26:80:4D:D2:39:5F:AB:2A:50:57:02:16:3B:51:AB:EA:C4:1B:B1:C9:F3"
-      ]
-    }
-  },
-  {
-    "relation": ["delegate_permission/common.handle_all_urls"],
-    "target": {
-      "namespace": "android_app",
       "package_name": "app.vibtribe.app",
       "sha256_cert_fingerprints": [
-        "REPLACE_WITH_YOUR_CAPACITOR_APK_SHA256_FINGERPRINT"
+        "F0:36:4D:00:8D:46:8B:7E:3F:CA:6A:D4:66:FE:4C:44:64:F3:D5:FC:D7:E5:E1:CA:B4:9A:DC:A5:29:8F:AD:68"
       ]
     }
   }
