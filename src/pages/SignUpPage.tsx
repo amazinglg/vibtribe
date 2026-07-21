@@ -2,6 +2,15 @@ import React, { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useNavigate } from '@tanstack/react-router';
 import { Phone, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle, User, Calendar, Mail, ArrowLeft, ShieldCheck, Check } from 'lucide-react';
+import {
+  OTPInput,
+  VerificationCard,
+  ResendButton,
+  VerificationLoader,
+  VerificationSuccess,
+  VerificationError,
+  type OTPStatus,
+} from '@/components/verification';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLogo from '@/components/ui/AppLogo';
 import Wordmark from '@/components/ui/Wordmark';
@@ -32,6 +41,7 @@ export default function SignUpPage() {
   const [step, setStep] = useState<'details' | 'verify'>('details');
   const [otp, setOtp] = useState('');
   const [resending, setResending] = useState(false);
+  const [otpStatus, setOtpStatus] = useState<OTPStatus>('idle');
 
   // Max DOB = today minus 13 years (used as `max` attribute on the date input)
   const maxDobStr = (() => {
@@ -110,10 +120,11 @@ export default function SignUpPage() {
   const handleVerifyAndCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (!/^\d{6}$/.test(otp)) { setError('Enter the 6-digit code from your email'); return; }
+    if (!/^\d{6}$/.test(otp)) { setError('Enter the 6-digit code from your email'); setOtpStatus('error'); return; }
     const local = mobile.replace(/\D/g, '').slice(-10);
     const fullMobile = `${countryCode}${local}`;
     setLoading(true);
+    setOtpStatus('verifying');
     try {
       const res = await fetch('/api/public/auth-otp', {
         method: 'POST',
@@ -141,6 +152,7 @@ export default function SignUpPage() {
       try {
         await recordMarketingConsent({ data: { optIn: marketingOptIn, source: 'signup' } });
       } catch {}
+      setOtpStatus('success');
       // Route any minor (<18) into the guardian consent flow first.
       const ageOf = (iso: string) => {
         const d = new Date(iso); const t = new Date();
@@ -150,9 +162,11 @@ export default function SignUpPage() {
         return a;
       };
       const isMinor = ageOf(dob) < 18;
-      router({ to: isMinor ? '/guardian-setup' : '/complete-profile', replace: true });
+      setTimeout(() => router({ to: isMinor ? '/guardian-setup' : '/complete-profile', replace: true }), 700);
     } catch (err: any) {
       setError(err.message || 'Verification failed. Please try again.');
+      setOtpStatus('error');
+      setTimeout(() => setOtpStatus('idle'), 500);
     } finally {
       setLoading(false);
     }
@@ -185,62 +199,35 @@ export default function SignUpPage() {
 
         <div className="glass-strong rounded-3xl border border-border p-8 shadow-card">
           {step === 'verify' ? (
-            <>
-              <button
-                type="button"
-                onClick={() => { setStep('details'); setOtp(''); setError(''); }}
-                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mb-5 transition-colors"
-              >
-                <ArrowLeft size={14} /> Back to details
-              </button>
-              <div className="flex items-center justify-center w-14 h-14 rounded-full gradient-primary glow-primary mx-auto mb-3">
-                <ShieldCheck size={26} className="text-white" />
-              </div>
-              <h1 className="font-bold text-2xl text-foreground mb-1 text-center">Verify your email</h1>
-              <p className="text-muted-foreground text-sm mb-6 text-center">
-                We sent a 6-digit code to <span className="text-foreground font-medium">{email}</span>
-              </p>
-              <form onSubmit={handleVerifyAndCreate} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">Verification code</label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    autoComplete="one-time-code"
-                    maxLength={6}
-                    value={otp}
-                    onChange={e => { setOtp(e.target.value.replace(/\D/g, '').slice(0, 6)); setError(''); }}
-                    placeholder="••••••"
-                    className="w-full px-4 py-3 bg-input border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all text-center text-2xl tracking-[0.5em] font-mono"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleResend}
-                    disabled={resending}
-                    className="mt-2 text-xs text-primary hover:text-primary/80 transition-colors disabled:opacity-50"
-                  >
-                    {resending ? 'Resending…' : "Didn't get it? Resend code"}
-                  </button>
-                </div>
-                {error && (
-                  <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-xl">
-                    <AlertCircle size={14} className="text-red-400 flex-shrink-0" />
-                    <p className="text-xs text-red-400">{error}</p>
-                  </div>
-                )}
-                <button
-                  type="submit"
-                  disabled={loading || otp.length !== 6}
-                  className="w-full gradient-primary text-white font-semibold py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed glow-primary"
-                >
+            <VerificationCard
+              title="Verify your email"
+              subtitle="We've sent a verification code to"
+              email={email}
+              onBack={() => { setStep('details'); setOtp(''); setError(''); setOtpStatus('idle'); }}
+              backLabel="Back to details"
+            >
+              <form onSubmit={handleVerifyAndCreate} className="space-y-5">
+                <OTPInput
+                  value={otp}
+                  onChange={v => { setOtp(v); setError(''); if (otpStatus === 'error') setOtpStatus('idle'); }}
+                  status={otpStatus}
+                  disabled={loading}
+                />
+                {error && <VerificationError message={error} />}
+                {otpStatus === 'verifying' && <VerificationLoader message="Securely verifying your identity…" />}
+                {otpStatus === 'success' && <VerificationSuccess message="Verified — creating your account" />}
+                <button type="submit" disabled={loading || otp.length !== 6} className="otp-primary-btn">
                   {loading ? (
                     <><Loader2 size={18} className="animate-spin" /><span>Verifying…</span></>
                   ) : (
                     <><span>Verify & Create Account</span><ArrowRight size={18} /></>
                   )}
                 </button>
+                <div className="flex justify-center pt-1">
+                  <ResendButton onResend={handleResend} disabled={resending} />
+                </div>
               </form>
-            </>
+            </VerificationCard>
           ) : (
           <>
           <h1 className="font-bold text-2xl text-foreground mb-1">{t('auth.createAccountTitle')}</h1>
