@@ -29,25 +29,16 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
 
-            <!-- Auto-verified deep links for the canonical (primary) host.
-                 Digital Asset Links must be reachable at
-                 https://www.vibtribe.in/.well-known/assetlinks.json with NO redirect. -->
+            <!-- Android App Links: both apex and www serve assetlinks.json
+                 directly (HTTP 200, no redirect), so a single auto-verified
+                 filter covers both hosts. -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="www.vibtribe.in" />
-            </intent-filter>
-
-            <!-- Apex host: kept as a separate (non-autoVerify) filter because the
-                 apex redirects to www at the edge, which breaks App Links auto-
-                 verification. Users tapping https://vibtribe.in/* links still get
-                 the option to open in the app. -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="vibtribe.in" />
+                <data android:scheme="https" />
+                <data android:host="vibtribe.in" />
+                <data android:host="www.vibtribe.in" />
             </intent-filter>
 
             <!-- Custom scheme for OAuth callbacks (vibtribe://auth) -->
