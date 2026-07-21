@@ -11,6 +11,11 @@ import {
   getMyGuardianStatus,
   resendGuardianOtp,
 } from '@/lib/guardian.functions'
+import { OTPInput } from '@/components/verification'
+
+function OtpForGuardian({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return <OTPInput value={value} onChange={onChange} />
+}
 
 type Status = {
   id: string
