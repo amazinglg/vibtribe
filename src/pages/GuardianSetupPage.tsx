@@ -199,12 +199,7 @@ export default function GuardianSetupPage() {
                 We emailed a 6-digit code to <span className="text-foreground font-medium">{status?.guardian_email_masked || email}</span>.
                 Ask your guardian to share it with you and enter it below.
               </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1.5">Verification code</label>
-                <input type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6}
-                  value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
-                  className="w-full px-4 py-3 rounded-xl bg-input border border-border text-foreground tracking-[0.5em] text-center text-lg font-mono" />
-              </div>
+              <OtpForGuardian value={otp} onChange={setOtp} />
               {error && <div className="flex items-center gap-2 text-red-400 text-sm"><AlertCircle size={16}/>{error}</div>}
               {ok && <div className="text-vt-green text-sm">{ok}</div>}
               <button type="submit" disabled={saving}

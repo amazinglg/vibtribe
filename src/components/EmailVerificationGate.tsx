@@ -1,6 +1,13 @@
 // @ts-nocheck
 import React, { useState } from 'react';
 import { Mail, ShieldCheck, Loader2, AlertTriangle } from 'lucide-react';
+import {
+  OTPInput,
+  ResendButton,
+  VerificationLoader,
+  VerificationError,
+  type OTPStatus,
+} from '@/components/verification';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
@@ -20,6 +27,7 @@ export default function EmailVerificationGate() {
   const [sending, setSending] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [otpStatus, setOtpStatus] = useState<OTPStatus>('idle');
 
   // Only render when we have a profile and it has no real_email
   if (!user || !profile) return null;
@@ -64,23 +72,34 @@ export default function EmailVerificationGate() {
     setError(null);
     if (!/^\d{6}$/.test(code)) {
       setError('Enter the 6-digit code from your email');
+      setOtpStatus('error');
       return;
     }
     setVerifying(true);
+    setOtpStatus('verifying');
     try {
       await authedFetch({
         action: 'verify_existing',
         email: email.trim().toLowerCase(),
         code,
       });
+      setOtpStatus('success');
       toast.success('Email verified — welcome!');
       // Refresh profile so the gate unmounts
       if (user?.id) await fetchProfile(user.id);
     } catch (e: any) {
       setError(e.message || 'Invalid or expired code');
+      setOtpStatus('error');
+      setTimeout(() => setOtpStatus('idle'), 500);
     } finally {
       setVerifying(false);
     }
+  };
+
+  const handleResendCode = async () => {
+    const clean = email.trim().toLowerCase();
+    if (!/^\S+@\S+\.\S+$/.test(clean)) throw new Error('Invalid email');
+    await authedFetch({ action: 'send_verify_existing', email: clean });
   };
 
   return (
@@ -138,26 +157,24 @@ export default function EmailVerificationGate() {
           </>
         ) : (
           <>
-            <label className="text-xs text-muted-foreground mb-1 block">6-digit code</label>
-            <input
-              type="text"
-              inputMode="numeric"
-              maxLength={6}
+            <OTPInput
               value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              placeholder="000000"
-              autoFocus
-              className="w-full px-3 py-3 bg-input border border-border rounded-xl text-center text-2xl font-mono tracking-[0.5em] text-foreground focus:border-primary outline-none"
-              onKeyDown={(e) => e.key === 'Enter' && handleVerify()}
+              onChange={v => { setCode(v); setError(null); if (otpStatus === 'error') setOtpStatus('idle'); }}
+              status={otpStatus}
+              disabled={verifying}
             />
-            {error && <p className="text-xs text-red-400 mt-2">{error}</p>}
+            {error && <div className="mt-3"><VerificationError message={error} /></div>}
+            {otpStatus === 'verifying' && <div className="mt-3"><VerificationLoader /></div>}
             <button
               onClick={handleVerify}
               disabled={verifying || code.length !== 6}
-              className="w-full mt-4 px-4 py-3 gradient-primary rounded-xl text-white font-semibold text-sm glow-primary disabled:opacity-50 flex items-center justify-center gap-2"
+              className="otp-primary-btn mt-4"
             >
               {verifying ? <><Loader2 size={16} className="animate-spin" /> Verifying…</> : 'Verify & continue'}
             </button>
+            <div className="flex justify-center mt-3">
+              <ResendButton onResend={handleResendCode} />
+            </div>
             <button
               onClick={() => { setStep('email'); setCode(''); setError(null); }}
               className="w-full mt-2 text-xs text-muted-foreground hover:text-foreground transition-colors"

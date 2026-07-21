@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Shield, Copy, Check, Loader2, AlertCircle, KeyRound } from 'lucide-react';
+import { OTPInput, VerificationLoader, VerificationError, type OTPStatus } from '@/components/verification';
 import QRCode from 'qrcode';
 import { toast } from 'sonner';
 import { generateBase32Secret, otpauthUri, verifyTotp } from '@/lib/totp';
@@ -20,6 +21,7 @@ export default function TotpEnrollDialog({ open, onClose, onEnabled }: { open: b
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>('');
   const [copied, setCopied] = useState(false);
+  const [otpStatus, setOtpStatus] = useState<OTPStatus>('idle');
 
   useEffect(() => {
     if (!open) {
@@ -49,25 +51,27 @@ export default function TotpEnrollDialog({ open, onClose, onEnabled }: { open: b
   };
 
   const confirmCode = async () => {
-    setBusy(true); setError('');
+    setBusy(true); setError(''); setOtpStatus('verifying');
     try {
-      if (!/^\d{6}$/.test(code)) { setError('Enter the 6-digit code from your Authenticator app.'); setBusy(false); return; }
+      if (!/^\d{6}$/.test(code)) { setError('Enter the 6-digit code from your Authenticator app.'); setOtpStatus('error'); setBusy(false); return; }
       const ok = await verifyTotp(secret, code);
       if (!ok) {
         // wrong code — keep pending enrollment so user can try again
         setError('That code is incorrect. Open Google Authenticator and try the latest 6-digit code.');
+        setOtpStatus('error'); setTimeout(() => setOtpStatus('idle'), 500);
         setBusy(false);
         return;
       }
       const { error: rpcErr } = await supabase.rpc('confirm_totp_enrollment', { _code: code });
       if (rpcErr) throw new Error(rpcErr.message);
-      setStep('done');
+      setOtpStatus('success'); setStep('done');
       toast.success('Two-factor authentication enabled ✅');
       onEnabled();
     } catch (e: any) {
       // restart on hard failure
       try { await supabase.rpc('cancel_totp_enrollment'); } catch {}
       setError((e?.message || 'Something went wrong, please try again.') + ' Restarting setup…');
+      setOtpStatus('error');
       setTimeout(() => { setStep('intro'); setError(''); setSecret(''); setQrDataUrl(''); setCode(''); }, 1800);
     } finally { setBusy(false); }
   };
@@ -149,18 +153,13 @@ export default function TotpEnrollDialog({ open, onClose, onEnabled }: { open: b
         {step === 'verify' && (
           <div className="space-y-3">
             <p className="text-xs text-muted-foreground">Open Google Authenticator and enter the current 6-digit code for <strong>VibTribe</strong>.</p>
-            <div className="relative">
-              <KeyRound size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <input
-                value={code}
-                onChange={e => { setCode(e.target.value.replace(/\D/g, '').slice(0, 6)); setError(''); }}
-                inputMode="numeric"
-                autoFocus
-                placeholder="123 456"
-                maxLength={6}
-                className="w-full pl-10 pr-4 py-3 bg-input border border-border rounded-xl text-foreground text-center tracking-[0.5em] font-mono text-lg focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
+            <OTPInput
+              value={code}
+              onChange={v => { setCode(v); setError(''); if (otpStatus === 'error') setOtpStatus('idle'); }}
+              status={otpStatus}
+              disabled={busy}
+            />
+            {busy && otpStatus === 'verifying' && <VerificationLoader message="Verifying authenticator code…" />}
             <div className="flex gap-2 pt-2">
               <button onClick={() => setStep('scan')} className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium bg-muted text-muted-foreground">Back</button>
               <button onClick={confirmCode} disabled={busy || code.length !== 6} className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold gradient-primary text-white disabled:opacity-50">
