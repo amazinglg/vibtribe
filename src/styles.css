@@ -122,6 +122,130 @@
   .perspective-card { perspective: 1000px; }
   .pattern-dot { width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; font-size: 14px; font-weight: 600; color: var(--muted-foreground); background: var(--input); }
   .pattern-dot.active { background: linear-gradient(135deg, var(--primary), var(--pink)); border-color: var(--primary); color: white; box-shadow: 0 0 16px rgba(124,58,237,0.5); transform: scale(1.1); }
+
+  /* ============================================================
+     Premium OTP / Verification experience
+     ============================================================ */
+  .otp-card-enter { animation: otpCardEnter 380ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+  @keyframes otpCardEnter {
+    0%   { opacity: 0; transform: scale(0.95) translateY(8px); filter: blur(6px); }
+    100% { opacity: 1; transform: scale(1)    translateY(0);   filter: blur(0); }
+  }
+
+  .otp-email-char { opacity: 0; transform: translateY(6px); animation: otpEmailChar 420ms cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+  @keyframes otpEmailChar {
+    0%   { opacity: 0; transform: translateY(6px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  .otp-shield-ring { box-shadow: 0 0 0 0 rgba(124,58,237,0.55); animation: otpShieldPulse 2.4s ease-in-out infinite; }
+  @keyframes otpShieldPulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(124,58,237,0.45); }
+    50%     { box-shadow: 0 0 0 10px rgba(124,58,237,0.0); }
+  }
+
+  .otp-group { touch-action: manipulation; }
+  .otp-cell {
+    position: relative;
+    flex: 1 1 0;
+    aspect-ratio: 1 / 1.15;
+    max-width: 56px;
+    min-width: 40px;
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015));
+    border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    transition: border-color 180ms ease, transform 180ms cubic-bezier(0.22,1,0.36,1), box-shadow 220ms ease, background 220ms ease;
+    will-change: transform, box-shadow;
+  }
+  .otp-input {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    background: transparent; border: 0; outline: none;
+    text-align: center;
+    color: var(--foreground);
+    font-size: 22px; font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    caret-color: var(--primary);
+  }
+  .otp-input:disabled { color: var(--foreground); opacity: 1; -webkit-text-fill-color: var(--foreground); }
+  .otp-cell--filled {
+    background: linear-gradient(180deg, rgba(124,58,237,0.14), rgba(124,58,237,0.04));
+    border-color: rgba(124,58,237,0.45);
+  }
+  .otp-cell--focused {
+    border-color: rgba(124,58,237,0.85);
+    box-shadow: 0 0 0 3px rgba(124,58,237,0.18), 0 12px 30px -12px rgba(124,58,237,0.55);
+    transform: translateY(-1px);
+  }
+  .otp-cell--pop { animation: otpCellPop 220ms cubic-bezier(0.22, 1, 0.36, 1); }
+  @keyframes otpCellPop {
+    0%   { transform: scale(1); }
+    45%  { transform: scale(1.08); box-shadow: 0 0 24px rgba(124,58,237,0.55); }
+    100% { transform: scale(1); }
+  }
+  .otp-cell--error {
+    border-color: color-mix(in oklab, var(--red) 65%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--red) 22%, transparent);
+  }
+  .otp-cell--success {
+    border-color: color-mix(in oklab, var(--green) 65%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--green) 22%, transparent), 0 0 24px color-mix(in oklab, var(--green) 30%, transparent);
+  }
+  .otp-cell--verifying { opacity: 0.85; }
+
+  .otp-shake { animation: otpShake 380ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+  @keyframes otpShake {
+    10%, 90% { transform: translateX(-1px); }
+    20%, 80% { transform: translateX(2px); }
+    30%, 50%, 70% { transform: translateX(-4px); }
+    40%, 60% { transform: translateX(4px); }
+  }
+
+  .otp-success-pop { animation: otpSuccessPop 420ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+  @keyframes otpSuccessPop {
+    0%   { opacity: 0; transform: scale(0.9); }
+    60%  { opacity: 1; transform: scale(1.05); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  .otp-success-ripple {
+    background: radial-gradient(circle, color-mix(in oklab, var(--green) 40%, transparent) 0%, transparent 70%);
+    animation: otpSuccessRipple 900ms ease-out both;
+  }
+  @keyframes otpSuccessRipple {
+    0%   { transform: scale(0.6); opacity: 0.9; }
+    100% { transform: scale(1.9); opacity: 0; }
+  }
+
+  .otp-resend-pulse { animation: otpResendIn 260ms ease-out both; }
+  @keyframes otpResendIn {
+    0%   { opacity: 0; transform: translateY(4px) scale(0.96); }
+    100% { opacity: 1; transform: translateY(0)   scale(1); }
+  }
+
+  .otp-primary-btn {
+    background: linear-gradient(135deg, var(--primary) 0%, #9333ea 100%);
+    color: #fff;
+    border-radius: 14px;
+    padding: 14px 18px;
+    font-weight: 600;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    box-shadow: 0 10px 30px -10px rgba(124,58,237,0.55), inset 0 1px 0 rgba(255,255,255,0.15);
+    transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 220ms ease, opacity 200ms ease;
+    width: 100%;
+  }
+  .otp-primary-btn:hover:not(:disabled) { box-shadow: 0 16px 40px -12px rgba(124,58,237,0.65), inset 0 1px 0 rgba(255,255,255,0.18); }
+  .otp-primary-btn:active:not(:disabled) { transform: scale(0.97); }
+  .otp-primary-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .otp-card-enter, .otp-email-char, .otp-shield-ring, .otp-cell--pop,
+    .otp-shake, .otp-success-pop, .otp-success-ripple, .otp-resend-pulse {
+      animation: none !important;
+    }
+    .otp-cell, .otp-primary-btn { transition: none !important; }
+  }
 }
 
 @keyframes bubbleIn { from { opacity: 0; transform: scale(0.7) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
