@@ -72,7 +72,7 @@ export default function LandingPage() {
       {/* Hero */}
       <section className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pt-4 sm:pt-8 pb-12 sm:pb-20">
         <div className="aurora-glass-shell rounded-[2rem] sm:rounded-[3rem] p-6 sm:p-10 lg:p-16 overflow-hidden">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_74%_34%,rgba(168,85,247,0.24),transparent_34%),radial-gradient(circle_at_12%_18%,rgba(217,70,239,0.16),transparent_28%)]" aria-hidden="true" />
+          <div className="pointer-events-none absolute inset-0 aurora-hero-sheen" aria-hidden="true" />
         <div className="relative grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
           {/* Left: copy */}
           <div className="float-up text-center lg:text-left order-2 lg:order-1">
