@@ -174,7 +174,7 @@ export default function SignUpPage() {
 
   return (
     <div
-      className="gradient-bg-page min-h-screen w-full flex flex-col items-center justify-start relative overflow-x-hidden overflow-y-auto px-4"
+      className="auth-aurora-page min-h-screen w-full flex flex-col items-center justify-start relative overflow-x-hidden overflow-y-auto px-4"
       style={{
         // Cap injected Android safe-top (physical px) to avoid huge gap on
         // high-DPR devices.
@@ -184,20 +184,18 @@ export default function SignUpPage() {
         paddingRight: 'var(--safe-right)',
       }}
     >
-      <div className="absolute top-0 right-0 w-96 h-96 gradient-cyan rounded-full blur-3xl opacity-20 animate-pulse" />
-      <div className="absolute bottom-0 left-0 w-80 h-80 gradient-pink rounded-full blur-3xl opacity-15 animate-pulse" style={{ animationDelay: '1s' }} />
-      <div className="absolute top-1/3 left-1/4 w-64 h-64 gradient-primary rounded-full blur-3xl opacity-10 animate-pulse" style={{ animationDelay: '2s' }} />
+      <div className="aurora-ambient" aria-hidden="true" />
 
-      <div className="relative w-full max-w-md float-up pt-2 pb-6">
+      <div className="relative w-full max-w-md float-up pt-4 pb-8">
         <div className="text-center mb-3">
           <div className="flex items-center justify-center gap-2.5 mb-1.5">
             <AppLogo size={40} />
             <Wordmark className="text-2xl" />
           </div>
-          <p className="text-muted-foreground text-xs">{t('auth.joinTribe')}</p>
+          <p className="auth-aurora-chip inline-flex rounded-full px-3 py-1 text-muted-foreground text-xs">{t('auth.joinTribe')}</p>
         </div>
 
-        <div className="glass-strong rounded-3xl border border-border p-8 shadow-card">
+        <div className="auth-aurora-card rounded-[2rem] p-8 shadow-card">
           {step === 'verify' ? (
             <VerificationCard
               title="Verify your email"

@@ -19,7 +19,7 @@ export default function LandingPage() {
 
   return (
     <div
-      className="min-h-screen gradient-bg-page text-foreground overflow-x-hidden relative"
+      className="min-h-screen aurora-home-page text-foreground overflow-x-hidden relative"
       style={{
         // Android safe-area: MainActivity injects --safe-top as raw physical
         // pixels, which become oversized CSS px on high-DPR devices. Cap at
@@ -31,14 +31,12 @@ export default function LandingPage() {
         paddingRight: 'var(--safe-right)',
       }}
     >
-      {/* Ambient orbs */}
-      <div className="pointer-events-none absolute -top-32 -left-32 w-[28rem] h-[28rem] gradient-primary rounded-full blur-3xl opacity-20" />
-      <div className="pointer-events-none absolute top-1/3 -right-32 w-[26rem] h-[26rem] gradient-cyan rounded-full blur-3xl opacity-15" />
-      <div className="pointer-events-none absolute bottom-0 left-1/4 w-[24rem] h-[24rem] gradient-pink rounded-full blur-3xl opacity-10" />
+      <div className="aurora-ambient" aria-hidden="true" />
+      <div className="pointer-events-none absolute left-1/2 top-[28rem] h-[34rem] w-[34rem] -translate-x-1/2 rounded-full bg-primary/10 blur-[120px]" aria-hidden="true" />
 
       {/* Nav */}
       <header className="relative z-20">
-        <nav className="max-w-6xl mx-auto px-4 sm:px-6 py-2 sm:py-3 flex items-center justify-between gap-3">
+        <nav className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-5 flex items-center justify-between gap-3">
           <Link to="/" className="flex items-center gap-2 group">
             <AppLogo size={32} />
             <Wordmark className="text-lg sm:text-xl" />
@@ -53,57 +51,53 @@ export default function LandingPage() {
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <Link
               to="/sign-in"
-              className="px-2.5 sm:px-4 py-1 sm:py-2 rounded-full text-xs sm:text-sm font-semibold text-foreground hover:text-primary transition-colors whitespace-nowrap"
+              className="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold text-foreground hover:text-primary transition-colors whitespace-nowrap"
             >
               {t('landing.nav.login')}
             </Link>
             <Link
               to="/sign-up"
-              className="px-2.5 sm:px-4 py-1 sm:py-2 rounded-full text-xs sm:text-sm font-semibold gradient-primary text-white glow-primary hover:opacity-90 transition-all flex items-center gap-1 whitespace-nowrap"
+              className="px-3.5 sm:px-5 py-1.5 sm:py-2.5 rounded-full text-xs sm:text-sm font-semibold aurora-primary-cta hover:opacity-95 transition-all flex items-center gap-1 whitespace-nowrap"
             >
               {t('landing.nav.signup')}
               <ArrowRight size={14} />
             </Link>
           </div>
         </nav>
-        <div className="px-4 pb-2 flex justify-center sm:pb-1 sm:justify-end sm:max-w-6xl sm:mx-auto sm:pr-6">
+        <div className="px-4 pb-2 flex justify-center sm:pb-1 sm:justify-end sm:max-w-7xl sm:mx-auto sm:pr-6">
           <LanguageSwitcher variant="pill" />
         </div>
       </header>
 
       {/* Hero */}
-      <section className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pt-4 sm:pt-12 pb-12 sm:pb-20">
-        <div className="grid lg:grid-cols-2 gap-10 lg:gap-8 items-center">
+      <section className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pt-4 sm:pt-8 pb-12 sm:pb-20">
+        <div className="aurora-glass-shell rounded-[2rem] sm:rounded-[3rem] p-6 sm:p-10 lg:p-16 overflow-hidden">
+          <div className="pointer-events-none absolute inset-0 aurora-hero-sheen" aria-hidden="true" />
+        <div className="relative grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
           {/* Left: copy */}
           <div className="float-up text-center lg:text-left order-2 lg:order-1">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass border border-primary/30 mb-5">
-              <ShieldCheck size={13} className="text-primary" />
-              <span className="text-[11px] sm:text-xs font-medium text-foreground/90">Private by design · No ads · No data selling</span>
+            <div className="aurora-copy-chip inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6">
+              <span className="h-2 w-2 rounded-full bg-vt-green shadow-[0_0_12px_rgba(34,197,94,0.9)]" />
+              <span className="text-[11px] sm:text-xs font-bold tracking-[0.14em] uppercase text-foreground/75">Private by design · No ads · No data selling</span>
             </div>
-            <h1 className="font-extrabold text-4xl sm:text-5xl lg:text-6xl xl:text-7xl tracking-tight leading-[1.05] mb-5">
-              <span className="block text-white">Your conversations</span>
-              <span className="block text-gradient-primary">belong to you.</span>
+            <h1 className="font-extrabold text-4xl sm:text-5xl lg:text-6xl xl:text-7xl tracking-tight leading-[1.06] mb-6">
+              <span className="block text-foreground">Your conversations</span>
+              <span className="block aurora-text-gradient-purple italic">belong to you.</span>
             </h1>
-            <p className="max-w-xl mx-auto lg:mx-0 text-sm sm:text-base lg:text-lg text-muted-foreground leading-relaxed mb-6">
+            <p className="max-w-xl mx-auto lg:mx-0 text-sm sm:text-base lg:text-xl text-muted-foreground leading-relaxed mb-7">
               <Wordmark className="text-sm sm:text-base lg:text-lg" /> is a private messenger for real conversations — end-to-end encrypted chats, voice &amp; video calls, disappearing status, and a personal vault only you can unlock.
             </p>
-            <ul className="max-w-xl mx-auto lg:mx-0 grid sm:grid-cols-2 gap-x-4 gap-y-1.5 text-xs sm:text-sm text-foreground/85 mb-7 text-left">
-              <li className="flex items-start gap-2"><Check size={14} className="text-primary mt-0.5 flex-shrink-0" /> No ads, ever</li>
-              <li className="flex items-start gap-2"><Check size={14} className="text-primary mt-0.5 flex-shrink-0" /> We never sell your data</li>
-              <li className="flex items-start gap-2"><Check size={14} className="text-primary mt-0.5 flex-shrink-0" /> Screenshot &amp; screen-record protection</li>
-              <li className="flex items-start gap-2"><Check size={14} className="text-primary mt-0.5 flex-shrink-0" /> Free — for you, your family &amp; friends</li>
-            </ul>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-3 mb-5">
               <Link
                 to="/sign-up"
-                className="px-7 py-3.5 rounded-2xl gradient-primary text-white text-sm font-semibold glow-primary hover:opacity-90 transition-all flex items-center justify-center gap-2"
+                className="px-7 sm:px-8 py-3.5 sm:py-4 rounded-2xl aurora-primary-cta text-sm font-bold hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
               >
                 Create your free account
                 <ArrowRight size={16} />
               </Link>
               <Link
                 to="/sign-in"
-                className="px-7 py-3.5 rounded-2xl glass border border-border text-foreground text-sm font-semibold hover:border-primary/50 transition-all text-center"
+                className="px-7 sm:px-8 py-3.5 sm:py-4 rounded-2xl aurora-secondary-cta text-foreground text-sm font-bold hover:border-primary/50 transition-all text-center"
               >
                 I already have an account
               </Link>
@@ -114,10 +108,10 @@ export default function LandingPage() {
                 e.preventDefault();
                 document.getElementById('download')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
               }}
-              className="mb-4 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl gradient-tri text-white text-sm font-semibold glow-primary hover:opacity-95 transition-all"
+              className="mb-4 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl aurora-download-pill text-sm font-semibold hover:border-primary/50 transition-all"
             >
               <Download size={16} /> Get the Android app
-              <span className="text-[10px] font-bold uppercase tracking-widest bg-white/20 px-2 py-0.5 rounded-full ml-1">New</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest bg-primary/20 text-primary px-2 py-0.5 rounded-full ml-1">New</span>
             </a>
             <p className="text-[11px] sm:text-xs text-muted-foreground flex items-center justify-center lg:justify-start gap-1.5">
               <Lock size={11} /> Takes 30 seconds. No credit card. Delete your account anytime.
@@ -125,38 +119,41 @@ export default function LandingPage() {
           </div>
 
           {/* Right: phone showcase */}
-          <div className="relative order-1 lg:order-2">
+          <div className="relative order-1 lg:order-2 aurora-phone-stage flex min-h-[360px] sm:min-h-[520px] items-center justify-center">
             <div className="pointer-events-none absolute inset-0 -z-10">
-              <div className="absolute top-1/4 left-1/4 w-72 h-72 gradient-primary rounded-full blur-3xl opacity-30" />
-              <div className="absolute bottom-1/4 right-1/4 w-72 h-72 gradient-pink rounded-full blur-3xl opacity-20" />
+              <div className="absolute top-1/4 left-1/4 w-72 h-72 gradient-primary rounded-full blur-3xl opacity-35" />
+              <div className="absolute bottom-1/4 right-1/4 w-80 h-80 gradient-pink rounded-full blur-3xl opacity-25" />
             </div>
             <img
               src={heroPhones}
               alt="VibTribe encrypted messaging app shown on three smartphones — chat list, end-to-end encrypted conversation, and contact profile"
               width={1280}
               height={1280}
-              className="w-full max-w-md sm:max-w-lg lg:max-w-none mx-auto drop-shadow-[0_25px_60px_rgba(139,92,246,0.35)] float-up"
+              className="aurora-phone-card w-full max-w-[21rem] sm:max-w-lg lg:max-w-none mx-auto"
             />
-            {/* Floating glow badges */}
-            <div className="hidden sm:flex absolute top-6 -left-2 lg:left-4 items-center gap-2 px-3 py-2 rounded-2xl glass border border-primary/40 shadow-lg shadow-primary/20">
+            <div className="hidden sm:flex absolute top-8 -left-2 lg:left-4 items-center gap-2 px-3 py-2 rounded-2xl aurora-download-pill">
               <ShieldCheck size={14} className="text-primary" />
               <span className="text-[11px] font-semibold text-foreground">Only you can read it</span>
             </div>
-            <div className="hidden sm:flex absolute bottom-10 -right-2 lg:right-4 items-center gap-2 px-3 py-2 rounded-2xl glass border border-vt-pink/40 shadow-lg shadow-vt-pink/20">
-              <Sparkles size={14} className="text-vt-pink" />
-              <span className="text-[11px] font-semibold text-foreground">Vanishes in 24 hours</span>
+            <div className="aurora-trust-toast absolute bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded-3xl px-4 py-3 sm:-left-2 sm:bottom-10 sm:translate-x-0 lg:left-0">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-vt-green/20">
+                <span className="h-3 w-3 rounded-full bg-vt-green" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-foreground">Trust Lock Active</p>
+                <p className="text-[11px] text-muted-foreground">Screenshots disabled</p>
+              </div>
             </div>
           </div>
         </div>
-      </section>
+        </div>
 
-      {/* Trust bar */}
-      <section className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pb-10 sm:pb-14 -mt-4 sm:-mt-8">
-        <div className="glass rounded-2xl sm:rounded-3xl border border-border px-4 sm:px-6 py-4 sm:py-5 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 text-center">
-          <TrustPill icon={<Ban size={16} className="text-primary" />} label="No ads" />
-          <TrustPill icon={<EyeOff size={16} className="text-vt-cyan" />} label="No tracking" />
-          <TrustPill icon={<ShieldCheck size={16} className="text-vt-pink" />} label="End-to-end encrypted" />
-          <TrustPill icon={<KeyRound size={16} className="text-vt-amber" />} label="You hold the keys" />
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 sm:gap-4 mt-8 sm:mt-12">
+          <AuroraFeature icon={<Ban size={22} />} label="No ads" tone="magenta" />
+          <AuroraFeature icon={<Lock size={22} />} label="Encrypted" tone="purple" />
+          <AuroraFeature icon={<EyeOff size={22} />} label="No tracking" tone="violet" />
+          <AuroraFeature icon={<Sparkles size={22} />} label="Vanishing" tone="amber" />
+          <AuroraFeature icon={<KeyRound size={22} />} label="Vault" tone="green" className="col-span-2 md:col-span-1" />
         </div>
       </section>
 
@@ -468,6 +465,35 @@ export default function LandingPage() {
       </footer>
       <ContactFormModal open={contactOpen} onClose={() => setContactOpen(false)} external />
 
+    </div>
+  );
+}
+
+function AuroraFeature({
+  icon,
+  label,
+  tone,
+  className = '',
+}: {
+  icon: React.ReactNode;
+  label: string;
+  tone: 'magenta' | 'purple' | 'violet' | 'amber' | 'green';
+  className?: string;
+}) {
+  const toneClass: Record<typeof tone, string> = {
+    magenta: 'aurora-feature-icon--magenta',
+    purple: 'aurora-feature-icon--purple',
+    violet: 'aurora-feature-icon--violet',
+    amber: 'aurora-feature-icon--amber',
+    green: 'aurora-feature-icon--green',
+  };
+
+  return (
+    <div className={`aurora-feature-card rounded-3xl p-5 sm:p-6 flex flex-col items-center justify-center text-center gap-3 ${className}`}>
+      <div className={`w-11 h-11 rounded-2xl flex items-center justify-center ${toneClass[tone]}`}>
+        {icon}
+      </div>
+      <p className="text-sm font-bold tracking-tight text-foreground">{label}</p>
     </div>
   );
 }
