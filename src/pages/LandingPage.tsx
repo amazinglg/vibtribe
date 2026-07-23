@@ -469,6 +469,35 @@ export default function LandingPage() {
   );
 }
 
+function AuroraFeature({
+  icon,
+  label,
+  tone,
+  className = '',
+}: {
+  icon: React.ReactNode;
+  label: string;
+  tone: 'magenta' | 'purple' | 'violet' | 'amber' | 'green';
+  className?: string;
+}) {
+  const toneClass: Record<typeof tone, string> = {
+    magenta: 'aurora-feature-icon--magenta',
+    purple: 'aurora-feature-icon--purple',
+    violet: 'aurora-feature-icon--violet',
+    amber: 'aurora-feature-icon--amber',
+    green: 'aurora-feature-icon--green',
+  };
+
+  return (
+    <div className={`aurora-feature-card rounded-3xl p-5 sm:p-6 flex flex-col items-center justify-center text-center gap-3 ${className}`}>
+      <div className={`w-11 h-11 rounded-2xl flex items-center justify-center ${toneClass[tone]}`}>
+        {icon}
+      </div>
+      <p className="text-sm font-bold tracking-tight text-foreground">{label}</p>
+    </div>
+  );
+}
+
 function FeatureTile({
   icon, title, desc, className = '', big = false, accent,
 }: {
