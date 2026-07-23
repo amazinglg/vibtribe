@@ -315,6 +315,12 @@
   pointer-events: none;
 }
 
+.aurora-hero-sheen {
+  background:
+    radial-gradient(circle at 74% 34%, rgba(168,85,247,0.24), transparent 34%),
+    radial-gradient(circle at 12% 18%, rgba(217,70,239,0.16), transparent 28%);
+}
+
 .aurora-copy-chip,
 .auth-aurora-chip {
   background: rgba(255,255,255,0.055);
