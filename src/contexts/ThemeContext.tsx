@@ -8,7 +8,8 @@ export type ThemeId =
   | 'theme-5'
   | 'theme-6'
   | 'theme-7'
-  | 'theme-8';
+  | 'theme-8'
+  | 'theme-9';
 
 export interface AppTheme {
   id: ThemeId;
@@ -281,6 +282,39 @@ export const APP_THEMES: AppTheme[] = [
       '--glass-strong-bg': 'rgba(40,49,66,0.95)',
       '--glass-border': 'rgba(255,255,255,0.06)',
       '--glass-border-strong': 'rgba(255,255,255,0.10)',
+    },
+  },
+  {
+    id: 'theme-9',
+    name: 'Aurora Glass',
+    description: 'Matches the VibTribe home page — deep obsidian with magenta & violet aurora glows',
+    preview: ['#050208', '#d946ef', '#a855f7', '#7c3aed'],
+    vars: {
+      '--background': '#050208',
+      '--foreground': '#f5f0ff',
+      '--primary': '#a855f7',
+      '--primary-foreground': '#ffffff',
+      '--secondary': '#150a24',
+      '--secondary-foreground': '#e9d5ff',
+      '--accent': '#d946ef',
+      '--accent-foreground': '#ffffff',
+      '--muted': '#100720',
+      '--muted-foreground': '#a898c8',
+      '--card': '#0b0616',
+      '--card-foreground': '#f5f0ff',
+      '--border': 'rgba(255,255,255,0.10)',
+      '--input': '#150a24',
+      '--ring': '#a855f7',
+      '--pink': '#d946ef',
+      '--cyan': '#c084fc',
+      '--violet': '#7c3aed',
+      '--green': '#22c55e',
+      '--amber': '#f59e0b',
+      '--red': '#ef4444',
+      '--glass-bg': 'rgba(10,6,20,0.72)',
+      '--glass-strong-bg': 'rgba(10,6,20,0.92)',
+      '--glass-border': 'rgba(255,255,255,0.10)',
+      '--glass-border-strong': 'rgba(255,255,255,0.16)',
     },
   },
 ];
