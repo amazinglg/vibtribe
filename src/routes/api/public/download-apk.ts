@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import apkAsset from '@/assets/VibTribe-v2.1.2.apk.asset.json'
+import apkAsset from '@/assets/VibTribe-v2.1.3.apk.asset.json'
 
 export const Route = createFileRoute('/api/public/download-apk')({
   server: {
@@ -15,7 +15,7 @@ export const Route = createFileRoute('/api/public/download-apk')({
           status: 200,
           headers: {
             'Content-Type': 'application/vnd.android.package-archive',
-            'Content-Disposition': 'attachment; filename="VibTribe-v2.1.2.apk"',
+            'Content-Disposition': 'attachment; filename="VibTribe-v2.1.3.apk"',
             'Cache-Control': 'no-cache, no-store, must-revalidate',
             Pragma: 'no-cache',
             Expires: '0',
