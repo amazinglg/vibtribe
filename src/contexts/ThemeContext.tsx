@@ -8,7 +8,8 @@ export type ThemeId =
   | 'theme-5'
   | 'theme-6'
   | 'theme-7'
-  | 'theme-8';
+  | 'theme-8'
+  | 'theme-9';
 
 export interface AppTheme {
   id: ThemeId;
