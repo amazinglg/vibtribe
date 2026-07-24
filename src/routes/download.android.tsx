@@ -127,7 +127,7 @@ function DownloadAndroidPage() {
               eyebrow="Step 1 of 5"
               icon={Download}
               title="Download the VibTribe APK (v2.1.3)"
-              body="Tap the button below. The file will save to your phone as VibTribe-v2.1.3.apk (about 38 MB). Use Wi-Fi for the fastest download. This is the latest official Android release — version 2.1.2."
+              body="Tap the button below. The file will save to your phone as VibTribe-v2.1.3.apk (about 38 MB). Use Wi-Fi for the fastest download. This is the latest official Android release — version 2.1.3."
             >
               <a
                 href={APK_HREF}
