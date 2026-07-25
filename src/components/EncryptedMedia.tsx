@@ -2,37 +2,34 @@
 import React, { useEffect, useState } from 'react';
 import { decryptBytes, decryptBytesWithKey } from '@/lib/encryption';
 import { signChatMediaUrl } from '@/lib/chat-media-url';
-import { Download, FileText, Loader2, AlertTriangle, X, Eye } from 'lucide-react';
-import { isNativeWrapper } from '@/lib/native-bridge';
+import { FileText, Loader2, AlertTriangle, X, Eye, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTrustLock } from '@/contexts/TrustLockContext';
+import { saveMedia, shareMedia, TrustLockError } from '@/lib/media-actions';
+import MediaActionButton from '@/components/MediaActionButton';
+import TrustLockBlockedDialog from '@/components/TrustLockBlockedDialog';
 
 interface Props {
   url: string;
   mime: string;
   name?: string;
   kind: 'image' | 'file' | 'audio' | 'video';
-  /** Sender's ECDH public key (1:1 chats). Required if mediaKey is not set. */
   theirPublicKey?: string;
-  /** Raw AES key (base64) shipped in the group envelope. Used for group media. */
   mediaKey?: string;
   onImageClick?: (blobUrl: string) => void;
 }
 
-// Tiny in-memory cache so a re-render doesn't re-fetch & re-decrypt.
 const blobCache = new Map<string, string>();
+const rawCache = new Map<string, Blob>();
 
 export default function EncryptedMedia({ url, mime, name, kind, theirPublicKey, mediaKey, onImageClick }: Props) {
   const [blobUrl, setBlobUrl] = useState<string | null>(blobCache.get(url) || null);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(!blobCache.has(url));
   const [showPreview, setShowPreview] = useState(false);
-  // Trust Lock hides download / share affordances. Audio/video native
-  // controls still expose system download menus on some platforms — we
-  // disable the `controls` attribute's download item via
-  // controlsList="nodownload" below.
+  const [showTrustBlock, setShowTrustBlock] = useState(false);
   const trustLock = useTrustLock();
-  const hideDownload = trustLock.enabled;
+  const trustLocked = trustLock.enabled;
 
   useEffect(() => {
     let cancelled = false;
@@ -54,6 +51,7 @@ export default function EncryptedMedia({ url, mime, name, kind, theirPublicKey, 
         const blob = new Blob([plain], { type: mime || 'application/octet-stream' });
         const u = URL.createObjectURL(blob);
         blobCache.set(url, u);
+        rawCache.set(url, blob);
         if (!cancelled) { setBlobUrl(u); setError(false); }
       } catch {
         if (!cancelled) setError(true);
@@ -63,6 +61,30 @@ export default function EncryptedMedia({ url, mime, name, kind, theirPublicKey, 
     })();
     return () => { cancelled = true; };
   }, [url, mime, theirPublicKey, mediaKey]);
+
+  const getBlob = async (): Promise<Blob> => {
+    const cached = rawCache.get(url);
+    if (cached) return cached;
+    const res = await fetch(blobUrl!);
+    return res.blob();
+  };
+
+  const runDownload = async () => {
+    if (trustLocked) { setShowTrustBlock(true); throw new Error('Trust Lock enabled'); }
+    const blob = await getBlob();
+    return saveMedia(blob, { name, mime });
+  };
+
+  const runShare = async () => {
+    if (trustLocked) { setShowTrustBlock(true); throw new Error('Trust Lock enabled'); }
+    try {
+      const blob = await getBlob();
+      await shareMedia(blob, { name, mime });
+    } catch (e) {
+      if (e instanceof TrustLockError) { setShowTrustBlock(true); return; }
+      throw e;
+    }
+  };
 
   if (error) {
     return (
@@ -81,125 +103,89 @@ export default function EncryptedMedia({ url, mime, name, kind, theirPublicKey, 
     );
   }
 
+  const ActionCluster = ({ position = 'absolute' }: { position?: 'absolute' | 'inline' }) => (
+    <div className={position === 'absolute' ? 'absolute top-2 right-2 flex items-center gap-1.5' : 'flex items-center gap-1.5'}>
+      {!trustLocked && (
+        <>
+          <MediaActionButton action="download" label="Download" onRun={runDownload} />
+          <MediaActionButton action="share" label="Share" onRun={runShare} />
+        </>
+      )}
+      {trustLocked && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); setShowTrustBlock(true); }}
+          aria-label="Trust Lock protected"
+          className="p-2 rounded-full bg-black/60 text-primary backdrop-blur-md border border-primary/40"
+          title="Protected by Trust Lock"
+        >
+          <span aria-hidden>🛡️</span>
+        </button>
+      )}
+    </div>
+  );
+
   if (kind === 'image') {
     return (
-      <div className="relative inline-block group">
-        <img
-          src={blobUrl}
-          alt={name || 'Shared image'}
-          className={`max-w-[200px] rounded-xl cursor-zoom-in ${hideDownload ? 'select-none pointer-events-auto' : ''}`}
-          onClick={() => onImageClick?.(blobUrl)}
-          onContextMenu={hideDownload ? (e) => e.preventDefault() : undefined}
-          draggable={hideDownload ? false : undefined}
-        />
-        {!hideDownload && (
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); downloadFile(); }}
-            className="absolute top-2 right-2 p-1.5 rounded-full bg-black/55 text-white opacity-80 hover:opacity-100"
-            aria-label="Download image"
-          >
-            <Download size={14} />
-          </button>
-        )}
-      </div>
+      <>
+        <div className="relative inline-block group">
+          <img
+            src={blobUrl}
+            alt={name || 'Shared image'}
+            className={`max-w-[200px] rounded-xl cursor-zoom-in ${trustLocked ? 'select-none' : ''}`}
+            onClick={() => onImageClick?.(blobUrl)}
+            onContextMenu={trustLocked ? (e) => e.preventDefault() : undefined}
+            draggable={trustLocked ? false : undefined}
+          />
+          <ActionCluster />
+        </div>
+        <TrustLockBlockedDialog open={showTrustBlock} onClose={() => setShowTrustBlock(false)} />
+      </>
     );
   }
   if (kind === 'audio') {
     return (
-      <div className="flex items-center gap-2">
-        <audio
-          controls
-          src={blobUrl}
-          className="max-w-[200px]"
-          controlsList={hideDownload ? 'nodownload noplaybackrate' : undefined}
-          onContextMenu={hideDownload ? (e) => e.preventDefault() : undefined}
-        />
-        {!hideDownload && (
-          <button
-            type="button"
-            onClick={downloadFile}
-            className="p-1.5 rounded-full bg-muted text-foreground"
-            aria-label="Download audio"
-          >
-            <Download size={14} />
-          </button>
-        )}
-      </div>
+      <>
+        <div className="flex items-center gap-2">
+          <audio
+            controls
+            src={blobUrl}
+            className="max-w-[200px]"
+            controlsList={trustLocked ? 'nodownload noplaybackrate' : undefined}
+            onContextMenu={trustLocked ? (e) => e.preventDefault() : undefined}
+          />
+          <ActionCluster position="inline" />
+        </div>
+        <TrustLockBlockedDialog open={showTrustBlock} onClose={() => setShowTrustBlock(false)} />
+      </>
     );
   }
   if (kind === 'video') {
     return (
-      <div className="relative inline-block">
-        <video
-          controls
-          playsInline
-          src={blobUrl}
-          className="max-w-[240px] rounded-xl"
-          controlsList={hideDownload ? 'nodownload noplaybackrate' : undefined}
-          onContextMenu={hideDownload ? (e) => e.preventDefault() : undefined}
-          disablePictureInPicture={hideDownload ? true : undefined}
-        />
-        {!hideDownload && (
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); downloadFile(); }}
-            className="absolute top-2 right-2 p-1.5 rounded-full bg-black/55 text-white opacity-80 hover:opacity-100"
-            aria-label="Download video"
-          >
-            <Download size={14} />
-          </button>
-        )}
-      </div>
+      <>
+        <div className="relative inline-block">
+          <video
+            controls
+            playsInline
+            src={blobUrl}
+            className="max-w-[240px] rounded-xl"
+            controlsList={trustLocked ? 'nodownload noplaybackrate' : undefined}
+            onContextMenu={trustLocked ? (e) => e.preventDefault() : undefined}
+            disablePictureInPicture={trustLocked ? true : undefined}
+          />
+          <ActionCluster />
+        </div>
+        <TrustLockBlockedDialog open={showTrustBlock} onClose={() => setShowTrustBlock(false)} />
+      </>
     );
   }
-  // File / document: clicking opens a preview modal with a download button.
-  const downloadFile = async () => {
-    if (hideDownload) {
-      toast.error('Trust Lock is on — downloads are disabled in this chat');
-      return;
-    }
-    try {
-      const res = await fetch(blobUrl!);
-      const blob = await res.blob();
-      if (isNativeWrapper()) {
-        // Android WebView ignores blob: anchor downloads. Convert to a
-        // data: URL so the WebView's DownloadListener (registered in
-        // MainActivity) can save it via the system DownloadManager.
-        const dataUrl: string = await new Promise((resolve, reject) => {
-          const r = new FileReader();
-          r.onload = () => resolve(String(r.result));
-          r.onerror = () => reject(r.error);
-          r.readAsDataURL(blob);
-        });
-        const a = document.createElement('a');
-        a.href = dataUrl;
-        a.download = name || 'file';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-      } else {
-        const a = document.createElement('a');
-        a.href = blobUrl!;
-        a.download = name || 'file';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-      }
-      toast.success('Saved to your downloads');
-    } catch (e) {
-      console.warn('[VibTribe] download failed', e);
-      toast.error('Download failed');
-    }
-  };
 
-  // Android WebView cannot render PDFs from blob: / data: URLs inside an
-  // iframe — it just shows a blank white page. Skip the iframe on native and
-  // surface a clean Download CTA instead.
+  // File / document
   const isPdfLike = /pdf/i.test(mime || '');
   const isImageDoc = /^image\//i.test(mime || '');
   const isTextDoc = /text\/|json|xml/i.test(mime || '');
-  const canIframe = !isNativeWrapper() && (isPdfLike || isImageDoc || isTextDoc);
+  const isNative = typeof (window as any).Capacitor !== 'undefined' && (window as any).Capacitor?.isNativePlatform?.();
+  const canIframe = !isNative && (isPdfLike || isImageDoc || isTextDoc);
 
   return (
     <>
@@ -221,14 +207,7 @@ export default function EncryptedMedia({ url, mime, name, kind, theirPublicKey, 
               <span className="truncate text-sm">{name || 'file'}</span>
             </div>
             <div className="flex items-center gap-2">
-              {!hideDownload && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); downloadFile(); }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold"
-                >
-                  <Download size={14} /> Download
-                </button>
-              )}
+              <ActionCluster position="inline" />
               <button
                 onClick={(e) => { e.stopPropagation(); setShowPreview(false); }}
                 className="p-1.5 rounded-lg bg-white/10 text-white"
@@ -246,13 +225,17 @@ export default function EncryptedMedia({ url, mime, name, kind, theirPublicKey, 
                 <FileText size={48} className="text-muted-foreground mb-3" />
                 <p className="text-sm font-medium mb-1 break-all">{name || 'file'}</p>
                 <p className="text-xs text-muted-foreground mb-4">
-                  {hideDownload
+                  {trustLocked
                     ? '🛡️ Trust Lock is enabled — downloads are disabled in this chat.'
                     : 'Preview is not available for this file type. Tap Download to save it to your device.'}
                 </p>
-                {!hideDownload && (
+                {!trustLocked && (
                   <button
-                    onClick={downloadFile}
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      try { await runDownload(); toast.success('Saved to your device'); }
+                      catch (err: any) { if (err?.name !== 'AbortError') toast.error(err?.message || 'Download failed'); }
+                    }}
                     className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold"
                   >
                     <Download size={16} /> Download
@@ -263,6 +246,7 @@ export default function EncryptedMedia({ url, mime, name, kind, theirPublicKey, 
           </div>
         </div>
       )}
+      <TrustLockBlockedDialog open={showTrustBlock} onClose={() => setShowTrustBlock(false)} />
     </>
   );
 }

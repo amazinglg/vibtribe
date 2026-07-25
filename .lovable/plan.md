@@ -1,78 +1,71 @@
-# Implementation plan
+# Premium Media Experience Overhaul
 
-## 1. Download counter tile (Admin overview)
+Big surface-area change across chats. I'll ship it in three focused waves so nothing regresses, and I need one decision from you on the outstanding security finding before I start.
 
-**Schema (migration):**
-- New table `apk_download_events(id, ip_hash, user_agent, created_at)`.
-- GRANT INSERT to `anon` + `authenticated`; SELECT only to admins via RLS using `is_admin_user()`.
+---
 
-**Server route:** `src/routes/api/public/track-apk-download.ts` — POST endpoint, inserts one row per click (rate-limited by IP hash within 60s using a UNIQUE partial index isn't necessary; simple insert is fine).
+## Wave 1 — Download & Share (functional fixes)
 
-**Frontend:**
-- `src/routes/download.android.tsx`: call the tracking endpoint inside `startDownload()`.
-- `src/pages/AdminPage.tsx`: add a "Downloads" tile next to "Online now" showing total APK clicks (count(*)).
+**New shared utility `src/lib/media-actions.ts`**
+- `downloadMedia(url, filename, mime)` — resolves signed URL, then:
+  - Capacitor / Android → `Filesystem.writeFile` into `Directory.Documents` (docs) or the public gallery via `MediaStore` intent for images/videos; falls back to `Filesystem.Documents` if unavailable.
+  - PWA / Desktop → `showSaveFilePicker` when available, else anchor + `download` attribute blob download.
+  - Emits progress events so the button can render the circular progress ring.
+- `shareMedia({ url, filename, mime, text })`:
+  - Capacitor → `@capacitor/share` (`Share.share` with `files:[]`).
+  - Web → `navigator.share({ files })` when `navigator.canShare` allows; else `navigator.share({ url })`; else copy link + toast.
+  - Trust Lock ON → throws `TrustLockError`; caller shows premium dialog.
 
-## 2. Chat long-press menu — fix overflow, add Block & Mute
+**UI**
+- Replace inline download icon in `ChatWindowPanel.tsx` and `EncryptedMedia.tsx` with new `<MediaActionButton>` (idle → progress ring → check → auto-reset). Purple glow, spring bounce, toast on completion/failure.
+- Share button always visible when Trust Lock OFF; when ON, opens `<TrustLockBlockedDialog>` (shield icon, purple accent, framer-motion entrance).
+- Wire same helpers into media viewer toolbar and status viewer.
 
-**Schema:**
-- New table `chat_mutes(user_id, chat_id, muted_until timestamptz null, created_at)` — `null` = mute forever. RLS: users manage own.
+**Platform capabilities**
+- Android: add `WRITE_EXTERNAL_STORAGE` (≤API 28) + scoped `MediaStore` fallback via a small Capacitor plugin method in existing `VtTrustLockPlugin` file (new sibling `VtMediaSaverPlugin.java`) so images/videos land in the gallery.
+- Add `@capacitor/share` and `@capacitor/filesystem` (already partly present — will confirm).
 
-**Logic:**
-- `src/pages/components/ChatListPanel.tsx`:
-  - Replace fixed-position dropdown with a positioning helper: measure long-pressed row bbox + viewport, render menu **above** if `bottom > viewport.height - 220px`, else below. Clamp to safe-area (bottom-nav height ~80px).
-  - Add **Block user** (calls existing block flow) and **Mute** (opens timeline picker: 1h / 24h / 1w / Always).
-  - For VibTribe official chat: only show Block + Mute.
-- Notifications: filter outgoing FCM + in-app toasts + unread badge by joining `chat_mutes` where `muted_until is null OR muted_until > now()`. Adjust:
-  - `src/lib/fcm-push.functions.ts` (skip push when muted)
-  - `ChatListPanel` unread count query (exclude muted chats from badge)
-  - Toast layer in `CallProvider`/notification listener.
+---
 
-## 3. Permission toggle persistence fix
+## Wave 2 — Reactions & Long-Press Menu
 
-**Symptom:** Mic/Camera **toggle** flips back to off even when OS permission stays granted.
+**Reaction picker `src/components/ReactionPicker.tsx`**
+- Glass capsule (`backdrop-blur-xl bg-white/10 border border-white/15`), spring entrance (scale 0.9→1, y 8→0), 60 fps framer-motion.
+- Emojis: hover scale 1.15, tap bounce, selection triggers scale + glow + 6-particle burst (pure CSS keyframes, GPU only).
+- Existing reactions fade+scale in when message mounts.
+- Removing own reaction: shrink + fade before state update (150ms) — no instant pop.
 
-**Root cause (to verify when reading):** `PermissionsPage` likely re-reads OS permission state on focus and overwrites the user's stored preference. The toggle should reflect a *stored user choice* AND only show enabled when OS permission is granted; OS state changes shouldn't silently reset the user toggle.
+**Long-press bottom sheet `src/components/MediaActionSheet.tsx`**
+- Radix `Drawer` (vaul) with rounded top corners, glass background, safe-area padding.
+- Options staggered in (40ms each): Reply, React, Forward, Copy, Download, Share, Save to Vault, Report, Delete.
+- Reused by messages, images, videos, audio, docs, status viewer, profile header, tribe header.
 
-**Fix:**
-- Persist toggle state in `user_profiles` (already have `notif_*` columns — add `pref_mic_enabled`, `pref_camera_enabled` via migration).
-- `PermissionsPage.tsx` reads from DB on mount, writes on change. OS permission read only gates the *Request access* button, never overwrites stored value.
-- Apply same pattern to all other on/off toggles in Permissions/Profile that exhibit drift.
+---
 
-## 4. Website: download banner + improved iOS PWA guide
+## Wave 3 — Media Viewer & Micro-interactions
 
-- `LandingPage.tsx`: add a sticky top "Download VibTribe App" CTA below the "I already have an account" button, theme-matched. Add a dismissible promo banner near top that smooth-scrolls to `#download` section.
-- New route `src/routes/download.ios.tsx`: stepper mirroring Android (Safari → Share → Add to Home Screen → permissions → first launch) with screenshots/illustrations.
-- Update LandingPage iOS button to link to `/download/ios`.
+- `src/components/MediaViewer.tsx` upgrade: shared-element style opening (thumbnail rect → full-screen via framer-motion `layoutId`), backdrop blur ramp, toolbar fades in 120ms after transform completes; reverse on close (swipe-down to dismiss).
+- Icon button primitive `IconAction` — hover scale, focus ring, ripple, optional haptic (`Haptics.impact`), `prefers-reduced-motion` respected everywhere.
+- Accessibility: aria-labels on every icon-only button, focus trap in sheet/viewer, keyboard shortcuts (Esc close, ←/→ nav, R react), screen-reader live region for download progress.
 
-## 5. Status: 24h hard-delete + non-encrypted banner + legal updates
+---
 
-**Cleanup:**
-- Server route `src/routes/api/public/hooks/cleanup-expired-statuses.ts`: deletes storage files for expired statuses, then deletes the rows.
-- `pg_cron` every 15 min → calls the route.
+## QA checklist I'll run before handoff
 
-**UI banner:**
-- `StatusHero.tsx` (status composer): below "Visibility: All" selector, add an amber info banner: *"Statuses are not end-to-end encrypted. Media is auto-deleted from our servers 24 hours after posting."*
+- Playwright: download an image + doc in PWA, verify file lands via `page.on('download')`.
+- Manual verification steps documented for Android build (needs your APK rebuild — I'll flag it).
+- Trust Lock ON path: share/download buttons hidden or blocked with dialog.
+- Reduced-motion: animations collapse to opacity-only.
+- Console/network clean during a full chat session.
 
-**Legal:**
-- Update `src/components/legal/LegalContent.tsx` — add a "Status feature" subsection covering non-encryption + 24h retention.
+---
 
-**Security finding:** mark `status-media public bucket` as ignored with rationale; update security memory.
+## Outstanding security finding — I need your call to proceed
 
-## 6. Capacitor sync to Android + iOS PWA
+`profile_photos_public_bucket_bypass` is still open. It's high-risk because it touches every avatar surface. Pick one and I'll fold it into Wave 1:
 
-- Run `npx cap sync` to push web build changes into `android/`.
-- PWA is the web app itself — no extra build step; iOS gets changes the next time user reloads from Home Screen.
-- Bump `versionCode`/`versionName` in `android/app/build.gradle` so the next signed APK reflects the changes.
+- **A. Full fix** — flip `profile-photos` bucket to private, upgrade `visible_avatar_urls` RPC to return signed URLs, migrate every `<img>` avatar site to a `<Avatar userId=…>` helper. Correct but touches ~20 files.
+- **B. Partial** — restrict SELECT policy to authenticated only. Won't clear the finding (public bucket bypasses RLS for direct URLs) but blocks anonymous listing.
+- **C. Skip** — leave the finding open for now; I'll come back to it.
 
-## Technical notes
-
-- All new tables: GRANT block + RLS per project standards.
-- Cron secret: use `apikey` anon header pattern per `schedule-jobs-modern`.
-- No edits to `src/integrations/supabase/*` or `src/routeTree.gen.ts` (auto-generated).
-
-## Files touched (estimate)
-
-New: 4 (track-apk-download route, cleanup-expired-statuses route, download.ios.tsx, migration)
-Edited: ~12 (AdminPage, ChatListPanel, PermissionsPage, LandingPage, StatusHero, LegalContent, fcm-push.functions, download.android.tsx, build.gradle, security memory, +2)
-
-Reply **"go"** to execute, or tell me what to adjust.
+Reply **A**, **B**, or **C** (plus "go" to start the media work).

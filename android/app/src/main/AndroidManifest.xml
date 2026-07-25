@@ -118,6 +118,10 @@
     <!-- Legacy storage for Android 12 and below -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
+    <!-- Legacy write access so downloads land in Pictures/Movies/Music/Download
+         on Android 9 and below (scoped storage handles it automatically on 10+). -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
 
     <!-- Foreground service for active calls -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
