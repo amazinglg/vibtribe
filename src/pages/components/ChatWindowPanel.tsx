@@ -3301,18 +3301,22 @@ export default function ChatWindowPanel() {
           onClick={() => setReactionPickerMsg(null)}
         >
           <div
-            className="bg-card border border-border rounded-2xl w-full max-w-sm overflow-hidden shadow-card float-up"
+            className="w-full max-w-sm overflow-hidden rounded-3xl border border-white/10 shadow-2xl float-up backdrop-blur-2xl"
+            style={{
+              background: 'linear-gradient(160deg, color-mix(in oklab, hsl(var(--card)) 92%, transparent) 0%, color-mix(in oklab, hsl(var(--primary)) 8%, hsl(var(--card))) 100%)',
+              animation: 'reactionPop 320ms cubic-bezier(.2,.9,.25,1.15)',
+            }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-4 py-3 border-b border-border">
-              <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Choose reaction</p>
+            <div className="px-4 py-3 border-b border-white/10">
+              <p className="text-[11px] text-muted-foreground uppercase tracking-[0.14em]">Choose reaction</p>
             </div>
-            <div className="flex gap-1 p-2 bg-muted/40 overflow-x-auto no-scrollbar">
+            <div className="flex gap-1 p-2 bg-white/[0.03] overflow-x-auto no-scrollbar">
               {EMOJI_CATEGORIES.map(cat => (
                 <button
                   key={cat.key}
                   onClick={() => setEmojiTab(cat.key)}
-                  className={`flex-shrink-0 px-2.5 py-1.5 rounded-lg text-base transition-all ${emojiTab === cat.key ? 'bg-primary/15 text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                  className={`flex-shrink-0 px-2.5 py-1.5 rounded-lg text-base transition-all duration-200 ${emojiTab === cat.key ? 'bg-primary/20 text-primary shadow-[0_0_12px_-2px_hsl(var(--primary)/0.6)]' : 'text-muted-foreground hover:text-foreground hover:scale-110'}`}
                   aria-label={cat.label}
                   title={cat.label}
                   type="button"
@@ -3329,7 +3333,7 @@ export default function ChatWindowPanel() {
                   <button
                     key={`${emoji}-${i}`}
                     onClick={() => addReaction(reactionPickerMsg.id, emoji)}
-                    className="aspect-square flex items-center justify-center text-2xl rounded-lg hover:bg-muted active:scale-90 transition-all p-1"
+                    className="aspect-square flex items-center justify-center text-2xl rounded-xl hover:bg-white/10 hover:scale-125 hover:-translate-y-0.5 active:scale-90 transition-all duration-200 ease-out p-1 will-change-transform"
                     type="button"
                     aria-label={vt?.name || emoji}
                     title={vt?.name || emoji}
