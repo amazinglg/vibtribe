@@ -1797,7 +1797,18 @@ export default function ChatWindowPanel() {
     if (msg.deletedForEveryone) return;
     if (msg.messageType === 'system') return;
     if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
-    longPressTimerRef.current = setTimeout(() => setActionMsg(msg), 500);
+    longPressTimerRef.current = setTimeout(async () => {
+      setActionMsg(msg);
+      // Premium tactile feedback on native long-press
+      if (isNativeWrapper()) {
+        try {
+          const { Haptics, ImpactStyle } = await import('@capacitor/haptics');
+          await Haptics.impact({ style: ImpactStyle.Medium });
+        } catch { /* noop */ }
+      } else if (typeof navigator !== 'undefined' && (navigator as any).vibrate) {
+        try { (navigator as any).vibrate(12); } catch { /* noop */ }
+      }
+    }, 450);
   };
   const handleLongPressEnd = () => {
     if (longPressTimerRef.current) { clearTimeout(longPressTimerRef.current); longPressTimerRef.current = null; }
