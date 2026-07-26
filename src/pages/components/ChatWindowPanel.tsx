@@ -18,6 +18,7 @@ import { useCall } from '@/components/CallProvider';
 import { isCapacitorWrapper, isNativeWrapper, pickNativeImage, pickNativeFiles, pickNativeMedia, requestNativeCameraPermission } from '@/lib/native-bridge';
 import { TrustLockService, onTrustLockScreenshot, isIOS, isIosPwa } from '@/lib/trust-lock-service';
 import { toast } from 'sonner';
+import { motion, AnimatePresence } from 'framer-motion';
 import { EMOJI_CATEGORIES, type EmojiCategoryKey } from '@/lib/emojis';
 import { VIBTRIBE_EMOJI_MAP, VIBTRIBE_SHORTCODE_RE, renderVtEmojis } from '@/lib/vibtribe-emojis';
 import { useT } from '@/contexts/LanguageContext';
@@ -1796,7 +1797,18 @@ export default function ChatWindowPanel() {
     if (msg.deletedForEveryone) return;
     if (msg.messageType === 'system') return;
     if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
-    longPressTimerRef.current = setTimeout(() => setActionMsg(msg), 500);
+    longPressTimerRef.current = setTimeout(async () => {
+      setActionMsg(msg);
+      // Premium tactile feedback on native long-press
+      if (isNativeWrapper()) {
+        try {
+          const { Haptics, ImpactStyle } = await import('@capacitor/haptics');
+          await Haptics.impact({ style: ImpactStyle.Medium });
+        } catch { /* noop */ }
+      } else if (typeof navigator !== 'undefined' && (navigator as any).vibrate) {
+        try { (navigator as any).vibrate(12); } catch { /* noop */ }
+      }
+    }, 450);
   };
   const handleLongPressEnd = () => {
     if (longPressTimerRef.current) { clearTimeout(longPressTimerRef.current); longPressTimerRef.current = null; }
@@ -3094,194 +3106,221 @@ export default function ChatWindowPanel() {
       )}
 
       {/* Long-press action sheet for own messages */}
-      {actionMsg && (
-        <div
-          className="fixed inset-0 z-[1500] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 pb-24 sm:pb-4"
-          onClick={() => setActionMsg(null)}
-        >
-          <div
-            className="bg-card border border-border rounded-2xl w-full max-w-sm overflow-hidden shadow-card float-up"
-            onClick={(e) => e.stopPropagation()}
+      <AnimatePresence>
+      {actionMsg && (() => {
+        const isMine = actionMsg.senderId === user?.id;
+        const canEdit = canEditMessage(actionMsg.createdAt);
+        const canDelAll = canDeleteForEveryone(actionMsg.createdAt);
+        const editExpired = isMine && !canEdit;
+        const delExpired = isMine && !canDelAll;
+
+        const runReport = async () => {
+          const raw = (actionMsg?.text || '').toString();
+          let type: ReportType = 'message';
+          let envelope: any = null;
+          if (raw.startsWith('__media__:')) {
+            try { envelope = JSON.parse(raw.slice('__media__:'.length)); } catch {}
+            if (envelope?.type === 'image') type = 'image';
+            else if (envelope?.type === 'video') type = 'video';
+            else if (envelope?.type === 'audio') type = 'audio';
+            else if (envelope?.type) type = 'file';
+          }
+          let mediaFields: { mediaBase64?: string; mediaMime?: string; mediaName?: string } = {};
+          if (envelope?.url && (type === 'image' || type === 'video' || type === 'audio' || type === 'file')) {
+            try {
+              const signed = await signChatMediaUrl(envelope.url);
+              const res = await fetch(signed);
+              if (res.ok) {
+                const cipher = await res.arrayBuffer();
+                const plain = envelope.k
+                  ? await decryptBytesWithKey(cipher, envelope.k)
+                  : contactPubKeyRef.current
+                    ? await decryptBytes(cipher, contactPubKeyRef.current)
+                    : null;
+                if (plain) {
+                  const MAX = 10 * 1024 * 1024;
+                  const bytes = plain.byteLength > MAX ? plain.slice(0, MAX) : plain;
+                  let bin = '';
+                  const view = new Uint8Array(bytes);
+                  for (let i = 0; i < view.length; i++) bin += String.fromCharCode(view[i]);
+                  mediaFields = {
+                    mediaBase64: btoa(bin),
+                    mediaMime: envelope.mime || 'application/octet-stream',
+                    mediaName: envelope.name || `evidence`,
+                  };
+                }
+              }
+            } catch (e) {
+              console.warn('[report] media decrypt failed', e);
+            }
+          }
+          setReportTarget({
+            reportType: type,
+            reportedUserId: actionMsg.senderId,
+            chatId: selectedChatId || undefined,
+            messageId: actionMsg.id,
+            snapshot: {
+              text: envelope
+                ? `[${envelope.type || 'media'}] ${envelope.name || ''} (${envelope.mime || ''})`
+                : raw,
+              messageType: actionMsg.messageType,
+              createdAt: actionMsg.createdAt,
+              ...mediaFields,
+            },
+          });
+          setActionMsg(null);
+        };
+
+        type Item = {
+          key: string;
+          label: string;
+          icon: string;
+          onClick: () => void | Promise<void>;
+          tone?: 'default' | 'danger';
+          gradient: string;
+          hint?: string;
+          disabled?: boolean;
+        };
+        const items: Item[] = [];
+        items.push({
+          key: 'react', label: 'React', icon: '😊', gradient: 'from-amber-400 to-pink-500',
+          onClick: () => { setReactionPickerMsg(actionMsg); setActionMsg(null); },
+        });
+        items.push({
+          key: 'copy', label: 'Copy', icon: '📋', gradient: 'from-sky-400 to-indigo-500',
+          disabled: trustLock.enabled, hint: trustLock.enabled ? 'Trust Lock' : undefined,
+          onClick: async () => {
+            if (trustLock.enabled) return;
+            try { await navigator.clipboard.writeText((actionMsg?.text || '').toString()); toast.success('Copied to clipboard'); }
+            catch { toast.error('Copy failed'); }
+            setActionMsg(null);
+          },
+        });
+        items.push({
+          key: 'forward', label: 'Forward', icon: '↪️', gradient: 'from-emerald-400 to-teal-500',
+          disabled: trustLock.enabled, hint: trustLock.enabled ? 'Trust Lock' : undefined,
+          onClick: () => {
+            if (trustLock.enabled) return;
+            const raw = (actionMsg?.text || '').toString();
+            setActionMsg(null);
+            if (!raw || raw.startsWith('__media__:') || raw.startsWith('[IMAGE:') || raw.startsWith('[FILE:')) {
+              toast.error('Forwarding media is not supported yet'); return;
+            }
+            setForwardTexts([raw]);
+          },
+        });
+        items.push({
+          key: 'select', label: 'Select more', icon: '✅', gradient: 'from-violet-400 to-fuchsia-500',
+          onClick: () => {
+            if (!actionMsg) return;
+            setSelectedIds(new Set([actionMsg.id])); setSelectionMode(true); setActionMsg(null);
+          },
+        });
+        if (isMine) items.push({
+          key: 'edit', label: 'Edit message', icon: '✏️', gradient: 'from-blue-400 to-cyan-500',
+          disabled: editExpired, hint: editExpired ? 'expired' : undefined,
+          onClick: () => { setEditingMsg(actionMsg); setEditText(actionMsg.text); setActionMsg(null); },
+        });
+        items.push({
+          key: 'delme', label: 'Delete for me', icon: '🗑️', gradient: 'from-slate-400 to-slate-600',
+          onClick: () => deleteForMe(actionMsg.id),
+        });
+        if (isMine) items.push({
+          key: 'delall', label: 'Delete for everyone', icon: '🗑️', gradient: 'from-rose-500 to-red-600', tone: 'danger',
+          disabled: delExpired, hint: delExpired ? 'past 1 hour' : undefined,
+          onClick: () => deleteForEveryone(actionMsg.id),
+        });
+        if (chatType === 'group' && tribeRole === 'leader') items.push({
+          key: 'delleader', label: 'Delete as Tribe Leader', icon: '🛡️', gradient: 'from-orange-500 to-red-500', tone: 'danger',
+          hint: 'removes for everyone',
+          onClick: () => deleteAsTribeLeader(actionMsg.id),
+        });
+        if (!isMine) items.push({
+          key: 'report', label: 'Report', icon: '🚩', gradient: 'from-red-500 to-rose-600', tone: 'danger',
+          hint: 'Trust & Safety',
+          onClick: runReport,
+        });
+
+        return (
+          <motion.div
+            key="action-backdrop"
+            className="fixed inset-0 z-[1500] bg-black/60 backdrop-blur-md flex items-end sm:items-center justify-center p-3 sm:p-4"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            onClick={() => setActionMsg(null)}
           >
-            <div className="px-4 py-3 border-b border-border">
-              <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Message options</p>
-              <p className="text-sm text-foreground truncate mt-0.5">{formatPreviewText(actionMsg.text)}</p>
-            </div>
-            {/* React with emoji */}
-            <button
-              onClick={() => {
-                setReactionPickerMsg(actionMsg);
-                setActionMsg(null);
+            <motion.div
+              className="relative w-full max-w-sm rounded-3xl overflow-hidden border border-white/10 shadow-2xl"
+              style={{
+                background: 'linear-gradient(160deg, hsl(var(--card)) 0%, color-mix(in oklab, hsl(var(--primary)) 10%, hsl(var(--card))) 100%)',
               }}
-              className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground"
+              initial={{ y: 40, opacity: 0, scale: 0.96 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: 30, opacity: 0, scale: 0.97 }}
+              transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+              drag="y"
+              dragConstraints={{ top: 0, bottom: 0 }}
+              dragElastic={{ top: 0, bottom: 0.35 }}
+              onDragEnd={(_, info) => { if (info.offset.y > 120 || info.velocity.y > 600) setActionMsg(null); }}
+              onClick={(e) => e.stopPropagation()}
             >
-              <Smile size={16} className="text-primary" />
-              React
-            </button>
-            {/* Copy (disabled by Trust Lock) */}
-            <button
-              onClick={async () => {
-                if (trustLock.enabled) return;
-                try {
-                  const t = (actionMsg?.text || '').toString();
-                  await navigator.clipboard.writeText(t);
-                  toast.success('Copied to clipboard');
-                } catch {
-                  toast.error('Copy failed');
-                }
-                setActionMsg(null);
-              }}
-              disabled={trustLock.enabled}
-              className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground disabled:opacity-40"
-            >
-              📋 Copy
-              {trustLock.enabled && <span className="ml-auto text-[10px] text-muted-foreground">Trust Lock</span>}
-            </button>
-            {/* Forward (uses native share when available; disabled by Trust Lock) */}
-            <button
-              onClick={async () => {
-                if (trustLock.enabled) return;
-                const raw = (actionMsg?.text || '').toString();
-                setActionMsg(null);
-                if (!raw || raw.startsWith('__media__:') || raw.startsWith('[IMAGE:') || raw.startsWith('[FILE:')) {
-                  toast.error('Forwarding media is not supported yet');
-                  return;
-                }
-                setForwardTexts([raw]);
-              }}
-              disabled={trustLock.enabled}
-              className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground border-t border-border disabled:opacity-40"
-            >
-              ↪️ Forward
-              {trustLock.enabled && <span className="ml-auto text-[10px] text-muted-foreground">Trust Lock</span>}
-            </button>
-            {/* Enter multi-select mode */}
-            <button
-              onClick={() => {
-                if (!actionMsg) return;
-                setSelectedIds(new Set([actionMsg.id]));
-                setSelectionMode(true);
-                setActionMsg(null);
-              }}
-              className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground border-t border-border"
-            >
-              ✅ Select more
-            </button>
-            {actionMsg.senderId === user?.id && (
-              <button
-                onClick={() => {
-                  setEditingMsg(actionMsg);
-                  setEditText(actionMsg.text);
-                  setActionMsg(null);
-                }}
-                disabled={!canEditMessage(actionMsg.createdAt)}
-                className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground disabled:opacity-40"
+              <div className="pt-2.5 pb-1 flex justify-center sm:hidden">
+                <div className="w-10 h-1.5 rounded-full bg-white/25" />
+              </div>
+              <div className="px-5 pt-3 pb-3 border-b border-white/10">
+                <p className="text-[10px] font-semibold text-primary/80 uppercase tracking-[0.16em]">Message options</p>
+                <p className="text-sm text-foreground truncate mt-1">{formatPreviewText(actionMsg.text)}</p>
+              </div>
+              <motion.ul
+                className="py-1.5"
+                initial="hidden"
+                animate="show"
+                variants={{ hidden: {}, show: { transition: { staggerChildren: 0.035, delayChildren: 0.05 } } }}
               >
-                ✏️ Edit message
-                {!canEditMessage(actionMsg.createdAt) && <span className="ml-auto text-[10px] text-muted-foreground">expired</span>}
-              </button>
-            )}
-            <button
-              onClick={() => deleteForMe(actionMsg.id)}
-              className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground border-t border-border"
-            >
-              🗑️ Delete for me
-            </button>
-            {actionMsg.senderId === user?.id && (
+                {items.map((it) => (
+                  <motion.li
+                    key={it.key}
+                    variants={{
+                      hidden: { opacity: 0, y: 10 },
+                      show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 420, damping: 28 } },
+                    }}
+                  >
+                    <motion.button
+                      type="button"
+                      whileHover={{ x: 3 }}
+                      whileTap={{ scale: 0.98 }}
+                      transition={{ type: 'spring', stiffness: 500, damping: 26 }}
+                      onClick={() => { if (!it.disabled) it.onClick(); }}
+                      disabled={it.disabled}
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors ${
+                        it.disabled ? 'opacity-40 cursor-not-allowed' : 'hover:bg-white/5 active:bg-white/10'
+                      } ${it.tone === 'danger' ? 'text-red-300' : 'text-foreground'}`}
+                    >
+                      <span
+                        className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg bg-gradient-to-br ${it.gradient} shadow-md shrink-0`}
+                        aria-hidden
+                      >
+                        <span className="drop-shadow-sm">{it.icon}</span>
+                      </span>
+                      <span className="flex-1 font-medium">{it.label}</span>
+                      {it.hint && (
+                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{it.hint}</span>
+                      )}
+                    </motion.button>
+                  </motion.li>
+                ))}
+              </motion.ul>
               <button
-                onClick={() => deleteForEveryone(actionMsg.id)}
-                disabled={!canDeleteForEveryone(actionMsg.createdAt)}
-                className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-red-400 border-t border-border disabled:opacity-40"
+                onClick={() => setActionMsg(null)}
+                className="w-full text-center px-4 py-3 text-sm text-muted-foreground border-t border-white/10 hover:bg-white/5 transition-colors"
               >
-                🗑️ Delete for everyone
-                {!canDeleteForEveryone(actionMsg.createdAt) && <span className="ml-auto text-[10px] text-muted-foreground">past 1 hour</span>}
+                Cancel
               </button>
-            )}
-            {chatType === 'group' && tribeRole === 'leader' && (
-              <button
-                onClick={() => deleteAsTribeLeader(actionMsg.id)}
-                className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-red-400 border-t border-border"
-              >
-                🛡️ Delete as Tribe Leader
-                <span className="ml-auto text-[10px] text-muted-foreground">removes for everyone</span>
-              </button>
-            )}
-            {actionMsg.senderId !== user?.id && (
-              <button
-                onClick={async () => {
-                  const raw = (actionMsg?.text || '').toString();
-                  let type: ReportType = 'message';
-                  let envelope: any = null;
-                  if (raw.startsWith('__media__:')) {
-                    try { envelope = JSON.parse(raw.slice('__media__:'.length)); } catch {}
-                    if (envelope?.type === 'image') type = 'image';
-                    else if (envelope?.type === 'video') type = 'video';
-                    else if (envelope?.type === 'audio') type = 'audio';
-                    else if (envelope?.type) type = 'file';
-                  }
-                  // For media reports, try to decrypt the actual content so moderators
-                  // can review the exact image/video/audio/file the user flagged.
-                  let mediaFields: { mediaBase64?: string; mediaMime?: string; mediaName?: string } = {};
-                  if (envelope?.url && (type === 'image' || type === 'video' || type === 'audio' || type === 'file')) {
-                    try {
-                      const signed = await signChatMediaUrl(envelope.url);
-                      const res = await fetch(signed);
-                      if (res.ok) {
-                        const cipher = await res.arrayBuffer();
-                        const plain = envelope.k
-                          ? await decryptBytesWithKey(cipher, envelope.k)
-                          : contactPubKeyRef.current
-                            ? await decryptBytes(cipher, contactPubKeyRef.current)
-                            : null;
-                        if (plain) {
-                          // Cap at ~10MB to keep server payload safe.
-                          const MAX = 10 * 1024 * 1024;
-                          const bytes = plain.byteLength > MAX ? plain.slice(0, MAX) : plain;
-                          let bin = '';
-                          const view = new Uint8Array(bytes);
-                          for (let i = 0; i < view.length; i++) bin += String.fromCharCode(view[i]);
-                          mediaFields = {
-                            mediaBase64: btoa(bin),
-                            mediaMime: envelope.mime || 'application/octet-stream',
-                            mediaName: envelope.name || `evidence`,
-                          };
-                        }
-                      }
-                    } catch (e) {
-                      console.warn('[report] media decrypt failed', e);
-                    }
-                  }
-                  setReportTarget({
-                    reportType: type,
-                    reportedUserId: actionMsg.senderId,
-                    chatId: selectedChatId || undefined,
-                    messageId: actionMsg.id,
-                    snapshot: {
-                      text: envelope
-                        ? `[${envelope.type || 'media'}] ${envelope.name || ''} (${envelope.mime || ''})`
-                        : raw,
-                      messageType: actionMsg.messageType,
-                      createdAt: actionMsg.createdAt,
-                      ...mediaFields,
-                    },
-                  });
-                  setActionMsg(null);
-                }}
-                className="w-full text-left px-4 py-3 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-red-400 border-t border-border"
-              >
-                🚩 Report
-                <span className="ml-auto text-[10px] text-muted-foreground">Trust &amp; Safety</span>
-              </button>
-            )}
-            <button
-              onClick={() => setActionMsg(null)}
-              className="w-full text-center px-4 py-3 text-sm hover:bg-muted transition-colors text-muted-foreground border-t border-border"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
+            </motion.div>
+          </motion.div>
+        );
+      })()}
+      </AnimatePresence>
 
       {reportTarget && (
         <ReportContentSheet
