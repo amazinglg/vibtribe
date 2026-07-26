@@ -3106,6 +3106,221 @@ export default function ChatWindowPanel() {
       )}
 
       {/* Long-press action sheet for own messages */}
+      <AnimatePresence>
+      {actionMsg && (() => {
+        const isMine = actionMsg.senderId === user?.id;
+        const canEdit = canEditMessage(actionMsg.createdAt);
+        const canDelAll = canDeleteForEveryone(actionMsg.createdAt);
+        const editExpired = isMine && !canEdit;
+        const delExpired = isMine && !canDelAll;
+
+        const runReport = async () => {
+          const raw = (actionMsg?.text || '').toString();
+          let type: ReportType = 'message';
+          let envelope: any = null;
+          if (raw.startsWith('__media__:')) {
+            try { envelope = JSON.parse(raw.slice('__media__:'.length)); } catch {}
+            if (envelope?.type === 'image') type = 'image';
+            else if (envelope?.type === 'video') type = 'video';
+            else if (envelope?.type === 'audio') type = 'audio';
+            else if (envelope?.type) type = 'file';
+          }
+          let mediaFields: { mediaBase64?: string; mediaMime?: string; mediaName?: string } = {};
+          if (envelope?.url && (type === 'image' || type === 'video' || type === 'audio' || type === 'file')) {
+            try {
+              const signed = await signChatMediaUrl(envelope.url);
+              const res = await fetch(signed);
+              if (res.ok) {
+                const cipher = await res.arrayBuffer();
+                const plain = envelope.k
+                  ? await decryptBytesWithKey(cipher, envelope.k)
+                  : contactPubKeyRef.current
+                    ? await decryptBytes(cipher, contactPubKeyRef.current)
+                    : null;
+                if (plain) {
+                  const MAX = 10 * 1024 * 1024;
+                  const bytes = plain.byteLength > MAX ? plain.slice(0, MAX) : plain;
+                  let bin = '';
+                  const view = new Uint8Array(bytes);
+                  for (let i = 0; i < view.length; i++) bin += String.fromCharCode(view[i]);
+                  mediaFields = {
+                    mediaBase64: btoa(bin),
+                    mediaMime: envelope.mime || 'application/octet-stream',
+                    mediaName: envelope.name || `evidence`,
+                  };
+                }
+              }
+            } catch (e) {
+              console.warn('[report] media decrypt failed', e);
+            }
+          }
+          setReportTarget({
+            reportType: type,
+            reportedUserId: actionMsg.senderId,
+            chatId: selectedChatId || undefined,
+            messageId: actionMsg.id,
+            snapshot: {
+              text: envelope
+                ? `[${envelope.type || 'media'}] ${envelope.name || ''} (${envelope.mime || ''})`
+                : raw,
+              messageType: actionMsg.messageType,
+              createdAt: actionMsg.createdAt,
+              ...mediaFields,
+            },
+          });
+          setActionMsg(null);
+        };
+
+        type Item = {
+          key: string;
+          label: string;
+          icon: string;
+          onClick: () => void | Promise<void>;
+          tone?: 'default' | 'danger';
+          gradient: string;
+          hint?: string;
+          disabled?: boolean;
+        };
+        const items: Item[] = [];
+        items.push({
+          key: 'react', label: 'React', icon: '😊', gradient: 'from-amber-400 to-pink-500',
+          onClick: () => { setReactionPickerMsg(actionMsg); setActionMsg(null); },
+        });
+        items.push({
+          key: 'copy', label: 'Copy', icon: '📋', gradient: 'from-sky-400 to-indigo-500',
+          disabled: trustLock.enabled, hint: trustLock.enabled ? 'Trust Lock' : undefined,
+          onClick: async () => {
+            if (trustLock.enabled) return;
+            try { await navigator.clipboard.writeText((actionMsg?.text || '').toString()); toast.success('Copied to clipboard'); }
+            catch { toast.error('Copy failed'); }
+            setActionMsg(null);
+          },
+        });
+        items.push({
+          key: 'forward', label: 'Forward', icon: '↪️', gradient: 'from-emerald-400 to-teal-500',
+          disabled: trustLock.enabled, hint: trustLock.enabled ? 'Trust Lock' : undefined,
+          onClick: () => {
+            if (trustLock.enabled) return;
+            const raw = (actionMsg?.text || '').toString();
+            setActionMsg(null);
+            if (!raw || raw.startsWith('__media__:') || raw.startsWith('[IMAGE:') || raw.startsWith('[FILE:')) {
+              toast.error('Forwarding media is not supported yet'); return;
+            }
+            setForwardTexts([raw]);
+          },
+        });
+        items.push({
+          key: 'select', label: 'Select more', icon: '✅', gradient: 'from-violet-400 to-fuchsia-500',
+          onClick: () => {
+            if (!actionMsg) return;
+            setSelectedIds(new Set([actionMsg.id])); setSelectionMode(true); setActionMsg(null);
+          },
+        });
+        if (isMine) items.push({
+          key: 'edit', label: 'Edit message', icon: '✏️', gradient: 'from-blue-400 to-cyan-500',
+          disabled: editExpired, hint: editExpired ? 'expired' : undefined,
+          onClick: () => { setEditingMsg(actionMsg); setEditText(actionMsg.text); setActionMsg(null); },
+        });
+        items.push({
+          key: 'delme', label: 'Delete for me', icon: '🗑️', gradient: 'from-slate-400 to-slate-600',
+          onClick: () => deleteForMe(actionMsg.id),
+        });
+        if (isMine) items.push({
+          key: 'delall', label: 'Delete for everyone', icon: '🗑️', gradient: 'from-rose-500 to-red-600', tone: 'danger',
+          disabled: delExpired, hint: delExpired ? 'past 1 hour' : undefined,
+          onClick: () => deleteForEveryone(actionMsg.id),
+        });
+        if (chatType === 'group' && tribeRole === 'leader') items.push({
+          key: 'delleader', label: 'Delete as Tribe Leader', icon: '🛡️', gradient: 'from-orange-500 to-red-500', tone: 'danger',
+          hint: 'removes for everyone',
+          onClick: () => deleteAsTribeLeader(actionMsg.id),
+        });
+        if (!isMine) items.push({
+          key: 'report', label: 'Report', icon: '🚩', gradient: 'from-red-500 to-rose-600', tone: 'danger',
+          hint: 'Trust & Safety',
+          onClick: runReport,
+        });
+
+        return (
+          <motion.div
+            key="action-backdrop"
+            className="fixed inset-0 z-[1500] bg-black/60 backdrop-blur-md flex items-end sm:items-center justify-center p-3 sm:p-4"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            onClick={() => setActionMsg(null)}
+          >
+            <motion.div
+              className="relative w-full max-w-sm rounded-3xl overflow-hidden border border-white/10 shadow-2xl"
+              style={{
+                background: 'linear-gradient(160deg, hsl(var(--card)) 0%, color-mix(in oklab, hsl(var(--primary)) 10%, hsl(var(--card))) 100%)',
+              }}
+              initial={{ y: 40, opacity: 0, scale: 0.96 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: 30, opacity: 0, scale: 0.97 }}
+              transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+              drag="y"
+              dragConstraints={{ top: 0, bottom: 0 }}
+              dragElastic={{ top: 0, bottom: 0.35 }}
+              onDragEnd={(_, info) => { if (info.offset.y > 120 || info.velocity.y > 600) setActionMsg(null); }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="pt-2.5 pb-1 flex justify-center sm:hidden">
+                <div className="w-10 h-1.5 rounded-full bg-white/25" />
+              </div>
+              <div className="px-5 pt-3 pb-3 border-b border-white/10">
+                <p className="text-[10px] font-semibold text-primary/80 uppercase tracking-[0.16em]">Message options</p>
+                <p className="text-sm text-foreground truncate mt-1">{formatPreviewText(actionMsg.text)}</p>
+              </div>
+              <motion.ul
+                className="py-1.5"
+                initial="hidden"
+                animate="show"
+                variants={{ hidden: {}, show: { transition: { staggerChildren: 0.035, delayChildren: 0.05 } } }}
+              >
+                {items.map((it) => (
+                  <motion.li
+                    key={it.key}
+                    variants={{
+                      hidden: { opacity: 0, y: 10 },
+                      show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 420, damping: 28 } },
+                    }}
+                  >
+                    <motion.button
+                      type="button"
+                      whileHover={{ x: 3 }}
+                      whileTap={{ scale: 0.98 }}
+                      transition={{ type: 'spring', stiffness: 500, damping: 26 }}
+                      onClick={() => { if (!it.disabled) it.onClick(); }}
+                      disabled={it.disabled}
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors ${
+                        it.disabled ? 'opacity-40 cursor-not-allowed' : 'hover:bg-white/5 active:bg-white/10'
+                      } ${it.tone === 'danger' ? 'text-red-300' : 'text-foreground'}`}
+                    >
+                      <span
+                        className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg bg-gradient-to-br ${it.gradient} shadow-md shrink-0`}
+                        aria-hidden
+                      >
+                        <span className="drop-shadow-sm">{it.icon}</span>
+                      </span>
+                      <span className="flex-1 font-medium">{it.label}</span>
+                      {it.hint && (
+                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{it.hint}</span>
+                      )}
+                    </motion.button>
+                  </motion.li>
+                ))}
+              </motion.ul>
+              <button
+                onClick={() => setActionMsg(null)}
+                className="w-full text-center px-4 py-3 text-sm text-muted-foreground border-t border-white/10 hover:bg-white/5 transition-colors"
+              >
+                Cancel
+              </button>
+            </motion.div>
+          </motion.div>
+        );
+      })()}
+      </AnimatePresence>
 
       {reportTarget && (
         <ReportContentSheet
