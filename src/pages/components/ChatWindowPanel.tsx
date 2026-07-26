@@ -18,6 +18,7 @@ import { useCall } from '@/components/CallProvider';
 import { isCapacitorWrapper, isNativeWrapper, pickNativeImage, pickNativeFiles, pickNativeMedia, requestNativeCameraPermission } from '@/lib/native-bridge';
 import { TrustLockService, onTrustLockScreenshot, isIOS, isIosPwa } from '@/lib/trust-lock-service';
 import { toast } from 'sonner';
+import { motion, AnimatePresence } from 'framer-motion';
 import { EMOJI_CATEGORIES, type EmojiCategoryKey } from '@/lib/emojis';
 import { VIBTRIBE_EMOJI_MAP, VIBTRIBE_SHORTCODE_RE, renderVtEmojis } from '@/lib/vibtribe-emojis';
 import { useT } from '@/contexts/LanguageContext';
