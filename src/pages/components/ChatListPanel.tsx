@@ -457,7 +457,11 @@ export default function ChatListPanel() {
       for (const chat of data) {
         const isGroup = !!(chat as any).is_group;
 
-        const msgs = (chat as any).messages || [];
+        // Messages the current user deleted "for me" must never surface in the
+        // inbox preview or unread count — they no longer exist for this user.
+        const msgs = ((chat as any).messages || []).filter(
+          (m: any) => !(Array.isArray(m?.deleted_for) && m.deleted_for.includes(user.id)),
+        );
         const sortedMsgs = msgs.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
         const lastMsg = sortedMsgs[0];
         const unreadCount = msgs.filter((m: any) => m.sender_id !== user.id && m.message_status !== 'read').length;
