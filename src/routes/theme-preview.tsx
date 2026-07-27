@@ -227,6 +227,17 @@ function Preview({ v }: { v: Variant }) {
 function ThemePreview() {
   return (
     <main className="min-h-screen bg-background px-4 py-8 md:px-8">
+      <h1 className="text-2xl font-bold text-foreground">Direction 6 — “Aurora Nebula” (full shell redesign)</h1>
+      <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
+        Matches your reference: indigo-violet nebula backdrop, floating rounded glass panels with glowing rims, a
+        left nav rail, and every sub-tab (All / Unread / Tribes / Contacts, search fields, buttons, menus) themed to match.
+      </p>
+      <div className="mt-5">
+        <NebulaMock />
+      </div>
+
+      <hr className="my-12 border-border" />
+
       <h1 className="text-2xl font-bold text-foreground">Aurora Glass — 5 purple glass directions</h1>
       <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
         Only the app shell (sidebar, chat list, headers, composer surface) changes. Message bubbles stay exactly as they are today.
