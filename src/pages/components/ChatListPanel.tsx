@@ -1482,6 +1482,25 @@ function ContactsTabContent({
     );
   }
 
+  if (perm === 'unsupported') {
+    return (
+      <div className="p-4">
+        <div className="p-4 rounded-2xl border border-amber-500/30 bg-amber-500/5">
+          <p className="text-sm font-semibold text-foreground">Contact import isn't available on this device</p>
+          <p className="text-xs text-muted-foreground mt-1 mb-3 leading-relaxed">
+            Apple doesn't let web apps read your address book, so contact sync only works in the VibTribe Android app. You can still find people by searching their phone number or username, and add them from a chat.
+          </p>
+          <button
+            onClick={() => setPerm('idle')}
+            className="px-4 py-2 rounded-xl border border-border text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+          >
+            Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const filtered = contacts.filter((c: any) =>
     c.name.toLowerCase().includes(search.toLowerCase()) || (c.phone || '').includes(search)
   );
