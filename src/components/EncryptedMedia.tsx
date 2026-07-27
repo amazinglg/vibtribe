@@ -5,7 +5,7 @@ import { signChatMediaUrl } from '@/lib/chat-media-url';
 import { FileText, Loader2, AlertTriangle, X, Eye, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTrustLock } from '@/contexts/TrustLockContext';
-import { saveMedia, shareMedia, TrustLockError } from '@/lib/media-actions';
+import { saveMedia, shareMedia, copyImageToClipboard, TrustLockError } from '@/lib/media-actions';
 import MediaActionButton from '@/components/MediaActionButton';
 import TrustLockBlockedDialog from '@/components/TrustLockBlockedDialog';
 
@@ -86,6 +86,17 @@ export default function EncryptedMedia({ url, mime, name, kind, theirPublicKey, 
     }
   };
 
+  const runCopy = async () => {
+    if (trustLocked) { setShowTrustBlock(true); throw new Error('Trust Lock enabled'); }
+    try {
+      const blob = await getBlob();
+      await copyImageToClipboard(blob, { name, mime });
+    } catch (e) {
+      if (e instanceof TrustLockError) { setShowTrustBlock(true); return; }
+      throw e;
+    }
+  };
+
   if (error) {
     return (
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -109,6 +120,9 @@ export default function EncryptedMedia({ url, mime, name, kind, theirPublicKey, 
         <>
           <MediaActionButton action="download" label="Download" onRun={runDownload} />
           <MediaActionButton action="share" label="Share" onRun={runShare} />
+          {kind === 'image' && (
+            <MediaActionButton action="copy" label="Copy image" onRun={runCopy} successMessage="Image copied" />
+          )}
         </>
       )}
       {trustLocked && (
