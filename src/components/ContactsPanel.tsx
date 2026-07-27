@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useT } from '@/contexts/LanguageContext';
 import { isNativeWrapper, requestNativeContactsPermission } from '@/lib/native-bridge';
+import { toast } from 'sonner';
 
 interface Contact {
   name: string;
