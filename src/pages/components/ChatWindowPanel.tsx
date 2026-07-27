@@ -2058,7 +2058,8 @@ export default function ChatWindowPanel() {
 
   return (
     <TrustLockProvider value={{ enabled: trustLock.enabled, ownerUserId: trustLock.ownerUserId, isOwner: !!user && trustLock.ownerUserId === user.id }}>
-    <div className="flex-1 flex flex-col h-full relative min-w-0 w-full max-w-full overflow-hidden" onClick={() => { setShowAttachMenu(false); setShowMoreMenu(false); setShowDisappearMenu(false); setShowEmoji(false); }}>
+    <div className="vt-chat-aurora flex-1 flex flex-col h-full relative min-w-0 w-full max-w-full overflow-hidden" onClick={() => { setShowAttachMenu(false); setShowMoreMenu(false); setShowDisappearMenu(false); setShowEmoji(false); }}>
+      <div className="vt-chat-blob-c" aria-hidden />
       {/* Voice Call Permission Prompt */}
       {showCallPermPrompt && (
         <PermissionPrompt
