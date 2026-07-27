@@ -1598,6 +1598,61 @@ export default function ChatWindowPanel() {
     }
   };
 
+  /**
+   * Decrypt a media message back into a real Blob so it can be forwarded,
+   * copied to the clipboard, saved or shared.
+   */
+  const decryptMediaFromMessage = async (raw: string): Promise<{
+    blob: Blob; mime: string; name: string; type: 'image' | 'video' | 'audio' | 'file';
+  } | null> => {
+    if (!raw) return null;
+
+    // Encrypted envelope
+    if (raw.startsWith('__media__:')) {
+      let env: any = null;
+      try { env = JSON.parse(raw.slice('__media__:'.length)); } catch { return null; }
+      if (!env?.url) return null;
+      const signed = await signChatMediaUrl(env.url);
+      const res = await fetch(signed);
+      if (!res.ok) throw new Error('Could not load media');
+      const cipher = await res.arrayBuffer();
+      const plain = env.k
+        ? await decryptBytesWithKey(cipher, env.k)
+        : contactPubKeyRef.current
+          ? await decryptBytes(cipher, contactPubKeyRef.current)
+          : null;
+      if (!plain) throw new Error('Could not decrypt media');
+      const mime = env.mime || 'application/octet-stream';
+      const type = (['image', 'video', 'audio', 'file'].includes(env.type) ? env.type : 'file') as any;
+      return { blob: new Blob([plain], { type: mime }), mime, name: env.name || 'vibtribe-media', type };
+    }
+
+    // Legacy plaintext markers
+    let url = '';
+    let name = 'vibtribe-media';
+    let type: 'image' | 'file' = 'file';
+    if (raw.startsWith('[IMAGE:')) {
+      url = raw.replace('[IMAGE:', '').replace(/\]$/, '');
+      type = 'image';
+      name = 'image';
+    } else if (raw.startsWith('[FILE:')) {
+      const body = raw.replace('[FILE:', '').replace(/\]$/, '');
+      const idx = body.indexOf(':');
+      name = idx > 0 ? body.slice(0, idx) : 'file';
+      url = idx > 0 ? body.slice(idx + 1) : body;
+    } else {
+      return null;
+    }
+    const signed = await signChatMediaUrl(url);
+    const res = await fetch(signed);
+    if (!res.ok) throw new Error('Could not load media');
+    const blob = await res.blob();
+    return { blob, mime: blob.type || 'application/octet-stream', name, type };
+  };
+
+  const isMediaRaw = (raw: string) =>
+    !!raw && (raw.startsWith('__media__:') || raw.startsWith('[IMAGE:') || raw.startsWith('[FILE:'));
+
   // Pick from gallery. On native we use the Capacitor Camera plugin (it
   // prompts for READ_MEDIA_IMAGES itself). On web we synchronously click the
   // hidden file input — any await before .click() loses gesture context.
