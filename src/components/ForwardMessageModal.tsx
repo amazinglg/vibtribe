@@ -14,12 +14,16 @@ export interface ForwardAttachment {
 }
 
 interface Target {
-  chatId: string;
+  /** Stable list key. Existing chats use the chat id, contacts use `u:<userId>`. */
+  key: string;
+  chatId: string | null;
   name: string;
   avatarUrl: string | null;
   isGroup: boolean;
   // For 1:1: other participant id
   otherUserId?: string | null;
+  /** Saved contact with no existing conversation yet. */
+  isNew?: boolean;
 }
 
 interface Props {
@@ -73,12 +77,41 @@ export default function ForwardMessageModal({ isOpen, onClose, messages, attachm
         }
         const out: Target[] = (chats || []).map((c: any) => {
           if (c.is_group) {
-            return { chatId: c.id, name: c.name || 'Tribe', avatarUrl: c.avatar_url, isGroup: true };
+            return { key: c.id, chatId: c.id, name: c.name || 'Tribe', avatarUrl: c.avatar_url, isGroup: true };
           }
           const other = c.participant_one === user.id ? c.participant_two : c.participant_one;
           const p = profMap[other] || {};
-          return { chatId: c.id, name: p.full_name || 'Contact', avatarUrl: p.avatar_url, isGroup: false, otherUserId: other };
+          return { key: c.id, chatId: c.id, name: p.full_name || 'Contact', avatarUrl: p.avatar_url, isGroup: false, otherUserId: other };
         });
+
+        // Saved contacts that don't have a conversation yet — the chat is
+        // created lazily when the user actually forwards to them.
+        try {
+          const { data: saved } = await supabase
+            .from('contacts')
+            .select('contact_id, contact_name')
+            .eq('user_id', user.id);
+          const savedIds = [...new Set((saved || []).map((r: any) => r.contact_id).filter(Boolean))];
+          const alreadyListed = new Set(out.filter(t => !t.isGroup).map(t => t.otherUserId));
+          const missing = savedIds.filter((id: string) => !alreadyListed.has(id));
+          if (missing.length) {
+            const { data: profs } = await supabase.rpc('get_my_saved_contact_profiles', { _ids: missing });
+            const nameByID: Record<string, string> = {};
+            (saved || []).forEach((r: any) => { if (r.contact_name) nameByID[r.contact_id] = r.contact_name; });
+            (profs || []).forEach((p: any) => {
+              out.push({
+                key: `u:${p.id}`,
+                chatId: null,
+                name: nameByID[p.id] || p.full_name || 'Saved contact',
+                avatarUrl: p.avatar_url || null,
+                isGroup: false,
+                otherUserId: p.id,
+                isNew: true,
+              });
+            });
+          }
+        } catch { /* contacts are optional */ }
+
         // Apply avatar-privacy for 1:1 targets (group avatars are public).
         try {
           const { applyAvatarPrivacy } = await import('@/lib/visible-avatars');
@@ -96,15 +129,15 @@ export default function ForwardMessageModal({ isOpen, onClose, messages, attachm
     return targets.filter(t => t.name.toLowerCase().includes(q));
   }, [targets, query]);
 
-  const toggle = (chatId: string) => {
+  const toggle = (key: string) => {
     setSelected(prev => {
       const next = new Set(prev);
-      if (next.has(chatId)) { next.delete(chatId); return next; }
+      if (next.has(key)) { next.delete(key); return next; }
       if (next.size >= MAX_TARGETS) {
         toast.error(`You can forward to up to ${MAX_TARGETS} chats at once`);
         return next;
       }
-      next.add(chatId);
+      next.add(key);
       return next;
     });
   };
