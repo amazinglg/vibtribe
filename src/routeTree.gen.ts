@@ -9,153 +9,68 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
-import { Route as TermsRouteImport } from './routes/terms'
-import { Route as SubprocessorsRouteImport } from './routes/subprocessors'
-import { Route as StatusScreenRouteImport } from './routes/status-screen'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as SignUpRouteImport } from './routes/sign-up'
-import { Route as SignInRouteImport } from './routes/sign-in'
-import { Route as SecurityRouteImport } from './routes/security'
-import { Route as ProfileScreenRouteImport } from './routes/profile-screen'
-import { Route as PrivacyRouteImport } from './routes/privacy'
-import { Route as GuardianSetupRouteImport } from './routes/guardian-setup'
-import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
-import { Route as FeaturesRouteImport } from './routes/features'
-import { Route as FaqRouteImport } from './routes/faq'
-import { Route as DataNoticeRouteImport } from './routes/data-notice'
-import { Route as CompleteProfileRouteImport } from './routes/complete-profile'
-import { Route as ChildSafetyRouteImport } from './routes/child-safety'
-import { Route as AdminRouteImport } from './routes/admin'
-import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as ChildSafetyRouteImport } from './routes/child-safety'
+import { Route as CompleteProfileRouteImport } from './routes/complete-profile'
+import { Route as DataNoticeRouteImport } from './routes/data-notice'
+import { Route as FaqRouteImport } from './routes/faq'
+import { Route as FeaturesRouteImport } from './routes/features'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as GuardianSetupRouteImport } from './routes/guardian-setup'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as ProfileScreenRouteImport } from './routes/profile-screen'
+import { Route as SecurityRouteImport } from './routes/security'
+import { Route as SignInRouteImport } from './routes/sign-in'
+import { Route as SignUpRouteImport } from './routes/sign-up'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as StatusScreenRouteImport } from './routes/status-screen'
+import { Route as SubprocessorsRouteImport } from './routes/subprocessors'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
-import { Route as HelpReportingRouteImport } from './routes/help.reporting'
-import { Route as GuardianConsentTokenRouteImport } from './routes/guardian-consent.$token'
-import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
-import { Route as DownloadIosRouteImport } from './routes/download.ios'
-import { Route as DownloadAndroidRouteImport } from './routes/download.android'
-import { Route as BlogWhatsappAlternativesIndiaRouteImport } from './routes/blog.whatsapp-alternatives-india'
-import { Route as BlogVibtribeVsSignalVsTelegramRouteImport } from './routes/blog.vibtribe-vs-signal-vs-telegram'
-import { Route as BlogSelfDestructingMessagesGuideRouteImport } from './routes/blog.self-destructing-messages-guide'
-import { Route as BlogPrivateVaultMessagingRouteImport } from './routes/blog.private-vault-messaging'
-import { Route as BlogEndToEndEncryptionExplainedRouteImport } from './routes/blog.end-to-end-encryption-explained'
-import { Route as AppealReportIdRouteImport } from './routes/appeal.$reportId'
-import { Route as AppealOffboardingTokenRouteImport } from './routes/appeal-offboarding.$token'
-import { Route as AdminReportsRouteImport } from './routes/admin.reports'
-import { Route as AdminPremiumUsersRouteImport } from './routes/admin.premium-users'
-import { Route as AdminPermissionsRouteImport } from './routes/admin.permissions'
-import { Route as AdminOffboardingAppealsRouteImport } from './routes/admin.offboarding-appeals'
-import { Route as AdminMarketingRouteImport } from './routes/admin.marketing'
-import { Route as AdminDeletedUsersRouteImport } from './routes/admin.deleted-users'
 import { Route as AdminAppealsRouteImport } from './routes/admin.appeals'
-import { Route as TribeJoinCodeRouteImport } from './routes/tribe.join.$code'
-import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
-import { Route as ApiPublicTrackApkDownloadRouteImport } from './routes/api/public/track-apk-download'
-import { Route as ApiPublicResendWebhookRouteImport } from './routes/api/public/resend-webhook'
-import { Route as ApiPublicDownloadApkRouteImport } from './routes/api/public/download-apk'
-import { Route as ApiPublicAuthOtpRouteImport } from './routes/api/public/auth-otp'
-import { Route as ApiPublicAuthLoginRouteImport } from './routes/api/public/auth-login'
+import { Route as AdminDeletedUsersRouteImport } from './routes/admin.deleted-users'
+import { Route as AdminMarketingRouteImport } from './routes/admin.marketing'
+import { Route as AdminOffboardingAppealsRouteImport } from './routes/admin.offboarding-appeals'
+import { Route as AdminPermissionsRouteImport } from './routes/admin.permissions'
+import { Route as AdminPremiumUsersRouteImport } from './routes/admin.premium-users'
+import { Route as AdminReportsRouteImport } from './routes/admin.reports'
+import { Route as AppealOffboardingTokenRouteImport } from './routes/appeal-offboarding.$token'
+import { Route as AppealReportIdRouteImport } from './routes/appeal.$reportId'
+import { Route as BlogEndToEndEncryptionExplainedRouteImport } from './routes/blog.end-to-end-encryption-explained'
+import { Route as BlogPrivateVaultMessagingRouteImport } from './routes/blog.private-vault-messaging'
+import { Route as BlogSelfDestructingMessagesGuideRouteImport } from './routes/blog.self-destructing-messages-guide'
+import { Route as BlogVibtribeVsSignalVsTelegramRouteImport } from './routes/blog.vibtribe-vs-signal-vs-telegram'
+import { Route as BlogWhatsappAlternativesIndiaRouteImport } from './routes/blog.whatsapp-alternatives-india'
+import { Route as DownloadAndroidRouteImport } from './routes/download.android'
+import { Route as DownloadIosRouteImport } from './routes/download.ios'
+import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
+import { Route as GuardianConsentTokenRouteImport } from './routes/guardian-consent.$token'
+import { Route as HelpReportingRouteImport } from './routes/help.reporting'
 import { Route as AdminUserUserIdRouteImport } from './routes/admin.user.$userId'
-import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
-import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
-import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
-import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
-import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
-import { Route as ApiPublicHooksRetentionSweepRouteImport } from './routes/api/public/hooks/retention-sweep'
-import { Route as ApiPublicHooksIncompleteSignupRemindersRouteImport } from './routes/api/public/hooks/incomplete-signup-reminders'
-import { Route as ApiPublicHooksGuardianMonthlyReminderRouteImport } from './routes/api/public/hooks/guardian-monthly-reminder'
-import { Route as ApiPublicHooksCleanupExpiredStatusesRouteImport } from './routes/api/public/hooks/cleanup-expired-statuses'
+import { Route as ApiPublicAuthLoginRouteImport } from './routes/api/public/auth-login'
+import { Route as ApiPublicAuthOtpRouteImport } from './routes/api/public/auth-otp'
+import { Route as ApiPublicDownloadApkRouteImport } from './routes/api/public/download-apk'
+import { Route as ApiPublicResendWebhookRouteImport } from './routes/api/public/resend-webhook'
+import { Route as ApiPublicTrackApkDownloadRouteImport } from './routes/api/public/track-apk-download'
+import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
+import { Route as TribeJoinCodeRouteImport } from './routes/tribe.join.$code'
 import { Route as ApiPublicHooksCleanupExpiredMessagesRouteImport } from './routes/api/public/hooks/cleanup-expired-messages'
+import { Route as ApiPublicHooksCleanupExpiredStatusesRouteImport } from './routes/api/public/hooks/cleanup-expired-statuses'
+import { Route as ApiPublicHooksGuardianMonthlyReminderRouteImport } from './routes/api/public/hooks/guardian-monthly-reminder'
+import { Route as ApiPublicHooksIncompleteSignupRemindersRouteImport } from './routes/api/public/hooks/incomplete-signup-reminders'
+import { Route as ApiPublicHooksRetentionSweepRouteImport } from './routes/api/public/hooks/retention-sweep'
+import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
+import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
+import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 
-const UnsubscribeRoute = UnsubscribeRouteImport.update({
-  id: '/unsubscribe',
-  path: '/unsubscribe',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TermsRoute = TermsRouteImport.update({
-  id: '/terms',
-  path: '/terms',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SubprocessorsRoute = SubprocessorsRouteImport.update({
-  id: '/subprocessors',
-  path: '/subprocessors',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const StatusScreenRoute = StatusScreenRouteImport.update({
-  id: '/status-screen',
-  path: '/status-screen',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SignUpRoute = SignUpRouteImport.update({
-  id: '/sign-up',
-  path: '/sign-up',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SignInRoute = SignInRouteImport.update({
-  id: '/sign-in',
-  path: '/sign-in',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SecurityRoute = SecurityRouteImport.update({
-  id: '/security',
-  path: '/security',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProfileScreenRoute = ProfileScreenRouteImport.update({
-  id: '/profile-screen',
-  path: '/profile-screen',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivacyRoute = PrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GuardianSetupRoute = GuardianSetupRouteImport.update({
-  id: '/guardian-setup',
-  path: '/guardian-setup',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
-  id: '/forgot-password',
-  path: '/forgot-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FeaturesRoute = FeaturesRouteImport.update({
-  id: '/features',
-  path: '/features',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FaqRoute = FaqRouteImport.update({
-  id: '/faq',
-  path: '/faq',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DataNoticeRoute = DataNoticeRouteImport.update({
-  id: '/data-notice',
-  path: '/data-notice',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CompleteProfileRoute = CompleteProfileRouteImport.update({
-  id: '/complete-profile',
-  path: '/complete-profile',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ChildSafetyRoute = ChildSafetyRouteImport.update({
-  id: '/child-safety',
-  path: '/child-safety',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -163,9 +78,94 @@ const AboutRoute = AboutRouteImport.update({
   path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChildSafetyRoute = ChildSafetyRouteImport.update({
+  id: '/child-safety',
+  path: '/child-safety',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CompleteProfileRoute = CompleteProfileRouteImport.update({
+  id: '/complete-profile',
+  path: '/complete-profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DataNoticeRoute = DataNoticeRouteImport.update({
+  id: '/data-notice',
+  path: '/data-notice',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FeaturesRoute = FeaturesRouteImport.update({
+  id: '/features',
+  path: '/features',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GuardianSetupRoute = GuardianSetupRouteImport.update({
+  id: '/guardian-setup',
+  path: '/guardian-setup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileScreenRoute = ProfileScreenRouteImport.update({
+  id: '/profile-screen',
+  path: '/profile-screen',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SecurityRoute = SecurityRouteImport.update({
+  id: '/security',
+  path: '/security',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignInRoute = SignInRouteImport.update({
+  id: '/sign-in',
+  path: '/sign-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignUpRoute = SignUpRouteImport.update({
+  id: '/sign-up',
+  path: '/sign-up',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StatusScreenRoute = StatusScreenRouteImport.update({
+  id: '/status-screen',
+  path: '/status-screen',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SubprocessorsRoute = SubprocessorsRouteImport.update({
+  id: '/subprocessors',
+  path: '/subprocessors',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UnsubscribeRoute = UnsubscribeRouteImport.update({
+  id: '/unsubscribe',
+  path: '/unsubscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -173,47 +173,55 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
-const HelpReportingRoute = HelpReportingRouteImport.update({
-  id: '/help/reporting',
-  path: '/help/reporting',
+const AdminAppealsRoute = AdminAppealsRouteImport.update({
+  id: '/appeals',
+  path: '/appeals',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminDeletedUsersRoute = AdminDeletedUsersRouteImport.update({
+  id: '/deleted-users',
+  path: '/deleted-users',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMarketingRoute = AdminMarketingRouteImport.update({
+  id: '/marketing',
+  path: '/marketing',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminOffboardingAppealsRoute = AdminOffboardingAppealsRouteImport.update({
+  id: '/offboarding-appeals',
+  path: '/offboarding-appeals',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminPermissionsRoute = AdminPermissionsRouteImport.update({
+  id: '/permissions',
+  path: '/permissions',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminPremiumUsersRoute = AdminPremiumUsersRouteImport.update({
+  id: '/premium-users',
+  path: '/premium-users',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminReportsRoute = AdminReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AppealOffboardingTokenRoute = AppealOffboardingTokenRouteImport.update({
+  id: '/appeal-offboarding/$token',
+  path: '/appeal-offboarding/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
-const GuardianConsentTokenRoute = GuardianConsentTokenRouteImport.update({
-  id: '/guardian-consent/$token',
-  path: '/guardian-consent/$token',
+const AppealReportIdRoute = AppealReportIdRouteImport.update({
+  id: '/appeal/$reportId',
+  path: '/appeal/$reportId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
-  id: '/email/unsubscribe',
-  path: '/email/unsubscribe',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DownloadIosRoute = DownloadIosRouteImport.update({
-  id: '/download/ios',
-  path: '/download/ios',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DownloadAndroidRoute = DownloadAndroidRouteImport.update({
-  id: '/download/android',
-  path: '/download/android',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BlogWhatsappAlternativesIndiaRoute =
-  BlogWhatsappAlternativesIndiaRouteImport.update({
-    id: '/blog/whatsapp-alternatives-india',
-    path: '/blog/whatsapp-alternatives-india',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const BlogVibtribeVsSignalVsTelegramRoute =
-  BlogVibtribeVsSignalVsTelegramRouteImport.update({
-    id: '/blog/vibtribe-vs-signal-vs-telegram',
-    path: '/blog/vibtribe-vs-signal-vs-telegram',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const BlogSelfDestructingMessagesGuideRoute =
-  BlogSelfDestructingMessagesGuideRouteImport.update({
-    id: '/blog/self-destructing-messages-guide',
-    path: '/blog/self-destructing-messages-guide',
+const BlogEndToEndEncryptionExplainedRoute =
+  BlogEndToEndEncryptionExplainedRouteImport.update({
+    id: '/blog/end-to-end-encryption-explained',
+    path: '/blog/end-to-end-encryption-explained',
     getParentRoute: () => rootRouteImport,
   } as any)
 const BlogPrivateVaultMessagingRoute =
@@ -222,65 +230,72 @@ const BlogPrivateVaultMessagingRoute =
     path: '/blog/private-vault-messaging',
     getParentRoute: () => rootRouteImport,
   } as any)
-const BlogEndToEndEncryptionExplainedRoute =
-  BlogEndToEndEncryptionExplainedRouteImport.update({
-    id: '/blog/end-to-end-encryption-explained',
-    path: '/blog/end-to-end-encryption-explained',
+const BlogSelfDestructingMessagesGuideRoute =
+  BlogSelfDestructingMessagesGuideRouteImport.update({
+    id: '/blog/self-destructing-messages-guide',
+    path: '/blog/self-destructing-messages-guide',
     getParentRoute: () => rootRouteImport,
   } as any)
-const AppealReportIdRoute = AppealReportIdRouteImport.update({
-  id: '/appeal/$reportId',
-  path: '/appeal/$reportId',
+const BlogVibtribeVsSignalVsTelegramRoute =
+  BlogVibtribeVsSignalVsTelegramRouteImport.update({
+    id: '/blog/vibtribe-vs-signal-vs-telegram',
+    path: '/blog/vibtribe-vs-signal-vs-telegram',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const BlogWhatsappAlternativesIndiaRoute =
+  BlogWhatsappAlternativesIndiaRouteImport.update({
+    id: '/blog/whatsapp-alternatives-india',
+    path: '/blog/whatsapp-alternatives-india',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DownloadAndroidRoute = DownloadAndroidRouteImport.update({
+  id: '/download/android',
+  path: '/download/android',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppealOffboardingTokenRoute = AppealOffboardingTokenRouteImport.update({
-  id: '/appeal-offboarding/$token',
-  path: '/appeal-offboarding/$token',
+const DownloadIosRoute = DownloadIosRouteImport.update({
+  id: '/download/ios',
+  path: '/download/ios',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminReportsRoute = AdminReportsRouteImport.update({
-  id: '/reports',
-  path: '/reports',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminPremiumUsersRoute = AdminPremiumUsersRouteImport.update({
-  id: '/premium-users',
-  path: '/premium-users',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminPermissionsRoute = AdminPermissionsRouteImport.update({
-  id: '/permissions',
-  path: '/permissions',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminOffboardingAppealsRoute = AdminOffboardingAppealsRouteImport.update({
-  id: '/offboarding-appeals',
-  path: '/offboarding-appeals',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminMarketingRoute = AdminMarketingRouteImport.update({
-  id: '/marketing',
-  path: '/marketing',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminDeletedUsersRoute = AdminDeletedUsersRouteImport.update({
-  id: '/deleted-users',
-  path: '/deleted-users',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminAppealsRoute = AdminAppealsRouteImport.update({
-  id: '/appeals',
-  path: '/appeals',
-  getParentRoute: () => AdminRoute,
-} as any)
-const TribeJoinCodeRoute = TribeJoinCodeRouteImport.update({
-  id: '/tribe/join/$code',
-  path: '/tribe/join/$code',
+const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
+  id: '/email/unsubscribe',
+  path: '/email/unsubscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
-  id: '/lovable/email/suppression',
-  path: '/lovable/email/suppression',
+const GuardianConsentTokenRoute = GuardianConsentTokenRouteImport.update({
+  id: '/guardian-consent/$token',
+  path: '/guardian-consent/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HelpReportingRoute = HelpReportingRouteImport.update({
+  id: '/help/reporting',
+  path: '/help/reporting',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminUserUserIdRoute = AdminUserUserIdRouteImport.update({
+  id: '/user/$userId',
+  path: '/user/$userId',
+  getParentRoute: () => AdminRoute,
+} as any)
+const ApiPublicAuthLoginRoute = ApiPublicAuthLoginRouteImport.update({
+  id: '/api/public/auth-login',
+  path: '/api/public/auth-login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAuthOtpRoute = ApiPublicAuthOtpRouteImport.update({
+  id: '/api/public/auth-otp',
+  path: '/api/public/auth-otp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicDownloadApkRoute = ApiPublicDownloadApkRouteImport.update({
+  id: '/api/public/download-apk',
+  path: '/api/public/download-apk',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicResendWebhookRoute = ApiPublicResendWebhookRouteImport.update({
+  id: '/api/public/resend-webhook',
+  path: '/api/public/resend-webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicTrackApkDownloadRoute =
@@ -289,75 +304,20 @@ const ApiPublicTrackApkDownloadRoute =
     path: '/api/public/track-apk-download',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicResendWebhookRoute = ApiPublicResendWebhookRouteImport.update({
-  id: '/api/public/resend-webhook',
-  path: '/api/public/resend-webhook',
+const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
+  id: '/lovable/email/suppression',
+  path: '/lovable/email/suppression',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicDownloadApkRoute = ApiPublicDownloadApkRouteImport.update({
-  id: '/api/public/download-apk',
-  path: '/api/public/download-apk',
+const TribeJoinCodeRoute = TribeJoinCodeRouteImport.update({
+  id: '/tribe/join/$code',
+  path: '/tribe/join/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicAuthOtpRoute = ApiPublicAuthOtpRouteImport.update({
-  id: '/api/public/auth-otp',
-  path: '/api/public/auth-otp',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicAuthLoginRoute = ApiPublicAuthLoginRouteImport.update({
-  id: '/api/public/auth-login',
-  path: '/api/public/auth-login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminUserUserIdRoute = AdminUserUserIdRouteImport.update({
-  id: '/user/$userId',
-  path: '/user/$userId',
-  getParentRoute: () => AdminRoute,
-} as any)
-const LovableEmailTransactionalSendRoute =
-  LovableEmailTransactionalSendRouteImport.update({
-    id: '/lovable/email/transactional/send',
-    path: '/lovable/email/transactional/send',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const LovableEmailTransactionalPreviewRoute =
-  LovableEmailTransactionalPreviewRouteImport.update({
-    id: '/lovable/email/transactional/preview',
-    path: '/lovable/email/transactional/preview',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const LovableEmailQueueProcessRoute =
-  LovableEmailQueueProcessRouteImport.update({
-    id: '/lovable/email/queue/process',
-    path: '/lovable/email/queue/process',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
-  id: '/lovable/email/auth/webhook',
-  path: '/lovable/email/auth/webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
-  id: '/lovable/email/auth/preview',
-  path: '/lovable/email/auth/preview',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicHooksRetentionSweepRoute =
-  ApiPublicHooksRetentionSweepRouteImport.update({
-    id: '/api/public/hooks/retention-sweep',
-    path: '/api/public/hooks/retention-sweep',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksIncompleteSignupRemindersRoute =
-  ApiPublicHooksIncompleteSignupRemindersRouteImport.update({
-    id: '/api/public/hooks/incomplete-signup-reminders',
-    path: '/api/public/hooks/incomplete-signup-reminders',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksGuardianMonthlyReminderRoute =
-  ApiPublicHooksGuardianMonthlyReminderRouteImport.update({
-    id: '/api/public/hooks/guardian-monthly-reminder',
-    path: '/api/public/hooks/guardian-monthly-reminder',
+const ApiPublicHooksCleanupExpiredMessagesRoute =
+  ApiPublicHooksCleanupExpiredMessagesRouteImport.update({
+    id: '/api/public/hooks/cleanup-expired-messages',
+    path: '/api/public/hooks/cleanup-expired-messages',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicHooksCleanupExpiredStatusesRoute =
@@ -366,10 +326,50 @@ const ApiPublicHooksCleanupExpiredStatusesRoute =
     path: '/api/public/hooks/cleanup-expired-statuses',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicHooksCleanupExpiredMessagesRoute =
-  ApiPublicHooksCleanupExpiredMessagesRouteImport.update({
-    id: '/api/public/hooks/cleanup-expired-messages',
-    path: '/api/public/hooks/cleanup-expired-messages',
+const ApiPublicHooksGuardianMonthlyReminderRoute =
+  ApiPublicHooksGuardianMonthlyReminderRouteImport.update({
+    id: '/api/public/hooks/guardian-monthly-reminder',
+    path: '/api/public/hooks/guardian-monthly-reminder',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksIncompleteSignupRemindersRoute =
+  ApiPublicHooksIncompleteSignupRemindersRouteImport.update({
+    id: '/api/public/hooks/incomplete-signup-reminders',
+    path: '/api/public/hooks/incomplete-signup-reminders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksRetentionSweepRoute =
+  ApiPublicHooksRetentionSweepRouteImport.update({
+    id: '/api/public/hooks/retention-sweep',
+    path: '/api/public/hooks/retention-sweep',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
+  id: '/lovable/email/auth/preview',
+  path: '/lovable/email/auth/preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
+  id: '/lovable/email/auth/webhook',
+  path: '/lovable/email/auth/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailQueueProcessRoute =
+  LovableEmailQueueProcessRouteImport.update({
+    id: '/lovable/email/queue/process',
+    path: '/lovable/email/queue/process',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const LovableEmailTransactionalSendRoute =
+  LovableEmailTransactionalSendRouteImport.update({
+    id: '/lovable/email/transactional/send',
+    path: '/lovable/email/transactional/send',
     getParentRoute: () => rootRouteImport,
   } as any)
 
@@ -789,130 +789,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/unsubscribe': {
-      id: '/unsubscribe'
-      path: '/unsubscribe'
-      fullPath: '/unsubscribe'
-      preLoaderRoute: typeof UnsubscribeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/terms': {
-      id: '/terms'
-      path: '/terms'
-      fullPath: '/terms'
-      preLoaderRoute: typeof TermsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/subprocessors': {
-      id: '/subprocessors'
-      path: '/subprocessors'
-      fullPath: '/subprocessors'
-      preLoaderRoute: typeof SubprocessorsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/status-screen': {
-      id: '/status-screen'
-      path: '/status-screen'
-      fullPath: '/status-screen'
-      preLoaderRoute: typeof StatusScreenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sign-up': {
-      id: '/sign-up'
-      path: '/sign-up'
-      fullPath: '/sign-up'
-      preLoaderRoute: typeof SignUpRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sign-in': {
-      id: '/sign-in'
-      path: '/sign-in'
-      fullPath: '/sign-in'
-      preLoaderRoute: typeof SignInRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/security': {
-      id: '/security'
-      path: '/security'
-      fullPath: '/security'
-      preLoaderRoute: typeof SecurityRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/profile-screen': {
-      id: '/profile-screen'
-      path: '/profile-screen'
-      fullPath: '/profile-screen'
-      preLoaderRoute: typeof ProfileScreenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacy': {
-      id: '/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PrivacyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/guardian-setup': {
-      id: '/guardian-setup'
-      path: '/guardian-setup'
-      fullPath: '/guardian-setup'
-      preLoaderRoute: typeof GuardianSetupRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/forgot-password': {
-      id: '/forgot-password'
-      path: '/forgot-password'
-      fullPath: '/forgot-password'
-      preLoaderRoute: typeof ForgotPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/features': {
-      id: '/features'
-      path: '/features'
-      fullPath: '/features'
-      preLoaderRoute: typeof FeaturesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/faq': {
-      id: '/faq'
-      path: '/faq'
-      fullPath: '/faq'
-      preLoaderRoute: typeof FaqRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/data-notice': {
-      id: '/data-notice'
-      path: '/data-notice'
-      fullPath: '/data-notice'
-      preLoaderRoute: typeof DataNoticeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/complete-profile': {
-      id: '/complete-profile'
-      path: '/complete-profile'
-      fullPath: '/complete-profile'
-      preLoaderRoute: typeof CompleteProfileRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/child-safety': {
-      id: '/child-safety'
-      path: '/child-safety'
-      fullPath: '/child-safety'
-      preLoaderRoute: typeof ChildSafetyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about': {
@@ -922,11 +803,130 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/child-safety': {
+      id: '/child-safety'
+      path: '/child-safety'
+      fullPath: '/child-safety'
+      preLoaderRoute: typeof ChildSafetyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/complete-profile': {
+      id: '/complete-profile'
+      path: '/complete-profile'
+      fullPath: '/complete-profile'
+      preLoaderRoute: typeof CompleteProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data-notice': {
+      id: '/data-notice'
+      path: '/data-notice'
+      fullPath: '/data-notice'
+      preLoaderRoute: typeof DataNoticeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/features': {
+      id: '/features'
+      path: '/features'
+      fullPath: '/features'
+      preLoaderRoute: typeof FeaturesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guardian-setup': {
+      id: '/guardian-setup'
+      path: '/guardian-setup'
+      fullPath: '/guardian-setup'
+      preLoaderRoute: typeof GuardianSetupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile-screen': {
+      id: '/profile-screen'
+      path: '/profile-screen'
+      fullPath: '/profile-screen'
+      preLoaderRoute: typeof ProfileScreenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/security': {
+      id: '/security'
+      path: '/security'
+      fullPath: '/security'
+      preLoaderRoute: typeof SecurityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sign-in': {
+      id: '/sign-in'
+      path: '/sign-in'
+      fullPath: '/sign-in'
+      preLoaderRoute: typeof SignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sign-up': {
+      id: '/sign-up'
+      path: '/sign-up'
+      fullPath: '/sign-up'
+      preLoaderRoute: typeof SignUpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/status-screen': {
+      id: '/status-screen'
+      path: '/status-screen'
+      fullPath: '/status-screen'
+      preLoaderRoute: typeof StatusScreenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/subprocessors': {
+      id: '/subprocessors'
+      path: '/subprocessors'
+      fullPath: '/subprocessors'
+      preLoaderRoute: typeof SubprocessorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/unsubscribe': {
+      id: '/unsubscribe'
+      path: '/unsubscribe'
+      fullPath: '/unsubscribe'
+      preLoaderRoute: typeof UnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -936,123 +936,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/help/reporting': {
-      id: '/help/reporting'
-      path: '/help/reporting'
-      fullPath: '/help/reporting'
-      preLoaderRoute: typeof HelpReportingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/guardian-consent/$token': {
-      id: '/guardian-consent/$token'
-      path: '/guardian-consent/$token'
-      fullPath: '/guardian-consent/$token'
-      preLoaderRoute: typeof GuardianConsentTokenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/email/unsubscribe': {
-      id: '/email/unsubscribe'
-      path: '/email/unsubscribe'
-      fullPath: '/email/unsubscribe'
-      preLoaderRoute: typeof EmailUnsubscribeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/download/ios': {
-      id: '/download/ios'
-      path: '/download/ios'
-      fullPath: '/download/ios'
-      preLoaderRoute: typeof DownloadIosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/download/android': {
-      id: '/download/android'
-      path: '/download/android'
-      fullPath: '/download/android'
-      preLoaderRoute: typeof DownloadAndroidRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/blog/whatsapp-alternatives-india': {
-      id: '/blog/whatsapp-alternatives-india'
-      path: '/blog/whatsapp-alternatives-india'
-      fullPath: '/blog/whatsapp-alternatives-india'
-      preLoaderRoute: typeof BlogWhatsappAlternativesIndiaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/blog/vibtribe-vs-signal-vs-telegram': {
-      id: '/blog/vibtribe-vs-signal-vs-telegram'
-      path: '/blog/vibtribe-vs-signal-vs-telegram'
-      fullPath: '/blog/vibtribe-vs-signal-vs-telegram'
-      preLoaderRoute: typeof BlogVibtribeVsSignalVsTelegramRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/blog/self-destructing-messages-guide': {
-      id: '/blog/self-destructing-messages-guide'
-      path: '/blog/self-destructing-messages-guide'
-      fullPath: '/blog/self-destructing-messages-guide'
-      preLoaderRoute: typeof BlogSelfDestructingMessagesGuideRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/blog/private-vault-messaging': {
-      id: '/blog/private-vault-messaging'
-      path: '/blog/private-vault-messaging'
-      fullPath: '/blog/private-vault-messaging'
-      preLoaderRoute: typeof BlogPrivateVaultMessagingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/blog/end-to-end-encryption-explained': {
-      id: '/blog/end-to-end-encryption-explained'
-      path: '/blog/end-to-end-encryption-explained'
-      fullPath: '/blog/end-to-end-encryption-explained'
-      preLoaderRoute: typeof BlogEndToEndEncryptionExplainedRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/appeal/$reportId': {
-      id: '/appeal/$reportId'
-      path: '/appeal/$reportId'
-      fullPath: '/appeal/$reportId'
-      preLoaderRoute: typeof AppealReportIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/appeal-offboarding/$token': {
-      id: '/appeal-offboarding/$token'
-      path: '/appeal-offboarding/$token'
-      fullPath: '/appeal-offboarding/$token'
-      preLoaderRoute: typeof AppealOffboardingTokenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/reports': {
-      id: '/admin/reports'
-      path: '/reports'
-      fullPath: '/admin/reports'
-      preLoaderRoute: typeof AdminReportsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/premium-users': {
-      id: '/admin/premium-users'
-      path: '/premium-users'
-      fullPath: '/admin/premium-users'
-      preLoaderRoute: typeof AdminPremiumUsersRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/permissions': {
-      id: '/admin/permissions'
-      path: '/permissions'
-      fullPath: '/admin/permissions'
-      preLoaderRoute: typeof AdminPermissionsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/offboarding-appeals': {
-      id: '/admin/offboarding-appeals'
-      path: '/offboarding-appeals'
-      fullPath: '/admin/offboarding-appeals'
-      preLoaderRoute: typeof AdminOffboardingAppealsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/marketing': {
-      id: '/admin/marketing'
-      path: '/marketing'
-      fullPath: '/admin/marketing'
-      preLoaderRoute: typeof AdminMarketingRouteImport
+    '/admin/appeals': {
+      id: '/admin/appeals'
+      path: '/appeals'
+      fullPath: '/admin/appeals'
+      preLoaderRoute: typeof AdminAppealsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/deleted-users': {
@@ -1062,60 +950,123 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminDeletedUsersRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/appeals': {
-      id: '/admin/appeals'
-      path: '/appeals'
-      fullPath: '/admin/appeals'
-      preLoaderRoute: typeof AdminAppealsRouteImport
+    '/admin/marketing': {
+      id: '/admin/marketing'
+      path: '/marketing'
+      fullPath: '/admin/marketing'
+      preLoaderRoute: typeof AdminMarketingRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/tribe/join/$code': {
-      id: '/tribe/join/$code'
-      path: '/tribe/join/$code'
-      fullPath: '/tribe/join/$code'
-      preLoaderRoute: typeof TribeJoinCodeRouteImport
+    '/admin/offboarding-appeals': {
+      id: '/admin/offboarding-appeals'
+      path: '/offboarding-appeals'
+      fullPath: '/admin/offboarding-appeals'
+      preLoaderRoute: typeof AdminOffboardingAppealsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/permissions': {
+      id: '/admin/permissions'
+      path: '/permissions'
+      fullPath: '/admin/permissions'
+      preLoaderRoute: typeof AdminPermissionsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/premium-users': {
+      id: '/admin/premium-users'
+      path: '/premium-users'
+      fullPath: '/admin/premium-users'
+      preLoaderRoute: typeof AdminPremiumUsersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/reports': {
+      id: '/admin/reports'
+      path: '/reports'
+      fullPath: '/admin/reports'
+      preLoaderRoute: typeof AdminReportsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/appeal-offboarding/$token': {
+      id: '/appeal-offboarding/$token'
+      path: '/appeal-offboarding/$token'
+      fullPath: '/appeal-offboarding/$token'
+      preLoaderRoute: typeof AppealOffboardingTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lovable/email/suppression': {
-      id: '/lovable/email/suppression'
-      path: '/lovable/email/suppression'
-      fullPath: '/lovable/email/suppression'
-      preLoaderRoute: typeof LovableEmailSuppressionRouteImport
+    '/appeal/$reportId': {
+      id: '/appeal/$reportId'
+      path: '/appeal/$reportId'
+      fullPath: '/appeal/$reportId'
+      preLoaderRoute: typeof AppealReportIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/track-apk-download': {
-      id: '/api/public/track-apk-download'
-      path: '/api/public/track-apk-download'
-      fullPath: '/api/public/track-apk-download'
-      preLoaderRoute: typeof ApiPublicTrackApkDownloadRouteImport
+    '/blog/end-to-end-encryption-explained': {
+      id: '/blog/end-to-end-encryption-explained'
+      path: '/blog/end-to-end-encryption-explained'
+      fullPath: '/blog/end-to-end-encryption-explained'
+      preLoaderRoute: typeof BlogEndToEndEncryptionExplainedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/resend-webhook': {
-      id: '/api/public/resend-webhook'
-      path: '/api/public/resend-webhook'
-      fullPath: '/api/public/resend-webhook'
-      preLoaderRoute: typeof ApiPublicResendWebhookRouteImport
+    '/blog/private-vault-messaging': {
+      id: '/blog/private-vault-messaging'
+      path: '/blog/private-vault-messaging'
+      fullPath: '/blog/private-vault-messaging'
+      preLoaderRoute: typeof BlogPrivateVaultMessagingRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/download-apk': {
-      id: '/api/public/download-apk'
-      path: '/api/public/download-apk'
-      fullPath: '/api/public/download-apk'
-      preLoaderRoute: typeof ApiPublicDownloadApkRouteImport
+    '/blog/self-destructing-messages-guide': {
+      id: '/blog/self-destructing-messages-guide'
+      path: '/blog/self-destructing-messages-guide'
+      fullPath: '/blog/self-destructing-messages-guide'
+      preLoaderRoute: typeof BlogSelfDestructingMessagesGuideRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/auth-otp': {
-      id: '/api/public/auth-otp'
-      path: '/api/public/auth-otp'
-      fullPath: '/api/public/auth-otp'
-      preLoaderRoute: typeof ApiPublicAuthOtpRouteImport
+    '/blog/vibtribe-vs-signal-vs-telegram': {
+      id: '/blog/vibtribe-vs-signal-vs-telegram'
+      path: '/blog/vibtribe-vs-signal-vs-telegram'
+      fullPath: '/blog/vibtribe-vs-signal-vs-telegram'
+      preLoaderRoute: typeof BlogVibtribeVsSignalVsTelegramRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/auth-login': {
-      id: '/api/public/auth-login'
-      path: '/api/public/auth-login'
-      fullPath: '/api/public/auth-login'
-      preLoaderRoute: typeof ApiPublicAuthLoginRouteImport
+    '/blog/whatsapp-alternatives-india': {
+      id: '/blog/whatsapp-alternatives-india'
+      path: '/blog/whatsapp-alternatives-india'
+      fullPath: '/blog/whatsapp-alternatives-india'
+      preLoaderRoute: typeof BlogWhatsappAlternativesIndiaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/download/android': {
+      id: '/download/android'
+      path: '/download/android'
+      fullPath: '/download/android'
+      preLoaderRoute: typeof DownloadAndroidRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/download/ios': {
+      id: '/download/ios'
+      path: '/download/ios'
+      fullPath: '/download/ios'
+      preLoaderRoute: typeof DownloadIosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/email/unsubscribe': {
+      id: '/email/unsubscribe'
+      path: '/email/unsubscribe'
+      fullPath: '/email/unsubscribe'
+      preLoaderRoute: typeof EmailUnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guardian-consent/$token': {
+      id: '/guardian-consent/$token'
+      path: '/guardian-consent/$token'
+      fullPath: '/guardian-consent/$token'
+      preLoaderRoute: typeof GuardianConsentTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/help/reporting': {
+      id: '/help/reporting'
+      path: '/help/reporting'
+      fullPath: '/help/reporting'
+      preLoaderRoute: typeof HelpReportingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/user/$userId': {
@@ -1125,60 +1076,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUserUserIdRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/lovable/email/transactional/send': {
-      id: '/lovable/email/transactional/send'
-      path: '/lovable/email/transactional/send'
-      fullPath: '/lovable/email/transactional/send'
-      preLoaderRoute: typeof LovableEmailTransactionalSendRouteImport
+    '/api/public/auth-login': {
+      id: '/api/public/auth-login'
+      path: '/api/public/auth-login'
+      fullPath: '/api/public/auth-login'
+      preLoaderRoute: typeof ApiPublicAuthLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lovable/email/transactional/preview': {
-      id: '/lovable/email/transactional/preview'
-      path: '/lovable/email/transactional/preview'
-      fullPath: '/lovable/email/transactional/preview'
-      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+    '/api/public/auth-otp': {
+      id: '/api/public/auth-otp'
+      path: '/api/public/auth-otp'
+      fullPath: '/api/public/auth-otp'
+      preLoaderRoute: typeof ApiPublicAuthOtpRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lovable/email/queue/process': {
-      id: '/lovable/email/queue/process'
-      path: '/lovable/email/queue/process'
-      fullPath: '/lovable/email/queue/process'
-      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
+    '/api/public/download-apk': {
+      id: '/api/public/download-apk'
+      path: '/api/public/download-apk'
+      fullPath: '/api/public/download-apk'
+      preLoaderRoute: typeof ApiPublicDownloadApkRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lovable/email/auth/webhook': {
-      id: '/lovable/email/auth/webhook'
-      path: '/lovable/email/auth/webhook'
-      fullPath: '/lovable/email/auth/webhook'
-      preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
+    '/api/public/resend-webhook': {
+      id: '/api/public/resend-webhook'
+      path: '/api/public/resend-webhook'
+      fullPath: '/api/public/resend-webhook'
+      preLoaderRoute: typeof ApiPublicResendWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lovable/email/auth/preview': {
-      id: '/lovable/email/auth/preview'
-      path: '/lovable/email/auth/preview'
-      fullPath: '/lovable/email/auth/preview'
-      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
+    '/api/public/track-apk-download': {
+      id: '/api/public/track-apk-download'
+      path: '/api/public/track-apk-download'
+      fullPath: '/api/public/track-apk-download'
+      preLoaderRoute: typeof ApiPublicTrackApkDownloadRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/hooks/retention-sweep': {
-      id: '/api/public/hooks/retention-sweep'
-      path: '/api/public/hooks/retention-sweep'
-      fullPath: '/api/public/hooks/retention-sweep'
-      preLoaderRoute: typeof ApiPublicHooksRetentionSweepRouteImport
+    '/lovable/email/suppression': {
+      id: '/lovable/email/suppression'
+      path: '/lovable/email/suppression'
+      fullPath: '/lovable/email/suppression'
+      preLoaderRoute: typeof LovableEmailSuppressionRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/hooks/incomplete-signup-reminders': {
-      id: '/api/public/hooks/incomplete-signup-reminders'
-      path: '/api/public/hooks/incomplete-signup-reminders'
-      fullPath: '/api/public/hooks/incomplete-signup-reminders'
-      preLoaderRoute: typeof ApiPublicHooksIncompleteSignupRemindersRouteImport
+    '/tribe/join/$code': {
+      id: '/tribe/join/$code'
+      path: '/tribe/join/$code'
+      fullPath: '/tribe/join/$code'
+      preLoaderRoute: typeof TribeJoinCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/hooks/guardian-monthly-reminder': {
-      id: '/api/public/hooks/guardian-monthly-reminder'
-      path: '/api/public/hooks/guardian-monthly-reminder'
-      fullPath: '/api/public/hooks/guardian-monthly-reminder'
-      preLoaderRoute: typeof ApiPublicHooksGuardianMonthlyReminderRouteImport
+    '/api/public/hooks/cleanup-expired-messages': {
+      id: '/api/public/hooks/cleanup-expired-messages'
+      path: '/api/public/hooks/cleanup-expired-messages'
+      fullPath: '/api/public/hooks/cleanup-expired-messages'
+      preLoaderRoute: typeof ApiPublicHooksCleanupExpiredMessagesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/cleanup-expired-statuses': {
@@ -1188,11 +1139,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksCleanupExpiredStatusesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/hooks/cleanup-expired-messages': {
-      id: '/api/public/hooks/cleanup-expired-messages'
-      path: '/api/public/hooks/cleanup-expired-messages'
-      fullPath: '/api/public/hooks/cleanup-expired-messages'
-      preLoaderRoute: typeof ApiPublicHooksCleanupExpiredMessagesRouteImport
+    '/api/public/hooks/guardian-monthly-reminder': {
+      id: '/api/public/hooks/guardian-monthly-reminder'
+      path: '/api/public/hooks/guardian-monthly-reminder'
+      fullPath: '/api/public/hooks/guardian-monthly-reminder'
+      preLoaderRoute: typeof ApiPublicHooksGuardianMonthlyReminderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/incomplete-signup-reminders': {
+      id: '/api/public/hooks/incomplete-signup-reminders'
+      path: '/api/public/hooks/incomplete-signup-reminders'
+      fullPath: '/api/public/hooks/incomplete-signup-reminders'
+      preLoaderRoute: typeof ApiPublicHooksIncompleteSignupRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/retention-sweep': {
+      id: '/api/public/hooks/retention-sweep'
+      path: '/api/public/hooks/retention-sweep'
+      fullPath: '/api/public/hooks/retention-sweep'
+      preLoaderRoute: typeof ApiPublicHooksRetentionSweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/auth/preview': {
+      id: '/lovable/email/auth/preview'
+      path: '/lovable/email/auth/preview'
+      fullPath: '/lovable/email/auth/preview'
+      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/auth/webhook': {
+      id: '/lovable/email/auth/webhook'
+      path: '/lovable/email/auth/webhook'
+      fullPath: '/lovable/email/auth/webhook'
+      preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/queue/process': {
+      id: '/lovable/email/queue/process'
+      path: '/lovable/email/queue/process'
+      fullPath: '/lovable/email/queue/process'
+      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/transactional/send': {
+      id: '/lovable/email/transactional/send'
+      path: '/lovable/email/transactional/send'
+      fullPath: '/lovable/email/transactional/send'
+      preLoaderRoute: typeof LovableEmailTransactionalSendRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -1282,13 +1282,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
