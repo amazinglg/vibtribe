@@ -10,6 +10,7 @@ import { decryptBytes, decryptBytesWithKey } from '@/lib/encryption';
 import { signChatMediaUrl } from '@/lib/chat-media-url';
 import EncryptedMedia from '@/components/EncryptedMedia';
 import ChatMediaImg from '@/components/ChatMediaImg';
+import MediaViewer, { type ViewerSource } from '@/components/MediaViewer';
 import { getPreferredNickname } from '@/components/SecureVaultModal';
 import PermissionPrompt from '@/components/PermissionPrompt';
 import { usePermissions } from '@/hooks/usePermissions';
