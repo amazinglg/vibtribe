@@ -110,7 +110,7 @@ export default function ForwardMessageModal({ isOpen, onClose, messages, attachm
   };
 
   const send = async () => {
-    if (!user || selected.size === 0 || messages.length === 0) return;
+    if (!user || selected.size === 0 || (messages.length === 0 && attachments.length === 0)) return;
     const ok = await hasLocalPrivateKey();
     if (!ok) { toast.error('Unlock your encryption PIN first'); return; }
     setSending(true);
@@ -144,6 +144,46 @@ export default function ForwardMessageModal({ isOpen, onClose, messages, attachm
           }
           await supabase.from('messages').insert({ chat_id: chatId, sender_id: user.id, content, message_status: 'sent' });
         }
+
+        // Media: re-encrypt + re-upload for each target so the recipient can
+        // actually decrypt it (media keys are per-conversation).
+        for (const att of attachments) {
+          const plainBuf = await att.blob.arrayBuffer();
+          let uploadBody: Blob = att.blob;
+          let ext = att.name.includes('.') ? att.name.split('.').pop() : 'bin';
+          let mediaKey: string | null = null;
+          const useGroup = tgt.isGroup && members.length > 0;
+          const use1to1 = !tgt.isGroup && !!otherPk;
+          if (use1to1) {
+            const cipher = await encryptBytes(plainBuf, otherPk as string);
+            uploadBody = new Blob([cipher], { type: 'application/octet-stream' });
+            ext = 'enc';
+          } else if (useGroup) {
+            const { keyB64, cipher } = await encryptBytesWithRandomKey(plainBuf);
+            mediaKey = keyB64;
+            uploadBody = new Blob([cipher], { type: 'application/octet-stream' });
+            ext = 'enc';
+          } else { failCount++; continue; }
+
+          const safeName = att.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+          const filePath = `${user.id}/${chatId}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}_${safeName}.${ext}`;
+          const { error: upErr } = await supabase.storage
+            .from('chat-media')
+            .upload(filePath, uploadBody, { upsert: true, contentType: 'application/octet-stream' });
+          if (upErr) { failCount++; continue; }
+          const { data: urlData } = supabase.storage.from('chat-media').getPublicUrl(filePath);
+          const publicUrl = urlData?.publicUrl || '';
+          const envelope = `__media__:${JSON.stringify(
+            useGroup
+              ? { type: att.type, url: publicUrl, mime: att.mime, name: att.name, k: mediaKey, gk: true }
+              : { type: att.type, url: publicUrl, mime: att.mime, name: att.name },
+          )}`;
+          const content = useGroup
+            ? await encryptGroupMessage(envelope, members)
+            : await encryptMessage(envelope, otherPk as string);
+          await supabase.from('messages').insert({ chat_id: chatId, sender_id: user.id, content, message_status: 'sent' });
+        }
+
         await supabase.from('chats').update({ updated_at: new Date().toISOString() }).eq('id', chatId);
         okCount++;
       } catch (err: any) {
@@ -167,7 +207,9 @@ export default function ForwardMessageModal({ isOpen, onClose, messages, attachm
         <div className="px-4 py-3 border-b border-border flex items-center justify-between">
           <div>
             <h3 className="text-sm font-semibold text-foreground">Forward to…</h3>
-            <p className="text-[11px] text-muted-foreground">{messages.length} message{messages.length > 1 ? 's' : ''} · {selected.size}/{MAX_TARGETS} selected</p>
+            <p className="text-[11px] text-muted-foreground">
+              {messages.length + attachments.length} item{messages.length + attachments.length > 1 ? 's' : ''} · {selected.size}/{MAX_TARGETS} selected
+            </p>
           </div>
           <button onClick={onClose} className="p-1.5 text-muted-foreground hover:text-foreground"><X size={16} /></button>
         </div>
