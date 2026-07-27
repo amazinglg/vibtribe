@@ -2221,12 +2221,12 @@ export default function ChatWindowPanel() {
             </button>
             {showMoreMenu && (
               <div
-                className="absolute right-0 top-full mt-1 z-30 glass-strong rounded-xl border border-border shadow-card overflow-hidden float-up min-w-[220px]"
+                className="absolute right-0 top-full mt-1 z-30 vt-chat-menu rounded-xl overflow-hidden float-up min-w-[220px]"
                 onClick={e => e.stopPropagation()}
               >
                 <button
                   onClick={() => { setShowMoreMenu(false); setShowInfo(true); }}
-                  className="w-full text-left px-3 py-2.5 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground"
+                  className="w-full text-left px-3 py-2.5 text-sm vt-chat-menu-item transition-colors flex items-center gap-3"
                 >
                   <Info size={16} className="text-muted-foreground" />
                   Chat info
@@ -2241,7 +2241,7 @@ export default function ChatWindowPanel() {
                         setSecureModalOpen(true);
                       }
                     }}
-                    className="w-full text-left px-3 py-2.5 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground"
+                    className="w-full text-left px-3 py-2.5 text-sm vt-chat-menu-item transition-colors flex items-center gap-3"
                   >
                     {myChatSecured ? <ShieldOff size={16} className="text-vt-amber" /> : <Lock size={16} className="text-primary" />}
                     {chatType === 'group'
@@ -2251,7 +2251,7 @@ export default function ChatWindowPanel() {
                 )}
                 <button
                   onClick={(e) => { e.stopPropagation(); setShowDisappearMenu(v => !v); }}
-                  className="w-full text-left px-3 py-2.5 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground"
+                  className="w-full text-left px-3 py-2.5 text-sm vt-chat-menu-item transition-colors flex items-center gap-3"
                 >
                   <Timer size={16} className={disappearMode !== 'never' ? 'text-primary' : 'text-muted-foreground'} />
                   <span className="flex-1">Disappearing messages</span>
@@ -2260,7 +2260,7 @@ export default function ChatWindowPanel() {
                   </span>
                 </button>
                 {showDisappearMenu && (
-                  <div className="bg-muted/40 border-t border-border">
+                  <div className="vt-chat-menu-sub">
                     {([
                       { id: 'never', label: 'Off (keep forever)' },
                       { id: '24h', label: '24 hours' },
@@ -2269,7 +2269,7 @@ export default function ChatWindowPanel() {
                       <button
                         key={opt.id}
                         onClick={() => { updateDisappearMode(opt.id); setShowMoreMenu(false); }}
-                        className={`w-full text-left pl-10 pr-3 py-2 text-xs hover:bg-muted transition-colors flex items-center justify-between ${disappearMode === opt.id ? 'text-primary font-semibold' : 'text-foreground/80'}`}
+                        className={`w-full text-left pl-10 pr-3 py-2 text-xs vt-chat-menu-item transition-colors flex items-center justify-between ${disappearMode === opt.id ? 'font-semibold opacity-100' : 'opacity-80'}`}
                       >
                         <span>{opt.label}</span>
                         {disappearMode === opt.id && <Check size={12} />}
@@ -2279,7 +2279,7 @@ export default function ChatWindowPanel() {
                 )}
                 <button
                   onClick={() => { setShowMoreMenu(false); setShowUnlockPinModal(true); }}
-                  className="w-full text-left px-3 py-2.5 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground"
+                  className="w-full text-left px-3 py-2.5 text-sm vt-chat-menu-item transition-colors flex items-center gap-3"
                 >
                   <KeyRound size={16} className="text-vt-green" />
                   <span className="flex-1">Unlock Encryption</span>
@@ -2315,7 +2315,7 @@ export default function ChatWindowPanel() {
                       }
                     }}
                     disabled={trustLockBusy || (trustLock.enabled && trustLock.ownerUserId !== user?.id)}
-                    className="w-full text-left px-3 py-2.5 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground disabled:opacity-60"
+                    className="w-full text-left px-3 py-2.5 text-sm vt-chat-menu-item transition-colors flex items-center gap-3 disabled:opacity-60"
                   >
                     <Shield size={16} className={trustLock.enabled ? 'text-primary' : 'text-muted-foreground'} />
                     <span className="flex-1">Trust Lock</span>
@@ -2329,7 +2329,7 @@ export default function ChatWindowPanel() {
                 {chatType !== 'group' && contact?.userId && !contact.isContact && (
                   <button
                     onClick={() => { setShowMoreMenu(false); handleAddToContacts(); }}
-                    className="w-full text-left px-3 py-2.5 text-sm hover:bg-muted transition-colors flex items-center gap-3 text-foreground"
+                    className="w-full text-left px-3 py-2.5 text-sm vt-chat-menu-item transition-colors flex items-center gap-3"
                   >
                     <UserPlus size={16} className="text-vt-green" />
                     Add to contacts
@@ -2800,11 +2800,11 @@ export default function ChatWindowPanel() {
 
       {/* Attach Menu */}
       {showAttachMenu && (
-        <div className="absolute bottom-20 left-16 z-20 glass-strong rounded-2xl border border-border shadow-card p-3 float-up" onClick={e => e.stopPropagation()}>
+        <div className="absolute bottom-20 left-16 z-20 vt-chat-menu rounded-2xl p-3 float-up" onClick={e => e.stopPropagation()}>
           <div className="flex flex-col gap-1 min-w-[160px]">
             <button
               onClick={handlePickPhotoVideo}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-all text-sm text-foreground"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl vt-chat-menu-item transition-all text-sm"
             >
               <div className="w-8 h-8 bg-blue-500/20 rounded-xl flex items-center justify-center">
                 <Image size={16} className="text-blue-400" />
@@ -2813,7 +2813,7 @@ export default function ChatWindowPanel() {
             </button>
             <button
               onClick={handlePickDocument}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-all text-sm text-foreground"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl vt-chat-menu-item transition-all text-sm"
             >
               <div className="w-8 h-8 bg-purple-500/20 rounded-xl flex items-center justify-center">
                 <FileText size={16} className="text-purple-400" />
@@ -2822,7 +2822,7 @@ export default function ChatWindowPanel() {
             </button>
             <button
               onClick={handlePickCamera}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-all text-sm text-foreground"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl vt-chat-menu-item transition-all text-sm"
             >
               <div className="w-8 h-8 bg-green-500/20 rounded-xl flex items-center justify-center">
                 <Camera size={16} className="text-green-400" />
@@ -2999,7 +2999,7 @@ export default function ChatWindowPanel() {
       {/* Emoji Picker */}
       {showEmoji && (
         <div
-          className="absolute bottom-20 left-2 right-2 sm:left-4 sm:right-auto sm:w-[360px] z-30 glass-strong rounded-2xl border border-border shadow-card p-3 float-up"
+          className="absolute bottom-20 left-2 right-2 sm:left-4 sm:right-auto sm:w-[360px] z-30 vt-chat-menu rounded-2xl p-3 float-up"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex gap-1 mb-3 p-1 bg-muted/50 rounded-xl overflow-x-auto no-scrollbar">
@@ -3049,21 +3049,21 @@ export default function ChatWindowPanel() {
       )}
 
       {/* Input Area */}
-      {(!trustLock.enabled || trustLockProtected === true) && <div className="relative z-30 px-3 pb-3 pt-2 flex-shrink-0 w-full max-w-full">
-      <div className="vt-chat-composer rounded-[28px] px-2 py-1.5 flex items-end gap-1 w-full max-w-full overflow-hidden">
+      {(!trustLock.enabled || trustLockProtected === true) && <div className="relative z-30 px-2.5 pb-2 pt-1.5 flex-shrink-0 w-full max-w-full">
+      <div className="vt-chat-composer rounded-[22px] px-1.5 py-1 flex items-end gap-0.5 w-full max-w-full overflow-hidden">
         <button
           onClick={(e) => { e.stopPropagation(); setShowAttachMenu(v => { const next = !v; if (next) { setShowEmoji(false); setShowMoreMenu(false); setShowDisappearMenu(false); } return next; }); }}
-          className={`p-2 rounded-full transition-all flex-shrink-0 self-center ${showAttachMenu ? 'text-white bg-white/20' : 'vt-chat-icon-btn hover:bg-white/10'}`}
+          className={`p-1.5 rounded-full transition-all flex-shrink-0 self-center ${showAttachMenu ? 'vt-chat-icon-btn-active' : 'vt-chat-icon-btn hover:bg-white/10'}`}
           aria-label="Attach"
         >
-          <Paperclip size={20} />
+          <Paperclip size={18} />
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); setShowEmoji(v => { const next = !v; if (next) { setShowAttachMenu(false); setShowMoreMenu(false); setShowDisappearMenu(false); } return next; }); }}
-          className={`p-2 rounded-full transition-all flex-shrink-0 self-center ${showEmoji ? 'text-white bg-white/20' : 'vt-chat-icon-btn hover:bg-white/10'}`}
+          className={`p-1.5 rounded-full transition-all flex-shrink-0 self-center ${showEmoji ? 'vt-chat-icon-btn-active' : 'vt-chat-icon-btn hover:bg-white/10'}`}
           aria-label="Emoji"
         >
-          <Smile size={20} />
+          <Smile size={18} />
         </button>
         <textarea
           ref={inputRef as any}
@@ -3082,7 +3082,7 @@ export default function ChatWindowPanel() {
             setInputText(e.target.value);
             const ta = e.currentTarget;
             ta.style.height = 'auto';
-            ta.style.height = Math.min(ta.scrollHeight, 140) + 'px';
+            ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
           }}
           onPaste={e => {
             // Paste an image copied from another chat / app straight into the
@@ -3108,17 +3108,17 @@ export default function ChatWindowPanel() {
             }
           }}
           placeholder={e2eEnabled ? t('chat.typeEncrypted') : t('chat.type')}
-          className="flex-1 min-w-0 self-center bg-transparent border-0 px-2 py-2.5 text-[15px] text-white placeholder-white/40 focus:outline-none resize-none leading-5 max-h-[140px] overflow-y-auto"
-          style={{ height: 40 }}
+          className="vt-chat-input flex-1 min-w-0 self-center bg-transparent border-0 px-2 py-2 text-[14px] focus:outline-none resize-none leading-5 max-h-[120px] overflow-y-auto"
+          style={{ height: 36 }}
         />
         <button
           onClick={() => {
             sendMessage();
             const ta = inputRef.current as unknown as HTMLTextAreaElement | null;
-            if (ta) requestAnimationFrame(() => { ta.style.height = '40px'; });
+            if (ta) requestAnimationFrame(() => { ta.style.height = '36px'; });
           }}
           disabled={!inputText.trim() && pendingAttachments.length === 0}
-          className="vt-chat-send w-11 h-11 self-center rounded-full flex items-center justify-center hover:opacity-95 active:scale-90 transition-all flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="vt-chat-send w-9 h-9 self-center rounded-full flex items-center justify-center hover:opacity-95 active:scale-90 transition-all flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
           aria-label="Send"
         >
           <Send size={18} />
