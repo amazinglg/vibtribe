@@ -387,7 +387,7 @@ export default function ChatListPanel() {
         .from('chats')
         .select(`
           id, chat_type, participant_one, participant_two, is_group, name, updated_at,
-          messages(id, content, created_at, sender_id, message_status)
+          messages(id, content, created_at, sender_id, message_status, deleted_for, deleted_for_everyone)
         `)
         .or(`participant_one.eq.${user.id},participant_two.eq.${user.id}`)
         .eq('is_group', false)
@@ -406,7 +406,7 @@ export default function ChatListPanel() {
           .from('chats')
           .select(`
             id, chat_type, is_group, name, avatar_url, updated_at,
-            messages(id, content, created_at, sender_id, message_status)
+            messages(id, content, created_at, sender_id, message_status, deleted_for, deleted_for_everyone)
           `)
           .in('id', groupIds)
           .eq('is_group', true)
