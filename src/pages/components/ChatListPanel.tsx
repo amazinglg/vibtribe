@@ -1298,8 +1298,8 @@ function ContactsTabContent({
           await matchContacts(raw);
         } catch (nativeErr) {
           console.error('[VibTribe] native contacts fetch failed', nativeErr);
-          setPerm('granted');
-          await loadDemo();
+          setLoading(false);
+          setPerm('unsupported');
         }
         return;
       }
@@ -1309,16 +1309,18 @@ function ContactsTabContent({
         setPerm('granted');
         await matchContacts(raw);
       } else {
-        setPerm('granted');
-        await loadDemo();
+        // iOS Safari / iOS PWA and desktop browsers have no Contacts Picker.
+        // Never fall back to listing platform users — those aren't contacts.
+        setLoading(false);
+        setPerm('unsupported');
       }
     } catch (err: any) {
       console.error('[VibTribe] requestContacts failed', err);
       if (err?.name === 'SecurityError' || err?.name === 'NotAllowedError') {
         setPerm('denied');
       } else {
-        setPerm('granted');
-        try { await loadDemo(); } catch (e) { console.error('[VibTribe] loadDemo fallback failed', e); }
+        setLoading(false);
+        setPerm('unsupported');
       }
     }
   };
@@ -1399,23 +1401,6 @@ function ContactsTabContent({
     } finally {
       setLoading(false);
     }
-  };
-
-  const loadDemo = async () => {
-    setLoading(true);
-    const { data: users } = await (supabase as any)
-      .rpc('list_recent_public_users', { _limit: 50 });
-    const result = (users || []).map((u: any) => ({
-      name: u.full_name || 'Unknown',
-      phone: u.mobile_number || '',
-      onPlatform: true,
-      userId: u.id,
-      avatar: u.full_name?.[0]?.toUpperCase(),
-      avatarUrl: u.avatar_url || null,
-    }));
-    const { applyAvatarPrivacy } = await import('@/lib/visible-avatars');
-    setContacts(await applyAvatarPrivacy(result, 'userId', 'avatarUrl'));
-    setLoading(false);
   };
 
   const startChat = async (contact: any) => {
