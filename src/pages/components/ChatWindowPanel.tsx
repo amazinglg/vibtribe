@@ -3788,18 +3788,42 @@ export default function ChatWindowPanel() {
         <button
           onClick={async () => {
             if (trustLock.enabled) { toast.error('Disabled by Trust Lock'); return; }
-            const texts = messages.filter(m => selectedIds.has(m.id)).map(m => m.text || '').filter(t => t && !t.startsWith('__media__:') && !t.startsWith('[IMAGE:') && !t.startsWith('[FILE:'));
-            if (texts.length === 0) { toast.error('No text messages selected'); return; }
+            const raws = messages.filter(m => selectedIds.has(m.id)).map(m => m.text || '').filter(Boolean);
+            const texts = raws.filter(t => !isMediaRaw(t));
+            const medias = raws.filter(isMediaRaw);
+            if (texts.length === 0 && medias.length === 1) {
+              const id = toast.loading('Copying image…');
+              try {
+                const att = await decryptMediaFromMessage(medias[0]);
+                if (!att || att.type !== 'image') throw new Error('Only images can be copied');
+                await copyImageToClipboard(att.blob, { name: att.name, mime: att.mime, trustLocked: trustLock.enabled });
+                toast.success('Image copied', { id });
+              } catch (e: any) { toast.error(e?.message || 'Copy failed', { id }); }
+              return;
+            }
+            if (texts.length === 0) { toast.error('Select a single image, or text messages, to copy'); return; }
             try { await navigator.clipboard.writeText(texts.join('\n\n')); toast.success('Copied'); } catch { toast.error('Copy failed'); }
           }}
           disabled={selectedIds.size === 0 || trustLock.enabled}
           className="px-3 py-1.5 rounded-lg text-xs bg-muted text-foreground disabled:opacity-40"
         >📋 Copy</button>
         <button
-          onClick={() => {
+          onClick={async () => {
             if (trustLock.enabled) { toast.error('Disabled by Trust Lock'); return; }
-            const texts = messages.filter(m => selectedIds.has(m.id)).map(m => m.text || '').filter(t => t && !t.startsWith('__media__:') && !t.startsWith('[IMAGE:') && !t.startsWith('[FILE:'));
-            if (texts.length === 0) { toast.error('Forwarding media is not supported yet'); return; }
+            const raws = messages.filter(m => selectedIds.has(m.id)).map(m => m.text || '').filter(Boolean);
+            if (raws.length === 0) return;
+            const texts = raws.filter(t => !isMediaRaw(t));
+            const medias = raws.filter(isMediaRaw);
+            let atts: any[] = [];
+            if (medias.length) {
+              const id = toast.loading('Preparing media…');
+              try {
+                atts = (await Promise.all(medias.map(m => decryptMediaFromMessage(m).catch(() => null)))).filter(Boolean);
+                toast.dismiss(id);
+                if (atts.length === 0 && texts.length === 0) { toast.error('Could not prepare the selected media'); return; }
+              } catch { toast.dismiss(id); }
+            }
+            setForwardAttachments(atts);
             setForwardTexts(texts);
             setSelectionMode(false);
             setSelectedIds(new Set());
