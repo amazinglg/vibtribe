@@ -193,6 +193,16 @@ function RootComponent() {
     initNativeBridge();
   }, []);
 
+  // `profile-photos` is private: transparently swap legacy public URLs on any
+  // rendered <img> for short-lived signed URLs.
+  useEffect(() => {
+    let cancelled = false;
+    void import('@/lib/profile-photo-url').then((m) => {
+      if (!cancelled) m.installProfilePhotoSigner();
+    });
+    return () => { cancelled = true; };
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
