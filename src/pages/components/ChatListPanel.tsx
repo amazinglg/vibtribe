@@ -387,7 +387,7 @@ export default function ChatListPanel() {
         .from('chats')
         .select(`
           id, chat_type, participant_one, participant_two, is_group, name, updated_at,
-          messages(id, content, created_at, sender_id, message_status)
+          messages(id, content, created_at, sender_id, message_status, deleted_for, deleted_for_everyone)
         `)
         .or(`participant_one.eq.${user.id},participant_two.eq.${user.id}`)
         .eq('is_group', false)
@@ -406,7 +406,7 @@ export default function ChatListPanel() {
           .from('chats')
           .select(`
             id, chat_type, is_group, name, avatar_url, updated_at,
-            messages(id, content, created_at, sender_id, message_status)
+            messages(id, content, created_at, sender_id, message_status, deleted_for, deleted_for_everyone)
           `)
           .in('id', groupIds)
           .eq('is_group', true)
@@ -457,7 +457,11 @@ export default function ChatListPanel() {
       for (const chat of data) {
         const isGroup = !!(chat as any).is_group;
 
-        const msgs = (chat as any).messages || [];
+        // Messages the current user deleted "for me" must never surface in the
+        // inbox preview or unread count — they no longer exist for this user.
+        const msgs = ((chat as any).messages || []).filter(
+          (m: any) => !(Array.isArray(m?.deleted_for) && m.deleted_for.includes(user.id)),
+        );
         const sortedMsgs = msgs.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
         const lastMsg = sortedMsgs[0];
         const unreadCount = msgs.filter((m: any) => m.sender_id !== user.id && m.message_status !== 'read').length;
@@ -504,6 +508,7 @@ export default function ChatListPanel() {
                 : `📎 ${m.name || 'File'}`;
             } catch { gPreview = '📎 Media'; }
           }
+          if (lastMsg?.deleted_for_everyone) gPreview = '🚫 This message was deleted';
           chatList.push({
             id: chat.id,
             name: gname,
@@ -578,6 +583,7 @@ export default function ChatListPanel() {
             const parts = preview.split(':');
             preview = parts[1] === 'video' ? '📹 Missed video call' : '📞 Missed voice call';
           }
+          if (lastMsg?.deleted_for_everyone) preview = '🚫 This message was deleted';
           chatList.push({
             id: chat.id,
             name: ou.full_name || 'VibTribe user',
@@ -1292,8 +1298,8 @@ function ContactsTabContent({
           await matchContacts(raw);
         } catch (nativeErr) {
           console.error('[VibTribe] native contacts fetch failed', nativeErr);
-          setPerm('granted');
-          await loadDemo();
+          setLoading(false);
+          setPerm('unsupported');
         }
         return;
       }
@@ -1303,16 +1309,18 @@ function ContactsTabContent({
         setPerm('granted');
         await matchContacts(raw);
       } else {
-        setPerm('granted');
-        await loadDemo();
+        // iOS Safari / iOS PWA and desktop browsers have no Contacts Picker.
+        // Never fall back to listing platform users — those aren't contacts.
+        setLoading(false);
+        setPerm('unsupported');
       }
     } catch (err: any) {
       console.error('[VibTribe] requestContacts failed', err);
       if (err?.name === 'SecurityError' || err?.name === 'NotAllowedError') {
         setPerm('denied');
       } else {
-        setPerm('granted');
-        try { await loadDemo(); } catch (e) { console.error('[VibTribe] loadDemo fallback failed', e); }
+        setLoading(false);
+        setPerm('unsupported');
       }
     }
   };
@@ -1395,23 +1403,6 @@ function ContactsTabContent({
     }
   };
 
-  const loadDemo = async () => {
-    setLoading(true);
-    const { data: users } = await (supabase as any)
-      .rpc('list_recent_public_users', { _limit: 50 });
-    const result = (users || []).map((u: any) => ({
-      name: u.full_name || 'Unknown',
-      phone: u.mobile_number || '',
-      onPlatform: true,
-      userId: u.id,
-      avatar: u.full_name?.[0]?.toUpperCase(),
-      avatarUrl: u.avatar_url || null,
-    }));
-    const { applyAvatarPrivacy } = await import('@/lib/visible-avatars');
-    setContacts(await applyAvatarPrivacy(result, 'userId', 'avatarUrl'));
-    setLoading(false);
-  };
-
   const startChat = async (contact: any) => {
     if (!contact.userId || !user) return;
     const { data: existing } = await supabase
@@ -1485,6 +1476,25 @@ function ContactsTabContent({
             className="px-4 py-2 gradient-primary rounded-xl text-white text-xs font-semibold hover:opacity-90 transition-all"
           >
             Try again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (perm === 'unsupported') {
+    return (
+      <div className="p-4">
+        <div className="p-4 rounded-2xl border border-amber-500/30 bg-amber-500/5">
+          <p className="text-sm font-semibold text-foreground">Contact import isn't available on this device</p>
+          <p className="text-xs text-muted-foreground mt-1 mb-3 leading-relaxed">
+            Apple doesn't let web apps read your address book, so contact sync only works in the VibTribe Android app. You can still find people by searching their phone number or username, and add them from a chat.
+          </p>
+          <button
+            onClick={() => setPerm('idle')}
+            className="px-4 py-2 rounded-xl border border-border text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+          >
+            Back
           </button>
         </div>
       </div>

@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useT } from '@/contexts/LanguageContext';
 import { isNativeWrapper, requestNativeContactsPermission } from '@/lib/native-bridge';
+import { toast } from 'sonner';
 
 interface Contact {
   name: string;
@@ -29,12 +30,26 @@ const getInviteMsg = () =>
 export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelProps) {
   const { t } = useT();
   const [contacts, setContacts] = useState<Contact[]>([]);
-  const [permissionState, setPermissionState] = useState<'idle' | 'requesting' | 'granted' | 'denied'>('idle');
+  const [permissionState, setPermissionState] = useState<'idle' | 'requesting' | 'granted' | 'denied' | 'unsupported'>('idle');
   const [loading, setLoading] = useState(false);
   const [inviteTarget, setInviteTarget] = useState<Contact | null>(null);
   const [search, setSearch] = useState('');
+  const [unsupportedNote, setUnsupportedNote] = useState(false);
   const { user } = useAuth();
   const supabase = createClient();
+
+  /**
+   * When the device can't hand us the address book (iOS Safari / iOS PWA have
+   * no Contacts Picker API), we must NOT fall back to listing platform users —
+   * that would expose every VibTribe account as if it were a contact.
+   */
+  const handleUnsupported = () => {
+    setLoading(false);
+    setPermissionState(prev => (contacts.length > 0 ? 'granted' : 'unsupported'));
+    if (contacts.length > 0) {
+      setUnsupportedNote(true);
+    }
+  };
 
   const requestContacts = async () => {
     setPermissionState('requesting');
@@ -62,13 +77,13 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
             await matchContactsWithPlatform(raw);
           } catch (matchErr) {
             console.error('[VibTribe] matchContactsWithPlatform failed', matchErr);
-            await loadDemoContacts().catch(() => {});
+            setLoading(false);
+            toast.error('Could not match your contacts right now. Please try again.');
           }
           return;
         } catch (nativeErr) {
           console.error('[VibTribe] native contacts sync failed', nativeErr);
-          setPermissionState('granted');
-          await loadDemoContacts().catch(() => {});
+          handleUnsupported();
           return;
         }
       }
@@ -81,18 +96,15 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
         setPermissionState('granted');
         await matchContactsWithPlatform(rawContacts);
       } else {
-        // 3) Fallback — desktop / unsupported browser: show platform users
-        setPermissionState('granted');
-        await loadDemoContacts();
+        // 3) No Contacts Picker (iOS Safari / iOS PWA, desktop browsers).
+        handleUnsupported();
       }
     } catch (err: any) {
       console.error('[VibTribe] requestContacts failed', err);
       if (err?.name === 'SecurityError' || err?.name === 'NotAllowedError') {
         setPermissionState('denied');
       } else {
-        // API not supported — show demo
-        setPermissionState('granted');
-        await loadDemoContacts().catch(() => {});
+        handleUnsupported();
       }
     }
   };
@@ -237,33 +249,6 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
     setLoading(false);
   };
 
-  const loadDemoContacts = async () => {
-    setLoading(true);
-    // Load actual platform users as "contacts"
-    const { data: users } = await (supabase as any)
-      .rpc('list_recent_public_users', { _limit: 20 });
-
-    const result: Contact[] = (users || []).map(u => ({
-      name: u.full_name || 'Unknown',
-      phone: u.mobile_number || '',
-      onPlatform: true,
-      userId: u.id,
-      avatar: u.full_name?.[0]?.toUpperCase(),
-      avatarUrl: u.avatar_url || null,
-      isVerified: !!u.is_verified,
-    }));
-
-    // Add some demo non-platform contacts
-    result.push(
-      { name: 'Rahul Sharma', phone: '9876543210', onPlatform: false },
-      { name: 'Priya Patel', phone: '9123456789', onPlatform: false },
-    );
-
-    const { applyAvatarPrivacy } = await import('@/lib/visible-avatars');
-    setContacts(await applyAvatarPrivacy(result, 'userId', 'avatarUrl'));
-    setLoading(false);
-  };
-
   const handleStartChat = async (contact: Contact) => {
     if (!contact.userId || !user) return;
     // Check if chat already exists
@@ -387,8 +372,34 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
             </div>
           )}
 
+          {permissionState === 'unsupported' && (
+            <div className="p-6 text-center">
+              <div className="w-12 h-12 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Phone size={22} className="text-amber-400" />
+              </div>
+              <h3 className="font-semibold text-foreground mb-1">Contact import isn't available here</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                This browser can't share your address book with a web app — Apple doesn't allow it on iPhone/iPad, so contact sync only works in the VibTribe Android app.
+              </p>
+              <p className="text-sm text-muted-foreground mb-4">
+                You can still add people by searching their phone number or username, or add them manually from a chat.
+              </p>
+              <button
+                onClick={onClose}
+                className="gradient-primary text-white px-6 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-all"
+              >
+                Close
+              </button>
+            </div>
+          )}
+
           {(permissionState === 'granted') && (
             <div className="p-4">
+              {unsupportedNote && (
+                <p className="mb-3 text-[11px] leading-relaxed text-muted-foreground bg-muted/40 border border-border rounded-xl px-3 py-2">
+                  Your device doesn't allow web apps to read the address book, so only your saved VibTribe contacts are shown here.
+                </p>
+              )}
               {/* Search */}
               <div className="relative mb-4">
                 <input
