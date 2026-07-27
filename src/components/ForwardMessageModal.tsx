@@ -278,9 +278,9 @@ export default function ForwardMessageModal({ isOpen, onClose, messages, attachm
           ) : filtered.length === 0 ? (
             <p className="p-6 text-center text-sm text-muted-foreground">No chats found</p>
           ) : filtered.map(t => {
-            const isSel = selected.has(t.chatId);
+            const isSel = selected.has(t.key);
             return (
-              <button key={t.chatId} onClick={() => toggle(t.chatId)} className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted/40 transition-colors text-left">
+              <button key={t.key} onClick={() => toggle(t.key)} className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted/40 transition-colors text-left">
                 {t.avatarUrl ? (
                   <img src={t.avatarUrl} alt="" className="w-10 h-10 rounded-full object-cover" />
                 ) : (
@@ -290,7 +290,7 @@ export default function ForwardMessageModal({ isOpen, onClose, messages, attachm
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-foreground truncate">{t.name}</p>
-                  <p className="text-[11px] text-muted-foreground">{t.isGroup ? 'Tribe' : 'Contact'}</p>
+                  <p className="text-[11px] text-muted-foreground">{t.isGroup ? 'Tribe' : t.isNew ? 'Saved contact' : 'Recent chat'}</p>
                 </div>
                 <div className={`w-5 h-5 rounded-md border flex items-center justify-center ${isSel ? 'bg-primary border-primary text-white' : 'border-border'}`}>
                   {isSel && <Check size={14} />}
