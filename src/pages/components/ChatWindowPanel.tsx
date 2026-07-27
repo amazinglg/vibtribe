@@ -3070,6 +3070,21 @@ export default function ChatWindowPanel() {
             ta.style.height = 'auto';
             ta.style.height = Math.min(ta.scrollHeight, 140) + 'px';
           }}
+          onPaste={e => {
+            // Paste an image copied from another chat / app straight into the
+            // composer instead of dropping a useless URL string.
+            const items = Array.from(e.clipboardData?.items || []);
+            const files = items
+              .filter(it => it.kind === 'file' && it.type.startsWith('image/'))
+              .map(it => it.getAsFile())
+              .filter(Boolean) as File[];
+            if (files.length === 0) return;
+            e.preventDefault();
+            queueAttachments(files.map(f => ({
+              file: f.name ? f : new File([f], `pasted-image.${(f.type.split('/')[1] || 'png')}`, { type: f.type }),
+              type: 'image' as const,
+            })));
+          }}
           onKeyDown={e => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
