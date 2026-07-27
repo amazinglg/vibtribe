@@ -2567,11 +2567,11 @@ export default function ChatWindowPanel() {
                 <React.Fragment key={msg.id}>
                   {__sep}
                   <div className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                    <div className="glass border border-border rounded-2xl px-4 py-2.5 text-sm flex items-center gap-3">
-                      {kind === 'video' ? <Video size={16} className="text-vt-green" /> : <Phone size={16} className="text-vt-green" />}
+                    <div className="vt-bubble-in rounded-2xl px-4 py-2.5 text-sm flex items-center gap-3">
+                      {kind === 'video' ? <Video size={16} className="text-green-300" /> : <Phone size={16} className="text-green-300" />}
                       <div className="flex flex-col">
-                        <span className="text-foreground/90">{kind === 'video' ? 'Video' : 'Voice'} call · {mm}:{ss}</span>
-                        <span className="text-[10px] text-muted-foreground">{msg.time}</span>
+                        <span className="text-white/90">{kind === 'video' ? 'Video' : 'Voice'} call · {mm}:{ss}</span>
+                        <span className="text-[10px] text-white/50">{msg.time}</span>
                       </div>
                     </div>
                   </div>
@@ -2584,18 +2584,18 @@ export default function ChatWindowPanel() {
                 <React.Fragment key={msg.id}>
                   {__sep}
                   <div className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                  <div className="glass border border-border rounded-2xl px-4 py-2.5 text-sm flex items-center gap-3">
-                    <PhoneOff size={16} className="text-red-400" />
+                  <div className="vt-bubble-in rounded-2xl px-4 py-2.5 text-sm flex items-center gap-3">
+                    <PhoneOff size={16} className="text-red-300" />
                     <div className="flex flex-col">
-                      <span className="text-red-400 font-medium">
+                      <span className="text-red-300 font-medium">
                         {isMe ? `Missed ${callKind} call` : `You missed a ${callKind} call`}
                       </span>
-                      <span className="text-[10px] text-muted-foreground">{msg.time}</span>
+                      <span className="text-[10px] text-white/50">{msg.time}</span>
                     </div>
                     {isMe && contact?.userId && (
                       <button
                         onClick={() => startCall({ calleeId: contact.userId!, chatId: selectedChatId, type: callKind as 'voice'|'video', calleeName: contact.name, calleeAvatar: contact.avatarUrl || contact.avatar })}
-                        className="ml-2 px-3 py-1 rounded-lg bg-primary/15 text-primary text-xs font-semibold hover:bg-primary/25 transition-all">
+                        className="ml-2 px-3 py-1 rounded-lg bg-white/15 text-white text-xs font-semibold hover:bg-white/25 transition-all">
                         Call back
                       </button>
                     )}
@@ -2612,7 +2612,7 @@ export default function ChatWindowPanel() {
                 <React.Fragment key={msg.id}>
                   {__sep}
                   <div className="flex justify-center">
-                    <span className="text-[11px] text-muted-foreground px-3 py-1 glass rounded-full border border-border/60 text-center max-w-[80%]">
+                    <span className="vt-chat-pill text-[11px] px-3 py-1 rounded-full text-center max-w-[80%]">
                       {safeText}
                     </span>
                   </div>
