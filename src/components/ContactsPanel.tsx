@@ -29,12 +29,25 @@ const getInviteMsg = () =>
 export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelProps) {
   const { t } = useT();
   const [contacts, setContacts] = useState<Contact[]>([]);
-  const [permissionState, setPermissionState] = useState<'idle' | 'requesting' | 'granted' | 'denied'>('idle');
+  const [permissionState, setPermissionState] = useState<'idle' | 'requesting' | 'granted' | 'denied' | 'unsupported'>('idle');
   const [loading, setLoading] = useState(false);
   const [inviteTarget, setInviteTarget] = useState<Contact | null>(null);
   const [search, setSearch] = useState('');
   const { user } = useAuth();
   const supabase = createClient();
+
+  /**
+   * When the device can't hand us the address book (iOS Safari / iOS PWA have
+   * no Contacts Picker API), we must NOT fall back to listing platform users —
+   * that would expose every VibTribe account as if it were a contact.
+   */
+  const handleUnsupported = () => {
+    setLoading(false);
+    setPermissionState(prev => (contacts.length > 0 ? 'granted' : 'unsupported'));
+    if (contacts.length > 0) {
+      setUnsupportedNote(true);
+    }
+  };
 
   const requestContacts = async () => {
     setPermissionState('requesting');
@@ -67,8 +80,7 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
           return;
         } catch (nativeErr) {
           console.error('[VibTribe] native contacts sync failed', nativeErr);
-          setPermissionState('granted');
-          await loadDemoContacts().catch(() => {});
+          handleUnsupported();
           return;
         }
       }
@@ -81,18 +93,15 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
         setPermissionState('granted');
         await matchContactsWithPlatform(rawContacts);
       } else {
-        // 3) Fallback — desktop / unsupported browser: show platform users
-        setPermissionState('granted');
-        await loadDemoContacts();
+        // 3) No Contacts Picker (iOS Safari / iOS PWA, desktop browsers).
+        handleUnsupported();
       }
     } catch (err: any) {
       console.error('[VibTribe] requestContacts failed', err);
       if (err?.name === 'SecurityError' || err?.name === 'NotAllowedError') {
         setPermissionState('denied');
       } else {
-        // API not supported — show demo
-        setPermissionState('granted');
-        await loadDemoContacts().catch(() => {});
+        handleUnsupported();
       }
     }
   };
