@@ -5,7 +5,7 @@ import { signChatMediaUrl } from '@/lib/chat-media-url';
 import { useTrustLock } from '@/contexts/TrustLockContext';
 import MediaActionButton from '@/components/MediaActionButton';
 import TrustLockBlockedDialog from '@/components/TrustLockBlockedDialog';
-import { saveMedia, shareMedia, TrustLockError } from '@/lib/media-actions';
+import { saveMedia, shareMedia, copyImageToClipboard, TrustLockError } from '@/lib/media-actions';
 
 export interface ViewerSource {
   /** blob:, data:, raw chat-media path or legacy public URL */
@@ -127,6 +127,17 @@ export default function MediaViewer({ source, onClose }: Props) {
     }
   };
 
+  const runCopy = async () => {
+    if (trustLocked) { setShowTrustBlock(true); throw new Error('Trust Lock enabled'); }
+    try {
+      const blob = await fetchBlob();
+      await copyImageToClipboard(blob, { name: source?.name, mime: source?.mime || blob.type });
+    } catch (e) {
+      if (e instanceof TrustLockError) { setShowTrustBlock(true); return; }
+      throw e;
+    }
+  };
+
   const rect = source?.rect;
   const origin = rect
     ? {
@@ -169,6 +180,7 @@ export default function MediaViewer({ source, onClose }: Props) {
                 <>
                   <MediaActionButton action="download" label="Download" onRun={runDownload} />
                   <MediaActionButton action="share" label="Share" onRun={runShare} />
+                  <MediaActionButton action="copy" label="Copy image" onRun={runCopy} successMessage="Image copied" />
                 </>
               )}
               {trustLocked && (
