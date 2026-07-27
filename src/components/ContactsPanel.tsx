@@ -370,8 +370,34 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
             </div>
           )}
 
+          {permissionState === 'unsupported' && (
+            <div className="p-6 text-center">
+              <div className="w-12 h-12 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Phone size={22} className="text-amber-400" />
+              </div>
+              <h3 className="font-semibold text-foreground mb-1">Contact import isn't available here</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                This browser can't share your address book with a web app — Apple doesn't allow it on iPhone/iPad, so contact sync only works in the VibTribe Android app.
+              </p>
+              <p className="text-sm text-muted-foreground mb-4">
+                You can still add people by searching their phone number or username, or add them manually from a chat.
+              </p>
+              <button
+                onClick={onClose}
+                className="gradient-primary text-white px-6 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-all"
+              >
+                Close
+              </button>
+            </div>
+          )}
+
           {(permissionState === 'granted') && (
             <div className="p-4">
+              {unsupportedNote && (
+                <p className="mb-3 text-[11px] leading-relaxed text-muted-foreground bg-muted/40 border border-border rounded-xl px-3 py-2">
+                  Your device doesn't allow web apps to read the address book, so only your saved VibTribe contacts are shown here.
+                </p>
+              )}
               {/* Search */}
               <div className="relative mb-4">
                 <input
