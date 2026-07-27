@@ -508,6 +508,7 @@ export default function ChatListPanel() {
                 : `📎 ${m.name || 'File'}`;
             } catch { gPreview = '📎 Media'; }
           }
+          if (lastMsg?.deleted_for_everyone) gPreview = '🚫 This message was deleted';
           chatList.push({
             id: chat.id,
             name: gname,
@@ -582,6 +583,7 @@ export default function ChatListPanel() {
             const parts = preview.split(':');
             preview = parts[1] === 'video' ? '📹 Missed video call' : '📞 Missed voice call';
           }
+          if (lastMsg?.deleted_for_everyone) preview = '🚫 This message was deleted';
           chatList.push({
             id: chat.id,
             name: ou.full_name || 'VibTribe user',
