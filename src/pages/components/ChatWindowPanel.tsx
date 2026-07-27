@@ -3049,17 +3049,18 @@ export default function ChatWindowPanel() {
       )}
 
       {/* Input Area */}
-      {(!trustLock.enabled || trustLockProtected === true) && <div className="glass border-t border-border px-2 py-2 flex items-center gap-1 flex-shrink-0 w-full max-w-full overflow-hidden">
+      {(!trustLock.enabled || trustLockProtected === true) && <div className="relative z-30 px-3 pb-3 pt-2 flex-shrink-0 w-full max-w-full">
+      <div className="vt-chat-composer rounded-[28px] px-2 py-1.5 flex items-end gap-1 w-full max-w-full overflow-hidden">
         <button
           onClick={(e) => { e.stopPropagation(); setShowAttachMenu(v => { const next = !v; if (next) { setShowEmoji(false); setShowMoreMenu(false); setShowDisappearMenu(false); } return next; }); }}
-          className={`p-2 rounded-xl transition-all flex-shrink-0 ${showAttachMenu ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
+          className={`p-2 rounded-full transition-all flex-shrink-0 self-center ${showAttachMenu ? 'text-white bg-white/20' : 'vt-chat-icon-btn hover:bg-white/10'}`}
           aria-label="Attach"
         >
           <Paperclip size={20} />
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); setShowEmoji(v => { const next = !v; if (next) { setShowAttachMenu(false); setShowMoreMenu(false); setShowDisappearMenu(false); } return next; }); }}
-          className={`p-2 rounded-xl transition-all flex-shrink-0 ${showEmoji ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
+          className={`p-2 rounded-full transition-all flex-shrink-0 self-center ${showEmoji ? 'text-white bg-white/20' : 'vt-chat-icon-btn hover:bg-white/10'}`}
           aria-label="Emoji"
         >
           <Smile size={20} />
@@ -3107,7 +3108,7 @@ export default function ChatWindowPanel() {
             }
           }}
           placeholder={e2eEnabled ? t('chat.typeEncrypted') : t('chat.type')}
-          className="flex-1 min-w-0 bg-input border border-border rounded-2xl px-3 py-2.5 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all resize-none leading-5 max-h-[140px] overflow-y-auto"
+          className="flex-1 min-w-0 self-center bg-transparent border-0 px-2 py-2.5 text-[15px] text-white placeholder-white/40 focus:outline-none resize-none leading-5 max-h-[140px] overflow-y-auto"
           style={{ height: 40 }}
         />
         <button
@@ -3117,11 +3118,12 @@ export default function ChatWindowPanel() {
             if (ta) requestAnimationFrame(() => { ta.style.height = '40px'; });
           }}
           disabled={!inputText.trim() && pendingAttachments.length === 0}
-          className="p-2.5 gradient-primary rounded-xl text-white hover:opacity-90 transition-all glow-primary flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="vt-chat-send w-11 h-11 self-center rounded-full flex items-center justify-center hover:opacity-95 active:scale-90 transition-all flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
           aria-label="Send"
         >
           <Send size={18} />
         </button>
+      </div>
       </div>}
 
       {secureModalOpen && (
