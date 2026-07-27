@@ -225,8 +225,186 @@ function Preview({ v }: { v: Variant }) {
 }
 
 function ThemePreview() {
+  return <ThemePreviewInner />
+}
+
+const NAV = [
+  { label: 'Chats', active: true },
+  { label: 'Status', active: false },
+  { label: 'Profile', active: false },
+]
+
+const NEB_CHATS = [
+  { name: 'VibTribe', msg: 'Official VibTribe Account · Please use this link…', time: 'Sun', active: false },
+  { name: 'Richa Garg', msg: 'Yo', time: '6h', active: false },
+  { name: 'Yashika Garg', msg: 'Yrr tu Bhabhi ko reply kyu nhi karti???', time: 'Sun', active: true },
+  { name: 'Tanseef Manzoor', msg: 'Eh?', time: 'Thu', active: false },
+]
+
+function NebulaMock() {
+  const panel = {
+    background: 'linear-gradient(180deg, rgba(52,28,110,0.55), rgba(24,12,58,0.62))',
+    border: '1px solid rgba(168,85,247,0.34)',
+    boxShadow: '0 0 40px rgba(124,58,237,0.28) inset, 0 10px 40px rgba(0,0,0,0.35)',
+    backdropFilter: 'blur(26px)',
+  } as React.CSSProperties
+
+  return (
+    <div
+      className="relative overflow-hidden rounded-[26px] p-3"
+      style={{
+        background:
+          'radial-gradient(ellipse at 20% 90%, rgba(217,70,239,.35), transparent 45%), radial-gradient(ellipse at 70% 60%, rgba(56,189,248,.20), transparent 45%), linear-gradient(150deg, #1b0b4a 0%, #150a3a 40%, #0b0524 100%)',
+        border: '1px solid rgba(168,85,247,0.35)',
+      }}
+    >
+      <div className="flex gap-3" style={{ height: 560 }}>
+        {/* Nav rail */}
+        <div className="w-[190px] shrink-0 rounded-3xl p-3 flex flex-col" style={panel}>
+          <div className="flex items-center gap-2 pb-3" style={{ borderBottom: '1px solid rgba(168,85,247,.25)' }}>
+            <div className="h-7 w-7 rounded-full" style={{ background: 'conic-gradient(from 0deg,#d946ef,#38bdf8,#a855f7,#d946ef)' }} />
+            <div className="text-sm font-bold" style={{ color: '#fff' }}>
+              Vib<span style={{ color: '#c084fc' }}>Tribe</span>
+            </div>
+          </div>
+          <div className="mt-4 space-y-2">
+            {NAV.map(n => (
+              <div
+                key={n.label}
+                className="rounded-full px-4 py-2.5 text-[13px] font-medium"
+                style={
+                  n.active
+                    ? { background: 'linear-gradient(135deg,#7c3aed,#a855f7)', color: '#fff', boxShadow: '0 6px 24px rgba(168,85,247,.5)' }
+                    : { color: 'rgba(226,214,255,.75)' }
+                }
+              >
+                {n.label}
+              </div>
+            ))}
+          </div>
+          <div className="mt-auto rounded-2xl px-3 py-2.5 flex items-center gap-2" style={{ background: 'rgba(168,85,247,.14)', border: '1px solid rgba(168,85,247,.3)' }}>
+            <div className="h-7 w-7 rounded-full" style={{ background: 'linear-gradient(135deg,#d946ef,#7c3aed)' }} />
+            <div className="text-[12px] font-semibold" style={{ color: '#f5f0ff' }}>Labhansh Garg</div>
+          </div>
+        </div>
+
+        {/* Conversation list + sub tabs */}
+        <div className="w-[290px] shrink-0 rounded-3xl p-3 flex flex-col gap-2.5" style={panel}>
+          <div className="rounded-full px-3 py-2 text-[12px]" style={{ background: 'rgba(12,6,32,.55)', border: '1px solid rgba(168,85,247,.3)', color: 'rgba(214,200,255,.7)' }}>
+            Search conversations...
+          </div>
+          <div className="flex items-center gap-1 text-[12px]">
+            {['All', 'Unread (0)', 'Tribes', 'Contacts'].map((t, i) => (
+              <div
+                key={t}
+                className="rounded-full px-3 py-1.5"
+                style={
+                  i === 0
+                    ? { background: 'linear-gradient(135deg,#7c3aed,#a855f7)', color: '#fff', boxShadow: '0 4px 18px rgba(168,85,247,.5)' }
+                    : { color: 'rgba(220,208,255,.7)' }
+                }
+              >
+                {t}
+              </div>
+            ))}
+          </div>
+          <div
+            className="rounded-full py-2.5 text-center text-[13px] font-semibold"
+            style={{ background: 'linear-gradient(135deg,#7c3aed,#c026d3)', color: '#fff', boxShadow: '0 8px 26px rgba(192,38,211,.45)' }}
+          >
+            + New Chat
+          </div>
+          <div className="mt-1 space-y-2">
+            {NEB_CHATS.map(c => (
+              <div
+                key={c.name}
+                className="rounded-2xl p-2.5 flex items-center gap-2.5"
+                style={{
+                  background: c.active ? 'linear-gradient(90deg, rgba(168,85,247,.28), rgba(168,85,247,.10))' : 'rgba(20,10,48,.5)',
+                  border: '1px solid rgba(168,85,247,.22)',
+                  borderRight: c.active ? '3px solid #d946ef' : '1px solid rgba(168,85,247,.22)',
+                }}
+              >
+                <div className="h-9 w-9 shrink-0 rounded-full" style={{ background: 'linear-gradient(135deg,#d946ef,#6366f1)' }} />
+                <div className="min-w-0">
+                  <div className="truncate text-[12px] font-semibold" style={{ color: '#fff' }}>{c.name}</div>
+                  <div className="truncate text-[11px]" style={{ color: 'rgba(214,200,255,.6)' }}>{c.msg}</div>
+                </div>
+                <div className="ml-auto text-[10px]" style={{ color: 'rgba(214,200,255,.55)' }}>{c.time}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Chat window */}
+        <div className="relative flex-1 overflow-hidden rounded-3xl flex flex-col" style={panel}>
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background:
+                'radial-gradient(ellipse at 30% 100%, rgba(168,85,247,.45), transparent 55%), radial-gradient(ellipse at 60% 80%, rgba(56,189,248,.28), transparent 50%), radial-gradient(ellipse at 15% 70%, rgba(217,70,239,.30), transparent 50%)',
+            }}
+          />
+          <div
+            className="relative px-4 py-3 flex items-center gap-3"
+            style={{ background: 'linear-gradient(100deg,#4c1d95,#a21caf 55%,#6d28d9)', borderBottom: '1px solid rgba(255,255,255,.12)' }}
+          >
+            <div className="h-9 w-9 rounded-full" style={{ background: 'linear-gradient(135deg,#f0abfc,#7c3aed)' }} />
+            <div>
+              <div className="text-[14px] font-bold" style={{ color: '#fff' }}>Yashika Garg</div>
+              <div className="mt-0.5 inline-block rounded-full px-2 text-[9px]" style={{ background: 'rgba(255,255,255,.18)', color: '#f5f0ff' }}>E2E</div>
+            </div>
+          </div>
+          <div className="relative py-1.5 text-center text-[11px]" style={{ background: 'rgba(6,3,18,.45)', color: '#4ade80' }}>
+            Messages are end-to-end encrypted · Tap to learn more
+          </div>
+
+          <div className="relative flex-1 space-y-3 p-4">
+            <div className="flex">
+              <div className="max-w-[70%] rounded-2xl rounded-tl-sm px-3.5 py-2 text-[12px]" style={{ background: 'rgba(233,213,255,0.22)', border: '1px solid rgba(233,213,255,0.28)', color: '#f3e8ff', backdropFilter: 'blur(14px)' }}>
+                Mene banaya 😄🤭
+              </div>
+            </div>
+            <div className="flex justify-center">
+              <div className="rounded-full px-3 py-1 text-[10px]" style={{ background: 'rgba(255,255,255,.14)', color: '#f5f0ff' }}>Yesterday</div>
+            </div>
+            {['Are waahhhhh', 'Nice use ot towel 🤣', 'Yrr tu Bhabhi ko reply kyu nhi karti???'].map(t => (
+              <div key={t} className="flex justify-end">
+                <div className="max-w-[70%] rounded-2xl rounded-tr-sm px-3.5 py-2 text-[12px]" style={{ background: 'linear-gradient(135deg,#7e22ce,#4c1d95)', boxShadow: '0 6px 22px rgba(126,34,206,.5)', color: '#fff' }}>
+                  {t}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="relative p-3">
+            <div className="flex items-center gap-2 rounded-full px-4 py-2.5" style={{ background: 'rgba(20,10,48,.6)', border: '1px solid rgba(168,85,247,.35)', backdropFilter: 'blur(18px)' }}>
+              <span className="text-[13px]" style={{ color: 'rgba(214,200,255,.6)' }}>📎 🙂</span>
+              <span className="text-[12px]" style={{ color: 'rgba(214,200,255,.6)' }}>Encrypted message...</span>
+              <div className="ml-auto h-8 w-8 rounded-full grid place-items-center text-[13px]" style={{ background: 'linear-gradient(135deg,#a21caf,#7c3aed)', color: '#fff', boxShadow: '0 6px 20px rgba(162,28,175,.55)' }}>➤</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ThemePreviewInner() {
   return (
     <main className="min-h-screen bg-background px-4 py-8 md:px-8">
+      <h1 className="text-2xl font-bold text-foreground">Direction 6 — “Aurora Nebula” (full shell redesign)</h1>
+      <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
+        Matches your reference: indigo-violet nebula backdrop, floating rounded glass panels with glowing rims, a
+        left nav rail, and every sub-tab (All / Unread / Tribes / Contacts, search fields, buttons, menus) themed to match.
+      </p>
+      <div className="mt-5">
+        <NebulaMock />
+      </div>
+
+      <hr className="my-12 border-border" />
+
       <h1 className="text-2xl font-bold text-foreground">Aurora Glass — 5 purple glass directions</h1>
       <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
         Only the app shell (sidebar, chat list, headers, composer surface) changes. Message bubbles stay exactly as they are today.
