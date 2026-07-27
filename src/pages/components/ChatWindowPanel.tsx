@@ -2116,9 +2116,13 @@ export default function ChatWindowPanel() {
       {/* Call UI is rendered globally by CallProvider */}
 
       {/* Chat Header */}
-      <div className="glass border-b border-border px-3 py-3 flex items-center gap-2 flex-shrink-0 min-w-0 max-w-full">
+      <div className="vt-chat-header px-3 pt-3 pb-8 flex items-center gap-2 min-w-0 max-w-full">
+        <svg ref={waveRef} className="vt-chat-wave" viewBox="0 0 390 120" preserveAspectRatio="none" fill="none" aria-hidden>
+          <path className="vt-chat-wave-back" d="M0 40C60 10 120 10 180 40C240 70 300 70 390 40V120H0V40Z" fill="#1e0b3b" />
+          <path d="M0 60C80 30 160 30 240 60C320 90 390 90 390 90V120H0V60Z" fill="#0d0221" />
+        </svg>
         <button
-          className="lg:hidden -ml-1 p-2 rounded-xl text-foreground hover:bg-primary/10 active:bg-primary/20 transition-all flex-shrink-0"
+          className="lg:hidden -ml-1 p-2 rounded-xl text-white/90 hover:bg-white/10 active:scale-95 transition-all flex-shrink-0 relative z-10"
           onClick={() => setSelectedChatId(null)}
           aria-label="Back to chats"
             title={t('chat.back')}
@@ -2132,64 +2136,64 @@ export default function ChatWindowPanel() {
             if (chatType === 'group') setTribeSheetOpen(true);
             else if (contact?.avatarUrl) setEnlargeAvatar(true);
           }}
-          className="relative flex-shrink-0 focus:outline-none"
+          className="relative z-10 flex-shrink-0 focus:outline-none"
           aria-label={chatType === 'group' ? 'Tribe info' : 'View profile picture'}
         >
           {contact?.avatarUrl ? (
             <img src={contact.avatarUrl} alt={contact.name}
-                 className="w-10 h-10 rounded-full object-cover border border-border" />
+                 className="w-10 h-10 rounded-full object-cover border border-white/25" />
           ) : (
-            <div className="w-10 h-10 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-sm">
+            <div className="w-10 h-10 rounded-full bg-white/20 border border-white/25 flex items-center justify-center text-white font-bold text-sm">
               {contact?.avatar || '?'}
             </div>
           )}
           {contact?.online && (
-            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-vt-green rounded-full border-2 border-background" />
+            <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-[#b026ff] shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
           )}
         </button>
 
         <button
           type="button"
           onClick={() => { if (chatType === 'group') setTribeSheetOpen(true); }}
-          className={`flex-1 min-w-0 text-left ${chatType === 'group' ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
+          className={`relative z-10 flex-1 min-w-0 text-left ${chatType === 'group' ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
           aria-label={chatType === 'group' ? 'Open tribe info' : undefined}
         >
-          <h3 className="font-semibold text-sm text-foreground truncate min-w-0">{contact?.name || 'Loading...'}</h3>
+          <h3 className="font-semibold text-[15px] text-white truncate min-w-0">{contact?.name || 'Loading...'}</h3>
           {(e2eEnabled || trustLock.enabled) ? (
             <div className="flex items-center gap-1 mt-0.5 min-w-0">
               {e2eEnabled && (
-                <div className="flex items-center gap-1 px-1.5 py-0.5 bg-vt-green/10 rounded-full flex-shrink-0" title="End-to-end encrypted">
-                  <ShieldCheck size={9} className="text-vt-green" />
-                  <span className="text-[9px] text-vt-green font-medium leading-none">E2E</span>
+                <div className="flex items-center gap-1 px-1.5 py-0.5 bg-white/15 rounded-full flex-shrink-0" title="End-to-end encrypted">
+                  <ShieldCheck size={9} className="text-green-300" />
+                  <span className="text-[9px] text-green-200 font-medium leading-none">E2E</span>
                 </div>
               )}
               {trustLock.enabled && (
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); setShowTrustLockInfo(true); }}
-                  className="flex items-center gap-1 px-1.5 py-0.5 bg-primary/15 rounded-full flex-shrink-0"
+                  className="flex items-center gap-1 px-1.5 py-0.5 bg-white/15 rounded-full flex-shrink-0"
                   title="Trust Lock is enabled in this chat"
                 >
-                  <Shield size={9} className="text-primary" />
-                  <span className="text-[9px] text-primary font-medium leading-none">Trust Lock</span>
+                  <Shield size={9} className="text-white" />
+                  <span className="text-[9px] text-white font-medium leading-none">Trust Lock</span>
                 </button>
               )}
               {contact?.online && (
-                <span className="text-[10px] text-vt-green truncate ml-1">online</span>
+                <span className="text-[10px] text-green-300 truncate ml-1">online</span>
               )}
             </div>
           ) : (
-            <p className={`text-xs truncate ${contact?.online ? 'text-vt-green' : 'text-muted-foreground'}`}>
+            <p className={`text-xs truncate ${contact?.online ? 'text-green-300' : 'text-white/60'}`}>
               {contact?.lastSeen || ''}
             </p>
           )}
         </button>
 
-        <div className="flex items-center gap-0.5 flex-shrink-0">
+        <div className="relative z-10 flex items-center gap-0.5 flex-shrink-0">
           {/* Voice Call */}
           <button
             onClick={handleVoiceCallClick}
-            className="p-2 rounded-xl transition-all flex-shrink-0 text-muted-foreground hover:text-vt-green hover:bg-vt-green/10"
+            className="p-2 rounded-full transition-all flex-shrink-0 text-white/90 hover:bg-white/15"
             title={t('chat.voiceCall')}
             aria-label="Voice call"
           >
@@ -2198,7 +2202,7 @@ export default function ChatWindowPanel() {
           {/* Video Call */}
           <button
             onClick={handleVideoCallClick}
-            className="p-2 rounded-xl transition-all flex-shrink-0 text-muted-foreground hover:text-vt-green hover:bg-vt-green/10"
+            className="p-2 rounded-full transition-all flex-shrink-0 text-white/90 hover:bg-white/15"
             title={t('chat.videoCall')}
             aria-label="Video call"
           >
@@ -2208,7 +2212,7 @@ export default function ChatWindowPanel() {
           <div className="relative flex-shrink-0">
             <button
               onClick={(e) => { e.stopPropagation(); setShowMoreMenu(v => !v); setShowDisappearMenu(false); }}
-              className={`p-2 rounded-xl transition-all flex-shrink-0 ${showMoreMenu ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
+              className={`p-2 rounded-full transition-all flex-shrink-0 ${showMoreMenu ? 'text-white bg-white/25' : 'text-white/90 hover:bg-white/15'}`}
               title={t('chat.more')}
               aria-label="More options"
             >
