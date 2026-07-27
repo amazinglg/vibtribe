@@ -613,17 +613,17 @@ html[data-trust-lock-recording="true"] body {
 .vt-chat-scroll { position: relative; z-index: 10; }
 
 .vt-bubble-in {
-  background: rgba(255,255,255,0.10);
+  background: linear-gradient(135deg, rgba(233,213,255,0.92), rgba(216,180,254,0.86));
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255,255,255,0.20);
-  color: #fff;
-  box-shadow: 0 8px 24px -14px rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.55);
+  color: #3b0764;
+  box-shadow: 0 8px 24px -14px rgba(88,28,135,0.55);
 }
 .vt-bubble-out {
-  background: linear-gradient(to right, #c026d3, #7e22ce);
-  border: 1px solid rgba(255,255,255,0.14);
+  background: linear-gradient(135deg, #a21caf 0%, #7e22ce 55%, #6d28d9 100%);
+  border: 1px solid rgba(255,255,255,0.18);
   color: #fff;
-  box-shadow: 0 10px 26px -14px rgba(112, 26, 117, 0.9);
+  box-shadow: 0 10px 30px -10px rgba(147,51,234,0.75), 0 0 22px -6px rgba(192,38,211,0.45);
 }
 .vt-bubble-ghost {
   background: rgba(255,255,255,0.06);
@@ -712,15 +712,7 @@ html[data-vt-theme] .vt-chat-aurora {
 html[data-vt-theme] .vt-chat-aurora::before { background: color-mix(in srgb, var(--pink, var(--primary)) 30%, transparent); }
 html[data-vt-theme] .vt-chat-aurora::after { background: color-mix(in srgb, var(--violet, var(--primary)) 24%, transparent); }
 html[data-vt-theme] .vt-chat-blob-c { background: color-mix(in srgb, var(--violet, var(--primary)) 20%, transparent); }
-html[data-vt-theme] .vt-bubble-in {
-  background: var(--card);
-  border-color: var(--border);
-  color: var(--card-foreground);
-}
-html[data-vt-theme] .vt-bubble-out {
-  background: linear-gradient(to right, var(--accent), var(--primary));
-  color: var(--primary-foreground);
-}
+/* Message bubbles stay purple across every theme (product decision) */
 html[data-vt-theme] .vt-bubble-ghost {
   background: color-mix(in srgb, var(--foreground) 6%, transparent);
   border-color: var(--border);
