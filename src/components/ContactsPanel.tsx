@@ -247,33 +247,6 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
     setLoading(false);
   };
 
-  const loadDemoContacts = async () => {
-    setLoading(true);
-    // Load actual platform users as "contacts"
-    const { data: users } = await (supabase as any)
-      .rpc('list_recent_public_users', { _limit: 20 });
-
-    const result: Contact[] = (users || []).map(u => ({
-      name: u.full_name || 'Unknown',
-      phone: u.mobile_number || '',
-      onPlatform: true,
-      userId: u.id,
-      avatar: u.full_name?.[0]?.toUpperCase(),
-      avatarUrl: u.avatar_url || null,
-      isVerified: !!u.is_verified,
-    }));
-
-    // Add some demo non-platform contacts
-    result.push(
-      { name: 'Rahul Sharma', phone: '9876543210', onPlatform: false },
-      { name: 'Priya Patel', phone: '9123456789', onPlatform: false },
-    );
-
-    const { applyAvatarPrivacy } = await import('@/lib/visible-avatars');
-    setContacts(await applyAvatarPrivacy(result, 'userId', 'avatarUrl'));
-    setLoading(false);
-  };
-
   const handleStartChat = async (contact: Contact) => {
     if (!contact.userId || !user) return;
     // Check if chat already exists
