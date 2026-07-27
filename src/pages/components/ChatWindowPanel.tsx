@@ -454,6 +454,7 @@ export default function ChatWindowPanel() {
   const [profile, setProfile] = React.useState<{ full_name?: string } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const waveRef = useRef<SVGSVGElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -2058,7 +2059,8 @@ export default function ChatWindowPanel() {
 
   return (
     <TrustLockProvider value={{ enabled: trustLock.enabled, ownerUserId: trustLock.ownerUserId, isOwner: !!user && trustLock.ownerUserId === user.id }}>
-    <div className="flex-1 flex flex-col h-full relative min-w-0 w-full max-w-full overflow-hidden" onClick={() => { setShowAttachMenu(false); setShowMoreMenu(false); setShowDisappearMenu(false); setShowEmoji(false); }}>
+    <div className="vt-chat-aurora flex-1 flex flex-col h-full relative min-w-0 w-full max-w-full overflow-hidden" onClick={() => { setShowAttachMenu(false); setShowMoreMenu(false); setShowDisappearMenu(false); setShowEmoji(false); }}>
+      <div className="vt-chat-blob-c" aria-hidden />
       {/* Voice Call Permission Prompt */}
       {showCallPermPrompt && (
         <PermissionPrompt
@@ -2115,9 +2117,13 @@ export default function ChatWindowPanel() {
       {/* Call UI is rendered globally by CallProvider */}
 
       {/* Chat Header */}
-      <div className="glass border-b border-border px-3 py-3 flex items-center gap-2 flex-shrink-0 min-w-0 max-w-full">
+      <div className="vt-chat-header px-3 pt-3 pb-8 flex items-center gap-2 min-w-0 max-w-full">
+        <svg ref={waveRef} className="vt-chat-wave" viewBox="0 0 390 120" preserveAspectRatio="none" fill="none" aria-hidden>
+          <path className="vt-chat-wave-back" d="M0 40C60 10 120 10 180 40C240 70 300 70 390 40V120H0V40Z" fill="#1e0b3b" />
+          <path d="M0 60C80 30 160 30 240 60C320 90 390 90 390 90V120H0V60Z" fill="#0d0221" />
+        </svg>
         <button
-          className="lg:hidden -ml-1 p-2 rounded-xl text-foreground hover:bg-primary/10 active:bg-primary/20 transition-all flex-shrink-0"
+          className="lg:hidden -ml-1 p-2 rounded-xl text-white/90 hover:bg-white/10 active:scale-95 transition-all flex-shrink-0 relative z-10"
           onClick={() => setSelectedChatId(null)}
           aria-label="Back to chats"
             title={t('chat.back')}
@@ -2131,64 +2137,64 @@ export default function ChatWindowPanel() {
             if (chatType === 'group') setTribeSheetOpen(true);
             else if (contact?.avatarUrl) setEnlargeAvatar(true);
           }}
-          className="relative flex-shrink-0 focus:outline-none"
+          className="relative z-10 flex-shrink-0 focus:outline-none"
           aria-label={chatType === 'group' ? 'Tribe info' : 'View profile picture'}
         >
           {contact?.avatarUrl ? (
             <img src={contact.avatarUrl} alt={contact.name}
-                 className="w-10 h-10 rounded-full object-cover border border-border" />
+                 className="w-10 h-10 rounded-full object-cover border border-white/25" />
           ) : (
-            <div className="w-10 h-10 gradient-primary rounded-full flex items-center justify-center text-white font-bold text-sm">
+            <div className="w-10 h-10 rounded-full bg-white/20 border border-white/25 flex items-center justify-center text-white font-bold text-sm">
               {contact?.avatar || '?'}
             </div>
           )}
           {contact?.online && (
-            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-vt-green rounded-full border-2 border-background" />
+            <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-[#b026ff] shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
           )}
         </button>
 
         <button
           type="button"
           onClick={() => { if (chatType === 'group') setTribeSheetOpen(true); }}
-          className={`flex-1 min-w-0 text-left ${chatType === 'group' ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
+          className={`relative z-10 flex-1 min-w-0 text-left ${chatType === 'group' ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
           aria-label={chatType === 'group' ? 'Open tribe info' : undefined}
         >
-          <h3 className="font-semibold text-sm text-foreground truncate min-w-0">{contact?.name || 'Loading...'}</h3>
+          <h3 className="font-semibold text-[15px] text-white truncate min-w-0">{contact?.name || 'Loading...'}</h3>
           {(e2eEnabled || trustLock.enabled) ? (
             <div className="flex items-center gap-1 mt-0.5 min-w-0">
               {e2eEnabled && (
-                <div className="flex items-center gap-1 px-1.5 py-0.5 bg-vt-green/10 rounded-full flex-shrink-0" title="End-to-end encrypted">
-                  <ShieldCheck size={9} className="text-vt-green" />
-                  <span className="text-[9px] text-vt-green font-medium leading-none">E2E</span>
+                <div className="flex items-center gap-1 px-1.5 py-0.5 bg-white/15 rounded-full flex-shrink-0" title="End-to-end encrypted">
+                  <ShieldCheck size={9} className="text-green-300" />
+                  <span className="text-[9px] text-green-200 font-medium leading-none">E2E</span>
                 </div>
               )}
               {trustLock.enabled && (
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); setShowTrustLockInfo(true); }}
-                  className="flex items-center gap-1 px-1.5 py-0.5 bg-primary/15 rounded-full flex-shrink-0"
+                  className="flex items-center gap-1 px-1.5 py-0.5 bg-white/15 rounded-full flex-shrink-0"
                   title="Trust Lock is enabled in this chat"
                 >
-                  <Shield size={9} className="text-primary" />
-                  <span className="text-[9px] text-primary font-medium leading-none">Trust Lock</span>
+                  <Shield size={9} className="text-white" />
+                  <span className="text-[9px] text-white font-medium leading-none">Trust Lock</span>
                 </button>
               )}
               {contact?.online && (
-                <span className="text-[10px] text-vt-green truncate ml-1">online</span>
+                <span className="text-[10px] text-green-300 truncate ml-1">online</span>
               )}
             </div>
           ) : (
-            <p className={`text-xs truncate ${contact?.online ? 'text-vt-green' : 'text-muted-foreground'}`}>
+            <p className={`text-xs truncate ${contact?.online ? 'text-green-300' : 'text-white/60'}`}>
               {contact?.lastSeen || ''}
             </p>
           )}
         </button>
 
-        <div className="flex items-center gap-0.5 flex-shrink-0">
+        <div className="relative z-10 flex items-center gap-0.5 flex-shrink-0">
           {/* Voice Call */}
           <button
             onClick={handleVoiceCallClick}
-            className="p-2 rounded-xl transition-all flex-shrink-0 text-muted-foreground hover:text-vt-green hover:bg-vt-green/10"
+            className="p-2 rounded-full transition-all flex-shrink-0 text-white/90 hover:bg-white/15"
             title={t('chat.voiceCall')}
             aria-label="Voice call"
           >
@@ -2197,7 +2203,7 @@ export default function ChatWindowPanel() {
           {/* Video Call */}
           <button
             onClick={handleVideoCallClick}
-            className="p-2 rounded-xl transition-all flex-shrink-0 text-muted-foreground hover:text-vt-green hover:bg-vt-green/10"
+            className="p-2 rounded-full transition-all flex-shrink-0 text-white/90 hover:bg-white/15"
             title={t('chat.videoCall')}
             aria-label="Video call"
           >
@@ -2207,7 +2213,7 @@ export default function ChatWindowPanel() {
           <div className="relative flex-shrink-0">
             <button
               onClick={(e) => { e.stopPropagation(); setShowMoreMenu(v => !v); setShowDisappearMenu(false); }}
-              className={`p-2 rounded-xl transition-all flex-shrink-0 ${showMoreMenu ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
+              className={`p-2 rounded-full transition-all flex-shrink-0 ${showMoreMenu ? 'text-white bg-white/25' : 'text-white/90 hover:bg-white/15'}`}
               title={t('chat.more')}
               aria-label="More options"
             >
@@ -2503,12 +2509,19 @@ export default function ChatWindowPanel() {
       )}
 
       {/* Messages Area */}
-      {(!trustLock.enabled || trustLockProtected === true) && <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
+      {(!trustLock.enabled || trustLockProtected === true) && <div
+        ref={messagesContainerRef}
+        onScroll={(e) => {
+          const y = (e.currentTarget as HTMLDivElement).scrollTop;
+          if (waveRef.current) waveRef.current.style.transform = `translateY(${Math.min(y * 0.12, 14)}px)`;
+        }}
+        className="vt-chat-scroll flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3"
+      >
         {loading ? (
           <div className="flex flex-col gap-3">
             {[1, 2, 3].map(i => (
               <div key={i} className={`flex ${i % 2 === 0 ? 'justify-end' : 'justify-start'} animate-pulse`}>
-                <div className="h-10 w-48 bg-muted rounded-2xl" />
+                <div className="h-10 w-48 bg-white/10 rounded-2xl" />
               </div>
             ))}
           </div>
@@ -2531,10 +2544,8 @@ export default function ChatWindowPanel() {
               else if (cur.toDateString() === yesterday.toDateString()) label = 'Yesterday';
               else label = cur.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: cur.getFullYear() === today.getFullYear() ? undefined : 'numeric' });
               return (
-                <div key={`sep-${msg.id}`} className="flex items-center gap-3">
-                  <div className="flex-1 h-px bg-border" />
-                  <span className="text-[11px] text-muted-foreground px-3 py-1 glass rounded-full">{label}</span>
-                  <div className="flex-1 h-px bg-border" />
+                <div key={`sep-${msg.id}`} className="flex items-center justify-center my-1">
+                  <span className="vt-chat-pill text-[12px] font-medium tracking-wide px-4 py-1.5 rounded-full">{label}</span>
                 </div>
               );
             })();
@@ -2556,11 +2567,11 @@ export default function ChatWindowPanel() {
                 <React.Fragment key={msg.id}>
                   {__sep}
                   <div className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                    <div className="glass border border-border rounded-2xl px-4 py-2.5 text-sm flex items-center gap-3">
-                      {kind === 'video' ? <Video size={16} className="text-vt-green" /> : <Phone size={16} className="text-vt-green" />}
+                    <div className="vt-bubble-in rounded-2xl px-4 py-2.5 text-sm flex items-center gap-3">
+                      {kind === 'video' ? <Video size={16} className="text-green-300" /> : <Phone size={16} className="text-green-300" />}
                       <div className="flex flex-col">
-                        <span className="text-foreground/90">{kind === 'video' ? 'Video' : 'Voice'} call · {mm}:{ss}</span>
-                        <span className="text-[10px] text-muted-foreground">{msg.time}</span>
+                        <span className="text-white/90">{kind === 'video' ? 'Video' : 'Voice'} call · {mm}:{ss}</span>
+                        <span className="text-[10px] text-white/50">{msg.time}</span>
                       </div>
                     </div>
                   </div>
@@ -2573,18 +2584,18 @@ export default function ChatWindowPanel() {
                 <React.Fragment key={msg.id}>
                   {__sep}
                   <div className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                  <div className="glass border border-border rounded-2xl px-4 py-2.5 text-sm flex items-center gap-3">
-                    <PhoneOff size={16} className="text-red-400" />
+                  <div className="vt-bubble-in rounded-2xl px-4 py-2.5 text-sm flex items-center gap-3">
+                    <PhoneOff size={16} className="text-red-300" />
                     <div className="flex flex-col">
-                      <span className="text-red-400 font-medium">
+                      <span className="text-red-300 font-medium">
                         {isMe ? `Missed ${callKind} call` : `You missed a ${callKind} call`}
                       </span>
-                      <span className="text-[10px] text-muted-foreground">{msg.time}</span>
+                      <span className="text-[10px] text-white/50">{msg.time}</span>
                     </div>
                     {isMe && contact?.userId && (
                       <button
                         onClick={() => startCall({ calleeId: contact.userId!, chatId: selectedChatId, type: callKind as 'voice'|'video', calleeName: contact.name, calleeAvatar: contact.avatarUrl || contact.avatar })}
-                        className="ml-2 px-3 py-1 rounded-lg bg-primary/15 text-primary text-xs font-semibold hover:bg-primary/25 transition-all">
+                        className="ml-2 px-3 py-1 rounded-lg bg-white/15 text-white text-xs font-semibold hover:bg-white/25 transition-all">
                         Call back
                       </button>
                     )}
@@ -2601,7 +2612,7 @@ export default function ChatWindowPanel() {
                 <React.Fragment key={msg.id}>
                   {__sep}
                   <div className="flex justify-center">
-                    <span className="text-[11px] text-muted-foreground px-3 py-1 glass rounded-full border border-border/60 text-center max-w-[80%]">
+                    <span className="vt-chat-pill text-[11px] px-3 py-1 rounded-full text-center max-w-[80%]">
                       {safeText}
                     </span>
                   </div>
@@ -2668,12 +2679,12 @@ export default function ChatWindowPanel() {
                         // Sticker-style: no bubble, just the big emoji.
                         return 'px-1 py-1 text-sm leading-relaxed bg-transparent';
                       }
-                      return `px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                      return `px-4 py-2.5 rounded-[20px] text-[15px] leading-snug animate-fade-in ${
                         msg.deletedForEveryone
-                          ? 'glass border border-dashed border-border text-muted-foreground italic'
+                          ? 'vt-bubble-ghost italic'
                           : isMe
-                            ? 'gradient-primary text-white rounded-br-sm'
-                            : 'glass border border-border text-foreground rounded-bl-sm'
+                            ? 'vt-bubble-out rounded-br-none'
+                            : 'vt-bubble-in rounded-tl-none'
                       }`;
                     })()}
                   >
@@ -2713,10 +2724,10 @@ export default function ChatWindowPanel() {
                             />
                           : displayText}
                         {msg.editedAt && !msg.deletedForEveryone && (
-                          <span className={`ml-1 text-[10px] italic ${isMe ? 'text-white/60' : 'text-muted-foreground'}`}>(edited)</span>
+                          <span className="ml-1 text-[10px] italic text-white/60">(edited)</span>
                         )}
                         {msg.encrypted && (
-                          <ShieldCheck size={9} className={`inline ml-1 ${isMe ? 'text-white/60' : 'text-vt-green/60'}`} />
+                          <ShieldCheck size={9} className="inline ml-1 text-white/60" />
                         )}
                       </>
                     )}
@@ -2728,7 +2739,7 @@ export default function ChatWindowPanel() {
                          const vtMatch = /^:vt:([a-z0-9_-]+):$/.exec(r);
                          const vt = vtMatch ? VIBTRIBE_EMOJI_MAP[vtMatch[1]] : null;
                          return (
-                           <span key={i} className="inline-flex items-center bg-muted rounded-full px-1.5 py-0.5 text-xs">
+                           <span key={i} className="vt-reaction-badge inline-flex items-center rounded-full px-1.5 py-0.5 text-xs">
                              {vt ? (
                                <img src={vt.url} alt={vt.name} className="w-4 h-4 select-none" draggable={false} loading="lazy" decoding="async" />
                              ) : (
@@ -2741,16 +2752,16 @@ export default function ChatWindowPanel() {
                    )}
 
                   <div className={`flex items-center gap-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
-                    <span className="text-[10px] text-muted-foreground">{msg.time}</span>
+                    <span className="text-[10px] text-white/45">{msg.time}</span>
                     {isMe && (
-                      msg.status === 'read' ? <CheckCheck size={12} className="text-primary" /> :
-                      msg.status === 'delivered' ? <CheckCheck size={12} className="text-muted-foreground" /> :
-                      <Check size={12} className="text-muted-foreground" />
+                      msg.status === 'read' ? <CheckCheck size={12} className="text-cyan-300" /> :
+                      msg.status === 'delivered' ? <CheckCheck size={12} className="text-white/50" /> :
+                      <Check size={12} className="text-white/50" />
                     )}
                   </div>
 
                   {hoveredMsg === msg.id && (
-                    <div className={`absolute -top-9 ${isMe ? 'right-0' : 'left-0'} flex items-center gap-1 glass-strong rounded-xl border border-border px-2 py-1 float-up z-10 shadow-card`}>
+                    <div className={`absolute -top-9 ${isMe ? 'right-0' : 'left-0'} vt-reaction-badge flex items-center gap-1 rounded-full px-2 py-1 float-up z-10`}>
                       {['❤️','😂','😮','😢','👍'].map(emoji => (
                         <button
                           key={emoji}
@@ -2762,7 +2773,7 @@ export default function ChatWindowPanel() {
                       ))}
                       <button
                         onClick={() => setReactionPickerMsg(msg)}
-                        className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-muted hover:bg-muted/80 transition-colors"
+                        className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-white/15 hover:bg-white/25 transition-colors"
                         type="button"
                         aria-label="More reactions"
                       >
@@ -2771,7 +2782,7 @@ export default function ChatWindowPanel() {
                       {isMe && (
                         <button
                           onClick={() => deleteMessage(msg.id)}
-                          className="p-1 text-red-400 hover:text-red-300 transition-colors"
+                          className="p-1 text-red-300 hover:text-red-200 transition-colors"
                         >
                           <Trash2 size={12} />
                         </button>
@@ -3038,17 +3049,18 @@ export default function ChatWindowPanel() {
       )}
 
       {/* Input Area */}
-      {(!trustLock.enabled || trustLockProtected === true) && <div className="glass border-t border-border px-2 py-2 flex items-center gap-1 flex-shrink-0 w-full max-w-full overflow-hidden">
+      {(!trustLock.enabled || trustLockProtected === true) && <div className="relative z-30 px-3 pb-3 pt-2 flex-shrink-0 w-full max-w-full">
+      <div className="vt-chat-composer rounded-[28px] px-2 py-1.5 flex items-end gap-1 w-full max-w-full overflow-hidden">
         <button
           onClick={(e) => { e.stopPropagation(); setShowAttachMenu(v => { const next = !v; if (next) { setShowEmoji(false); setShowMoreMenu(false); setShowDisappearMenu(false); } return next; }); }}
-          className={`p-2 rounded-xl transition-all flex-shrink-0 ${showAttachMenu ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
+          className={`p-2 rounded-full transition-all flex-shrink-0 self-center ${showAttachMenu ? 'text-white bg-white/20' : 'vt-chat-icon-btn hover:bg-white/10'}`}
           aria-label="Attach"
         >
           <Paperclip size={20} />
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); setShowEmoji(v => { const next = !v; if (next) { setShowAttachMenu(false); setShowMoreMenu(false); setShowDisappearMenu(false); } return next; }); }}
-          className={`p-2 rounded-xl transition-all flex-shrink-0 ${showEmoji ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
+          className={`p-2 rounded-full transition-all flex-shrink-0 self-center ${showEmoji ? 'text-white bg-white/20' : 'vt-chat-icon-btn hover:bg-white/10'}`}
           aria-label="Emoji"
         >
           <Smile size={20} />
@@ -3096,7 +3108,7 @@ export default function ChatWindowPanel() {
             }
           }}
           placeholder={e2eEnabled ? t('chat.typeEncrypted') : t('chat.type')}
-          className="flex-1 min-w-0 bg-input border border-border rounded-2xl px-3 py-2.5 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all resize-none leading-5 max-h-[140px] overflow-y-auto"
+          className="flex-1 min-w-0 self-center bg-transparent border-0 px-2 py-2.5 text-[15px] text-white placeholder-white/40 focus:outline-none resize-none leading-5 max-h-[140px] overflow-y-auto"
           style={{ height: 40 }}
         />
         <button
@@ -3106,11 +3118,12 @@ export default function ChatWindowPanel() {
             if (ta) requestAnimationFrame(() => { ta.style.height = '40px'; });
           }}
           disabled={!inputText.trim() && pendingAttachments.length === 0}
-          className="p-2.5 gradient-primary rounded-xl text-white hover:opacity-90 transition-all glow-primary flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="vt-chat-send w-11 h-11 self-center rounded-full flex items-center justify-center hover:opacity-95 active:scale-90 transition-all flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
           aria-label="Send"
         >
           <Send size={18} />
         </button>
+      </div>
       </div>}
 
       {secureModalOpen && (
