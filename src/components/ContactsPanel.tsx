@@ -33,6 +33,7 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
   const [loading, setLoading] = useState(false);
   const [inviteTarget, setInviteTarget] = useState<Contact | null>(null);
   const [search, setSearch] = useState('');
+  const [unsupportedNote, setUnsupportedNote] = useState(false);
   const { user } = useAuth();
   const supabase = createClient();
 
