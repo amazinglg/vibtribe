@@ -3247,21 +3247,51 @@ export default function ChatWindowPanel() {
           disabled: trustLock.enabled, hint: trustLock.enabled ? 'Trust Lock' : undefined,
           onClick: async () => {
             if (trustLock.enabled) return;
-            try { await navigator.clipboard.writeText((actionMsg?.text || '').toString()); toast.success('Copied to clipboard'); }
-            catch { toast.error('Copy failed'); }
+            const raw = (actionMsg?.text || '').toString();
             setActionMsg(null);
+            if (isMediaRaw(raw)) {
+              const id = toast.loading('Copying media…');
+              try {
+                const att = await decryptMediaFromMessage(raw);
+                if (!att) throw new Error('Unsupported media');
+                if (att.type === 'image') {
+                  await copyImageToClipboard(att.blob, { name: att.name, mime: att.mime, trustLocked: trustLock.enabled });
+                  toast.success('Image copied — paste it into any chat', { id });
+                } else {
+                  await saveMedia(att.blob, { name: att.name, mime: att.mime });
+                  toast.success('Only images can be copied — saved to your device instead', { id });
+                }
+              } catch (e: any) {
+                toast.error(e?.name === 'TrustLockError' ? 'Blocked by Trust Lock' : (e?.message || 'Copy failed'), { id });
+              }
+              return;
+            }
+            try { await navigator.clipboard.writeText(raw); toast.success('Copied to clipboard'); }
+            catch { toast.error('Copy failed'); }
           },
         });
         items.push({
           key: 'forward', label: 'Forward', icon: '↪️', gradient: 'from-emerald-400 to-teal-500',
           disabled: trustLock.enabled, hint: trustLock.enabled ? 'Trust Lock' : undefined,
-          onClick: () => {
+          onClick: async () => {
             if (trustLock.enabled) return;
             const raw = (actionMsg?.text || '').toString();
             setActionMsg(null);
-            if (!raw || raw.startsWith('__media__:') || raw.startsWith('[IMAGE:') || raw.startsWith('[FILE:')) {
-              toast.error('Forwarding media is not supported yet'); return;
+            if (!raw) return;
+            if (isMediaRaw(raw)) {
+              const id = toast.loading('Preparing media…');
+              try {
+                const att = await decryptMediaFromMessage(raw);
+                if (!att) throw new Error('Unsupported media');
+                toast.dismiss(id);
+                setForwardAttachments([att]);
+                setForwardTexts([]);
+              } catch (e: any) {
+                toast.error(e?.message || 'Could not prepare this media', { id });
+              }
+              return;
             }
+            setForwardAttachments([]);
             setForwardTexts([raw]);
           },
         });
