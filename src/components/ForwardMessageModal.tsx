@@ -269,7 +269,7 @@ export default function ForwardMessageModal({ isOpen, onClose, messages, attachm
         <div className="px-3 py-2 border-b border-border">
           <div className="flex items-center gap-2 bg-muted/40 rounded-lg px-3 py-2">
             <Search size={14} className="text-muted-foreground" />
-            <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search recent chats…" className="flex-1 bg-transparent text-sm outline-none text-foreground" />
+            <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search chats & contacts…" className="flex-1 bg-transparent text-sm outline-none text-foreground" />
           </div>
         </div>
         <div className="flex-1 overflow-y-auto">
