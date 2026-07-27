@@ -149,10 +149,30 @@ export default function ForwardMessageModal({ isOpen, onClose, messages, attachm
     setSending(true);
     let okCount = 0;
     let failCount = 0;
-    for (const chatId of Array.from(selected)) {
-      const tgt = targets.find(t => t.chatId === chatId);
+    for (const key of Array.from(selected)) {
+      const tgt = targets.find(t => t.key === key);
       if (!tgt) continue;
       try {
+        // Lazily create the 1:1 conversation for saved contacts with no chat.
+        let chatId = tgt.chatId;
+        if (!chatId && tgt.otherUserId) {
+          const { data: existing } = await supabase
+            .from('chats')
+            .select('id')
+            .or(`and(participant_one.eq.${user.id},participant_two.eq.${tgt.otherUserId}),and(participant_one.eq.${tgt.otherUserId},participant_two.eq.${user.id})`)
+            .maybeSingle();
+          if (existing?.id) chatId = existing.id;
+          else {
+            const { data: created, error: createErr } = await supabase
+              .from('chats')
+              .insert({ participant_one: user.id, participant_two: tgt.otherUserId, chat_type: 'normal' })
+              .select('id')
+              .single();
+            if (createErr || !created?.id) { failCount++; continue; }
+            chatId = created.id;
+          }
+        }
+        if (!chatId) { failCount++; continue; }
         let members: GroupMember[] = [];
         let otherPk: string | null = null;
         if (tgt.isGroup) {
