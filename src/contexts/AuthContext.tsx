@@ -315,6 +315,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       clearInterval((window as any).__forceLogoutInterval);
     }
     stopSessionHeartbeat();
+    // Drop cached signed profile-photo URLs so the next user can't reuse them.
+    try {
+      const m = await import('@/lib/profile-photo-url');
+      m.clearProfilePhotoUrlCache();
+    } catch {}
     // Clear per-session encryption unlock so the next login re-prompts for the PIN.
     try {
       if (user?.id) {
