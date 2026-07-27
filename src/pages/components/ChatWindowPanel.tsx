@@ -1775,6 +1775,8 @@ export default function ChatWindowPanel() {
     try {
       const { error } = await supabase.rpc('delete_message_for_me', { _msg_id: msgId });
       if (error) throw error;
+      // Refresh the inbox so the deleted message stops showing as the preview.
+      window.dispatchEvent(new CustomEvent('vt-message-sent'));
     } catch (e: any) {
       toast.error(e?.message || 'Could not delete');
     }
