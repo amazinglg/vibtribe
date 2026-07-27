@@ -349,6 +349,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
 
   const applyTheme = (theme: AppTheme) => {
     const root = document.documentElement;
+    root.setAttribute('data-vt-theme', theme.id);
     Object.entries(theme.vars).forEach(([key, value]) => {
       root.style.setProperty(key, value);
     });
