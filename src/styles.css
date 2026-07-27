@@ -701,16 +701,16 @@ html[data-trust-lock-recording="true"] body {
 html[data-vt-theme] .vt-chat-aurora {
   --vt-chat-bg: var(--background);
   --vt-chat-fg: var(--foreground);
-  --vt-chat-wave-from: var(--accent);
-  --vt-chat-wave-to: var(--primary);
+  --vt-chat-wave-from: var(--pink, var(--primary));
+  --vt-chat-wave-to: var(--violet, var(--primary));
   --vt-chat-menu-bg: var(--card);
   --vt-chat-menu-fg: var(--card-foreground);
   --vt-chat-menu-border: var(--border);
   --vt-chat-menu-hover: color-mix(in srgb, var(--foreground) 8%, transparent);
   color: var(--foreground);
 }
-html[data-vt-theme] .vt-chat-aurora::before { background: color-mix(in srgb, var(--accent) 30%, transparent); }
-html[data-vt-theme] .vt-chat-aurora::after { background: color-mix(in srgb, var(--primary) 24%, transparent); }
+html[data-vt-theme] .vt-chat-aurora::before { background: color-mix(in srgb, var(--pink, var(--primary)) 30%, transparent); }
+html[data-vt-theme] .vt-chat-aurora::after { background: color-mix(in srgb, var(--violet, var(--primary)) 24%, transparent); }
 html[data-vt-theme] .vt-chat-blob-c { background: color-mix(in srgb, var(--violet, var(--primary)) 20%, transparent); }
 html[data-vt-theme] .vt-bubble-in {
   background: var(--card);
