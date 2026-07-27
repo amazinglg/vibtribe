@@ -712,15 +712,7 @@ html[data-vt-theme] .vt-chat-aurora {
 html[data-vt-theme] .vt-chat-aurora::before { background: color-mix(in srgb, var(--pink, var(--primary)) 30%, transparent); }
 html[data-vt-theme] .vt-chat-aurora::after { background: color-mix(in srgb, var(--violet, var(--primary)) 24%, transparent); }
 html[data-vt-theme] .vt-chat-blob-c { background: color-mix(in srgb, var(--violet, var(--primary)) 20%, transparent); }
-html[data-vt-theme] .vt-bubble-in {
-  background: var(--card);
-  border-color: var(--border);
-  color: var(--card-foreground);
-}
-html[data-vt-theme] .vt-bubble-out {
-  background: linear-gradient(to right, var(--accent), var(--primary));
-  color: var(--primary-foreground);
-}
+/* Message bubbles stay purple across every theme (product decision) */
 html[data-vt-theme] .vt-bubble-ghost {
   background: color-mix(in srgb, var(--foreground) 6%, transparent);
   border-color: var(--border);
