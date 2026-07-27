@@ -2679,12 +2679,12 @@ export default function ChatWindowPanel() {
                         // Sticker-style: no bubble, just the big emoji.
                         return 'px-1 py-1 text-sm leading-relaxed bg-transparent';
                       }
-                      return `px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                      return `px-4 py-2.5 rounded-[20px] text-[15px] leading-snug animate-fade-in ${
                         msg.deletedForEveryone
-                          ? 'glass border border-dashed border-border text-muted-foreground italic'
+                          ? 'vt-bubble-ghost italic'
                           : isMe
-                            ? 'gradient-primary text-white rounded-br-sm'
-                            : 'glass border border-border text-foreground rounded-bl-sm'
+                            ? 'vt-bubble-out rounded-br-none'
+                            : 'vt-bubble-in rounded-tl-none'
                       }`;
                     })()}
                   >
@@ -2724,10 +2724,10 @@ export default function ChatWindowPanel() {
                             />
                           : displayText}
                         {msg.editedAt && !msg.deletedForEveryone && (
-                          <span className={`ml-1 text-[10px] italic ${isMe ? 'text-white/60' : 'text-muted-foreground'}`}>(edited)</span>
+                          <span className="ml-1 text-[10px] italic text-white/60">(edited)</span>
                         )}
                         {msg.encrypted && (
-                          <ShieldCheck size={9} className={`inline ml-1 ${isMe ? 'text-white/60' : 'text-vt-green/60'}`} />
+                          <ShieldCheck size={9} className="inline ml-1 text-white/60" />
                         )}
                       </>
                     )}
@@ -2739,7 +2739,7 @@ export default function ChatWindowPanel() {
                          const vtMatch = /^:vt:([a-z0-9_-]+):$/.exec(r);
                          const vt = vtMatch ? VIBTRIBE_EMOJI_MAP[vtMatch[1]] : null;
                          return (
-                           <span key={i} className="inline-flex items-center bg-muted rounded-full px-1.5 py-0.5 text-xs">
+                           <span key={i} className="vt-reaction-badge inline-flex items-center rounded-full px-1.5 py-0.5 text-xs">
                              {vt ? (
                                <img src={vt.url} alt={vt.name} className="w-4 h-4 select-none" draggable={false} loading="lazy" decoding="async" />
                              ) : (
@@ -2752,16 +2752,16 @@ export default function ChatWindowPanel() {
                    )}
 
                   <div className={`flex items-center gap-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
-                    <span className="text-[10px] text-muted-foreground">{msg.time}</span>
+                    <span className="text-[10px] text-white/45">{msg.time}</span>
                     {isMe && (
-                      msg.status === 'read' ? <CheckCheck size={12} className="text-primary" /> :
-                      msg.status === 'delivered' ? <CheckCheck size={12} className="text-muted-foreground" /> :
-                      <Check size={12} className="text-muted-foreground" />
+                      msg.status === 'read' ? <CheckCheck size={12} className="text-cyan-300" /> :
+                      msg.status === 'delivered' ? <CheckCheck size={12} className="text-white/50" /> :
+                      <Check size={12} className="text-white/50" />
                     )}
                   </div>
 
                   {hoveredMsg === msg.id && (
-                    <div className={`absolute -top-9 ${isMe ? 'right-0' : 'left-0'} flex items-center gap-1 glass-strong rounded-xl border border-border px-2 py-1 float-up z-10 shadow-card`}>
+                    <div className={`absolute -top-9 ${isMe ? 'right-0' : 'left-0'} vt-reaction-badge flex items-center gap-1 rounded-full px-2 py-1 float-up z-10`}>
                       {['❤️','😂','😮','😢','👍'].map(emoji => (
                         <button
                           key={emoji}
@@ -2773,7 +2773,7 @@ export default function ChatWindowPanel() {
                       ))}
                       <button
                         onClick={() => setReactionPickerMsg(msg)}
-                        className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-muted hover:bg-muted/80 transition-colors"
+                        className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-white/15 hover:bg-white/25 transition-colors"
                         type="button"
                         aria-label="More reactions"
                       >
@@ -2782,7 +2782,7 @@ export default function ChatWindowPanel() {
                       {isMe && (
                         <button
                           onClick={() => deleteMessage(msg.id)}
-                          className="p-1 text-red-400 hover:text-red-300 transition-colors"
+                          className="p-1 text-red-300 hover:text-red-200 transition-colors"
                         >
                           <Trash2 size={12} />
                         </button>
