@@ -12,6 +12,16 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 public class VtTrustLockPlugin extends Plugin {
     private static final String TAG = "VibTribeTrustLock";
     private boolean secureEnabled = false;
+    /**
+     * Process-wide Trust Lock state so other native plugins (media save /
+     * share / clipboard) can hard-block exfiltration even if the web layer
+     * were bypassed.
+     */
+    private static volatile boolean SECURE_ACTIVE = false;
+
+    public static boolean isSecureActive() {
+        return SECURE_ACTIVE;
+    }
 
     @PluginMethod
     public void enable(PluginCall call) {
@@ -25,6 +35,7 @@ public class VtTrustLockPlugin extends Plugin {
                 );
                 boolean active = isWindowSecure();
                 if (!active) secureEnabled = false;
+                SECURE_ACTIVE = active;
                 JSObject ret = new JSObject();
                 ret.put("enabled", active);
                 Log.i(TAG, "VtTrustLockPlugin.enable() returning { enabled: " + active + " }");
@@ -44,6 +55,7 @@ public class VtTrustLockPlugin extends Plugin {
                 secureEnabled = false;
                 getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
                 boolean active = isWindowSecure();
+                SECURE_ACTIVE = active;
                 JSObject ret = new JSObject();
                 ret.put("enabled", active);
                 Log.i(TAG, "VtTrustLockPlugin.disable() returning { enabled: " + active + " }");
@@ -60,6 +72,7 @@ public class VtTrustLockPlugin extends Plugin {
         getBridge().executeOnMainThread(() -> {
             Log.i(TAG, "VtTrustLockPlugin.isActive() called");
             boolean active = isWindowSecure();
+            SECURE_ACTIVE = active;
             JSObject ret = new JSObject();
             ret.put("active", active);
             Log.i(TAG, "VtTrustLockPlugin.isActive() returning { active: " + active + " }");

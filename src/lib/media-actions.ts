@@ -3,6 +3,7 @@
 // error the caller can surface.
 
 import { isNativeWrapper } from '@/lib/native-bridge';
+import { VtMedia, hasNativeMedia, isTrustLockRejection } from '@/lib/vt-media';
 
 export class TrustLockError extends Error {
   constructor() {
@@ -65,6 +66,19 @@ export async function saveMedia(
   const blob = await resolveBlob(source);
   const filename = ensureName(opts.name, opts.mime);
 
+  // Preferred Android path: MediaStore insert via the native plugin so the
+  // file actually lands in the phone's Gallery / Downloads.
+  if (hasNativeMedia()) {
+    try {
+      const base64 = await blobToBase64(blob);
+      const res = await VtMedia.save({ data: base64, mime: opts.mime || blob.type || 'application/octet-stream', name: filename });
+      return { location: res?.location === 'downloads' ? 'downloads' : 'gallery' };
+    } catch (e) {
+      if (isTrustLockRejection(e)) throw new TrustLockError();
+      console.warn('[VibTribe] VtMedia.save failed, falling back', e);
+    }
+  }
+
   if (isNativeWrapper()) {
     try {
       const { Filesystem, Directory } = await import('@capacitor/filesystem');
@@ -124,6 +138,22 @@ export async function shareMedia(
   const blob = await resolveBlob(source);
   const filename = ensureName(opts.name, opts.mime);
 
+  if (hasNativeMedia()) {
+    try {
+      const base64 = await blobToBase64(blob);
+      await VtMedia.share({
+        data: base64,
+        mime: opts.mime || blob.type || 'application/octet-stream',
+        name: filename,
+        text: opts.text,
+      });
+      return;
+    } catch (e) {
+      if (isTrustLockRejection(e)) throw new TrustLockError();
+      console.warn('[VibTribe] VtMedia.share failed, falling back', e);
+    }
+  }
+
   if (isNativeWrapper()) {
     try {
       const { Filesystem, Directory } = await import('@capacitor/filesystem');
@@ -161,4 +191,61 @@ export async function shareMedia(
 
   await saveMedia(blob, { name: opts.name, mime: opts.mime });
   throw new Error('Sharing is not supported on this browser — file was saved instead.');
+}
+
+/**
+ * Copy an actual image (bitmap, not a URL) to the system clipboard so it can
+ * be pasted into another chat or app. Throws TrustLockError when blocked.
+ */
+export async function copyImageToClipboard(
+  source: Blob | string,
+  opts: { name?: string; mime?: string; trustLocked?: boolean },
+): Promise<void> {
+  if (opts.trustLocked) throw new TrustLockError();
+  const blob = await resolveBlob(source);
+  const mime = opts.mime || blob.type || 'image/png';
+  const filename = ensureName(opts.name, mime);
+
+  if (hasNativeMedia()) {
+    try {
+      const base64 = await blobToBase64(blob);
+      await VtMedia.copyImage({ data: base64, mime, name: filename });
+      return;
+    } catch (e) {
+      if (isTrustLockRejection(e)) throw new TrustLockError();
+      console.warn('[VibTribe] VtMedia.copyImage failed, falling back', e);
+    }
+  }
+
+  const anyNav = navigator as any;
+  if (typeof ClipboardItem !== 'undefined' && anyNav?.clipboard?.write) {
+    // Browsers only reliably accept image/png on the clipboard.
+    const png = mime === 'image/png' ? blob : await toPngBlob(blob);
+    await anyNav.clipboard.write([new ClipboardItem({ 'image/png': png })]);
+    return;
+  }
+  throw new Error('Copying images is not supported on this device');
+}
+
+async function toPngBlob(blob: Blob): Promise<Blob> {
+  const bitmapUrl = URL.createObjectURL(blob);
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const el = new Image();
+      el.onload = () => resolve(el);
+      el.onerror = () => reject(new Error('Could not decode image'));
+      el.src = bitmapUrl;
+    });
+    const canvas = document.createElement('canvas');
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Canvas unavailable');
+    ctx.drawImage(img, 0, 0);
+    return await new Promise<Blob>((resolve, reject) =>
+      canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('Could not encode image'))), 'image/png'),
+    );
+  } finally {
+    URL.revokeObjectURL(bitmapUrl);
+  }
 }

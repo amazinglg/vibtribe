@@ -27,6 +27,7 @@ import TribeDetailsSheet from '@/components/TribeDetailsSheet';
 import EncryptionPinModal from '@/components/EncryptionPinModal';
 import { TrustLockProvider } from '@/contexts/TrustLockContext';
 import ForwardMessageModal from '@/components/ForwardMessageModal';
+import { copyImageToClipboard, saveMedia } from '@/lib/media-actions';
 import { appConfirm } from '@/components/ui/AppDialog';
 import ReportContentSheet, { type ReportType } from '@/components/ReportContentSheet';
 
@@ -433,6 +434,9 @@ export default function ChatWindowPanel() {
     snapshot?: any;
   }>(null);
   const [forwardTexts, setForwardTexts] = useState<string[] | null>(null);
+  const [forwardAttachments, setForwardAttachments] = useState<Array<{
+    blob: Blob; mime: string; name: string; type: 'image' | 'video' | 'audio' | 'file';
+  }>>([]);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editingMsg, setEditingMsg] = useState<Message | null>(null);
@@ -1597,6 +1601,61 @@ export default function ChatWindowPanel() {
       });
     }
   };
+
+  /**
+   * Decrypt a media message back into a real Blob so it can be forwarded,
+   * copied to the clipboard, saved or shared.
+   */
+  const decryptMediaFromMessage = async (raw: string): Promise<{
+    blob: Blob; mime: string; name: string; type: 'image' | 'video' | 'audio' | 'file';
+  } | null> => {
+    if (!raw) return null;
+
+    // Encrypted envelope
+    if (raw.startsWith('__media__:')) {
+      let env: any = null;
+      try { env = JSON.parse(raw.slice('__media__:'.length)); } catch { return null; }
+      if (!env?.url) return null;
+      const signed = await signChatMediaUrl(env.url);
+      const res = await fetch(signed);
+      if (!res.ok) throw new Error('Could not load media');
+      const cipher = await res.arrayBuffer();
+      const plain = env.k
+        ? await decryptBytesWithKey(cipher, env.k)
+        : contactPubKeyRef.current
+          ? await decryptBytes(cipher, contactPubKeyRef.current)
+          : null;
+      if (!plain) throw new Error('Could not decrypt media');
+      const mime = env.mime || 'application/octet-stream';
+      const type = (['image', 'video', 'audio', 'file'].includes(env.type) ? env.type : 'file') as any;
+      return { blob: new Blob([plain], { type: mime }), mime, name: env.name || 'vibtribe-media', type };
+    }
+
+    // Legacy plaintext markers
+    let url = '';
+    let name = 'vibtribe-media';
+    let type: 'image' | 'file' = 'file';
+    if (raw.startsWith('[IMAGE:')) {
+      url = raw.replace('[IMAGE:', '').replace(/\]$/, '');
+      type = 'image';
+      name = 'image';
+    } else if (raw.startsWith('[FILE:')) {
+      const body = raw.replace('[FILE:', '').replace(/\]$/, '');
+      const idx = body.indexOf(':');
+      name = idx > 0 ? body.slice(0, idx) : 'file';
+      url = idx > 0 ? body.slice(idx + 1) : body;
+    } else {
+      return null;
+    }
+    const signed = await signChatMediaUrl(url);
+    const res = await fetch(signed);
+    if (!res.ok) throw new Error('Could not load media');
+    const blob = await res.blob();
+    return { blob, mime: blob.type || 'application/octet-stream', name, type };
+  };
+
+  const isMediaRaw = (raw: string) =>
+    !!raw && (raw.startsWith('__media__:') || raw.startsWith('[IMAGE:') || raw.startsWith('[FILE:'));
 
   // Pick from gallery. On native we use the Capacitor Camera plugin (it
   // prompts for READ_MEDIA_IMAGES itself). On web we synchronously click the
@@ -3011,6 +3070,21 @@ export default function ChatWindowPanel() {
             ta.style.height = 'auto';
             ta.style.height = Math.min(ta.scrollHeight, 140) + 'px';
           }}
+          onPaste={e => {
+            // Paste an image copied from another chat / app straight into the
+            // composer instead of dropping a useless URL string.
+            const items = Array.from(e.clipboardData?.items || []);
+            const files = items
+              .filter(it => it.kind === 'file' && it.type.startsWith('image/'))
+              .map(it => it.getAsFile())
+              .filter(Boolean) as File[];
+            if (files.length === 0) return;
+            e.preventDefault();
+            queueAttachments(files.map(f => ({
+              file: f.name ? f : new File([f], `pasted-image.${(f.type.split('/')[1] || 'png')}`, { type: f.type }),
+              type: 'image' as const,
+            })));
+          }}
           onKeyDown={e => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
@@ -3192,21 +3266,51 @@ export default function ChatWindowPanel() {
           disabled: trustLock.enabled, hint: trustLock.enabled ? 'Trust Lock' : undefined,
           onClick: async () => {
             if (trustLock.enabled) return;
-            try { await navigator.clipboard.writeText((actionMsg?.text || '').toString()); toast.success('Copied to clipboard'); }
-            catch { toast.error('Copy failed'); }
+            const raw = (actionMsg?.text || '').toString();
             setActionMsg(null);
+            if (isMediaRaw(raw)) {
+              const id = toast.loading('Copying media…');
+              try {
+                const att = await decryptMediaFromMessage(raw);
+                if (!att) throw new Error('Unsupported media');
+                if (att.type === 'image') {
+                  await copyImageToClipboard(att.blob, { name: att.name, mime: att.mime, trustLocked: trustLock.enabled });
+                  toast.success('Image copied — paste it into any chat', { id });
+                } else {
+                  await saveMedia(att.blob, { name: att.name, mime: att.mime });
+                  toast.success('Only images can be copied — saved to your device instead', { id });
+                }
+              } catch (e: any) {
+                toast.error(e?.name === 'TrustLockError' ? 'Blocked by Trust Lock' : (e?.message || 'Copy failed'), { id });
+              }
+              return;
+            }
+            try { await navigator.clipboard.writeText(raw); toast.success('Copied to clipboard'); }
+            catch { toast.error('Copy failed'); }
           },
         });
         items.push({
           key: 'forward', label: 'Forward', icon: '↪️', gradient: 'from-emerald-400 to-teal-500',
           disabled: trustLock.enabled, hint: trustLock.enabled ? 'Trust Lock' : undefined,
-          onClick: () => {
+          onClick: async () => {
             if (trustLock.enabled) return;
             const raw = (actionMsg?.text || '').toString();
             setActionMsg(null);
-            if (!raw || raw.startsWith('__media__:') || raw.startsWith('[IMAGE:') || raw.startsWith('[FILE:')) {
-              toast.error('Forwarding media is not supported yet'); return;
+            if (!raw) return;
+            if (isMediaRaw(raw)) {
+              const id = toast.loading('Preparing media…');
+              try {
+                const att = await decryptMediaFromMessage(raw);
+                if (!att) throw new Error('Unsupported media');
+                toast.dismiss(id);
+                setForwardAttachments([att]);
+                setForwardTexts([]);
+              } catch (e: any) {
+                toast.error(e?.message || 'Could not prepare this media', { id });
+              }
+              return;
             }
+            setForwardAttachments([]);
             setForwardTexts([raw]);
           },
         });
@@ -3687,9 +3791,10 @@ export default function ChatWindowPanel() {
       )}
     </div>
     <ForwardMessageModal
-      isOpen={!!forwardTexts}
+      isOpen={!!forwardTexts || forwardAttachments.length > 0}
       messages={forwardTexts || []}
-      onClose={() => setForwardTexts(null)}
+      attachments={forwardAttachments}
+      onClose={() => { setForwardTexts(null); setForwardAttachments([]); }}
     />
     {selectionMode && (
       <div className="fixed left-0 right-0 z-[1450] bg-card border-t border-border px-3 py-2 flex items-center gap-2 shadow-2xl" style={{ bottom: 'var(--mobile-bottom-nav-offset, 0px)' }}>
@@ -3698,18 +3803,42 @@ export default function ChatWindowPanel() {
         <button
           onClick={async () => {
             if (trustLock.enabled) { toast.error('Disabled by Trust Lock'); return; }
-            const texts = messages.filter(m => selectedIds.has(m.id)).map(m => m.text || '').filter(t => t && !t.startsWith('__media__:') && !t.startsWith('[IMAGE:') && !t.startsWith('[FILE:'));
-            if (texts.length === 0) { toast.error('No text messages selected'); return; }
+            const raws = messages.filter(m => selectedIds.has(m.id)).map(m => m.text || '').filter(Boolean);
+            const texts = raws.filter(t => !isMediaRaw(t));
+            const medias = raws.filter(isMediaRaw);
+            if (texts.length === 0 && medias.length === 1) {
+              const id = toast.loading('Copying image…');
+              try {
+                const att = await decryptMediaFromMessage(medias[0]);
+                if (!att || att.type !== 'image') throw new Error('Only images can be copied');
+                await copyImageToClipboard(att.blob, { name: att.name, mime: att.mime, trustLocked: trustLock.enabled });
+                toast.success('Image copied', { id });
+              } catch (e: any) { toast.error(e?.message || 'Copy failed', { id }); }
+              return;
+            }
+            if (texts.length === 0) { toast.error('Select a single image, or text messages, to copy'); return; }
             try { await navigator.clipboard.writeText(texts.join('\n\n')); toast.success('Copied'); } catch { toast.error('Copy failed'); }
           }}
           disabled={selectedIds.size === 0 || trustLock.enabled}
           className="px-3 py-1.5 rounded-lg text-xs bg-muted text-foreground disabled:opacity-40"
         >📋 Copy</button>
         <button
-          onClick={() => {
+          onClick={async () => {
             if (trustLock.enabled) { toast.error('Disabled by Trust Lock'); return; }
-            const texts = messages.filter(m => selectedIds.has(m.id)).map(m => m.text || '').filter(t => t && !t.startsWith('__media__:') && !t.startsWith('[IMAGE:') && !t.startsWith('[FILE:'));
-            if (texts.length === 0) { toast.error('Forwarding media is not supported yet'); return; }
+            const raws = messages.filter(m => selectedIds.has(m.id)).map(m => m.text || '').filter(Boolean);
+            if (raws.length === 0) return;
+            const texts = raws.filter(t => !isMediaRaw(t));
+            const medias = raws.filter(isMediaRaw);
+            let atts: any[] = [];
+            if (medias.length) {
+              const id = toast.loading('Preparing media…');
+              try {
+                atts = (await Promise.all(medias.map(m => decryptMediaFromMessage(m).catch(() => null)))).filter(Boolean);
+                toast.dismiss(id);
+                if (atts.length === 0 && texts.length === 0) { toast.error('Could not prepare the selected media'); return; }
+              } catch { toast.dismiss(id); }
+            }
+            setForwardAttachments(atts);
             setForwardTexts(texts);
             setSelectionMode(false);
             setSelectedIds(new Set());
