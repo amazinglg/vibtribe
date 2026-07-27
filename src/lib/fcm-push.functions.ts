@@ -121,6 +121,20 @@ export const sendCallPush = createServerFn({ method: 'POST' })
       }
     } catch {}
 
+    // `profile-photos` is a private bucket (visibility is enforced by storage
+    // RLS), so the raw stored URL won't load on the device. Hand the native
+    // incoming-call screen a short-lived signed URL instead.
+    if (callerAvatar && callerAvatar.includes('/profile-photos/')) {
+      try {
+        const tail = callerAvatar.split('/profile-photos/')[1] || '';
+        const path = decodeURIComponent(tail.split(/[?#]/)[0]);
+        const { data: signed } = await supabaseAdmin.storage
+          .from('profile-photos')
+          .createSignedUrl(path, 60 * 10);
+        callerAvatar = signed?.signedUrl || '';
+      } catch { callerAvatar = ''; }
+    }
+
     // Fetch all Android FCM tokens for callee
     const { data: tokens, error } = await supabaseAdmin
       .from('fcm_tokens')
