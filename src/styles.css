@@ -665,3 +665,84 @@ html[data-trust-lock-recording="true"] body {
   .vt-chat-aurora::after,
   .vt-chat-blob-c { animation: none !important; }
 }
+
+/* Chat sub-surfaces (attach menu, 3-dot menu, emoji panel, composer input) */
+.vt-chat-menu {
+  background: var(--vt-chat-menu-bg, rgba(20, 8, 40, 0.92));
+  backdrop-filter: blur(24px);
+  border: 1px solid var(--vt-chat-menu-border, rgba(255, 255, 255, 0.14));
+  color: var(--vt-chat-menu-fg, #fff);
+  box-shadow: 0 18px 40px -20px rgba(0, 0, 0, 0.85);
+}
+.vt-chat-menu-item {
+  color: var(--vt-chat-menu-fg, #fff);
+}
+.vt-chat-menu-item:hover {
+  background: var(--vt-chat-menu-hover, rgba(255, 255, 255, 0.10));
+}
+.vt-chat-menu-sub {
+  background: var(--vt-chat-menu-hover, rgba(255, 255, 255, 0.06));
+  border-top: 1px solid var(--vt-chat-menu-border, rgba(255, 255, 255, 0.14));
+  color: var(--vt-chat-menu-fg, #fff);
+}
+.vt-chat-icon-btn-active {
+  color: var(--vt-chat-menu-fg, #fff);
+  background: rgba(255, 255, 255, 0.2);
+}
+.vt-chat-input {
+  color: var(--vt-chat-fg, #fff);
+}
+.vt-chat-input::placeholder {
+  color: color-mix(in srgb, var(--vt-chat-fg, #fff) 45%, transparent);
+}
+
+/* Follow the theme picked in Profile → Themes. With no saved theme the
+   default Aurora Wave palette above stays in place. */
+html[data-vt-theme] .vt-chat-aurora {
+  --vt-chat-bg: var(--background);
+  --vt-chat-fg: var(--foreground);
+  --vt-chat-wave-from: var(--accent);
+  --vt-chat-wave-to: var(--primary);
+  --vt-chat-menu-bg: var(--card);
+  --vt-chat-menu-fg: var(--card-foreground);
+  --vt-chat-menu-border: var(--border);
+  --vt-chat-menu-hover: color-mix(in srgb, var(--foreground) 8%, transparent);
+  color: var(--foreground);
+}
+html[data-vt-theme] .vt-chat-aurora::before { background: color-mix(in srgb, var(--accent) 30%, transparent); }
+html[data-vt-theme] .vt-chat-aurora::after { background: color-mix(in srgb, var(--primary) 24%, transparent); }
+html[data-vt-theme] .vt-chat-blob-c { background: color-mix(in srgb, var(--violet, var(--primary)) 20%, transparent); }
+html[data-vt-theme] .vt-bubble-in {
+  background: var(--card);
+  border-color: var(--border);
+  color: var(--card-foreground);
+}
+html[data-vt-theme] .vt-bubble-out {
+  background: linear-gradient(to right, var(--accent), var(--primary));
+  color: var(--primary-foreground);
+}
+html[data-vt-theme] .vt-bubble-ghost {
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+  border-color: var(--border);
+  color: var(--muted-foreground);
+}
+html[data-vt-theme] .vt-chat-pill,
+html[data-vt-theme] .vt-reaction-badge {
+  background: var(--card);
+  border-color: var(--border);
+  color: var(--card-foreground);
+}
+html[data-vt-theme] .vt-chat-composer {
+  background: var(--card);
+  border-color: var(--border);
+}
+html[data-vt-theme] .vt-chat-send {
+  background: linear-gradient(to bottom right, var(--accent), var(--primary));
+  color: var(--primary-foreground);
+}
+html[data-vt-theme] .vt-chat-icon-btn { color: var(--muted-foreground); }
+html[data-vt-theme] .vt-chat-icon-btn:hover { color: var(--foreground); }
+html[data-vt-theme] .vt-chat-icon-btn-active {
+  color: var(--primary-foreground);
+  background: var(--primary);
+}
