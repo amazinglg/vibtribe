@@ -433,6 +433,9 @@ export default function ChatWindowPanel() {
     snapshot?: any;
   }>(null);
   const [forwardTexts, setForwardTexts] = useState<string[] | null>(null);
+  const [forwardAttachments, setForwardAttachments] = useState<Array<{
+    blob: Blob; mime: string; name: string; type: 'image' | 'video' | 'audio' | 'file';
+  }>>([]);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editingMsg, setEditingMsg] = useState<Message | null>(null);
