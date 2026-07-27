@@ -3772,9 +3772,10 @@ export default function ChatWindowPanel() {
       )}
     </div>
     <ForwardMessageModal
-      isOpen={!!forwardTexts}
+      isOpen={!!forwardTexts || forwardAttachments.length > 0}
       messages={forwardTexts || []}
-      onClose={() => setForwardTexts(null)}
+      attachments={forwardAttachments}
+      onClose={() => { setForwardTexts(null); setForwardAttachments([]); }}
     />
     {selectionMode && (
       <div className="fixed left-0 right-0 z-[1450] bg-card border-t border-border px-3 py-2 flex items-center gap-2 shadow-2xl" style={{ bottom: 'var(--mobile-bottom-nav-offset, 0px)' }}>
