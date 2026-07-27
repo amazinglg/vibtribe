@@ -4,7 +4,14 @@ import { X, Search, Check, Send, Users } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { encryptMessage, encryptGroupMessage, hasLocalPrivateKey, type GroupMember } from '@/lib/encryption';
+import { encryptMessage, encryptGroupMessage, encryptBytes, encryptBytesWithRandomKey, hasLocalPrivateKey, type GroupMember } from '@/lib/encryption';
+
+export interface ForwardAttachment {
+  blob: Blob;
+  mime: string;
+  name: string;
+  type: 'image' | 'video' | 'audio' | 'file';
+}
 
 interface Target {
   chatId: string;
@@ -19,11 +26,12 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   messages: string[]; // plaintext strings to forward
+  attachments?: ForwardAttachment[]; // decrypted media to re-encrypt per target
 }
 
 const MAX_TARGETS = 10;
 
-export default function ForwardMessageModal({ isOpen, onClose, messages }: Props) {
+export default function ForwardMessageModal({ isOpen, onClose, messages, attachments = [] }: Props) {
   const { user } = useAuth();
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
