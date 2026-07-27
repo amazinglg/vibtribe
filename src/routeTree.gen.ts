@@ -28,6 +28,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as StatusScreenRouteImport } from './routes/status-screen'
 import { Route as SubprocessorsRouteImport } from './routes/subprocessors'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as ThemePreviewRouteImport } from './routes/theme-preview'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminAppealsRouteImport } from './routes/admin.appeals'
@@ -161,6 +162,11 @@ const SubprocessorsRoute = SubprocessorsRouteImport.update({
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ThemePreviewRoute = ThemePreviewRouteImport.update({
+  id: '/theme-preview',
+  path: '/theme-preview',
   getParentRoute: () => rootRouteImport,
 } as any)
 const UnsubscribeRoute = UnsubscribeRouteImport.update({
@@ -393,6 +399,7 @@ export interface FileRoutesByFullPath {
   '/status-screen': typeof StatusScreenRoute
   '/subprocessors': typeof SubprocessorsRoute
   '/terms': typeof TermsRoute
+  '/theme-preview': typeof ThemePreviewRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/admin/appeals': typeof AdminAppealsRoute
   '/admin/deleted-users': typeof AdminDeletedUsersRoute
@@ -452,6 +459,7 @@ export interface FileRoutesByTo {
   '/status-screen': typeof StatusScreenRoute
   '/subprocessors': typeof SubprocessorsRoute
   '/terms': typeof TermsRoute
+  '/theme-preview': typeof ThemePreviewRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/admin/appeals': typeof AdminAppealsRoute
   '/admin/deleted-users': typeof AdminDeletedUsersRoute
@@ -513,6 +521,7 @@ export interface FileRoutesById {
   '/status-screen': typeof StatusScreenRoute
   '/subprocessors': typeof SubprocessorsRoute
   '/terms': typeof TermsRoute
+  '/theme-preview': typeof ThemePreviewRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/admin/appeals': typeof AdminAppealsRoute
   '/admin/deleted-users': typeof AdminDeletedUsersRoute
@@ -575,6 +584,7 @@ export interface FileRouteTypes {
     | '/status-screen'
     | '/subprocessors'
     | '/terms'
+    | '/theme-preview'
     | '/unsubscribe'
     | '/admin/appeals'
     | '/admin/deleted-users'
@@ -634,6 +644,7 @@ export interface FileRouteTypes {
     | '/status-screen'
     | '/subprocessors'
     | '/terms'
+    | '/theme-preview'
     | '/unsubscribe'
     | '/admin/appeals'
     | '/admin/deleted-users'
@@ -694,6 +705,7 @@ export interface FileRouteTypes {
     | '/status-screen'
     | '/subprocessors'
     | '/terms'
+    | '/theme-preview'
     | '/unsubscribe'
     | '/admin/appeals'
     | '/admin/deleted-users'
@@ -755,6 +767,7 @@ export interface RootRouteChildren {
   StatusScreenRoute: typeof StatusScreenRoute
   SubprocessorsRoute: typeof SubprocessorsRoute
   TermsRoute: typeof TermsRoute
+  ThemePreviewRoute: typeof ThemePreviewRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
   AppealOffboardingTokenRoute: typeof AppealOffboardingTokenRoute
   AppealReportIdRoute: typeof AppealReportIdRoute
@@ -920,6 +933,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/theme-preview': {
+      id: '/theme-preview'
+      path: '/theme-preview'
+      fullPath: '/theme-preview'
+      preLoaderRoute: typeof ThemePreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/unsubscribe': {
@@ -1244,6 +1264,7 @@ const rootRouteChildren: RootRouteChildren = {
   StatusScreenRoute: StatusScreenRoute,
   SubprocessorsRoute: SubprocessorsRoute,
   TermsRoute: TermsRoute,
+  ThemePreviewRoute: ThemePreviewRoute,
   UnsubscribeRoute: UnsubscribeRoute,
   AppealOffboardingTokenRoute: AppealOffboardingTokenRoute,
   AppealReportIdRoute: AppealReportIdRoute,
@@ -1282,3 +1303,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
