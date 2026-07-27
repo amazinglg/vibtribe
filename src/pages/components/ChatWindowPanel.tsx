@@ -2509,12 +2509,19 @@ export default function ChatWindowPanel() {
       )}
 
       {/* Messages Area */}
-      {(!trustLock.enabled || trustLockProtected === true) && <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
+      {(!trustLock.enabled || trustLockProtected === true) && <div
+        ref={messagesContainerRef}
+        onScroll={(e) => {
+          const y = (e.currentTarget as HTMLDivElement).scrollTop;
+          if (waveRef.current) waveRef.current.style.transform = `translateY(${Math.min(y * 0.12, 14)}px)`;
+        }}
+        className="vt-chat-scroll flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3"
+      >
         {loading ? (
           <div className="flex flex-col gap-3">
             {[1, 2, 3].map(i => (
               <div key={i} className={`flex ${i % 2 === 0 ? 'justify-end' : 'justify-start'} animate-pulse`}>
-                <div className="h-10 w-48 bg-muted rounded-2xl" />
+                <div className="h-10 w-48 bg-white/10 rounded-2xl" />
               </div>
             ))}
           </div>
@@ -2537,10 +2544,8 @@ export default function ChatWindowPanel() {
               else if (cur.toDateString() === yesterday.toDateString()) label = 'Yesterday';
               else label = cur.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: cur.getFullYear() === today.getFullYear() ? undefined : 'numeric' });
               return (
-                <div key={`sep-${msg.id}`} className="flex items-center gap-3">
-                  <div className="flex-1 h-px bg-border" />
-                  <span className="text-[11px] text-muted-foreground px-3 py-1 glass rounded-full">{label}</span>
-                  <div className="flex-1 h-px bg-border" />
+                <div key={`sep-${msg.id}`} className="flex items-center justify-center my-1">
+                  <span className="vt-chat-pill text-[12px] font-medium tracking-wide px-4 py-1.5 rounded-full">{label}</span>
                 </div>
               );
             })();
