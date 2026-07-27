@@ -76,7 +76,8 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
             await matchContactsWithPlatform(raw);
           } catch (matchErr) {
             console.error('[VibTribe] matchContactsWithPlatform failed', matchErr);
-            await loadDemoContacts().catch(() => {});
+            setLoading(false);
+            toast.error('Could not match your contacts right now. Please try again.');
           }
           return;
         } catch (nativeErr) {
