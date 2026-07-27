@@ -27,6 +27,7 @@ import TribeDetailsSheet from '@/components/TribeDetailsSheet';
 import EncryptionPinModal from '@/components/EncryptionPinModal';
 import { TrustLockProvider } from '@/contexts/TrustLockContext';
 import ForwardMessageModal from '@/components/ForwardMessageModal';
+import { copyImageToClipboard, saveMedia } from '@/lib/media-actions';
 import { appConfirm } from '@/components/ui/AppDialog';
 import ReportContentSheet, { type ReportType } from '@/components/ReportContentSheet';
 
