@@ -89,7 +89,7 @@ function FeaturesPage() {
             Available on Android and the web. iOS is in private beta.
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
-            <Link to="/download/android" className="rounded-full bg-primary px-5 py-2 text-sm font-medium text-primary-foreground">Download for Android</Link>
+            <Link to="/download/android" className="rounded-full bg-primary px-5 py-2 text-sm font-medium text-primary-foreground">Install from Google Play</Link>
             <Link to="/security" className="rounded-full border border-border px-5 py-2 text-sm font-medium">How we keep you safe</Link>
           </div>
         </section>
