@@ -411,7 +411,7 @@ export default function LandingPage() {
         <div className="space-y-3">
           <FaqItem q="Is VibTribe really free?" a="Yes — completely free. No ads, no paywalls on core messaging. We may offer optional premium features later, but private chats, calls and status will always be free." />
           <FaqItem q="Can VibTribe read my messages?" a="No. Your messages, calls and files are end-to-end encrypted on your device. We never see the contents, and we couldn't hand them over even if we were asked." />
-          <FaqItem q="Why is the Android app an APK and not on the Play Store?" a="It's the same official app — signed by us — while our Play Store review is in progress. You'll install it once and get updates automatically." />
+          <FaqItem q="Where do I get the Android app?" a="VibTribe is officially published on the Google Play Store. Install it in one tap — Google Play verifies the app and keeps it updated automatically." />
           <FaqItem q="What about iPhone?" a="You can install VibTribe from Safari as a home-screen app in seconds and get the full experience today. A native iOS build is on the roadmap." />
           <FaqItem q="Can I delete my account?" a="Anytime, from inside the app. Your data is removed and your account is gone — no forms, no waiting." />
           <FaqItem q="Do I need to give a phone number?" a="You sign up with your mobile number or email. It's used to help friends find you — never shared with advertisers." />
@@ -474,6 +474,7 @@ export default function LandingPage() {
             <Link to="/data-notice" className="hover:text-foreground transition-colors">Data Notice</Link>
             <Link to="/subprocessors" className="hover:text-foreground transition-colors">Subprocessors</Link>
             <Link to="/child-safety" className="hover:text-foreground transition-colors">Child Safety</Link>
+            <a href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Google Play</a>
             <Link to="/help/reporting" className="hover:text-foreground transition-colors">Reporting</Link>
             <span className="col-span-2 sm:col-auto">© {new Date().getFullYear()}</span>
           </div>
