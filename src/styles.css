@@ -738,3 +738,51 @@ html[data-vt-theme] .vt-chat-icon-btn-active {
   color: var(--primary-foreground);
   background: var(--primary);
 }
+
+/* ── Google Play premium CTA ─────────────────────────────────────── */
+.vt-play-btn {
+  background:
+    radial-gradient(120% 160% at 0% 0%, color-mix(in srgb, var(--primary) 65%, transparent) 0%, transparent 60%),
+    linear-gradient(135deg, color-mix(in srgb, var(--primary) 85%, #000 10%), color-mix(in srgb, var(--accent, var(--primary)) 80%, #000 10%));
+  border: 1px solid color-mix(in srgb, #ffffff 22%, transparent);
+  box-shadow:
+    0 18px 45px -18px color-mix(in srgb, var(--primary) 75%, transparent),
+    0 2px 0 0 color-mix(in srgb, #ffffff 18%, transparent) inset;
+  backdrop-filter: blur(16px);
+  transition: transform 260ms cubic-bezier(.2,.8,.25,1), box-shadow 260ms ease, filter 260ms ease;
+  cursor: pointer;
+}
+.vt-play-btn:hover {
+  transform: translateY(-2px) scale(1.015);
+  box-shadow:
+    0 26px 60px -18px color-mix(in srgb, var(--primary) 85%, transparent),
+    0 2px 0 0 color-mix(in srgb, #ffffff 26%, transparent) inset;
+  filter: saturate(1.08);
+}
+.vt-play-btn:active { transform: scale(.975); }
+.vt-play-btn__sheen {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,.28) 48%, transparent 66%);
+  transform: translateX(-120%);
+  transition: transform 900ms cubic-bezier(.2,.8,.25,1);
+  pointer-events: none;
+}
+.vt-play-btn:hover .vt-play-btn__sheen { transform: translateX(120%); }
+.vt-play-btn__ripple {
+  position: absolute;
+  width: 14px; height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 9999px;
+  background: rgba(255,255,255,.45);
+  pointer-events: none;
+  animation: vt-play-ripple 620ms ease-out forwards;
+}
+@keyframes vt-play-ripple {
+  from { transform: scale(1); opacity: .55; }
+  to   { transform: scale(34); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vt-play-btn, .vt-play-btn__sheen { transition: none; }
+  .vt-play-btn__ripple { animation: none; display: none; }
+}
