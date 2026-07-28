@@ -135,13 +135,13 @@ export default function LandingPage() {
               <ShieldCheck size={14} className="text-primary" />
               <span className="text-[11px] font-semibold text-foreground">Only you can read it</span>
             </div>
-            <div className="aurora-trust-toast absolute bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded-3xl px-4 py-3 sm:-left-2 sm:bottom-10 sm:translate-x-0 lg:left-0">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-vt-green/20">
-                <span className="h-3 w-3 rounded-full bg-vt-green" />
+            <div className="aurora-trust-toast absolute bottom-5 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-2xl px-3 py-2 sm:-left-2 sm:bottom-10 sm:translate-x-0 sm:gap-3 sm:rounded-3xl sm:px-4 sm:py-3 lg:left-0">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-vt-green/20 sm:h-8 sm:w-8">
+                <span className="h-2.5 w-2.5 rounded-full bg-vt-green sm:h-3 sm:w-3" />
               </div>
               <div>
-                <p className="text-sm font-bold text-foreground">Trust Lock Active</p>
-                <p className="text-[11px] text-muted-foreground">Screenshots disabled</p>
+                <p className="text-xs font-bold text-foreground sm:text-sm">Trust Lock Active</p>
+                <p className="text-[10px] text-muted-foreground sm:text-[11px]">Screenshots disabled</p>
               </div>
             </div>
           </div>
