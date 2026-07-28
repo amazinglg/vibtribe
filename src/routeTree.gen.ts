@@ -53,9 +53,7 @@ import { Route as HelpReportingRouteImport } from './routes/help.reporting'
 import { Route as AdminUserUserIdRouteImport } from './routes/admin.user.$userId'
 import { Route as ApiPublicAuthLoginRouteImport } from './routes/api/public/auth-login'
 import { Route as ApiPublicAuthOtpRouteImport } from './routes/api/public/auth-otp'
-import { Route as ApiPublicDownloadApkRouteImport } from './routes/api/public/download-apk'
 import { Route as ApiPublicResendWebhookRouteImport } from './routes/api/public/resend-webhook'
-import { Route as ApiPublicTrackApkDownloadRouteImport } from './routes/api/public/track-apk-download'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as TribeJoinCodeRouteImport } from './routes/tribe.join.$code'
 import { Route as ApiPublicHooksCleanupExpiredMessagesRouteImport } from './routes/api/public/hooks/cleanup-expired-messages'
@@ -294,22 +292,11 @@ const ApiPublicAuthOtpRoute = ApiPublicAuthOtpRouteImport.update({
   path: '/api/public/auth-otp',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicDownloadApkRoute = ApiPublicDownloadApkRouteImport.update({
-  id: '/api/public/download-apk',
-  path: '/api/public/download-apk',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiPublicResendWebhookRoute = ApiPublicResendWebhookRouteImport.update({
   id: '/api/public/resend-webhook',
   path: '/api/public/resend-webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicTrackApkDownloadRoute =
-  ApiPublicTrackApkDownloadRouteImport.update({
-    id: '/api/public/track-apk-download',
-    path: '/api/public/track-apk-download',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   id: '/lovable/email/suppression',
   path: '/lovable/email/suppression',
@@ -424,9 +411,7 @@ export interface FileRoutesByFullPath {
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
-  '/api/public/download-apk': typeof ApiPublicDownloadApkRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
-  '/api/public/track-apk-download': typeof ApiPublicTrackApkDownloadRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/tribe/join/$code': typeof TribeJoinCodeRoute
   '/api/public/hooks/cleanup-expired-messages': typeof ApiPublicHooksCleanupExpiredMessagesRoute
@@ -484,9 +469,7 @@ export interface FileRoutesByTo {
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
-  '/api/public/download-apk': typeof ApiPublicDownloadApkRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
-  '/api/public/track-apk-download': typeof ApiPublicTrackApkDownloadRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/tribe/join/$code': typeof TribeJoinCodeRoute
   '/api/public/hooks/cleanup-expired-messages': typeof ApiPublicHooksCleanupExpiredMessagesRoute
@@ -546,9 +529,7 @@ export interface FileRoutesById {
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
-  '/api/public/download-apk': typeof ApiPublicDownloadApkRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
-  '/api/public/track-apk-download': typeof ApiPublicTrackApkDownloadRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/tribe/join/$code': typeof TribeJoinCodeRoute
   '/api/public/hooks/cleanup-expired-messages': typeof ApiPublicHooksCleanupExpiredMessagesRoute
@@ -609,9 +590,7 @@ export interface FileRouteTypes {
     | '/admin/user/$userId'
     | '/api/public/auth-login'
     | '/api/public/auth-otp'
-    | '/api/public/download-apk'
     | '/api/public/resend-webhook'
-    | '/api/public/track-apk-download'
     | '/lovable/email/suppression'
     | '/tribe/join/$code'
     | '/api/public/hooks/cleanup-expired-messages'
@@ -669,9 +648,7 @@ export interface FileRouteTypes {
     | '/admin/user/$userId'
     | '/api/public/auth-login'
     | '/api/public/auth-otp'
-    | '/api/public/download-apk'
     | '/api/public/resend-webhook'
-    | '/api/public/track-apk-download'
     | '/lovable/email/suppression'
     | '/tribe/join/$code'
     | '/api/public/hooks/cleanup-expired-messages'
@@ -730,9 +707,7 @@ export interface FileRouteTypes {
     | '/admin/user/$userId'
     | '/api/public/auth-login'
     | '/api/public/auth-otp'
-    | '/api/public/download-apk'
     | '/api/public/resend-webhook'
-    | '/api/public/track-apk-download'
     | '/lovable/email/suppression'
     | '/tribe/join/$code'
     | '/api/public/hooks/cleanup-expired-messages'
@@ -783,9 +758,7 @@ export interface RootRouteChildren {
   HelpReportingRoute: typeof HelpReportingRoute
   ApiPublicAuthLoginRoute: typeof ApiPublicAuthLoginRoute
   ApiPublicAuthOtpRoute: typeof ApiPublicAuthOtpRoute
-  ApiPublicDownloadApkRoute: typeof ApiPublicDownloadApkRoute
   ApiPublicResendWebhookRoute: typeof ApiPublicResendWebhookRoute
-  ApiPublicTrackApkDownloadRoute: typeof ApiPublicTrackApkDownloadRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   TribeJoinCodeRoute: typeof TribeJoinCodeRoute
   ApiPublicHooksCleanupExpiredMessagesRoute: typeof ApiPublicHooksCleanupExpiredMessagesRoute
@@ -1110,25 +1083,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAuthOtpRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/download-apk': {
-      id: '/api/public/download-apk'
-      path: '/api/public/download-apk'
-      fullPath: '/api/public/download-apk'
-      preLoaderRoute: typeof ApiPublicDownloadApkRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/resend-webhook': {
       id: '/api/public/resend-webhook'
       path: '/api/public/resend-webhook'
       fullPath: '/api/public/resend-webhook'
       preLoaderRoute: typeof ApiPublicResendWebhookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/track-apk-download': {
-      id: '/api/public/track-apk-download'
-      path: '/api/public/track-apk-download'
-      fullPath: '/api/public/track-apk-download'
-      preLoaderRoute: typeof ApiPublicTrackApkDownloadRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lovable/email/suppression': {
@@ -1280,9 +1239,7 @@ const rootRouteChildren: RootRouteChildren = {
   HelpReportingRoute: HelpReportingRoute,
   ApiPublicAuthLoginRoute: ApiPublicAuthLoginRoute,
   ApiPublicAuthOtpRoute: ApiPublicAuthOtpRoute,
-  ApiPublicDownloadApkRoute: ApiPublicDownloadApkRoute,
   ApiPublicResendWebhookRoute: ApiPublicResendWebhookRoute,
-  ApiPublicTrackApkDownloadRoute: ApiPublicTrackApkDownloadRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   TribeJoinCodeRoute: TribeJoinCodeRoute,
   ApiPublicHooksCleanupExpiredMessagesRoute:

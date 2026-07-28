@@ -12,10 +12,25 @@ import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useT } from '@/contexts/LanguageContext';
 import ContactFormModal from '@/components/ContactFormModal';
 import heroPhones from '@/assets/hero-phones.png';
+import GooglePlayButton, { PLAY_STORE_URL } from '@/components/GooglePlayButton';
+
+function usePlatform() {
+  const [platform, setPlatform] = React.useState<'android' | 'ios' | 'desktop'>('desktop');
+  React.useEffect(() => {
+    const ua = navigator.userAgent || '';
+    const isIOS = /iPad|iPhone|iPod/.test(ua) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (/Android/i.test(ua)) setPlatform('android');
+    else if (isIOS) setPlatform('ios');
+    else setPlatform('desktop');
+  }, []);
+  return platform;
+}
 
 export default function LandingPage() {
   const { t } = useT();
   const [contactOpen, setContactOpen] = React.useState(false);
+  const platform = usePlatform();
 
   return (
     <div
@@ -103,15 +118,13 @@ export default function LandingPage() {
               </Link>
             </div>
             <a
-              href="#download"
-              onClick={(e) => {
-                e.preventDefault();
-                document.getElementById('download')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              }}
+              href={PLAY_STORE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
               className="mb-4 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl aurora-download-pill text-sm font-semibold hover:border-primary/50 transition-all"
             >
-              <Download size={16} /> Get the Android app
-              <span className="text-[10px] font-bold uppercase tracking-widest bg-primary/20 text-primary px-2 py-0.5 rounded-full ml-1">New</span>
+              <Download size={16} /> Install from Google Play
+              <span className="text-[10px] font-bold uppercase tracking-widest bg-primary/20 text-primary px-2 py-0.5 rounded-full ml-1">Live</span>
             </a>
             <p className="text-[11px] sm:text-xs text-muted-foreground flex items-center justify-center lg:justify-start gap-1.5">
               <Lock size={11} /> Takes 30 seconds. No credit card. Delete your account anytime.
@@ -285,13 +298,16 @@ export default function LandingPage() {
           <span className="text-[11px] font-bold uppercase tracking-widest text-primary">Get VibTribe</span>
           <h2 className="font-bold text-2xl sm:text-4xl text-foreground mt-2 mb-2">Install in under a minute.</h2>
           <p className="text-sm text-muted-foreground max-w-lg mx-auto">
-            Native Android app today. iPhone users can install it from Safari as a home-screen app in seconds.
+            Android users install straight from Google Play. iPhone users can install it from Safari as a home-screen app in seconds.
           </p>
         </div>
 
         <div className="grid sm:grid-cols-2 gap-3 sm:gap-4 max-w-4xl mx-auto">
           {/* Android Card */}
-          <div className="glass rounded-3xl border border-border p-6 sm:p-7 relative overflow-hidden">
+          <div
+            className="glass rounded-3xl border border-border p-6 sm:p-7 relative overflow-hidden"
+            style={{ order: platform === 'ios' ? 2 : 1 }}
+          >
             <div className="absolute -top-12 -right-12 w-40 h-40 gradient-primary rounded-full blur-3xl opacity-20" />
             <div className="relative">
               <div className="flex items-center gap-3 mb-4">
@@ -300,30 +316,30 @@ export default function LandingPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-lg text-foreground">Android</h3>
-                  <p className="text-xs text-muted-foreground">Official VibTribe app · Guided install</p>
+                  <p className="text-xs text-muted-foreground">Official VibTribe app · Google Play</p>
                 </div>
               </div>
 
               <ul className="space-y-2 text-sm text-foreground/80 mb-5">
-                <li className="flex items-start gap-2"><Check size={14} className="text-primary mt-0.5 flex-shrink-0" /> Official signed build — safe to install</li>
-                <li className="flex items-start gap-2"><Check size={14} className="text-primary mt-0.5 flex-shrink-0" /> Instant push notifications &amp; background calls</li>
-                <li className="flex items-start gap-2"><Check size={14} className="text-primary mt-0.5 flex-shrink-0" /> Play Store rollout in progress</li>
+                <li className="flex items-start gap-2"><Check size={14} className="text-primary mt-0.5 flex-shrink-0" /> Official Google Play Release</li>
+                <li className="flex items-start gap-2"><Check size={14} className="text-primary mt-0.5 flex-shrink-0" /> Automatic Updates</li>
+                <li className="flex items-start gap-2"><Check size={14} className="text-primary mt-0.5 flex-shrink-0" /> Verified by Google Play Protect</li>
+                <li className="flex items-start gap-2"><Check size={14} className="text-primary mt-0.5 flex-shrink-0" /> Secure Installation</li>
+                <li className="flex items-start gap-2"><Check size={14} className="text-primary mt-0.5 flex-shrink-0" /> Always Up-to-date</li>
               </ul>
 
-              <a
-                href="/download/android"
-                className="w-full px-4 py-3 rounded-2xl gradient-primary text-white text-sm font-semibold flex items-center justify-center gap-2 glow-primary hover:opacity-95 transition-all"
-              >
-                <Download size={16} /> Download for Android
-              </a>
+              <GooglePlayButton />
               <p className="text-[11px] text-muted-foreground text-center mt-2">
-                Free · ~38 MB · Step-by-step install guide included
+                Free · Installs and updates through Google Play
               </p>
             </div>
           </div>
 
           {/* iOS Card */}
-          <div className="glass rounded-3xl border border-border p-6 sm:p-7 relative overflow-hidden">
+          <div
+            className="glass rounded-3xl border border-border p-6 sm:p-7 relative overflow-hidden"
+            style={{ order: platform === 'ios' ? 1 : 2 }}
+          >
             <div className="absolute -top-12 -right-12 w-40 h-40 gradient-cyan rounded-full blur-3xl opacity-20" />
             <div className="relative">
               <div className="flex items-center gap-3 mb-4">
@@ -395,7 +411,7 @@ export default function LandingPage() {
         <div className="space-y-3">
           <FaqItem q="Is VibTribe really free?" a="Yes — completely free. No ads, no paywalls on core messaging. We may offer optional premium features later, but private chats, calls and status will always be free." />
           <FaqItem q="Can VibTribe read my messages?" a="No. Your messages, calls and files are end-to-end encrypted on your device. We never see the contents, and we couldn't hand them over even if we were asked." />
-          <FaqItem q="Why is the Android app an APK and not on the Play Store?" a="It's the same official app — signed by us — while our Play Store review is in progress. You'll install it once and get updates automatically." />
+          <FaqItem q="Where do I get the Android app?" a="VibTribe is officially published on the Google Play Store. Install it in one tap — Google Play verifies the app and keeps it updated automatically." />
           <FaqItem q="What about iPhone?" a="You can install VibTribe from Safari as a home-screen app in seconds and get the full experience today. A native iOS build is on the roadmap." />
           <FaqItem q="Can I delete my account?" a="Anytime, from inside the app. Your data is removed and your account is gone — no forms, no waiting." />
           <FaqItem q="Do I need to give a phone number?" a="You sign up with your mobile number or email. It's used to help friends find you — never shared with advertisers." />
@@ -458,6 +474,7 @@ export default function LandingPage() {
             <Link to="/data-notice" className="hover:text-foreground transition-colors">Data Notice</Link>
             <Link to="/subprocessors" className="hover:text-foreground transition-colors">Subprocessors</Link>
             <Link to="/child-safety" className="hover:text-foreground transition-colors">Child Safety</Link>
+            <a href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Google Play</a>
             <Link to="/help/reporting" className="hover:text-foreground transition-colors">Reporting</Link>
             <span className="col-span-2 sm:col-auto">© {new Date().getFullYear()}</span>
           </div>
