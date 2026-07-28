@@ -12,10 +12,25 @@ import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useT } from '@/contexts/LanguageContext';
 import ContactFormModal from '@/components/ContactFormModal';
 import heroPhones from '@/assets/hero-phones.png';
+import GooglePlayButton, { PLAY_STORE_URL } from '@/components/GooglePlayButton';
+
+function usePlatform() {
+  const [platform, setPlatform] = React.useState<'android' | 'ios' | 'desktop'>('desktop');
+  React.useEffect(() => {
+    const ua = navigator.userAgent || '';
+    const isIOS = /iPad|iPhone|iPod/.test(ua) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (/Android/i.test(ua)) setPlatform('android');
+    else if (isIOS) setPlatform('ios');
+    else setPlatform('desktop');
+  }, []);
+  return platform;
+}
 
 export default function LandingPage() {
   const { t } = useT();
   const [contactOpen, setContactOpen] = React.useState(false);
+  const platform = usePlatform();
 
   return (
     <div
@@ -103,15 +118,13 @@ export default function LandingPage() {
               </Link>
             </div>
             <a
-              href="#download"
-              onClick={(e) => {
-                e.preventDefault();
-                document.getElementById('download')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              }}
+              href={PLAY_STORE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
               className="mb-4 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl aurora-download-pill text-sm font-semibold hover:border-primary/50 transition-all"
             >
-              <Download size={16} /> Get the Android app
-              <span className="text-[10px] font-bold uppercase tracking-widest bg-primary/20 text-primary px-2 py-0.5 rounded-full ml-1">New</span>
+              <Download size={16} /> Install from Google Play
+              <span className="text-[10px] font-bold uppercase tracking-widest bg-primary/20 text-primary px-2 py-0.5 rounded-full ml-1">Live</span>
             </a>
             <p className="text-[11px] sm:text-xs text-muted-foreground flex items-center justify-center lg:justify-start gap-1.5">
               <Lock size={11} /> Takes 30 seconds. No credit card. Delete your account anytime.
