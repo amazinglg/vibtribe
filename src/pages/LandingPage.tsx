@@ -298,13 +298,16 @@ export default function LandingPage() {
           <span className="text-[11px] font-bold uppercase tracking-widest text-primary">Get VibTribe</span>
           <h2 className="font-bold text-2xl sm:text-4xl text-foreground mt-2 mb-2">Install in under a minute.</h2>
           <p className="text-sm text-muted-foreground max-w-lg mx-auto">
-            Native Android app today. iPhone users can install it from Safari as a home-screen app in seconds.
+            Android users install straight from Google Play. iPhone users can install it from Safari as a home-screen app in seconds.
           </p>
         </div>
 
         <div className="grid sm:grid-cols-2 gap-3 sm:gap-4 max-w-4xl mx-auto">
           {/* Android Card */}
-          <div className="glass rounded-3xl border border-border p-6 sm:p-7 relative overflow-hidden">
+          <div
+            className="glass rounded-3xl border border-border p-6 sm:p-7 relative overflow-hidden"
+            style={{ order: platform === 'ios' ? 2 : 1 }}
+          >
             <div className="absolute -top-12 -right-12 w-40 h-40 gradient-primary rounded-full blur-3xl opacity-20" />
             <div className="relative">
               <div className="flex items-center gap-3 mb-4">
@@ -313,30 +316,30 @@ export default function LandingPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-lg text-foreground">Android</h3>
-                  <p className="text-xs text-muted-foreground">Official VibTribe app · Guided install</p>
+                  <p className="text-xs text-muted-foreground">Official VibTribe app · Google Play</p>
                 </div>
               </div>
 
               <ul className="space-y-2 text-sm text-foreground/80 mb-5">
-                <li className="flex items-start gap-2"><Check size={14} className="text-primary mt-0.5 flex-shrink-0" /> Official signed build — safe to install</li>
-                <li className="flex items-start gap-2"><Check size={14} className="text-primary mt-0.5 flex-shrink-0" /> Instant push notifications &amp; background calls</li>
-                <li className="flex items-start gap-2"><Check size={14} className="text-primary mt-0.5 flex-shrink-0" /> Play Store rollout in progress</li>
+                <li className="flex items-start gap-2"><Check size={14} className="text-primary mt-0.5 flex-shrink-0" /> Official Google Play Release</li>
+                <li className="flex items-start gap-2"><Check size={14} className="text-primary mt-0.5 flex-shrink-0" /> Automatic Updates</li>
+                <li className="flex items-start gap-2"><Check size={14} className="text-primary mt-0.5 flex-shrink-0" /> Verified by Google Play Protect</li>
+                <li className="flex items-start gap-2"><Check size={14} className="text-primary mt-0.5 flex-shrink-0" /> Secure Installation</li>
+                <li className="flex items-start gap-2"><Check size={14} className="text-primary mt-0.5 flex-shrink-0" /> Always Up-to-date</li>
               </ul>
 
-              <a
-                href="/download/android"
-                className="w-full px-4 py-3 rounded-2xl gradient-primary text-white text-sm font-semibold flex items-center justify-center gap-2 glow-primary hover:opacity-95 transition-all"
-              >
-                <Download size={16} /> Download for Android
-              </a>
+              <GooglePlayButton />
               <p className="text-[11px] text-muted-foreground text-center mt-2">
-                Free · ~38 MB · Step-by-step install guide included
+                Free · Installs and updates through Google Play
               </p>
             </div>
           </div>
 
           {/* iOS Card */}
-          <div className="glass rounded-3xl border border-border p-6 sm:p-7 relative overflow-hidden">
+          <div
+            className="glass rounded-3xl border border-border p-6 sm:p-7 relative overflow-hidden"
+            style={{ order: platform === 'ios' ? 1 : 2 }}
+          >
             <div className="absolute -top-12 -right-12 w-40 h-40 gradient-cyan rounded-full blur-3xl opacity-20" />
             <div className="relative">
               <div className="flex items-center gap-3 mb-4">
