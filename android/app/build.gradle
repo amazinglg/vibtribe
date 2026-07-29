@@ -34,8 +34,14 @@ android {
     buildTypes {
     release {
         signingConfig signingConfigs.release
+        // R8 code shrinking + obfuscation. Resource shrinking is intentionally
+        // left OFF for this phase (stability over size).
+        minifyEnabled true
+        shrinkResources false
+        proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+    }
+    debug {
         minifyEnabled false
-        proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
     }
 }
 }
