@@ -1,7 +1,29 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 
-export const Route = createFileRoute('/unsubscribe')({ component: UnsubscribePage })
+const TITLE = 'Unsubscribe — VibTribe'
+const DESCRIPTION =
+  'Manage your VibTribe email preferences or unsubscribe from promotional emails. Account and security emails are unaffected.'
+const URL = 'https://www.vibtribe.in/unsubscribe'
+
+export const Route = createFileRoute('/unsubscribe')({
+  component: UnsubscribePage,
+  head: () => ({
+    meta: [
+      { title: TITLE },
+      { name: 'description', content: DESCRIPTION },
+      { name: 'robots', content: 'noindex, follow' },
+      { property: 'og:title', content: TITLE },
+      { property: 'og:description', content: DESCRIPTION },
+      { property: 'og:url', content: URL },
+      { property: 'og:type', content: 'website' },
+      { name: 'twitter:card', content: 'summary' },
+      { name: 'twitter:title', content: TITLE },
+      { name: 'twitter:description', content: DESCRIPTION },
+    ],
+    links: [{ rel: 'canonical', href: URL }],
+  }),
+})
 
 function UnsubscribePage() {
   const [status, setStatus] = useState<'loading' | 'ready' | 'done' | 'used' | 'error'>('loading')

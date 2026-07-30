@@ -3,9 +3,10 @@ import { ArrowLeft, Check, X, ShieldCheck, Lock, Sparkles } from 'lucide-react';
 import AppLogo from '@/components/ui/AppLogo';
 import Wordmark from '@/components/ui/Wordmark';
 
-const TITLE = 'VibTribe vs Signal vs Telegram: The Most Secure Messaging App in 2026';
+const TITLE = 'VibTribe vs Signal vs Telegram: Which Is Safest?';
+const HEADLINE = 'VibTribe vs Signal vs Telegram: The Most Secure Messaging App in 2026';
 const DESCRIPTION =
-  'A privacy-first comparison of VibTribe, Signal, and Telegram. End-to-end encryption, secure vault, metadata, and which secure messaging app is right for you in India.';
+  'Compare VibTribe, Signal and Telegram on end-to-end encryption, secure vault and metadata — and find the safest messaging app for India.';
 const URL = 'https://www.vibtribe.in/blog/vibtribe-vs-signal-vs-telegram';
 const OG_IMAGE = 'https://www.vibtribe.in/icons/icon-512x512.png';
 const PUBLISHED = '2026-06-05';
@@ -38,7 +39,7 @@ export const Route = createFileRoute('/blog/vibtribe-vs-signal-vs-telegram')({
         children: JSON.stringify({
           '@context': 'https://schema.org',
           '@type': 'Article',
-          headline: TITLE,
+          headline: HEADLINE,
           description: DESCRIPTION,
           datePublished: PUBLISHED,
           dateModified: PUBLISHED,
@@ -131,9 +132,9 @@ function ComparisonPage() {
             <ArrowLeft size={18} />
           </Link>
           <AppLogo size={24} />
-          <h1 className="font-semibold text-sm sm:text-base truncate">
+          <div className="font-semibold text-sm sm:text-base truncate">
             VibTribe vs Signal vs Telegram
-          </h1>
+          </div>
         </div>
       </header>
 
