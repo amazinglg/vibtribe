@@ -11,7 +11,10 @@ export const Route = createFileRoute('/about')({
       { name: 'description', content: 'Learn about VibTribe — a privacy-first social messaging platform. Our mission, values, and vision for private, vibrant communication.' },
       { property: 'og:title', content: 'About VibTribe — Our Story & Vision' },
       { property: 'og:description', content: 'The story, values and vision behind VibTribe — a privacy-first social messaging platform.' },
+      { property: 'og:url', content: 'https://www.vibtribe.in/about' },
+      { property: 'og:type', content: 'website' },
     ],
+    links: [{ rel: 'canonical', href: 'https://www.vibtribe.in/about' }],
   }),
   component: AboutPage,
 });

@@ -11,7 +11,10 @@ export const Route = createFileRoute('/subprocessors')({
       { name: 'description', content: 'The third-party service providers VibTribe uses to operate the platform, their purpose and processing region. Subscribe to change notifications.' },
       { property: 'og:title', content: 'VibTribe Subprocessors' },
       { property: 'og:description', content: 'Public list of subprocessors VibTribe uses, with purpose and region.' },
+      { property: 'og:url', content: 'https://www.vibtribe.in/subprocessors' },
+      { property: 'og:type', content: 'website' },
     ],
+    links: [{ rel: 'canonical', href: 'https://www.vibtribe.in/subprocessors' }],
   }),
   component: SubprocessorsPage,
 });

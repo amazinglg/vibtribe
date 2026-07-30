@@ -11,7 +11,10 @@ export const Route = createFileRoute('/data-notice')({
       { name: 'description', content: 'How VibTribe collects, processes, retains and shares your personal data — published under India\u2019s Digital Personal Data Protection Act, 2023.' },
       { property: 'og:title', content: 'VibTribe Data Notice' },
       { property: 'og:description', content: 'A clear, itemised notice of what data we process, why, on what legal basis, for how long, and with whom.' },
+      { property: 'og:url', content: 'https://www.vibtribe.in/data-notice' },
+      { property: 'og:type', content: 'website' },
     ],
+    links: [{ rel: 'canonical', href: 'https://www.vibtribe.in/data-notice' }],
   }),
   component: DataNoticePage,
 });
