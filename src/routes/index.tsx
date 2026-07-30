@@ -72,6 +72,7 @@ export const Route = createFileRoute("/")({
           description: DESCRIPTION,
           sameAs: [
             "https://vibtribe.lovable.app",
+            "https://play.google.com/store/apps/details?id=app.vibtribe.app",
           ],
           contactPoint: [{
             "@type": "ContactPoint",
