@@ -26,7 +26,7 @@ export const Route = createFileRoute('/help/reporting')({
       ...socialImageMeta(),
     ],
     links: [{ rel: 'canonical', href: URL }],
-    scripts: [breadcrumbLd([{ name: 'Help', path: '/help/reporting' }, { name: 'How reporting works', path: '/help/reporting' }])],
+    scripts: [breadcrumbLd([{ name: 'How reporting works', path: '/help/reporting' }])],
   }),
   component: HelpReportingPage,
 })
