@@ -121,7 +121,7 @@ function DataNoticePage() {
           <div className="glass rounded-2xl border border-border p-5">
             <div className="flex items-center gap-2 mb-2">
               <ShieldCheck size={18} className="text-primary" />
-              <h3 className="font-bold">Your DPDP rights</h3>
+              <h2 className="font-bold">Your DPDP rights</h2>
             </div>
             <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
               <li>Right to access &amp; correction</li>
@@ -134,7 +134,7 @@ function DataNoticePage() {
           <div className="glass rounded-2xl border border-border p-5">
             <div className="flex items-center gap-2 mb-2">
               <Mail size={18} className="text-primary" />
-              <h3 className="font-bold">Grievance Officer</h3>
+              <h2 className="font-bold">Grievance Officer</h2>
             </div>
             <p className="text-sm text-muted-foreground">
               For DPDP-related grievances, write to <a href="mailto:Labhansh.garg@outlook.com" className="text-primary hover:underline">Labhansh.garg@outlook.com</a>. We acknowledge within 72 hours and resolve within the timelines required by the DPDP Act, 2023 and IT Rules, 2021.

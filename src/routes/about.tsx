@@ -79,14 +79,14 @@ function AboutPage() {
             <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center mb-3 glow-primary">
               <Calendar size={18} className="text-white" />
             </div>
-            <h3 className="font-bold text-foreground mb-1">Founded in June 2026</h3>
+            <h2 className="font-bold text-foreground mb-1">Founded in June 2026</h2>
             <p className="text-sm text-muted-foreground">Born out of a need for a chat experience that puts people, not advertisers, at the center.</p>
           </div>
           <div className="glass rounded-2xl border border-border p-5">
             <div className="w-10 h-10 rounded-xl gradient-cyan flex items-center justify-center mb-3">
               <Compass size={18} className="text-white" />
             </div>
-            <h3 className="font-bold text-foreground mb-1">Built in India, for the world</h3>
+            <h2 className="font-bold text-foreground mb-1">Built in India, for the world</h2>
             <p className="text-sm text-muted-foreground">Designed locally with global standards of privacy, security and craft.</p>
           </div>
         </div>
@@ -128,7 +128,7 @@ function AboutPage() {
               <Target size={18} className="text-primary" />
               <span className="text-[11px] font-bold uppercase tracking-widest text-primary">Our aim</span>
             </div>
-            <h3 className="font-extrabold text-xl sm:text-2xl mb-3">A safer internet for the next generation</h3>
+            <h2 className="font-extrabold text-xl sm:text-2xl mb-3">A safer internet for the next generation</h2>
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
               We&apos;re building VibTribe so that the next billion people coming online can connect, share and grow without
               fear of being surveilled, profiled or exploited. Private by default. Powerful by craft.
