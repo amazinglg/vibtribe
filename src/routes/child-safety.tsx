@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import AppLogo from '@/components/ui/AppLogo';
 import Wordmark from '@/components/ui/Wordmark';
+import { breadcrumbLd, socialImageMeta } from '@/lib/seo';
 
 const TITLE = 'Child Safety Standards — VibTribe';
 const DESCRIPTION =
@@ -24,8 +25,10 @@ export const Route = createFileRoute('/child-safety')({
       { name: 'twitter:card', content: 'summary_large_image' },
       { name: 'twitter:title', content: TITLE },
       { name: 'twitter:description', content: DESCRIPTION },
+      ...socialImageMeta(),
     ],
     links: [{ rel: 'canonical', href: URL }],
+    scripts: [breadcrumbLd([{ name: 'Child Safety Standards', path: '/child-safety' }])],
   }),
   component: ChildSafetyPage,
 });
