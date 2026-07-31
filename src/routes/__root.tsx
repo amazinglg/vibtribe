@@ -151,7 +151,30 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           name: "VibTribe",
           url: "https://www.vibtribe.in",
           logo: "https://www.vibtribe.in/icons/icon-512x512.png",
-          sameAs: ["https://vibtribe.lovable.app"],
+          description:
+            "VibTribe is a privacy-first social messaging platform with end-to-end encrypted chat, a PIN-locked private vault and 24-hour status updates.",
+          sameAs: [
+            "https://play.google.com/store/apps/details?id=app.vibtribe.app",
+          ],
+          contactPoint: [
+            {
+              "@type": "ContactPoint",
+              contactType: "customer support",
+              email: "support@vibtribe.in",
+              availableLanguage: ["English", "Hindi"],
+            },
+          ],
+        }),
+      },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "VibTribe",
+          url: "https://www.vibtribe.in/",
+          inLanguage: "en",
+          publisher: { "@id": "https://www.vibtribe.in/#organization" },
         }),
       },
     ],
