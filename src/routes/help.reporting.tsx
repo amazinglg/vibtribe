@@ -3,6 +3,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { ArrowLeft, Flag, ShieldCheck, ShieldAlert, Clock, ShieldQuestion, Mail } from 'lucide-react'
 import AppLogo from '@/components/ui/AppLogo'
 import Wordmark from '@/components/ui/Wordmark'
+import { breadcrumbLd, socialImageMeta } from '@/lib/seo'
 
 const TITLE = 'How Reporting Works — VibTribe Help'
 const DESCRIPTION =
@@ -20,8 +21,12 @@ export const Route = createFileRoute('/help/reporting')({
       { property: 'og:type', content: 'article' },
       { property: 'og:url', content: URL },
       { name: 'twitter:card', content: 'summary_large_image' },
+      { name: 'twitter:title', content: TITLE },
+      { name: 'twitter:description', content: DESCRIPTION },
+      ...socialImageMeta(),
     ],
     links: [{ rel: 'canonical', href: URL }],
+    scripts: [breadcrumbLd([{ name: 'Help', path: '/help/reporting' }, { name: 'How reporting works', path: '/help/reporting' }])],
   }),
   component: HelpReportingPage,
 })
