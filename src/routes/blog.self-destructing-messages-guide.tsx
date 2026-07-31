@@ -2,6 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';
 import AppLogo from '@/components/ui/AppLogo';
 import Wordmark from '@/components/ui/Wordmark';
+import { breadcrumbLd } from '@/lib/seo';
 
 const TITLE = 'How to Send Self-Destructing Messages (And Why You Should)';
 const DESCRIPTION =
@@ -29,11 +30,12 @@ export const Route = createFileRoute('/blog/self-destructing-messages-guide')({
     ],
     links: [{ rel: 'canonical', href: URL }],
     scripts: [
+      breadcrumbLd([{ name: 'Self-Destructing Messages Guide', path: '/blog/self-destructing-messages-guide' }]),
       {
         type: 'application/ld+json',
         children: JSON.stringify({
           '@context': 'https://schema.org',
-          '@type': 'Article',
+          '@type': 'BlogPosting',
           headline: TITLE,
           description: DESCRIPTION,
           datePublished: PUBLISHED,

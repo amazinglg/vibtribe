@@ -2,6 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';
 import AppLogo from '@/components/ui/AppLogo';
 import Wordmark from '@/components/ui/Wordmark';
+import { breadcrumbLd } from '@/lib/seo';
 
 const TITLE = 'What Is a Private Vault in a Messaging App (and Do You Need One)?';
 const DESCRIPTION =
@@ -29,11 +30,12 @@ export const Route = createFileRoute('/blog/private-vault-messaging')({
     ],
     links: [{ rel: 'canonical', href: URL }],
     scripts: [
+      breadcrumbLd([{ name: 'What Is a Private Vault?', path: '/blog/private-vault-messaging' }]),
       {
         type: 'application/ld+json',
         children: JSON.stringify({
           '@context': 'https://schema.org',
-          '@type': 'Article',
+          '@type': 'BlogPosting',
           headline: TITLE,
           description: DESCRIPTION,
           datePublished: PUBLISHED,

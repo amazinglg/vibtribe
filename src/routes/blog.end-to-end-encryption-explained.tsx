@@ -2,6 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';
 import AppLogo from '@/components/ui/AppLogo';
 import Wordmark from '@/components/ui/Wordmark';
+import { breadcrumbLd } from '@/lib/seo';
 
 const TITLE = 'End-to-End Encryption Explained (Simply) for Messaging Apps';
 const DESCRIPTION =
@@ -29,11 +30,12 @@ export const Route = createFileRoute('/blog/end-to-end-encryption-explained')({
     ],
     links: [{ rel: 'canonical', href: URL }],
     scripts: [
+      breadcrumbLd([{ name: 'End-to-End Encryption Explained', path: '/blog/end-to-end-encryption-explained' }]),
       {
         type: 'application/ld+json',
         children: JSON.stringify({
           '@context': 'https://schema.org',
-          '@type': 'Article',
+          '@type': 'BlogPosting',
           headline: TITLE,
           description: DESCRIPTION,
           datePublished: PUBLISHED,

@@ -2,6 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';
 import AppLogo from '@/components/ui/AppLogo';
 import Wordmark from '@/components/ui/Wordmark';
+import { breadcrumbLd } from '@/lib/seo';
 
 const TITLE = 'Best WhatsApp Alternatives in India (2026): Privacy-First Messaging Apps';
 const DESCRIPTION =
@@ -29,11 +30,12 @@ export const Route = createFileRoute('/blog/whatsapp-alternatives-india')({
     ],
     links: [{ rel: 'canonical', href: URL }],
     scripts: [
+      breadcrumbLd([{ name: 'Privacy-First Messaging Apps in India', path: '/blog/whatsapp-alternatives-india' }]),
       {
         type: 'application/ld+json',
         children: JSON.stringify({
           '@context': 'https://schema.org',
-          '@type': 'Article',
+          '@type': 'BlogPosting',
           headline: TITLE,
           description: DESCRIPTION,
           datePublished: PUBLISHED,
