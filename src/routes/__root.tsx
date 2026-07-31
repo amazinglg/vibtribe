@@ -148,6 +148,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "Organization",
+          "@id": "https://www.vibtribe.in/#organization",
           name: "VibTribe",
           url: "https://www.vibtribe.in",
           logo: "https://www.vibtribe.in/icons/icon-512x512.png",
