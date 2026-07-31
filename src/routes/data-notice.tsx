@@ -3,6 +3,7 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowLeft, Database, ShieldCheck, Mail } from 'lucide-react';
 import AppLogo from '@/components/ui/AppLogo';
 import Wordmark from '@/components/ui/Wordmark';
+import { breadcrumbLd, socialImageMeta } from '@/lib/seo';
 
 export const Route = createFileRoute('/data-notice')({
   head: () => ({
@@ -13,8 +14,12 @@ export const Route = createFileRoute('/data-notice')({
       { property: 'og:description', content: 'A clear, itemised notice of what data we process, why, on what legal basis, for how long, and with whom.' },
       { property: 'og:url', content: 'https://www.vibtribe.in/data-notice' },
       { property: 'og:type', content: 'website' },
+      { name: 'twitter:title', content: 'VibTribe Data Notice' },
+      { name: 'twitter:description', content: 'A clear, itemised notice of what data we process, why, on what legal basis, for how long, and with whom.' },
+      ...socialImageMeta(),
     ],
     links: [{ rel: 'canonical', href: 'https://www.vibtribe.in/data-notice' }],
+    scripts: [breadcrumbLd([{ name: 'Data Notice', path: '/data-notice' }])],
   }),
   component: DataNoticePage,
 });
@@ -116,7 +121,7 @@ function DataNoticePage() {
           <div className="glass rounded-2xl border border-border p-5">
             <div className="flex items-center gap-2 mb-2">
               <ShieldCheck size={18} className="text-primary" />
-              <h3 className="font-bold">Your DPDP rights</h3>
+              <h2 className="font-bold">Your DPDP rights</h2>
             </div>
             <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
               <li>Right to access &amp; correction</li>
@@ -129,7 +134,7 @@ function DataNoticePage() {
           <div className="glass rounded-2xl border border-border p-5">
             <div className="flex items-center gap-2 mb-2">
               <Mail size={18} className="text-primary" />
-              <h3 className="font-bold">Grievance Officer</h3>
+              <h2 className="font-bold">Grievance Officer</h2>
             </div>
             <p className="text-sm text-muted-foreground">
               For DPDP-related grievances, write to <a href="mailto:Labhansh.garg@outlook.com" className="text-primary hover:underline">Labhansh.garg@outlook.com</a>. We acknowledge within 72 hours and resolve within the timelines required by the DPDP Act, 2023 and IT Rules, 2021.

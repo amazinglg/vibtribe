@@ -5,6 +5,7 @@ import {
   CheckCircle2, ArrowLeft, ExternalLink, Settings as SettingsIcon,
   AlertTriangle, Globe, Home,
 } from 'lucide-react';
+import { breadcrumbLd, socialImageMeta } from '@/lib/seo';
 
 const SITE_URL = 'https://www.vibtribe.in';
 const TITLE = 'Install VibTribe on iPhone — Step-by-step guide';
@@ -25,8 +26,10 @@ export const Route = createFileRoute('/download/ios')({
       { name: 'twitter:card', content: 'summary_large_image' },
       { name: 'twitter:title', content: TITLE },
       { name: 'twitter:description', content: DESCRIPTION },
+      ...socialImageMeta(),
     ],
     links: [{ rel: 'canonical', href: URL }],
+    scripts: [breadcrumbLd([{ name: 'Install on iPhone', path: '/download/ios' }])],
   }),
 });
 

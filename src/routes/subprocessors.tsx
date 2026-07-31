@@ -3,6 +3,7 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowLeft, Server } from 'lucide-react';
 import AppLogo from '@/components/ui/AppLogo';
 import Wordmark from '@/components/ui/Wordmark';
+import { breadcrumbLd, socialImageMeta } from '@/lib/seo';
 
 export const Route = createFileRoute('/subprocessors')({
   head: () => ({
@@ -13,8 +14,12 @@ export const Route = createFileRoute('/subprocessors')({
       { property: 'og:description', content: 'Public list of subprocessors VibTribe uses, with purpose and region.' },
       { property: 'og:url', content: 'https://www.vibtribe.in/subprocessors' },
       { property: 'og:type', content: 'website' },
+      { name: 'twitter:title', content: 'VibTribe Subprocessors' },
+      { name: 'twitter:description', content: 'Public list of subprocessors VibTribe uses, with purpose and region.' },
+      ...socialImageMeta(),
     ],
     links: [{ rel: 'canonical', href: 'https://www.vibtribe.in/subprocessors' }],
+    scripts: [breadcrumbLd([{ name: 'Subprocessors', path: '/subprocessors' }])],
   }),
   component: SubprocessorsPage,
 });

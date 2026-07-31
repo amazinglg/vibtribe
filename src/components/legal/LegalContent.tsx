@@ -96,7 +96,7 @@ export function PrivacyPolicyContent() {
       <p className="text-muted-foreground">Last updated: 4 July 2026</p>
       <p>VibTribe is a privacy-first messaging app. This Privacy Policy explains exactly what data we collect when you sign up and use the service, how we use it, who can see it, and the choices you have. It is a separate document from our <Link to="/terms" className="text-primary underline">Terms &amp; Conditions</Link>, although both must be accepted to use the App.</p>
 
-      <h3 className="text-base font-semibold mt-6">A. Information We Collect About You</h3>
+      <h2 className="text-base font-semibold mt-6">A. Information We Collect About You</h2>
       <p>The following list is exhaustive — these are every field we store about a user account in our database:</p>
       <ul className="list-disc pl-5 space-y-1">
         <li><strong>Full name</strong> — required at signup; shown to other users you chat with.</li>
@@ -124,7 +124,7 @@ export function PrivacyPolicyContent() {
         <li><strong>Role flags</strong> — whether your account is a standard user, admin, or master admin; whether you carry the blue Verified badge.</li>
       </ul>
 
-      <h3 className="text-base font-semibold mt-6">B. What We Do <em>Not</em> Collect</h3>
+      <h2 className="text-base font-semibold mt-6">B. What We Do <em>Not</em> Collect</h2>
       <ul className="list-disc pl-5 space-y-1">
         <li>We do not read or sell the contents of your end-to-end encrypted 1:1 messages or media.</li>
         <li>We do not expose your date of birth, email address, or two-factor secret to other users.</li>
@@ -134,7 +134,7 @@ export function PrivacyPolicyContent() {
         <li>We do not run third-party advertising or behavioural-profiling trackers.</li>
       </ul>
 
-      <h3 className="text-base font-semibold mt-6">C. How We Use Your Data</h3>
+      <h2 className="text-base font-semibold mt-6">C. How We Use Your Data</h2>
       <ul className="list-disc pl-5 space-y-1">
         <li>To operate the messaging, calling, status and group features you use.</li>
         <li>To verify your identity at signup and during password resets (email OTP).</li>
@@ -143,7 +143,7 @@ export function PrivacyPolicyContent() {
         <li>To send service notifications (delivery, security alerts) and, only with your explicit opt-in, promotional emails.</li>
       </ul>
 
-      <h3 className="text-base font-semibold mt-6">D. Encryption Approach</h3>
+      <h2 className="text-base font-semibold mt-6">D. Encryption Approach</h2>
       <ul className="list-disc pl-5 space-y-1">
         <li>Key exchange: ECDH on the NIST P-256 curve via the Web Crypto API.</li>
         <li>Message &amp; media encryption: AES-GCM-256 with a fresh random IV per payload.</li>
@@ -151,13 +151,13 @@ export function PrivacyPolicyContent() {
         <li>If you forget your PIN, encrypted chat history cannot be recovered.</li>
       </ul>
 
-      <h3 className="text-base font-semibold mt-6">E. Account Deletion &amp; Retention</h3>
+      <h2 className="text-base font-semibold mt-6">E. Account Deletion &amp; Retention</h2>
       <p>You can delete your account any time from Profile &rarr; Danger Zone &rarr; Delete My Account. This removes your profile, contacts, encrypted keys, chats, messages, statuses, push tokens, support tickets, and your authentication record. Some operational logs and backups may persist for a short period for security and legal reasons. Status media is auto-deleted 24 hours after posting regardless of account state. For any data-protection request, contact the Grievance Officer at <strong>Labhansh.garg@outlook.com</strong>.</p>
       <p><strong>Admin-initiated offboarding.</strong> When an administrator removes your account, we send an email to your registered address stating the reason — <em>General</em>, <em>Breach of Terms &amp; Conditions</em>, or <em>Incomplete Sign-up</em> — and personal data associated with the account is deleted <strong>immediately</strong>. A limited set of records (e.g. audit logs, consent records, records required for security, fraud prevention, dispute resolution and statutory retention under Indian law) may be retained for the periods required by applicable law.</p>
       <p><strong>Incomplete sign-up reminders.</strong> If you verify your email address but do not complete onboarding, we send up to three reminder emails (at approximately 24 hours, 72 hours and 7 days after email verification) to help you finish. Reminders stop the moment onboarding is completed. This processing is based on legitimate interest in completing the account creation you started, and no reminders are sent once onboarding is complete or the account is deleted.</p>
 
 
-      <h3 className="text-base font-semibold mt-6">F. Third-Party Processors</h3>
+      <h2 className="text-base font-semibold mt-6">F. Third-Party Processors</h2>
       <ul className="list-disc pl-5 space-y-1">
         <li>Supabase (managed backend: authentication, database, file storage, realtime).</li>
         <li>Cloudflare (hosting, CDN, edge runtime serving the web and API).</li>
@@ -165,14 +165,14 @@ export function PrivacyPolicyContent() {
         <li>Firebase Cloud Messaging and Web Push providers (notification delivery, when you opt in).</li>
       </ul>
 
-      <h3 className="text-base font-semibold mt-6">G. Device Permissions We May Request</h3>
+      <h2 className="text-base font-semibold mt-6">G. Device Permissions We May Request</h2>
       <ul className="list-disc pl-5 space-y-1">
         <li>Camera &amp; microphone — for sending photos, voice notes, and voice/video calls.</li>
         <li>Notifications — to alert you of new messages and calls.</li>
         <li>Storage / file access — to attach files you choose.</li>
       </ul>
 
-      <h3 className="text-base font-semibold mt-6">H. Children &amp; Guardian Consent</h3>
+      <h2 className="text-base font-semibold mt-6">H. Children &amp; Guardian Consent</h2>
       <p>Sign-up is <strong>blocked for anyone under 13</strong>. We do not knowingly collect data from anyone under 13; if we learn that we have, we will delete the account and associated data promptly.</p>
       <p>Users aged <strong>13 to 17</strong> may sign up, but the account is restricted to the guardian setup flow (<code>/guardian-setup</code>) until a parent or legal guardian:</p>
       <ul className="list-disc pl-5 space-y-1">
@@ -184,10 +184,10 @@ export function PrivacyPolicyContent() {
       <p>When the user turns 18, the guardian consent flow is <strong>automatically retired</strong>, monthly reminders stop, and all minor-related restrictions are lifted. The historical consent record is retained for compliance audit purposes.</p>
       <p>Users aged <strong>18 and above</strong> may sign up and use the app directly.</p>
 
-      <h3 className="text-base font-semibold mt-6">I. Your Rights</h3>
+      <h2 className="text-base font-semibold mt-6">I. Your Rights</h2>
       <p>Subject to applicable law (including India's Digital Personal Data Protection Act, 2023, and the EU/UK GDPR where applicable) you may request access, correction, export, or deletion of your personal data, and may withdraw consent at any time. Contact the Grievance Officer at <strong>Labhansh.garg@outlook.com</strong>.</p>
 
-      <h3 className="text-base font-semibold mt-6">J. Marketing Emails</h3>
+      <h2 className="text-base font-semibold mt-6">J. Marketing Emails</h2>
       <p>We send promotional emails (product updates, tips, and announcements) only to users who have <strong>explicitly opted in</strong>. We record the timestamp, source (signup form, re-consent prompt, or profile settings), and IP address of your consent for compliance audit purposes.</p>
       <ul className="list-disc pl-5 space-y-1">
         <li><strong>Legal basis:</strong> your explicit consent — DPDP Act 2023 § 6 (India), GDPR Art. 6(1)(a) (EU/EEA), and CAN-SPAM Act compliance (US).</li>
@@ -198,7 +198,7 @@ export function PrivacyPolicyContent() {
       </ul>
       <p>Transactional and security emails (OTP codes, password resets, ticket replies, account notices) are <em>not</em> covered by this consent and will continue regardless.</p>
 
-      <h3 className="text-base font-semibold mt-6">K. Contact</h3>
+      <h2 className="text-base font-semibold mt-6">K. Contact</h2>
       <p>For any privacy question or request, email the Grievance Officer at <strong>Labhansh.garg@outlook.com</strong>. We acknowledge within 24 hours and resolve within 15 days as required by the IT Rules, 2021.</p>
     </div>
   );

@@ -2,6 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowLeft, Check, X, ShieldCheck, Lock, Sparkles } from 'lucide-react';
 import AppLogo from '@/components/ui/AppLogo';
 import Wordmark from '@/components/ui/Wordmark';
+import { breadcrumbLd } from '@/lib/seo';
 
 const TITLE = 'VibTribe vs Signal vs Telegram: Which Is Safest?';
 const HEADLINE = 'VibTribe vs Signal vs Telegram: The Most Secure Messaging App in 2026';
@@ -34,11 +35,12 @@ export const Route = createFileRoute('/blog/vibtribe-vs-signal-vs-telegram')({
     ],
     links: [{ rel: 'canonical', href: URL }],
     scripts: [
+      breadcrumbLd([{ name: 'Most Secure Messaging App in 2026', path: '/blog/vibtribe-vs-signal-vs-telegram' }]),
       {
         type: 'application/ld+json',
         children: JSON.stringify({
           '@context': 'https://schema.org',
-          '@type': 'Article',
+          '@type': 'BlogPosting',
           headline: HEADLINE,
           description: DESCRIPTION,
           datePublished: PUBLISHED,

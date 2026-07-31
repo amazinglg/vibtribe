@@ -2,6 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';
 import AppLogo from '@/components/ui/AppLogo';
 import Wordmark from '@/components/ui/Wordmark';
+import { breadcrumbLd } from '@/lib/seo';
 
 const TITLE = 'End-to-End Encryption Explained (Simply) for Messaging Apps';
 const DESCRIPTION =
@@ -29,11 +30,12 @@ export const Route = createFileRoute('/blog/end-to-end-encryption-explained')({
     ],
     links: [{ rel: 'canonical', href: URL }],
     scripts: [
+      breadcrumbLd([{ name: 'End-to-End Encryption Explained', path: '/blog/end-to-end-encryption-explained' }]),
       {
         type: 'application/ld+json',
         children: JSON.stringify({
           '@context': 'https://schema.org',
-          '@type': 'Article',
+          '@type': 'BlogPosting',
           headline: TITLE,
           description: DESCRIPTION,
           datePublished: PUBLISHED,
@@ -87,6 +89,17 @@ function Post() {
           <Link to="/download/android" className="rounded-full bg-primary px-5 py-2 text-sm font-medium text-primary-foreground">Try VibTribe</Link>
           <Link to="/security" className="rounded-full border border-border px-5 py-2 text-sm font-medium">Our security model</Link>
         </div>
+        <nav aria-label="Related guides" className="mt-12 border-t border-border/40 pt-6">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Related guides</h2>
+          <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+            <li><Link className="underline hover:text-foreground" to="/blog/private-vault-messaging">What is a private vault?</Link></li>
+            <li><Link className="underline hover:text-foreground" to="/blog/self-destructing-messages-guide">How to send self-destructing messages</Link></li>
+            <li><Link className="underline hover:text-foreground" to="/blog/vibtribe-vs-signal-vs-telegram">The most secure messaging app in 2026</Link></li>
+            <li><Link className="underline hover:text-foreground" to="/blog/whatsapp-alternatives-india">Privacy-first messaging apps in India</Link></li>
+            <li><Link className="underline hover:text-foreground" to="/security">How VibTribe protects your messages</Link></li>
+            <li><Link className="underline hover:text-foreground" to="/faq">Frequently asked questions</Link></li>
+          </ul>
+        </nav>
       </main>
     </div>
   );
