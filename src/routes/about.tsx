@@ -3,6 +3,7 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowLeft, ShieldCheck, Compass, Sparkles, Calendar, Target, Users, Lock } from 'lucide-react';
 import AppLogo from '@/components/ui/AppLogo';
 import Wordmark from '@/components/ui/Wordmark';
+import { breadcrumbLd, socialImageMeta } from '@/lib/seo';
 
 export const Route = createFileRoute('/about')({
   head: () => ({
@@ -13,8 +14,12 @@ export const Route = createFileRoute('/about')({
       { property: 'og:description', content: 'The story, values and vision behind VibTribe — a privacy-first social messaging platform.' },
       { property: 'og:url', content: 'https://www.vibtribe.in/about' },
       { property: 'og:type', content: 'website' },
+      { name: 'twitter:title', content: 'About VibTribe — Our Story & Vision' },
+      { name: 'twitter:description', content: 'The story, values and vision behind VibTribe — a privacy-first social messaging platform.' },
+      ...socialImageMeta(),
     ],
     links: [{ rel: 'canonical', href: 'https://www.vibtribe.in/about' }],
+    scripts: [breadcrumbLd([{ name: 'About', path: '/about' }])],
   }),
   component: AboutPage,
 });
