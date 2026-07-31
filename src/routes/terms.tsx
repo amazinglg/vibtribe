@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';
 import { TermsConditionsContent } from '@/components/legal/LegalContent';
+import { breadcrumbLd, socialImageMeta } from '@/lib/seo';
 
 export const Route = createFileRoute('/terms')({
   head: () => ({
@@ -11,8 +12,12 @@ export const Route = createFileRoute('/terms')({
       { property: 'og:description', content: 'Read the Terms of Service and Privacy Policy for the VibTribe messaging app.' },
       { property: 'og:url', content: 'https://www.vibtribe.in/terms' },
       { property: 'og:type', content: 'article' },
+      { name: 'twitter:title', content: 'Terms & Conditions — VibTribe' },
+      { name: 'twitter:description', content: 'Read the Terms of Service for the VibTribe messaging app.' },
+      ...socialImageMeta(),
     ],
     links: [{ rel: 'canonical', href: 'https://www.vibtribe.in/terms' }],
+    scripts: [breadcrumbLd([{ name: 'Terms & Conditions', path: '/terms' }])],
   }),
   component: TermsPage,
 });
