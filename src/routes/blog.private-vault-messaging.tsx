@@ -83,6 +83,17 @@ function Post() {
           <Link to="/download/android" className="rounded-full bg-primary px-5 py-2 text-sm font-medium text-primary-foreground">Get VibTribe</Link>
           <Link to="/features" className="rounded-full border border-border px-5 py-2 text-sm font-medium">All features</Link>
         </div>
+        <nav aria-label="Related guides" className="mt-12 border-t border-border/40 pt-6">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Related guides</h2>
+          <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+            <li><Link className="underline hover:text-foreground" to="/blog/end-to-end-encryption-explained">End-to-end encryption explained</Link></li>
+            <li><Link className="underline hover:text-foreground" to="/blog/self-destructing-messages-guide">How to send self-destructing messages</Link></li>
+            <li><Link className="underline hover:text-foreground" to="/blog/vibtribe-vs-signal-vs-telegram">The most secure messaging app in 2026</Link></li>
+            <li><Link className="underline hover:text-foreground" to="/blog/whatsapp-alternatives-india">Privacy-first messaging apps in India</Link></li>
+            <li><Link className="underline hover:text-foreground" to="/security">How VibTribe protects your messages</Link></li>
+            <li><Link className="underline hover:text-foreground" to="/faq">Frequently asked questions</Link></li>
+          </ul>
+        </nav>
       </main>
     </div>
   );
