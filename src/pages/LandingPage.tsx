@@ -142,6 +142,9 @@ export default function LandingPage() {
               alt="VibTribe encrypted messaging app shown on three smartphones — chat list, end-to-end encrypted conversation, and contact profile"
               width={1280}
               height={1280}
+              loading="eager"
+              decoding="async"
+              fetchPriority="high"
               className="aurora-phone-card w-full max-w-[21rem] sm:max-w-lg lg:max-w-none mx-auto"
             />
             <div className="hidden sm:flex absolute top-8 -left-2 lg:left-4 items-center gap-2 px-3 py-2 rounded-2xl aurora-download-pill">
