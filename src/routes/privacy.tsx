@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';
 import { PrivacyPolicyContent } from '@/components/legal/LegalContent';
+import { breadcrumbLd, socialImageMeta } from '@/lib/seo';
 
 export const Route = createFileRoute('/privacy')({
   head: () => ({
@@ -11,8 +12,12 @@ export const Route = createFileRoute('/privacy')({
       { property: 'og:description', content: 'Privacy Policy for the VibTribe messaging app.' },
       { property: 'og:url', content: 'https://www.vibtribe.in/privacy' },
       { property: 'og:type', content: 'article' },
+      { name: 'twitter:title', content: 'Privacy Policy — VibTribe' },
+      { name: 'twitter:description', content: 'Privacy Policy for the VibTribe messaging app.' },
+      ...socialImageMeta(),
     ],
     links: [{ rel: 'canonical', href: 'https://www.vibtribe.in/privacy' }],
+    scripts: [breadcrumbLd([{ name: 'Privacy Policy', path: '/privacy' }])],
   }),
   component: PrivacyPage,
 });
