@@ -3,6 +3,7 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowLeft, Database, ShieldCheck, Mail } from 'lucide-react';
 import AppLogo from '@/components/ui/AppLogo';
 import Wordmark from '@/components/ui/Wordmark';
+import { breadcrumbLd, socialImageMeta } from '@/lib/seo';
 
 export const Route = createFileRoute('/data-notice')({
   head: () => ({
@@ -13,8 +14,12 @@ export const Route = createFileRoute('/data-notice')({
       { property: 'og:description', content: 'A clear, itemised notice of what data we process, why, on what legal basis, for how long, and with whom.' },
       { property: 'og:url', content: 'https://www.vibtribe.in/data-notice' },
       { property: 'og:type', content: 'website' },
+      { name: 'twitter:title', content: 'VibTribe Data Notice' },
+      { name: 'twitter:description', content: 'A clear, itemised notice of what data we process, why, on what legal basis, for how long, and with whom.' },
+      ...socialImageMeta(),
     ],
     links: [{ rel: 'canonical', href: 'https://www.vibtribe.in/data-notice' }],
+    scripts: [breadcrumbLd([{ name: 'Data Notice', path: '/data-notice' }])],
   }),
   component: DataNoticePage,
 });
