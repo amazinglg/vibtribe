@@ -5,6 +5,7 @@ import {
   CheckCircle2, ArrowLeft, ExternalLink, RefreshCw, BadgeCheck, Sparkles,
 } from 'lucide-react';
 import GooglePlayButton, { PLAY_STORE_URL } from '@/components/GooglePlayButton';
+import { breadcrumbLd, socialImageMeta } from '@/lib/seo';
 
 const TITLE = 'Install VibTribe on Android — Get it on Google Play';
 const DESCRIPTION =
@@ -24,9 +25,11 @@ export const Route = createFileRoute('/download/android')({
       { name: 'twitter:card', content: 'summary_large_image' },
       { name: 'twitter:title', content: TITLE },
       { name: 'twitter:description', content: DESCRIPTION },
+      ...socialImageMeta(),
     ],
     links: [{ rel: 'canonical', href: URL }],
     scripts: [
+      breadcrumbLd([{ name: 'Install on Android', path: '/download/android' }]),
       {
         type: 'application/ld+json',
         children: JSON.stringify({
