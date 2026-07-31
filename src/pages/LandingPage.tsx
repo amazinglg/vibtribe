@@ -469,6 +469,13 @@ export default function LandingPage() {
             <span className="text-xs text-muted-foreground hidden sm:inline ml-2">— {t('landing.footer.tagline')}</span>
           </div>
           <div className="grid grid-cols-2 gap-x-6 gap-y-2 w-full text-center text-xs text-muted-foreground sm:flex sm:w-auto sm:items-center sm:gap-5 sm:text-left">
+            <Link to="/features" className="hover:text-foreground transition-colors">Features</Link>
+            <Link to="/security" className="hover:text-foreground transition-colors">Security</Link>
+            <Link to="/faq" className="hover:text-foreground transition-colors">FAQ</Link>
+            <Link to="/about" className="hover:text-foreground transition-colors">About</Link>
+            <Link to="/download/android" className="hover:text-foreground transition-colors">Android app</Link>
+            <Link to="/download/ios" className="hover:text-foreground transition-colors">iPhone install</Link>
+            <Link to="/blog/end-to-end-encryption-explained" className="hover:text-foreground transition-colors">Guides</Link>
             <Link to="/terms" className="hover:text-foreground transition-colors">{t('landing.footer.terms')}</Link>
             <Link to="/privacy" className="hover:text-foreground transition-colors">{t('landing.footer.privacy')}</Link>
             <Link to="/data-notice" className="hover:text-foreground transition-colors">Data Notice</Link>
