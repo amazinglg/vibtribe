@@ -7,7 +7,8 @@ export const Route = createFileRoute("/sitemap.xml")({
   server: {
     handlers: {
       GET: async () => {
-        const today = new Date().toISOString().slice(0, 10);
+        // No <lastmod>: the project has no authoritative per-page change
+        // timestamp, and a build-time date is worse than omitting it.
         const paths: Array<{ path: string; changefreq: string; priority: string }> = [
           { path: "/", changefreq: "weekly", priority: "1.0" },
           { path: "/features", changefreq: "monthly", priority: "0.9" },
@@ -34,7 +35,6 @@ export const Route = createFileRoute("/sitemap.xml")({
           ...paths.map((e) => [
             `  <url>`,
             `    <loc>${BASE_URL}${e.path}</loc>`,
-            `    <lastmod>${today}</lastmod>`,
             `    <changefreq>${e.changefreq}</changefreq>`,
             `    <priority>${e.priority}</priority>`,
             `  </url>`,
