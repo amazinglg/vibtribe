@@ -70,7 +70,15 @@ function TribeJoinPage() {
     <div className="min-h-screen flex items-center justify-center p-6">
       <div className="max-w-sm w-full glass-strong border border-border rounded-2xl p-6 text-center flex flex-col items-center gap-4">
         {tribe?.avatar_url ? (
-          <img src={tribe.avatar_url} className="w-24 h-24 rounded-full object-cover border border-border" />
+          <img
+            src={tribe.avatar_url}
+            alt={`${tribe.name ?? 'Tribe'} group photo`}
+            width={96}
+            height={96}
+            loading="lazy"
+            decoding="async"
+            className="w-24 h-24 rounded-full object-cover border border-border"
+          />
         ) : (
           <div className="w-24 h-24 gradient-primary rounded-full flex items-center justify-center text-white text-3xl font-bold">
             {(tribe?.name || 'T')[0]?.toUpperCase()}
