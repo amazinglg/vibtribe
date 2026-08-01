@@ -73,16 +73,25 @@ export default function ChatsPage() {
     // instead of being force-redirected to /sign-in.
   }, [user, loading, router]);
 
+  // Boot state (SSR + pre-session-resolution). Anonymous visitors get the fully
+  // server-rendered landing page as the primary HTML; browsers that already hold
+  // a session are marked `html.vt-authed` by the pre-hydration script in
+  // __root.tsx and see the loader instead - no landing flash, no layout shift.
   if (loading) {
     return (
-      <div className="gradient-bg-page min-h-screen flex items-center justify-center">
-        <div className="text-center float-up">
-          <div className="w-16 h-16 gradient-primary rounded-full flex items-center justify-center mx-auto mb-4 glow-primary animate-pulse">
-            <span className="text-2xl">💬</span>
-          </div>
-          <p className="text-muted-foreground text-sm">{t('app.loading')}</p>
+      <>
+        <div className="vt-boot-landing">
+          <LandingPage />
         </div>
-      </div>
+        <div className="vt-boot-loader gradient-bg-page min-h-screen items-center justify-center">
+          <div className="text-center float-up">
+            <div className="w-16 h-16 gradient-primary rounded-full flex items-center justify-center mx-auto mb-4 glow-primary animate-pulse">
+              <span className="text-2xl">💬</span>
+            </div>
+            <p className="text-muted-foreground text-sm">{t('app.loading')}</p>
+          </div>
+        </div>
+      </>
     );
   }
 

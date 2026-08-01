@@ -786,3 +786,12 @@ html[data-vt-theme] .vt-chat-icon-btn-active {
   .vt-play-btn, .vt-play-btn__sheen { transition: none; }
   .vt-play-btn__ripple { animation: none; display: none; }
 }
+
+/* --- Homepage first-render (SSR) gate -------------------------------------
+   The homepage server-renders the public landing page so crawlers and social
+   previews always get meaningful HTML. A pre-hydration script in __root.tsx
+   adds `.vt-authed` to <html> when a Supabase session already exists in this
+   browser, which swaps the landing shell for the loader before first paint. */
+.vt-boot-loader { display: none; }
+html.vt-authed .vt-boot-landing { display: none; }
+html.vt-authed .vt-boot-loader { display: flex; }
