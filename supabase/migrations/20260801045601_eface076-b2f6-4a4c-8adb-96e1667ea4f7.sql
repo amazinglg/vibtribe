@@ -1,0 +1,2 @@
+CREATE POLICY "trust_locks_delete_owner" ON public.trust_locks FOR DELETE TO authenticated USING (owner_user_id = auth.uid() AND public.is_chat_participant(chat_id, auth.uid()));
+GRANT DELETE ON public.trust_locks TO authenticated;
