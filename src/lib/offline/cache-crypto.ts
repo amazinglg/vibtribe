@@ -26,7 +26,7 @@
  * just because no PIN exists — platform storage is the baseline.
  */
 
-import { registerPlugin, Capacitor } from '@capacitor/core';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 
 export interface VtSecureStorePlugin {
   get(options: { key: string }): Promise<{ value: string | null }>;
@@ -34,7 +34,11 @@ export interface VtSecureStorePlugin {
   remove(options: { key: string }): Promise<void>;
 }
 
-const VtSecureStore = registerPlugin<VtSecureStorePlugin>('VtSecureStore');
+let _plugin: VtSecureStorePlugin | null = null;
+function VtSecureStoreLazy(): VtSecureStorePlugin {
+  if (!_plugin) _plugin = registerPlugin<VtSecureStorePlugin>('VtSecureStore');
+  return _plugin;
+}
 
 function hasNativeSecureStore(): boolean {
   try {
@@ -187,7 +191,7 @@ export async function getCacheKey(userId: string): Promise<CryptoKey | null> {
   // Native: Keystore / Keychain holds the (optionally PIN-wrapped) CMK.
   if (hasNativeSecureStore()) {
     try {
-      const existing = await VtSecureStore.get({ key: storeKey });
+      const existing = await VtSecureStoreLazy().get({ key: storeKey });
       if (existing?.value) {
         const raw = await unpackCmk(existing.value);
         if (raw) {
@@ -198,7 +202,7 @@ export async function getCacheKey(userId: string): Promise<CryptoKey | null> {
         return null; // PIN layer present but not unlocked yet
       }
       const raw = crypto.getRandomValues(new Uint8Array(32));
-      await VtSecureStore.set({ key: storeKey, value: await packCmk(raw) });
+      await VtSecureStoreLazy().set({ key: storeKey, value: await packCmk(raw) });
       const key = await importCmk(raw);
       memKeys.set(userId, key);
       return key;
@@ -238,7 +242,7 @@ export async function destroyCacheKey(userId: string): Promise<void> {
   memKeys.delete(userId);
   const storeKey = `vt_cmk_${userId}`;
   if (hasNativeSecureStore()) {
-    try { await VtSecureStore.remove({ key: storeKey }); } catch {}
+    try { await VtSecureStoreLazy().remove({ key: storeKey }); } catch {}
   }
   try { await idbDel(storeKey); } catch {}
 }
