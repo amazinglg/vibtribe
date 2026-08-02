@@ -7,19 +7,19 @@
  * behaviour is changed here.
  */
 import { supabase } from '@/integrations/supabase/client';
-import { flushOutbox, pendingOutboxCount } from './sync-engine';
+import { readOutbox, dequeueOutbox, updateOutboxAttempt, deleteMessages } from './cache-db';
 import { beginSync, endSync } from './connection';
 
 let installedFor: string | null = null;
 let disposer: (() => void) | null = null;
 let running = false;
 
-/** Insert one queued payload. Duplicate sends are prevented by the outbox
- *  dequeue + `client_local_id` echo in the dispatched event. */
-async function sendQueued(payload: Record<string, unknown>): Promise<void> {
-  const localId = String(payload.__local_id || '');
-  const row = { ...payload };
-  delete (row as Record<string, unknown>).__local_id;
+/** Display-only fields the UI attaches to a queued payload. */
+const DISPLAY_KEYS = ['text', 'senderId', 'status', 'pending', 'id', 'created_at', 'time'];
+
+async function sendQueued(localId: string, payload: Record<string, unknown>): Promise<void> {
+  const row: Record<string, unknown> = { ...payload };
+  for (const k of DISPLAY_KEYS) delete row[k];
   const { data, error } = await supabase
     .from('messages')
     .insert(row as never)
@@ -35,7 +35,7 @@ async function sendQueued(payload: Record<string, unknown>): Promise<void> {
     } catch {}
     window.dispatchEvent(
       new CustomEvent('vt-outbox-sent', {
-        detail: { localId, chatId: row.chat_id, message: data },
+        detail: { localId, chatId: row.chat_id, message: data, text: payload.text },
       }),
     );
   }
@@ -45,14 +45,26 @@ async function sendQueued(payload: Record<string, unknown>): Promise<void> {
 export async function runOutbox(userId: string): Promise<number> {
   if (running) return 0;
   if (typeof navigator !== 'undefined' && navigator.onLine === false) return 0;
-  const queued = await pendingOutboxCount(userId).catch(() => 0);
-  if (!queued) return 0;
+  const queued = await readOutbox<Record<string, unknown>>(userId).catch(() => []);
+  if (!queued.length) return 0;
   running = true;
   beginSync();
+  let sent = 0;
   try {
-    return await flushOutbox(userId, sendQueued);
-  } catch {
-    return 0;
+    for (const item of queued) {
+      if (item.row.next_attempt_at > Date.now()) continue;
+      try {
+        await sendQueued(item.row.local_id, item.payload);
+        // Dequeue first so a retry can never send the same message twice.
+        await dequeueOutbox(item.row.local_id);
+        await deleteMessages([item.row.local_id]);
+        sent++;
+      } catch {
+        const delay = Math.min(5 * 60_000, 2000 * 2 ** item.row.attempts);
+        await updateOutboxAttempt(item.row, delay);
+      }
+    }
+    return sent;
   } finally {
     running = false;
     endSync();
