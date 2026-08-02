@@ -820,7 +820,12 @@ export default function ChatWindowPanel() {
       }
       void noteChatUsage(user.id, selectedChatId);
     } catch {}
-    if (!paintedFromCache) setLoading(true);
+    // Skeletons are reserved for conversations that have never been cached.
+    // Once a chat has been seen, we paint cached content and sync silently.
+    if (!paintedFromCache && !everCachedRef.current.has(selectedChatId)) setLoading(true);
+    if (paintedFromCache) everCachedRef.current.add(selectedChatId);
+    const { beginSync, endSync } = await import('@/lib/offline');
+    beginSync();
     try {
       // Note: my public_key is managed by the PIN setup flow — do not overwrite here.
 
@@ -1079,6 +1084,7 @@ export default function ChatWindowPanel() {
       ]);
     } finally {
       setLoading(false);
+      endSync();
     }
   };
 
