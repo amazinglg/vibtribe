@@ -80,6 +80,9 @@ export async function prioritiseChats(userId: string, chatIds: string[]): Promis
 }
 
 // ------------------------------------------------------------ delta sync
+/** In-flight delta syncs, keyed by user+chat, so concurrent callers share one run. */
+const inFlightSyncs = new Map<string, Promise<{ changed: number; messages: CachedMessage[] }>>();
+
 export async function getCachedMessages(
   userId: string,
   chatId: string,
@@ -105,6 +108,22 @@ export async function deltaSyncChat(
   opts: { pageSize?: number } = {},
 ): Promise<{ changed: number; messages: CachedMessage[] }> {
   if (!cacheAvailable()) return { changed: 0, messages: [] };
+  const flightKey = `${userId}:${chatId}`;
+  const existing = inFlightSyncs.get(flightKey);
+  if (existing) return existing;
+  const run = runDeltaSync(userId, chatId, decrypt, opts).finally(() => {
+    inFlightSyncs.delete(flightKey);
+  });
+  inFlightSyncs.set(flightKey, run);
+  return run;
+}
+
+async function runDeltaSync(
+  userId: string,
+  chatId: string,
+  decrypt: MessageDecryptor,
+  opts: { pageSize?: number } = {},
+): Promise<{ changed: number; messages: CachedMessage[] }> {
   const cursor = (await metaGet<string>(cursorKey(userId, chatId))) || null;
   const firstRun = !cursor;
 

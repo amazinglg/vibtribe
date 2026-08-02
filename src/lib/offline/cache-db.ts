@@ -146,6 +146,26 @@ function all<T>(store: string, index: string | null, range: IDBKeyRange | null):
   );
 }
 
+/**
+ * Run many writes inside ONE IndexedDB transaction. Encryption is done by the
+ * caller beforehand — this is purely a batching/perf helper.
+ */
+function txMany(
+  store: string,
+  run: (s: IDBObjectStore) => void,
+): Promise<void> {
+  return openDb().then(
+    (db) =>
+      new Promise<void>((resolve, reject) => {
+        const t = db.transaction(store, 'readwrite');
+        run(t.objectStore(store));
+        t.oncomplete = () => resolve();
+        t.onerror = () => reject(t.error);
+        t.onabort = () => reject(t.error);
+      }),
+  );
+}
+
 // ------------------------------------------------------------------ meta
 export async function metaGet<T>(key: string): Promise<T | undefined> {
   if (!cacheAvailable()) return undefined;
@@ -183,7 +203,26 @@ export async function putChatSummaries(
   userId: string,
   chats: Array<{ id: string; updated_at: string; [k: string]: unknown }>,
 ): Promise<void> {
-  for (const c of chats) await putChatSummary(userId, c);
+  if (!cacheAvailable() || !chats.length) return;
+  const key = await getCacheKey(userId);
+  if (!key) return;
+  const rows: CachedChatRow[] = [];
+  for (const chat of chats) {
+    const sealed = await sealRecord(key, chat, {
+      userId,
+      chatId: chat.id,
+      recordId: `chat:${chat.id}`,
+    });
+    rows.push({
+      id: chat.id,
+      user_id: userId,
+      updated_at: chat.updated_at,
+      pinned_score: (chat.pinned_score as number) ?? 0,
+      iv: sealed.iv,
+      ct: sealed.ct,
+    });
+  }
+  await txMany(STORE.chats, (s) => { for (const r of rows) s.put(r); });
 }
 
 export async function readChatSummaries<T = Record<string, unknown>>(
@@ -217,7 +256,8 @@ export async function deleteChat(chatId: string): Promise<void> {
     'by_chat_created',
     IDBKeyRange.bound([chatId, ''], [chatId, '\uffff']),
   );
-  for (const r of rows) await tx(STORE.messages, 'readwrite', (s) => s.delete(r.id));
+  if (rows.length)
+    await txMany(STORE.messages, (s) => { for (const r of rows) s.delete(r.id); });
 }
 
 // -------------------------------------------------------------- messages
@@ -229,9 +269,12 @@ export async function putMessages(
 ): Promise<void> {
   const key = await getCacheKey(userId);
   if (!key) return;
+  if (!messages.length) return;
+  // Seal first (async crypto), then commit every row in ONE transaction.
+  const rows: CachedMessageRow[] = [];
   for (const m of messages) {
     const sealed = await sealRecord(key, m, { userId, chatId, recordId: m.id });
-    const row: CachedMessageRow = {
+    rows.push({
       id: m.id,
       chat_id: chatId,
       user_id: userId,
@@ -240,9 +283,9 @@ export async function putMessages(
       sync_state: syncState,
       iv: sealed.iv,
       ct: sealed.ct,
-    };
-    await tx(STORE.messages, 'readwrite', (s) => s.put(row));
+    });
   }
+  await txMany(STORE.messages, (s) => { for (const r of rows) s.put(r); });
 }
 
 export async function readMessages<T = Record<string, unknown>>(
@@ -283,7 +326,7 @@ export async function countMessages(chatId: string): Promise<number> {
 
 export async function deleteMessages(ids: string[]): Promise<void> {
   if (!cacheAvailable() || !ids.length) return;
-  for (const id of ids) await tx(STORE.messages, 'readwrite', (s) => s.delete(id));
+  await txMany(STORE.messages, (s) => { for (const id of ids) s.delete(id); });
 }
 
 /**
@@ -423,11 +466,14 @@ export async function sweepMedia(userId: string, limitMb: number): Promise<void>
   let total = rows.reduce((n, r) => n + r.size, 0);
   if (total <= budget) return;
   const lru = rows.sort((a, b) => a.last_used - b.last_used);
+  const drop: string[] = [];
   for (const r of lru) {
     if (total <= budget) break;
-    await tx(STORE.media, 'readwrite', (s) => s.delete(r.key));
+    drop.push(r.key);
     total -= r.size;
   }
+  if (drop.length)
+    await txMany(STORE.media, (s) => { for (const k of drop) s.delete(k); });
 }
 
 // ------------------------------------------------------------ secure wipe
@@ -440,10 +486,10 @@ export async function wipeUserCache(userId: string): Promise<void> {
       'by_user',
       IDBKeyRange.only(userId),
     ).catch(() => []);
-    for (const r of rows) {
-      const pk = (r.id ?? r.local_id ?? r.key) as string;
-      await tx(store, 'readwrite', (s) => s.delete(pk));
-    }
+    if (rows.length)
+      await txMany(store, (s) => {
+        for (const r of rows) s.delete((r.id ?? r.local_id ?? r.key) as string);
+      });
   }
   // chats store has no by_user index name collision — clear leftovers too
   const chatRows = await all<CachedChatRow>(
@@ -451,7 +497,8 @@ export async function wipeUserCache(userId: string): Promise<void> {
     'by_user_updated',
     IDBKeyRange.bound([userId, ''], [userId, '\uffff']),
   ).catch(() => []);
-  for (const r of chatRows) await tx(STORE.chats, 'readwrite', (s) => s.delete(r.id));
+  if (chatRows.length)
+    await txMany(STORE.chats, (s) => { for (const r of chatRows) s.delete(r.id); });
 }
 
 /** Nuke the whole cache database (Maximum Privacy Mode logout). */
