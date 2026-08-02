@@ -359,21 +359,28 @@ export default function ChatWindowPanel() {
   const supabase = createClient();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
-  // Per-chat draft persistence: keep typed-but-unsent text per chat until the user
-  // either sends it or clears the box themselves. Survives chat switches and reloads.
+  // Per-chat drafts are MEMORY-ONLY. Draft text is real conversation content,
+  // so it is never written to localStorage/sessionStorage in plaintext. It
+  // survives chat switches within a session and is gone on reload/close.
   const draftsRef = useRef<Record<string, string>>({});
-  const draftsHydrated = useRef<string | null>(null);
-  const draftsKey = user?.id ? `vt:chat-drafts_${user.id}` : 'vt:chat-drafts__anon';
-  if (draftsHydrated.current !== draftsKey) {
-    try {
-      const raw = typeof window !== 'undefined' ? window.localStorage.getItem(draftsKey) : null;
-      draftsRef.current = raw ? (JSON.parse(raw) || {}) : {};
-    } catch { draftsRef.current = {}; }
-    draftsHydrated.current = draftsKey;
-  }
   const persistDrafts = () => {
-    try { window.localStorage.setItem(draftsKey, JSON.stringify(draftsRef.current)); } catch {}
+    // Intentionally a no-op: drafts must never be persisted in plaintext.
   };
+  // Legacy cleanup: purge any plaintext drafts written by earlier versions.
+  const draftsPurged = useRef(false);
+  if (!draftsPurged.current && typeof window !== 'undefined') {
+    draftsPurged.current = true;
+    try {
+      for (const store of [window.localStorage, window.sessionStorage]) {
+        const rm: string[] = [];
+        for (let i = 0; i < store.length; i++) {
+          const k = store.key(i);
+          if (k && k.startsWith('vt:chat-drafts')) rm.push(k);
+        }
+        rm.forEach((k) => store.removeItem(k));
+      }
+    } catch {}
+  }
   const [showInfo, setShowInfo] = useState(false);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
   const [pendingAttachments, setPendingAttachments] = useState<Array<{
