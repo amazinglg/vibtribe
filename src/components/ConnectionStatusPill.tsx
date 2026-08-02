@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { CloudOff, RefreshCw, Check, Loader2 } from 'lucide-react';
 import { useConnectionState } from '@/lib/offline/connection';
 
@@ -11,7 +11,7 @@ export default function ConnectionStatusPill({ className = '' }: { className?: s
   const state = useConnectionState();
   const [visible, setVisible] = useState(false);
   const seen = useRef(false);
-  const hideTimer = useRef<ReturnType<typeof setTimeout>>();
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     clearTimeout(hideTimer.current);
@@ -30,7 +30,7 @@ export default function ConnectionStatusPill({ className = '' }: { className?: s
     return () => clearTimeout(hideTimer.current);
   }, [state]);
 
-  const copy: Record<string, { label: string; icon: JSX.Element; tone: string }> = {
+  const copy: Record<string, { label: string; icon: ReactNode; tone: string }> = {
     offline: {
       label: "You're offline",
       icon: <CloudOff size={12} />,
