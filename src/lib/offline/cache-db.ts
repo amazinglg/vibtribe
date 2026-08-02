@@ -477,6 +477,52 @@ export async function sweepMedia(userId: string, limitMb: number): Promise<void>
 }
 
 // ------------------------------------------------------------ secure wipe
+/**
+ * Read-only cache usage stats for the Settings screen. Touches only row
+ * metadata (sizes / counts) — never decrypts a payload.
+ */
+export interface CacheStats {
+  messageCount: number;
+  chatCount: number;
+  mediaCount: number;
+  mediaBytes: number;
+  totalBytes: number;
+  outboxCount: number;
+}
+
+export async function cacheStats(userId: string): Promise<CacheStats> {
+  const empty: CacheStats = {
+    messageCount: 0, chatCount: 0, mediaCount: 0,
+    mediaBytes: 0, totalBytes: 0, outboxCount: 0,
+  };
+  if (!cacheAvailable()) return empty;
+  try {
+    const [msgs, media, outbox, chats] = await Promise.all([
+      all<CachedMessageRow>(STORE.messages, 'by_user', IDBKeyRange.only(userId)).catch(() => []),
+      all<MediaRow>(STORE.media, 'by_user', IDBKeyRange.only(userId)).catch(() => []),
+      all<OutboxRow>(STORE.outbox, 'by_user', IDBKeyRange.only(userId)).catch(() => []),
+      all<CachedChatRow>(
+        STORE.chats,
+        'by_user_updated',
+        IDBKeyRange.bound([userId, ''], [userId, '\uffff']),
+      ).catch(() => []),
+    ]);
+    const bytesOf = (rows: Array<{ ct: ArrayBuffer }>) =>
+      rows.reduce((n, r) => n + (r.ct?.byteLength || 0), 0);
+    const mediaBytes = media.reduce((n, r) => n + (r.ct?.byteLength || r.size || 0), 0);
+    return {
+      messageCount: msgs.length,
+      chatCount: chats.length,
+      mediaCount: media.length,
+      mediaBytes,
+      outboxCount: outbox.length,
+      totalBytes: bytesOf(msgs) + bytesOf(chats) + bytesOf(outbox) + mediaBytes,
+    };
+  } catch {
+    return empty;
+  }
+}
+
 /** Remove every cached record for one user (logout / manual clear). */
 export async function wipeUserCache(userId: string): Promise<void> {
   if (!cacheAvailable()) return;

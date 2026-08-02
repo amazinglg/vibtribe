@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useRef, useEffect } from 'react';
-import { Phone, Video, Paperclip, Mic, MicOff, Send, Lock, CheckCheck, Check, ArrowLeft, Info, Trash2, ShieldCheck, Ban, ShieldOff, X, Image, FileText, Camera, VideoOff, PhoneOff, Volume2, VolumeX, Timer, MoreVertical, UserPlus, Smile, KeyRound, Shield, ShieldAlert, Plus, Flag } from 'lucide-react';
+import { Phone, Video, Paperclip, Mic, MicOff, Send, Lock, CheckCheck, Check, Clock, ArrowLeft, Info, Trash2, ShieldCheck, Ban, ShieldOff, X, Image, FileText, Camera, VideoOff, PhoneOff, Volume2, VolumeX, Timer, MoreVertical, UserPlus, Smile, KeyRound, Shield, ShieldAlert, Plus, Flag } from 'lucide-react';
 import { useChatStore } from '@/store/chatStore';
 import MarkSecureModal from '@/components/MarkSecureModal';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,6 +10,7 @@ import { decryptBytes, decryptBytesWithKey } from '@/lib/encryption';
 import { signChatMediaUrl } from '@/lib/chat-media-url';
 import EncryptedMedia from '@/components/EncryptedMedia';
 import ChatMediaImg from '@/components/ChatMediaImg';
+import ConnectionStatusPill from '@/components/ConnectionStatusPill';
 import MediaViewer, { type ViewerSource } from '@/components/MediaViewer';
 import { getPreferredNickname } from '@/components/SecureVaultModal';
 import PermissionPrompt from '@/components/PermissionPrompt';
@@ -36,7 +37,7 @@ interface Message {
   senderId: string;
   text: string;
   time: string;
-  status: 'sent' | 'delivered' | 'read';
+  status: 'pending' | 'sent' | 'delivered' | 'read';
   reactions: string[];
   encrypted?: boolean;
   mediaUrl?: string;
@@ -395,6 +396,8 @@ export default function ChatWindowPanel() {
   const [enlargeAvatar, setEnlargeAvatar] = useState(false);
   const [lightbox, setLightbox] = useState<ViewerSource | null>(null);
   const [loading, setLoading] = useState(false);
+  // Chats we've already painted from the encrypted cache — never skeleton twice.
+  const everCachedRef = useRef<Set<string>>(new Set());
   const [e2eEnabled, setE2eEnabled] = useState(false);
   const [showE2EInfo, setShowE2EInfo] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
@@ -820,7 +823,12 @@ export default function ChatWindowPanel() {
       }
       void noteChatUsage(user.id, selectedChatId);
     } catch {}
-    if (!paintedFromCache) setLoading(true);
+    // Skeletons are reserved for conversations that have never been cached.
+    // Once a chat has been seen, we paint cached content and sync silently.
+    if (!paintedFromCache && !everCachedRef.current.has(selectedChatId)) setLoading(true);
+    if (paintedFromCache) everCachedRef.current.add(selectedChatId);
+    const { beginSync, endSync } = await import('@/lib/offline');
+    beginSync();
     try {
       // Note: my public_key is managed by the PIN setup flow — do not overwrite here.
 
@@ -1079,6 +1087,7 @@ export default function ChatWindowPanel() {
       ]);
     } finally {
       setLoading(false);
+      endSync();
     }
   };
 
@@ -1090,6 +1099,38 @@ export default function ChatWindowPanel() {
     window.addEventListener('vt-encryption-unlocked', handleUnlocked);
     return () => window.removeEventListener('vt-encryption-unlocked', handleUnlocked);
   }, [selectedChatId, user?.id]);
+
+  // Outbox: keep retrying queued sends and swap the Pending clock for the
+  // real delivered tick the moment a queued message lands.
+  useEffect(() => {
+    if (!user?.id) return;
+    let dispose: (() => void) | undefined;
+    (async () => {
+      const { installOutboxRetry } = await import('@/lib/offline');
+      dispose = installOutboxRetry(user.id);
+    })();
+    const onSent = (e: Event) => {
+      const d = (e as CustomEvent).detail || {};
+      if (!d.localId || !d.message) return;
+      setMessages(prev =>
+        prev.map(m =>
+          m.id === d.localId
+            ? { ...m, id: d.message.id, status: 'delivered', createdAt: d.message.created_at }
+            : m,
+        ),
+      );
+      try {
+        window.dispatchEvent(new CustomEvent('vt-message-sent', {
+          detail: { chatId: d.chatId, preview: d.text || '', at: Date.now() },
+        }));
+      } catch {}
+    };
+    window.addEventListener('vt-outbox-sent', onSent);
+    return () => {
+      window.removeEventListener('vt-outbox-sent', onSent);
+      dispose?.();
+    };
+  }, [user?.id]);
 
   // Trust Lock: load current state when chat changes and subscribe to
   // realtime updates so both participants stay in sync. Cleared between
@@ -1336,7 +1377,8 @@ export default function ChatWindowPanel() {
       encrypted: e2eEnabled,
       createdAt: new Date().toISOString(),
     };
-    setMessages(prev => [...prev, tempMsg]);
+    const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+    setMessages(prev => [...prev, offline ? { ...tempMsg, status: 'pending' as const } : tempMsg]);
     if (!overrideText) {
       setInputText('');
       if (selectedChatId) {
@@ -1346,8 +1388,10 @@ export default function ChatWindowPanel() {
     }
     setShowEmoji(false);
 
+    // Declared outside the try so the offline-retry path queues the *encrypted*
+    // payload, never plaintext.
+    let contentToStore = text;
     try {
-      let contentToStore = text;
       const pkForSend = contact?.publicKey || contactPubKeyRef.current || null;
       if (chatType !== 'group' && pkForSend) {
         contentToStore = await encryptMessage(text, pkForSend);
@@ -1361,6 +1405,37 @@ export default function ChatWindowPanel() {
         if (members.length > 0) {
           contentToStore = await encryptGroupMessage(text, members);
         }
+      }
+
+      // Offline (or a failed send): park the already-encrypted payload in the
+      // outbox. It renders as Pending and retries automatically.
+      const queueIt = async () => {
+        const { queueOutgoing, installOutboxRetry } = await import('@/lib/offline');
+        const localId = await queueOutgoing(user.id, selectedChatId, {
+          chat_id: selectedChatId,
+          sender_id: user.id,
+          content: contentToStore,
+          message_status: 'sent',
+          // display-only, stripped before the DB insert
+          text,
+          senderId: user.id,
+          status: 'pending',
+        });
+        if (localId) {
+          setMessages(prev =>
+            prev.map(m => (m.id === tempId ? { ...m, id: localId, status: 'pending' as const } : m)),
+          );
+        }
+        installOutboxRetry(user.id);
+        return !!localId;
+      };
+
+      if (offline) {
+        if (!(await queueIt())) {
+          setMessages(prev => prev.filter(m => m.id !== tempId));
+          toast.error("You're offline — message could not be queued");
+        }
+        return;
       }
 
       const { data } = await supabase
@@ -1392,8 +1467,31 @@ export default function ChatWindowPanel() {
         }
       }
     } catch (err: any) {
-      setMessages(prev => prev.filter(m => m.id !== tempId));
-      toast.error(err?.message || 'Message could not be sent');
+      // Network-ish failure → keep the message and retry from the outbox.
+      let queued = false;
+      try {
+        const { queueOutgoing, installOutboxRetry } = await import('@/lib/offline');
+        const localId = await queueOutgoing(user.id, selectedChatId, {
+          chat_id: selectedChatId,
+          sender_id: user.id,
+          content: contentToStore,
+          message_status: 'sent',
+          text,
+          senderId: user.id,
+          status: 'pending',
+        });
+        if (localId) {
+          queued = true;
+          setMessages(prev =>
+            prev.map(m => (m.id === tempId ? { ...m, id: localId, status: 'pending' as const } : m)),
+          );
+          installOutboxRetry(user.id);
+        }
+      } catch {}
+      if (!queued) {
+        setMessages(prev => prev.filter(m => m.id !== tempId));
+        toast.error(err?.message || 'Message could not be sent');
+      }
     }
   };
 
@@ -2564,6 +2662,7 @@ export default function ChatWindowPanel() {
         }}
         className="vt-chat-scroll flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3"
       >
+        <ConnectionStatusPill className="sticky top-0 z-20 -mt-1 mb-1" />
         {loading ? (
           <div className="flex flex-col gap-3">
             {[1, 2, 3].map(i => (
@@ -2694,7 +2793,7 @@ export default function ChatWindowPanel() {
               {__sep}
               <div
                 data-msg-id={msg.id}
-                className={`flex ${isMe ? 'justify-end' : 'justify-start'} group`}
+                className={`flex ${isMe ? 'justify-end' : 'justify-start'} group vt-msg-in`}
                 onMouseEnter={() => setHoveredMsg(msg.id)}
                 onMouseLeave={() => setHoveredMsg(null)}
                 onClick={() => {
@@ -2801,6 +2900,11 @@ export default function ChatWindowPanel() {
                   <div className={`flex items-center gap-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
                     <span className="text-[10px] text-white/45">{msg.time}</span>
                     {isMe && (
+                      msg.status === 'pending' ? (
+                        <span className="inline-flex items-center gap-1 text-white/55" title="Waiting to send">
+                          <Clock size={11} className="animate-pulse" />
+                        </span>
+                      ) :
                       msg.status === 'read' ? <CheckCheck size={12} className="text-cyan-300" /> :
                       msg.status === 'delivered' ? <CheckCheck size={12} className="text-white/50" /> :
                       <Check size={12} className="text-white/50" />

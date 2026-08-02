@@ -84,10 +84,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     let cancelled = false;
     (async () => {
       try {
-        const { loadCachePrefs, installCachePrivacy } = await import('@/lib/offline');
+        const { loadCachePrefs, installCachePrivacy, installOutboxRetry } = await import('@/lib/offline');
         const prefs = await loadCachePrefs(user.id);
         if (cancelled) return;
         dispose = installCachePrivacy(user.id, prefs);
+        // Offline outbox: retry queued sends on reconnect / resume.
+        const disposeOutbox = installOutboxRetry(user.id);
+        const inner = dispose;
+        dispose = () => { inner?.(); disposeOutbox?.(); };
       } catch {}
     })();
     return () => {
