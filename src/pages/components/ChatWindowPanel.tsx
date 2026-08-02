@@ -2793,7 +2793,7 @@ export default function ChatWindowPanel() {
               {__sep}
               <div
                 data-msg-id={msg.id}
-                className={`flex ${isMe ? 'justify-end' : 'justify-start'} group`}
+                className={`flex ${isMe ? 'justify-end' : 'justify-start'} group vt-msg-in`}
                 onMouseEnter={() => setHoveredMsg(msg.id)}
                 onMouseLeave={() => setHoveredMsg(null)}
                 onClick={() => {
