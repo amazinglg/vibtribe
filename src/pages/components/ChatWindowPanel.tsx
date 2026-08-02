@@ -36,7 +36,7 @@ interface Message {
   senderId: string;
   text: string;
   time: string;
-  status: 'sent' | 'delivered' | 'read';
+  status: 'pending' | 'sent' | 'delivered' | 'read';
   reactions: string[];
   encrypted?: boolean;
   mediaUrl?: string;
