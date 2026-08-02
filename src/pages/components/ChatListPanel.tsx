@@ -884,6 +884,7 @@ export default function ChatListPanel() {
 
         {/* Chat List */}
         <div className="flex-1 overflow-y-auto">
+          <ConnectionStatusPill className="pt-2" />
           {activeTab === 'contacts' ? (
             <ContactsTabContent
               user={user}
