@@ -75,6 +75,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   // Keep the session warm: when the tab becomes visible (esp. on mobile
+  // Offline cache privacy lifecycle: install once per signed-in user so the
+  // decrypted cache memory is dropped on background/pagehide/Trust Lock and
+  // the encrypted media budget is enforced.
+  useEffect(() => {
+    if (!user?.id || typeof window === 'undefined') return;
+    let dispose: (() => void) | null = null;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { loadCachePrefs, installCachePrivacy } = await import('@/lib/offline');
+        const prefs = await loadCachePrefs(user.id);
+        if (cancelled) return;
+        dispose = installCachePrivacy(user.id, prefs);
+      } catch {}
+    })();
+    return () => {
+      cancelled = true;
+      dispose?.();
+    };
+  }, [user?.id]);
+
+  // Keep the session warm: when the tab becomes visible (esp. on mobile
   // where the OS aggressively suspends JS) refresh the access token so
   // the user is not silently logged out on a stale JWT.
   useEffect(() => {
