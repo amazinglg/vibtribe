@@ -34,7 +34,7 @@ export interface CachedChatRow {
   user_id: string;
   updated_at: string;
   pinned_score: number;
-  iv: Uint8Array;
+  iv: Uint8Array<ArrayBuffer>;
   ct: ArrayBuffer;
 }
 
@@ -45,7 +45,7 @@ export interface CachedMessageRow {
   created_at: string;
   updated_at: string;
   sync_state: 'synced' | 'pending' | 'failed';
-  iv: Uint8Array;
+  iv: Uint8Array<ArrayBuffer>;
   ct: ArrayBuffer;
 }
 
@@ -56,7 +56,7 @@ export interface OutboxRow {
   created_at: string;
   attempts: number;
   next_attempt_at: number;
-  iv: Uint8Array;
+  iv: Uint8Array<ArrayBuffer>;
   ct: ArrayBuffer;
 }
 
@@ -67,7 +67,7 @@ export interface MediaRow {
   size: number;
   last_used: number;
   mime: string;
-  iv: Uint8Array;
+  iv: Uint8Array<ArrayBuffer>;
   ct: ArrayBuffer;
 }
 

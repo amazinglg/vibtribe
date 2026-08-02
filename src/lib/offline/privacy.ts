@@ -50,7 +50,7 @@ export async function saveCachePrefs(
   if (prefs.mediaCacheLimitMb !== undefined)
     patch.media_cache_limit_mb = prefs.mediaCacheLimitMb;
   if (!Object.keys(patch).length) return;
-  await supabase.from('user_profiles').update(patch).eq('id', userId);
+  await supabase.from('user_profiles').update(patch as never).eq('id', userId);
   if (prefs.mediaCacheLimitMb !== undefined)
     await applyMediaBudget(userId, prefs.mediaCacheLimitMb);
 }

@@ -53,9 +53,9 @@ function bufToB64(buf: ArrayBuffer | Uint8Array): string {
   for (let i = 0; i < b.length; i++) s += String.fromCharCode(b[i]);
   return btoa(s);
 }
-function b64ToBuf(b64: string): Uint8Array {
+function b64ToBuf(b64: string): Uint8Array<ArrayBuffer> {
   const bin = atob(b64);
-  const out = new Uint8Array(bin.length);
+  const out = new Uint8Array(new ArrayBuffer(bin.length));
   for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
   return out;
 }
@@ -115,7 +115,7 @@ export function setCachePinLayer(pin: string | null): void {
   sessionPin = pin && /^\d{6}$/.test(pin) ? pin : null;
 }
 
-async function pinKey(pin: string, salt: Uint8Array): Promise<CryptoKey> {
+async function pinKey(pin: string, salt: Uint8Array<ArrayBuffer>): Promise<CryptoKey> {
   const base = await crypto.subtle.importKey(
     'raw',
     new TextEncoder().encode(pin),
@@ -133,7 +133,7 @@ async function pinKey(pin: string, salt: Uint8Array): Promise<CryptoKey> {
 }
 
 /** `v1:<b64 raw>` or `v1p:<b64 salt>:<b64 iv>:<b64 wrapped>` */
-async function packCmk(raw: Uint8Array): Promise<string> {
+async function packCmk(raw: Uint8Array<ArrayBuffer>): Promise<string> {
   if (!sessionPin) return `v1:${bufToB64(raw)}`;
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const iv = crypto.getRandomValues(new Uint8Array(12));
@@ -142,7 +142,7 @@ async function packCmk(raw: Uint8Array): Promise<string> {
   return `v1p:${bufToB64(salt)}:${bufToB64(iv)}:${bufToB64(new Uint8Array(ct))}`;
 }
 
-async function unpackCmk(packed: string): Promise<Uint8Array | null> {
+async function unpackCmk(packed: string): Promise<Uint8Array<ArrayBuffer> | null> {
   if (packed.startsWith('v1:')) return b64ToBuf(packed.slice(3));
   if (packed.startsWith('v1p:')) {
     if (!sessionPin) return null; // needs the PIN layer to open
@@ -154,7 +154,7 @@ async function unpackCmk(packed: string): Promise<Uint8Array | null> {
         k,
         b64ToBuf(c),
       );
-      return new Uint8Array(plain);
+      return new Uint8Array(plain) as Uint8Array<ArrayBuffer>;
     } catch {
       return null;
     }
@@ -165,7 +165,7 @@ async function unpackCmk(packed: string): Promise<Uint8Array | null> {
 // ----------------------------------------------------------------- CMK
 const memKeys = new Map<string, CryptoKey>();
 
-async function importCmk(raw: Uint8Array): Promise<CryptoKey> {
+async function importCmk(raw: Uint8Array<ArrayBuffer>): Promise<CryptoKey> {
   return crypto.subtle.importKey('raw', raw, { name: 'AES-GCM', length: 256 }, false, [
     'encrypt',
     'decrypt',
@@ -245,11 +245,11 @@ export async function destroyCacheKey(userId: string): Promise<void> {
 
 // ------------------------------------------------------- record crypto
 export interface SealedRecord {
-  iv: Uint8Array;
+  iv: Uint8Array<ArrayBuffer>;
   ct: ArrayBuffer;
 }
 
-function aad(userId: string, chatId: string, recordId: string): Uint8Array {
+function aad(userId: string, chatId: string, recordId: string): Uint8Array<ArrayBuffer> {
   return new TextEncoder().encode(`${userId}|${chatId}|${recordId}`);
 }
 
@@ -260,7 +260,7 @@ export async function sealRecord(
   ids: { userId: string; chatId: string; recordId: string },
 ): Promise<SealedRecord> {
   const iv = crypto.getRandomValues(new Uint8Array(12));
-  const data = new TextEncoder().encode(JSON.stringify(value));
+  const data = new TextEncoder().encode(JSON.stringify(value)) as Uint8Array<ArrayBuffer>;
   const ct = await crypto.subtle.encrypt(
     { name: 'AES-GCM', iv, additionalData: aad(ids.userId, ids.chatId, ids.recordId) },
     key,
