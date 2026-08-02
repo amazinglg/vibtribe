@@ -1410,6 +1410,9 @@ export default function ProfileContent() {
                 </div>
               </div>
 
+              {/* Offline Storage */}
+              <OfflineStorageSettings />
+
               {/* Permissions */}
               <div className="glass rounded-2xl border border-border p-5">
                 <h3 className="font-semibold text-base text-foreground mb-1 flex items-center gap-2">
