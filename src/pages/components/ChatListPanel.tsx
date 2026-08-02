@@ -630,7 +630,7 @@ export default function ChatListPanel() {
         // Persist encrypted summaries + prioritise background sync by MRU.
         if (user?.id) {
           try {
-            const { putChatSummaries, warmStartupSync } = await import('@/lib/offline');
+            const { putChatSummaries, noteChatUsage } = await import('@/lib/offline');
             await putChatSummaries(
               user.id,
               (gated as Chat[]).map((c: any) => ({
@@ -639,11 +639,10 @@ export default function ChatListPanel() {
               })),
             );
             localStorage.setItem(CHATS_MARKER_KEY, '1');
-            void warmStartupSync(
-              user.id,
-              (gated as Chat[]).map((c: any) => c.id).filter(Boolean),
-              async (row: any) => ({ ...row }),
-            );
+            // Keep MRU ordering fresh for predictive sync without touching
+            // message bodies here — conversations cache their own decrypted
+            // content when opened.
+            if (selectedChatId) void noteChatUsage(user.id, selectedChatId);
           } catch {}
         }
       }
