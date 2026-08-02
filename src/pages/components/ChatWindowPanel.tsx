@@ -2898,6 +2898,11 @@ export default function ChatWindowPanel() {
                   <div className={`flex items-center gap-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
                     <span className="text-[10px] text-white/45">{msg.time}</span>
                     {isMe && (
+                      msg.status === 'pending' ? (
+                        <span className="inline-flex items-center gap-1 text-white/55" title="Waiting to send">
+                          <Clock size={11} className="animate-pulse" />
+                        </span>
+                      ) :
                       msg.status === 'read' ? <CheckCheck size={12} className="text-cyan-300" /> :
                       msg.status === 'delivered' ? <CheckCheck size={12} className="text-white/50" /> :
                       <Check size={12} className="text-white/50" />
