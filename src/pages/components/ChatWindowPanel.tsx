@@ -1099,6 +1099,38 @@ export default function ChatWindowPanel() {
     return () => window.removeEventListener('vt-encryption-unlocked', handleUnlocked);
   }, [selectedChatId, user?.id]);
 
+  // Outbox: keep retrying queued sends and swap the Pending clock for the
+  // real delivered tick the moment a queued message lands.
+  useEffect(() => {
+    if (!user?.id) return;
+    let dispose: (() => void) | undefined;
+    (async () => {
+      const { installOutboxRetry } = await import('@/lib/offline');
+      dispose = installOutboxRetry(user.id);
+    })();
+    const onSent = (e: Event) => {
+      const d = (e as CustomEvent).detail || {};
+      if (!d.localId || !d.message) return;
+      setMessages(prev =>
+        prev.map(m =>
+          m.id === d.localId
+            ? { ...m, id: d.message.id, status: 'delivered', createdAt: d.message.created_at }
+            : m,
+        ),
+      );
+      try {
+        window.dispatchEvent(new CustomEvent('vt-message-sent', {
+          detail: { chatId: d.chatId, preview: d.text || '', at: Date.now() },
+        }));
+      } catch {}
+    };
+    window.addEventListener('vt-outbox-sent', onSent);
+    return () => {
+      window.removeEventListener('vt-outbox-sent', onSent);
+      dispose?.();
+    };
+  }, [user?.id]);
+
   // Trust Lock: load current state when chat changes and subscribe to
   // realtime updates so both participants stay in sync. Cleared between
   // chats so other (non-Trust-Lock) chats keep their default behaviour.
