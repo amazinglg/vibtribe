@@ -84,7 +84,11 @@ export default function ChatListPanel() {
   const { selectedChatId, setSelectedChatId } = useChatStore();
   const { user, profile } = useAuth();
   const supabase = createClient();
-  const CHATS_CACHE_KEY = user?.id ? `vt_chats_cache_v1_${user.id}` : 'vt_chats_cache_v1__anon';
+  // Stage 2: the chat list is cache-first. Summaries live in the encrypted
+  // IndexedDB cache (`@/lib/offline`), never in plaintext sessionStorage.
+  // The only thing kept in the clear is a boolean marker so the very first
+  // paint knows whether a skeleton is justified at all.
+  const CHATS_MARKER_KEY = user?.id ? `vt_chats_cached_v2_${user.id}` : 'vt_chats_cached_v2__anon';
   const PINS_KEY = user?.id ? `vt_pinned_chats_v1_${user.id}` : 'vt_pinned_chats_v1__anon';
   const [pinnedIds, setPinnedIds] = useState<string[]>(() => {
     if (typeof window === 'undefined') return [];
@@ -99,17 +103,27 @@ export default function ChatListPanel() {
     persistPins(isPinned ? pinnedIds.filter(x => x !== id) : [id, ...pinnedIds]);
     setContextMenu(null);
   };
-  const [chats, setChats] = useState<Chat[]>(() => {
-    if (typeof window === 'undefined') return [];
-    try {
-      const raw = sessionStorage.getItem(CHATS_CACHE_KEY);
-      return raw ? (JSON.parse(raw) as Chat[]) : [];
-    } catch { return []; }
-  });
+  const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState(() => {
     if (typeof window === 'undefined') return true;
-    try { return !sessionStorage.getItem(CHATS_CACHE_KEY); } catch { return true; }
+    try { return !localStorage.getItem(CHATS_MARKER_KEY); } catch { return true; }
   });
+
+  // Instant paint from the encrypted cache, before any network work starts.
+  useEffect(() => {
+    let cancelled = false;
+    if (!user?.id) return;
+    (async () => {
+      try {
+        const { readChatSummaries } = await import('@/lib/offline');
+        const rows = await readChatSummaries<Chat>(user.id);
+        if (cancelled || !rows.length) return;
+        setChats((prev) => (prev.length ? prev : rows));
+        setLoading(false);
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id]);
   const [contactsOpen, setContactsOpen] = useState(false);
   const [createGroupOpen, setCreateGroupOpen] = useState(false);
   // ===== Contacts tab state =====
