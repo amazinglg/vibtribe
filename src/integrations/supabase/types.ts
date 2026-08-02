@@ -987,6 +987,24 @@ export type Database = {
         }
         Relationships: []
       }
+      message_tombstones: {
+        Row: {
+          chat_id: string
+          deleted_at: string
+          id: string
+        }
+        Insert: {
+          chat_id: string
+          deleted_at?: string
+          id: string
+        }
+        Update: {
+          chat_id?: string
+          deleted_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           chat_id: string | null
@@ -1001,6 +1019,7 @@ export type Database = {
           message_type: string
           reactions: Json | null
           sender_id: string | null
+          updated_at: string
         }
         Insert: {
           chat_id?: string | null
@@ -1015,6 +1034,7 @@ export type Database = {
           message_type?: string
           reactions?: Json | null
           sender_id?: string | null
+          updated_at?: string
         }
         Update: {
           chat_id?: string | null
@@ -1029,6 +1049,7 @@ export type Database = {
           message_type?: string
           reactions?: Json | null
           sender_id?: string | null
+          updated_at?: string
         }
         Relationships: [
           {
@@ -1859,6 +1880,8 @@ export type Database = {
           marketing_consent_at: string | null
           marketing_consent_ip: string | null
           marketing_consent_source: string | null
+          max_privacy_mode: boolean
+          media_cache_limit_mb: number
           mobile_hash: string | null
           mobile_number: string | null
           notif_mentions: boolean
@@ -1917,6 +1940,8 @@ export type Database = {
           marketing_consent_at?: string | null
           marketing_consent_ip?: string | null
           marketing_consent_source?: string | null
+          max_privacy_mode?: boolean
+          media_cache_limit_mb?: number
           mobile_hash?: string | null
           mobile_number?: string | null
           notif_mentions?: boolean
@@ -1975,6 +2000,8 @@ export type Database = {
           marketing_consent_at?: string | null
           marketing_consent_ip?: string | null
           marketing_consent_source?: string | null
+          max_privacy_mode?: boolean
+          media_cache_limit_mb?: number
           mobile_hash?: string | null
           mobile_number?: string | null
           notif_mentions?: boolean
@@ -2262,6 +2289,8 @@ export type Database = {
           marketing_consent_at: string | null
           marketing_consent_ip: string | null
           marketing_consent_source: string | null
+          max_privacy_mode: boolean
+          media_cache_limit_mb: number
           mobile_hash: string | null
           mobile_number: string | null
           notif_mentions: boolean
@@ -2361,6 +2390,8 @@ export type Database = {
           marketing_consent_at: string | null
           marketing_consent_ip: string | null
           marketing_consent_source: string | null
+          max_privacy_mode: boolean
+          media_cache_limit_mb: number
           mobile_hash: string | null
           mobile_number: string | null
           notif_mentions: boolean
@@ -2440,6 +2471,8 @@ export type Database = {
           marketing_consent_at: string | null
           marketing_consent_ip: string | null
           marketing_consent_source: string | null
+          max_privacy_mode: boolean
+          media_cache_limit_mb: number
           mobile_hash: string | null
           mobile_number: string | null
           notif_mentions: boolean
@@ -2507,6 +2540,8 @@ export type Database = {
           marketing_consent_at: string | null
           marketing_consent_ip: string | null
           marketing_consent_source: string | null
+          max_privacy_mode: boolean
+          media_cache_limit_mb: number
           mobile_hash: string | null
           mobile_number: string | null
           notif_mentions: boolean
@@ -2676,6 +2711,8 @@ export type Database = {
           marketing_consent_at: string | null
           marketing_consent_ip: string | null
           marketing_consent_source: string | null
+          max_privacy_mode: boolean
+          media_cache_limit_mb: number
           mobile_hash: string | null
           mobile_number: string | null
           notif_mentions: boolean
