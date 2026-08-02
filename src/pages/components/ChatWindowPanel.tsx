@@ -775,7 +775,23 @@ export default function ChatWindowPanel() {
 
   const loadChatData = async () => {
     if (!selectedChatId || !user) return;
-    setLoading(true);
+    // Stage 3 — cache-first conversation. Paint whatever the encrypted cache
+    // already holds for this chat, then reconcile silently over the network.
+    // A skeleton is only shown when this conversation has never been cached.
+    let paintedFromCache = false;
+    try {
+      const { getCachedMessages, noteChatUsage } = await import('@/lib/offline');
+      const cached = await getCachedMessages(user.id, selectedChatId);
+      if (cached.length) {
+        setMessages(
+          cached.map((c: any) => ({ ...c, id: c.id, createdAt: c.created_at })) as any,
+        );
+        paintedFromCache = true;
+        setLoading(false);
+      }
+      void noteChatUsage(user.id, selectedChatId);
+    } catch {}
+    if (!paintedFromCache) setLoading(true);
     try {
       // Note: my public_key is managed by the PIN setup flow — do not overwrite here.
 
