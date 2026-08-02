@@ -773,6 +773,28 @@ export default function ChatWindowPanel() {
     return () => clearInterval(interval);
   }, [selectedChatId]);
 
+  /**
+   * Persist the rendered conversation into the encrypted offline cache.
+   * Content is already decrypted for display, then immediately re-encrypted
+   * with the device Cache Master Key — nothing readable is ever written.
+   */
+  const persistChatCache = async (list: any[]) => {
+    if (!user || !selectedChatId || !list?.length) return;
+    try {
+      const { putMessages, trimChat } = await import('@/lib/offline');
+      await putMessages(
+        user.id,
+        selectedChatId,
+        list.map((m: any) => ({
+          ...m,
+          id: m.id,
+          created_at: m.createdAt || new Date().toISOString(),
+        })),
+      );
+      await trimChat(selectedChatId);
+    } catch {}
+  };
+
   const loadChatData = async () => {
     if (!selectedChatId || !user) return;
     // Stage 3 — cache-first conversation. Paint whatever the encrypted cache
@@ -927,6 +949,7 @@ export default function ChatWindowPanel() {
             });
           }
           setMessages(out);
+          void persistChatCache(out);
           // Capture the first unread (received) message BEFORE marking as read,
           // so the scroll effect can jump to it on chat open.
           {
@@ -1028,6 +1051,7 @@ export default function ChatWindowPanel() {
         });
       }
       setMessages(decryptedMsgs);
+      void persistChatCache(decryptedMsgs);
 
       // Capture first unread (received) message BEFORE marking read.
       {
