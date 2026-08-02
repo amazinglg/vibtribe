@@ -1344,7 +1344,8 @@ export default function ChatWindowPanel() {
       encrypted: e2eEnabled,
       createdAt: new Date().toISOString(),
     };
-    setMessages(prev => [...prev, tempMsg]);
+    const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+    setMessages(prev => [...prev, offline ? { ...tempMsg, status: 'pending' as const } : tempMsg]);
     if (!overrideText) {
       setInputText('');
       if (selectedChatId) {
