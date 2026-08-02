@@ -1383,6 +1383,10 @@ export default function ChatWindowPanel() {
           sender_id: user.id,
           content: contentToStore,
           message_status: 'sent',
+          // display-only, stripped before the DB insert
+          text,
+          senderId: user.id,
+          status: 'pending',
         });
         if (localId) {
           setMessages(prev =>
@@ -1439,6 +1443,9 @@ export default function ChatWindowPanel() {
           sender_id: user.id,
           content: contentToStore,
           message_status: 'sent',
+          text,
+          senderId: user.id,
+          status: 'pending',
         });
         if (localId) {
           queued = true;
