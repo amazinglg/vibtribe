@@ -1372,6 +1372,33 @@ export default function ChatWindowPanel() {
         }
       }
 
+      // Offline (or a failed send): park the already-encrypted payload in the
+      // outbox. It renders as Pending and retries automatically.
+      const queueIt = async () => {
+        const { queueOutgoing, installOutboxRetry } = await import('@/lib/offline');
+        const localId = await queueOutgoing(user.id, selectedChatId, {
+          chat_id: selectedChatId,
+          sender_id: user.id,
+          content: contentToStore,
+          message_status: 'sent',
+        });
+        if (localId) {
+          setMessages(prev =>
+            prev.map(m => (m.id === tempId ? { ...m, id: localId, status: 'pending' as const } : m)),
+          );
+        }
+        installOutboxRetry(user.id);
+        return !!localId;
+      };
+
+      if (offline) {
+        if (!(await queueIt())) {
+          setMessages(prev => prev.filter(m => m.id !== tempId));
+          toast.error("You're offline — message could not be queued");
+        }
+        return;
+      }
+
       const { data } = await supabase
         .from('messages')
         .insert({ chat_id: selectedChatId, sender_id: user.id, content: contentToStore, message_status: 'sent' })
@@ -1401,8 +1428,28 @@ export default function ChatWindowPanel() {
         }
       }
     } catch (err: any) {
-      setMessages(prev => prev.filter(m => m.id !== tempId));
-      toast.error(err?.message || 'Message could not be sent');
+      // Network-ish failure → keep the message and retry from the outbox.
+      let queued = false;
+      try {
+        const { queueOutgoing, installOutboxRetry } = await import('@/lib/offline');
+        const localId = await queueOutgoing(user.id, selectedChatId, {
+          chat_id: selectedChatId,
+          sender_id: user.id,
+          content: text,
+          message_status: 'sent',
+        });
+        if (localId) {
+          queued = true;
+          setMessages(prev =>
+            prev.map(m => (m.id === tempId ? { ...m, id: localId, status: 'pending' as const } : m)),
+          );
+          installOutboxRetry(user.id);
+        }
+      } catch {}
+      if (!queued) {
+        setMessages(prev => prev.filter(m => m.id !== tempId));
+        toast.error(err?.message || 'Message could not be sent');
+      }
     }
   };
 
