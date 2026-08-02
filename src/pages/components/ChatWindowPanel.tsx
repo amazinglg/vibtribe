@@ -395,6 +395,8 @@ export default function ChatWindowPanel() {
   const [enlargeAvatar, setEnlargeAvatar] = useState(false);
   const [lightbox, setLightbox] = useState<ViewerSource | null>(null);
   const [loading, setLoading] = useState(false);
+  // Chats we've already painted from the encrypted cache — never skeleton twice.
+  const everCachedRef = useRef<Set<string>>(new Set());
   const [e2eEnabled, setE2eEnabled] = useState(false);
   const [showE2EInfo, setShowE2EInfo] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
