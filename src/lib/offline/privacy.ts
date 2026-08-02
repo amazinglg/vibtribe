@@ -79,6 +79,9 @@ export function installCachePrivacy(userId: string, prefs: CachePrefs): () => vo
   document.addEventListener('visibilitychange', onVisibility);
   window.addEventListener('vt-app-paused', onBackground);
   window.addEventListener('pagehide', onBackground);
+  // Trust Lock capture events must also drop decrypted memory immediately.
+  window.addEventListener('vt-trust-lock-screenshot', onBackground);
+  window.addEventListener('vt-trust-lock-recording', onBackground);
 
   void applyMediaBudget(userId, prefs.mediaCacheLimitMb);
 
@@ -86,6 +89,8 @@ export function installCachePrivacy(userId: string, prefs: CachePrefs): () => vo
     document.removeEventListener('visibilitychange', onVisibility);
     window.removeEventListener('vt-app-paused', onBackground);
     window.removeEventListener('pagehide', onBackground);
+    window.removeEventListener('vt-trust-lock-screenshot', onBackground);
+    window.removeEventListener('vt-trust-lock-recording', onBackground);
     teardown = null;
   };
   return teardown;
