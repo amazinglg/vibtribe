@@ -55,6 +55,7 @@ public class MainActivity extends BridgeActivity {
         SplashScreen.installSplashScreen(this);
         registerPlugin(VtTrustLockPlugin.class);
         registerPlugin(VtMediaPlugin.class);
+        registerPlugin(VtSecureStorePlugin.class);
         super.onCreate(savedInstanceState);
         // Single Android safe-area source: real WindowInsets/display-cutout
         // values are injected into the existing global --safe-* CSS variables.
