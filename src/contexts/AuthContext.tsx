@@ -173,6 +173,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const startSessionHeartbeat = (userId: string) => {
     if (typeof window === 'undefined') return;
     stopSessionHeartbeat();
+    // Offline cache: in Maximum Privacy Mode the encrypted cache and the
+    // wrapped Cache Master Key are securely wiped on logout; otherwise we
+    // only drop the decrypted key from memory so the next launch is instant.
+    try {
+      if (user?.id) {
+        const { loadCachePrefs, wipeCacheFor } = await import('@/lib/offline');
+        const prefs = await loadCachePrefs(user.id);
+        await wipeCacheFor(user.id, 'logout', prefs);
+      }
+    } catch {}
     const tick = () => {
       import('@/lib/sessions').then(({ heartbeatSession }) =>
         heartbeatSession(userId),
