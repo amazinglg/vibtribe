@@ -1355,8 +1355,10 @@ export default function ChatWindowPanel() {
     }
     setShowEmoji(false);
 
+    // Declared outside the try so the offline-retry path queues the *encrypted*
+    // payload, never plaintext.
+    let contentToStore = text;
     try {
-      let contentToStore = text;
       const pkForSend = contact?.publicKey || contactPubKeyRef.current || null;
       if (chatType !== 'group' && pkForSend) {
         contentToStore = await encryptMessage(text, pkForSend);
@@ -1435,7 +1437,7 @@ export default function ChatWindowPanel() {
         const localId = await queueOutgoing(user.id, selectedChatId, {
           chat_id: selectedChatId,
           sender_id: user.id,
-          content: text,
+          content: contentToStore,
           message_status: 'sent',
         });
         if (localId) {
