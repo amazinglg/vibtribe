@@ -15,6 +15,7 @@ import { useT } from '@/contexts/LanguageContext';
 import { isNativeWrapper, requestNativeContactsPermission } from '@/lib/native-bridge';
 import { appConfirm, appAlert } from '@/components/ui/AppDialog';
 import ReportContentSheet, { type ReportType } from '@/components/ReportContentSheet';
+import ConnectionStatusPill from '@/components/ConnectionStatusPill';
 const BROADCAST_LOGO = '/assets/images/app_logo.png';
 
 interface Chat {
