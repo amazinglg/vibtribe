@@ -2661,6 +2661,7 @@ export default function ChatWindowPanel() {
         }}
         className="vt-chat-scroll flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3"
       >
+        <ConnectionStatusPill className="sticky top-0 z-20 -mt-1 mb-1" />
         {loading ? (
           <div className="flex flex-col gap-3">
             {[1, 2, 3].map(i => (
