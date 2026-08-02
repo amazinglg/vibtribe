@@ -384,7 +384,7 @@ export default function ChatListPanel() {
     // fresh data replaces it in-place.
     const isFirstLoad =
       chats.length === 0 &&
-      (typeof window === 'undefined' || !sessionStorage.getItem(CHATS_CACHE_KEY));
+      (typeof window === 'undefined' || !localStorage.getItem(CHATS_MARKER_KEY));
     if (isFirstLoad) setLoading(true);
     try {
       // Chats the current user has moved to their Secure Vault — hide entirely
@@ -627,7 +627,25 @@ export default function ChatListPanel() {
         const { applyAvatarPrivacy } = await import('@/lib/visible-avatars');
         const gated = await applyAvatarPrivacy(chatList, 'participantId', 'avatarUrl');
         setChats(gated);
-        try { sessionStorage.setItem(CHATS_CACHE_KEY, JSON.stringify(gated)); } catch {}
+        // Persist encrypted summaries + prioritise background sync by MRU.
+        if (user?.id) {
+          try {
+            const { putChatSummaries, warmStartupSync } = await import('@/lib/offline');
+            await putChatSummaries(
+              user.id,
+              (gated as Chat[]).map((c: any) => ({
+                ...c,
+                updated_at: c.rawTime || new Date().toISOString(),
+              })),
+            );
+            localStorage.setItem(CHATS_MARKER_KEY, '1');
+            void warmStartupSync(
+              user.id,
+              (gated as Chat[]).map((c: any) => c.id).filter(Boolean),
+              async (row: any) => ({ ...row }),
+            );
+          } catch {}
+        }
       }
       // Only auto-open the first chat on desktop side-by-side layout.
       // On mobile/tablet the user should land on the chat list, not a chat.
