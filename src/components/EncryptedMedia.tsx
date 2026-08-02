@@ -5,6 +5,8 @@ import { signChatMediaUrl } from '@/lib/chat-media-url';
 import { FileText, Loader2, AlertTriangle, X, Eye, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTrustLock } from '@/contexts/TrustLockContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useChatStore } from '@/store/chatStore';
 import { saveMedia, shareMedia, copyImageToClipboard, TrustLockError } from '@/lib/media-actions';
 import MediaActionButton from '@/components/MediaActionButton';
 import TrustLockBlockedDialog from '@/components/TrustLockBlockedDialog';
@@ -30,6 +32,9 @@ export default function EncryptedMedia({ url, mime, name, kind, theirPublicKey, 
   const [showTrustBlock, setShowTrustBlock] = useState(false);
   const trustLock = useTrustLock();
   const trustLocked = trustLock.enabled;
+  const { user } = useAuth();
+  const chatId = useChatStore((s) => s.selectedChatId) || 'media';
+  const [offlineMiss, setOfflineMiss] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -39,8 +44,32 @@ export default function EncryptedMedia({ url, mime, name, kind, theirPublicKey, 
       return;
     }
     (async () => {
+      const publish = (plain: ArrayBuffer | Uint8Array) => {
+        const blob = new Blob([plain as BlobPart], { type: mime || 'application/octet-stream' });
+        const u = URL.createObjectURL(blob);
+        blobCache.set(url, u);
+        rawCache.set(url, blob);
+        if (!cancelled) { setBlobUrl(u); setError(false); setOfflineMiss(false); }
+      };
       try {
         setLoading(true);
+        // Offline-first: if this media was opened before, decrypt it straight
+        // from the encrypted device cache and never touch the network.
+        if (user?.id) {
+          try {
+            const { getMedia } = await import('@/lib/offline');
+            const hit = await getMedia(user.id, chatId, url);
+            if (hit?.bytes) {
+              publish(hit.bytes);
+              if (!cancelled) setLoading(false);
+              return;
+            }
+          } catch {}
+        }
+        if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+          if (!cancelled) { setOfflineMiss(true); setError(true); }
+          return;
+        }
         const signed = await signChatMediaUrl(url);
         const res = await fetch(signed);
         if (!res.ok) throw new Error('fetch failed');
@@ -48,11 +77,18 @@ export default function EncryptedMedia({ url, mime, name, kind, theirPublicKey, 
         const plain = mediaKey
           ? await decryptBytesWithKey(cipher, mediaKey)
           : await decryptBytes(cipher, theirPublicKey as string);
-        const blob = new Blob([plain], { type: mime || 'application/octet-stream' });
-        const u = URL.createObjectURL(blob);
-        blobCache.set(url, u);
-        rawCache.set(url, blob);
-        if (!cancelled) { setBlobUrl(u); setError(false); }
+        publish(plain);
+        // Seal the decrypted bytes into the encrypted media cache so the next
+        // open works offline and instantly.
+        if (user?.id) {
+          try {
+            const { putMedia } = await import('@/lib/offline');
+            const buf = plain instanceof ArrayBuffer
+              ? plain
+              : (plain as Uint8Array).slice().buffer;
+            await putMedia(user.id, chatId, url, buf as ArrayBuffer, mime || 'application/octet-stream');
+          } catch {}
+        }
       } catch {
         if (!cancelled) setError(true);
       } finally {
@@ -60,7 +96,7 @@ export default function EncryptedMedia({ url, mime, name, kind, theirPublicKey, 
       }
     })();
     return () => { cancelled = true; };
-  }, [url, mime, theirPublicKey, mediaKey]);
+  }, [url, mime, theirPublicKey, mediaKey, user?.id, chatId]);
 
   const getBlob = async (): Promise<Blob> => {
     const cached = rawCache.get(url);
@@ -101,7 +137,9 @@ export default function EncryptedMedia({ url, mime, name, kind, theirPublicKey, 
     return (
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <AlertTriangle size={14} className="text-vt-amber" />
-        🔒 Locked media — unlock encryption to view
+        {offlineMiss
+          ? "You're offline — this media hasn't been downloaded yet"
+          : '🔒 Locked media — unlock encryption to view'}
       </div>
     );
   }
