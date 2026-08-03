@@ -117,15 +117,12 @@ export default function LandingPage() {
                 I already have an account
               </Link>
             </div>
-            <a
-              href={PLAY_STORE_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mb-4 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl aurora-download-pill text-sm font-semibold hover:border-primary/50 transition-all"
-            >
-              <Download size={16} /> Install from Google Play
-              <span className="text-[10px] font-bold uppercase tracking-widest bg-primary/20 text-primary px-2 py-0.5 rounded-full ml-1">Live</span>
-            </a>
+            <div className="mb-4">
+              <GooglePlayButton
+                primaryText="Get VibTribe on Google Play"
+                secondaryText="Fast • Secure • Automatic Updates"
+              />
+            </div>
             <p className="text-[11px] sm:text-xs text-muted-foreground flex items-center justify-center lg:justify-start gap-1.5">
               <Lock size={11} /> Takes 30 seconds. No credit card. Delete your account anytime.
             </p>
