@@ -14,12 +14,10 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 import ForceReleaseListener from "@/components/ForceReleaseListener";
 import OldVersionBanner from "@/components/OldVersionBanner";
-import SplashAnimation from "@/components/SplashAnimation";
 import { useEffect } from "react";
 import { initNativeBridge } from "@/lib/native-bridge";
 
 import appCss from "../styles.css?url";
-import splashVideo from "@/assets/splash.mp4.asset.json";
 
 function NotFoundComponent() {
   return (
@@ -119,7 +117,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "icon", type: "image/png", sizes: "512x512", href: "/icons/icon-512x512.png" },
       // Preload the intro splash video at top priority so it's ready to play
       // immediately on first paint, avoiding initial buffering stutter.
-      { rel: "preload", as: "video", href: splashVideo.url, type: "video/mp4", fetchpriority: "high" } as any,
       // iOS PWA splash screens — eliminates the long white screen on launch
       { rel: "apple-touch-startup-image", href: "/splash/splash-1290x2796.png", media: "(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" },
       { rel: "apple-touch-startup-image", href: "/splash/splash-1179x2556.png", media: "(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" },
@@ -246,7 +243,6 @@ function RootComponent() {
             <ServiceWorkerRegistration />
             <ForceReleaseListener />
             <OldVersionBanner />
-            <SplashAnimation />
           </AuthProvider>
         </LanguageProvider>
       </ThemeProvider>

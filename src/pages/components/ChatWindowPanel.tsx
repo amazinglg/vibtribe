@@ -3220,10 +3220,10 @@ export default function ChatWindowPanel() {
           ref={inputRef as any}
           name="chat-message"
           rows={1}
-          autoComplete="off"
-          autoCorrect="off"
+          autoComplete="on"
+          autoCorrect="on"
           autoCapitalize="sentences"
-          spellCheck={false}
+          spellCheck={true}
           data-form-type="other"
           data-lpignore="true"
           data-1p-ignore="true"
