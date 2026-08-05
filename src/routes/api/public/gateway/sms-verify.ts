@@ -71,8 +71,7 @@ export const Route = createFileRoute('/api/public/gateway/sms-verify')({
 
         // Replay protection.
         const { data: nonceOk, error: nonceErr } = await admin
-          .schema('sms_gw')
-          .rpc('register_gateway_nonce', { _gateway_id: gatewayId, _nonce: nonce });
+          .rpc('sms_gw_register_nonce', { _gateway_id: gatewayId, _nonce: nonce });
         if (nonceErr) {
           console.error('[sms-gateway] nonce store failed', { gatewayId, code: nonceErr.code });
           return Response.json({ ok: false, error: 'internal_error' }, { status: 500 });
@@ -96,7 +95,7 @@ export const Route = createFileRoute('/api/public/gateway/sms-verify')({
           ? new Date(parsed.received_at).toISOString()
           : new Date().toISOString();
 
-        const { data, error } = await admin.schema('sms_gw').rpc('consume_gateway_token', {
+        const { data, error } = await admin.rpc('sms_gw_consume_token', {
           _gateway_id: gatewayId,
           _sms_id: parsed.sms_id,
           _token_hash: tokenHash,

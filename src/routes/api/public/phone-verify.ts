@@ -28,7 +28,7 @@ export const Route = createFileRoute('/api/public/phone-verify')({
         const user = await userFromRequest(request);
         if (!user) return Response.json({ error: 'unauthorized' }, { status: 401 });
         const admin = adminClient();
-        const { data } = await admin.schema('sms_gw').rpc('get_phone_status', { _user_id: user.id });
+        const { data } = await admin.rpc('sms_gw_phone_status', { _user_id: user.id });
         return Response.json({ ...(data as any), gateway_number: GATEWAY_NUMBER });
       },
       POST: async ({ request }) => {
@@ -39,7 +39,7 @@ export const Route = createFileRoute('/api/public/phone-verify')({
         const tokenHash = await hashToken(rawToken);
 
         const admin = adminClient();
-        const { data, error } = await admin.schema('sms_gw').rpc('create_phone_claim', {
+        const { data, error } = await admin.rpc('sms_gw_create_claim', {
           _user_id: user.id,
           _token_hash: tokenHash,
           _gateway_id: DEFAULT_GATEWAY_ID,
