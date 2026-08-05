@@ -53,9 +53,11 @@ import { Route as HelpReportingRouteImport } from './routes/help.reporting'
 import { Route as AdminUserUserIdRouteImport } from './routes/admin.user.$userId'
 import { Route as ApiPublicAuthLoginRouteImport } from './routes/api/public/auth-login'
 import { Route as ApiPublicAuthOtpRouteImport } from './routes/api/public/auth-otp'
+import { Route as ApiPublicPhoneVerifyRouteImport } from './routes/api/public/phone-verify'
 import { Route as ApiPublicResendWebhookRouteImport } from './routes/api/public/resend-webhook'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as TribeJoinCodeRouteImport } from './routes/tribe.join.$code'
+import { Route as ApiPublicGatewaySmsVerifyRouteImport } from './routes/api/public/gateway/sms-verify'
 import { Route as ApiPublicHooksCleanupExpiredMessagesRouteImport } from './routes/api/public/hooks/cleanup-expired-messages'
 import { Route as ApiPublicHooksCleanupExpiredStatusesRouteImport } from './routes/api/public/hooks/cleanup-expired-statuses'
 import { Route as ApiPublicHooksGuardianMonthlyReminderRouteImport } from './routes/api/public/hooks/guardian-monthly-reminder'
@@ -292,6 +294,11 @@ const ApiPublicAuthOtpRoute = ApiPublicAuthOtpRouteImport.update({
   path: '/api/public/auth-otp',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPhoneVerifyRoute = ApiPublicPhoneVerifyRouteImport.update({
+  id: '/api/public/phone-verify',
+  path: '/api/public/phone-verify',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicResendWebhookRoute = ApiPublicResendWebhookRouteImport.update({
   id: '/api/public/resend-webhook',
   path: '/api/public/resend-webhook',
@@ -307,6 +314,12 @@ const TribeJoinCodeRoute = TribeJoinCodeRouteImport.update({
   path: '/tribe/join/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicGatewaySmsVerifyRoute =
+  ApiPublicGatewaySmsVerifyRouteImport.update({
+    id: '/api/public/gateway/sms-verify',
+    path: '/api/public/gateway/sms-verify',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksCleanupExpiredMessagesRoute =
   ApiPublicHooksCleanupExpiredMessagesRouteImport.update({
     id: '/api/public/hooks/cleanup-expired-messages',
@@ -411,9 +424,11 @@ export interface FileRoutesByFullPath {
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
+  '/api/public/phone-verify': typeof ApiPublicPhoneVerifyRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/tribe/join/$code': typeof TribeJoinCodeRoute
+  '/api/public/gateway/sms-verify': typeof ApiPublicGatewaySmsVerifyRoute
   '/api/public/hooks/cleanup-expired-messages': typeof ApiPublicHooksCleanupExpiredMessagesRoute
   '/api/public/hooks/cleanup-expired-statuses': typeof ApiPublicHooksCleanupExpiredStatusesRoute
   '/api/public/hooks/guardian-monthly-reminder': typeof ApiPublicHooksGuardianMonthlyReminderRoute
@@ -469,9 +484,11 @@ export interface FileRoutesByTo {
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
+  '/api/public/phone-verify': typeof ApiPublicPhoneVerifyRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/tribe/join/$code': typeof TribeJoinCodeRoute
+  '/api/public/gateway/sms-verify': typeof ApiPublicGatewaySmsVerifyRoute
   '/api/public/hooks/cleanup-expired-messages': typeof ApiPublicHooksCleanupExpiredMessagesRoute
   '/api/public/hooks/cleanup-expired-statuses': typeof ApiPublicHooksCleanupExpiredStatusesRoute
   '/api/public/hooks/guardian-monthly-reminder': typeof ApiPublicHooksGuardianMonthlyReminderRoute
@@ -529,9 +546,11 @@ export interface FileRoutesById {
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
+  '/api/public/phone-verify': typeof ApiPublicPhoneVerifyRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/tribe/join/$code': typeof TribeJoinCodeRoute
+  '/api/public/gateway/sms-verify': typeof ApiPublicGatewaySmsVerifyRoute
   '/api/public/hooks/cleanup-expired-messages': typeof ApiPublicHooksCleanupExpiredMessagesRoute
   '/api/public/hooks/cleanup-expired-statuses': typeof ApiPublicHooksCleanupExpiredStatusesRoute
   '/api/public/hooks/guardian-monthly-reminder': typeof ApiPublicHooksGuardianMonthlyReminderRoute
@@ -590,9 +609,11 @@ export interface FileRouteTypes {
     | '/admin/user/$userId'
     | '/api/public/auth-login'
     | '/api/public/auth-otp'
+    | '/api/public/phone-verify'
     | '/api/public/resend-webhook'
     | '/lovable/email/suppression'
     | '/tribe/join/$code'
+    | '/api/public/gateway/sms-verify'
     | '/api/public/hooks/cleanup-expired-messages'
     | '/api/public/hooks/cleanup-expired-statuses'
     | '/api/public/hooks/guardian-monthly-reminder'
@@ -648,9 +669,11 @@ export interface FileRouteTypes {
     | '/admin/user/$userId'
     | '/api/public/auth-login'
     | '/api/public/auth-otp'
+    | '/api/public/phone-verify'
     | '/api/public/resend-webhook'
     | '/lovable/email/suppression'
     | '/tribe/join/$code'
+    | '/api/public/gateway/sms-verify'
     | '/api/public/hooks/cleanup-expired-messages'
     | '/api/public/hooks/cleanup-expired-statuses'
     | '/api/public/hooks/guardian-monthly-reminder'
@@ -707,9 +730,11 @@ export interface FileRouteTypes {
     | '/admin/user/$userId'
     | '/api/public/auth-login'
     | '/api/public/auth-otp'
+    | '/api/public/phone-verify'
     | '/api/public/resend-webhook'
     | '/lovable/email/suppression'
     | '/tribe/join/$code'
+    | '/api/public/gateway/sms-verify'
     | '/api/public/hooks/cleanup-expired-messages'
     | '/api/public/hooks/cleanup-expired-statuses'
     | '/api/public/hooks/guardian-monthly-reminder'
@@ -758,9 +783,11 @@ export interface RootRouteChildren {
   HelpReportingRoute: typeof HelpReportingRoute
   ApiPublicAuthLoginRoute: typeof ApiPublicAuthLoginRoute
   ApiPublicAuthOtpRoute: typeof ApiPublicAuthOtpRoute
+  ApiPublicPhoneVerifyRoute: typeof ApiPublicPhoneVerifyRoute
   ApiPublicResendWebhookRoute: typeof ApiPublicResendWebhookRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   TribeJoinCodeRoute: typeof TribeJoinCodeRoute
+  ApiPublicGatewaySmsVerifyRoute: typeof ApiPublicGatewaySmsVerifyRoute
   ApiPublicHooksCleanupExpiredMessagesRoute: typeof ApiPublicHooksCleanupExpiredMessagesRoute
   ApiPublicHooksCleanupExpiredStatusesRoute: typeof ApiPublicHooksCleanupExpiredStatusesRoute
   ApiPublicHooksGuardianMonthlyReminderRoute: typeof ApiPublicHooksGuardianMonthlyReminderRoute
@@ -1083,6 +1110,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAuthOtpRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/phone-verify': {
+      id: '/api/public/phone-verify'
+      path: '/api/public/phone-verify'
+      fullPath: '/api/public/phone-verify'
+      preLoaderRoute: typeof ApiPublicPhoneVerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/resend-webhook': {
       id: '/api/public/resend-webhook'
       path: '/api/public/resend-webhook'
@@ -1102,6 +1136,13 @@ declare module '@tanstack/react-router' {
       path: '/tribe/join/$code'
       fullPath: '/tribe/join/$code'
       preLoaderRoute: typeof TribeJoinCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/gateway/sms-verify': {
+      id: '/api/public/gateway/sms-verify'
+      path: '/api/public/gateway/sms-verify'
+      fullPath: '/api/public/gateway/sms-verify'
+      preLoaderRoute: typeof ApiPublicGatewaySmsVerifyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/cleanup-expired-messages': {
@@ -1239,9 +1280,11 @@ const rootRouteChildren: RootRouteChildren = {
   HelpReportingRoute: HelpReportingRoute,
   ApiPublicAuthLoginRoute: ApiPublicAuthLoginRoute,
   ApiPublicAuthOtpRoute: ApiPublicAuthOtpRoute,
+  ApiPublicPhoneVerifyRoute: ApiPublicPhoneVerifyRoute,
   ApiPublicResendWebhookRoute: ApiPublicResendWebhookRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   TribeJoinCodeRoute: TribeJoinCodeRoute,
+  ApiPublicGatewaySmsVerifyRoute: ApiPublicGatewaySmsVerifyRoute,
   ApiPublicHooksCleanupExpiredMessagesRoute:
     ApiPublicHooksCleanupExpiredMessagesRoute,
   ApiPublicHooksCleanupExpiredStatusesRoute:
@@ -1260,13 +1303,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

@@ -1884,6 +1884,7 @@ export type Database = {
           media_cache_limit_mb: number
           mobile_hash: string | null
           mobile_number: string | null
+          mobile_verified_at: string | null
           notif_mentions: boolean
           notif_messages: boolean
           notif_secure_chats: boolean
@@ -1944,6 +1945,7 @@ export type Database = {
           media_cache_limit_mb?: number
           mobile_hash?: string | null
           mobile_number?: string | null
+          mobile_verified_at?: string | null
           notif_mentions?: boolean
           notif_messages?: boolean
           notif_secure_chats?: boolean
@@ -2004,6 +2006,7 @@ export type Database = {
           media_cache_limit_mb?: number
           mobile_hash?: string | null
           mobile_number?: string | null
+          mobile_verified_at?: string | null
           notif_mentions?: boolean
           notif_messages?: boolean
           notif_secure_chats?: boolean
@@ -2293,6 +2296,7 @@ export type Database = {
           media_cache_limit_mb: number
           mobile_hash: string | null
           mobile_number: string | null
+          mobile_verified_at: string | null
           notif_mentions: boolean
           notif_messages: boolean
           notif_secure_chats: boolean
@@ -2394,6 +2398,7 @@ export type Database = {
           media_cache_limit_mb: number
           mobile_hash: string | null
           mobile_number: string | null
+          mobile_verified_at: string | null
           notif_mentions: boolean
           notif_messages: boolean
           notif_secure_chats: boolean
@@ -2475,6 +2480,7 @@ export type Database = {
           media_cache_limit_mb: number
           mobile_hash: string | null
           mobile_number: string | null
+          mobile_verified_at: string | null
           notif_mentions: boolean
           notif_messages: boolean
           notif_secure_chats: boolean
@@ -2544,6 +2550,7 @@ export type Database = {
           media_cache_limit_mb: number
           mobile_hash: string | null
           mobile_number: string | null
+          mobile_verified_at: string | null
           notif_mentions: boolean
           notif_messages: boolean
           notif_secure_chats: boolean
@@ -2715,6 +2722,7 @@ export type Database = {
           media_cache_limit_mb: number
           mobile_hash: string | null
           mobile_number: string | null
+          mobile_verified_at: string | null
           notif_mentions: boolean
           notif_messages: boolean
           notif_secure_chats: boolean
@@ -3003,6 +3011,26 @@ export type Database = {
       set_user_consent: {
         Args: { _granted: boolean; _purpose: string; _source?: string }
         Returns: undefined
+      }
+      sms_gw_consume_token: {
+        Args: {
+          _from_msisdn: string
+          _gateway_id: string
+          _received_at: string
+          _sms_id: string
+          _token_fingerprint: string
+          _token_hash: string
+        }
+        Returns: Json
+      }
+      sms_gw_create_claim: {
+        Args: { _gateway_id: string; _token_hash: string; _user_id: string }
+        Returns: Json
+      }
+      sms_gw_phone_status: { Args: { _user_id: string }; Returns: Json }
+      sms_gw_register_nonce: {
+        Args: { _gateway_id: string; _nonce: string }
+        Returns: boolean
       }
       start_totp_enrollment: { Args: { _secret: string }; Returns: undefined }
       submit_guardian_details: {
