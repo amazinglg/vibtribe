@@ -1884,6 +1884,7 @@ export type Database = {
           media_cache_limit_mb: number
           mobile_hash: string | null
           mobile_number: string | null
+          mobile_verified_at: string | null
           notif_mentions: boolean
           notif_messages: boolean
           notif_secure_chats: boolean
@@ -1944,6 +1945,7 @@ export type Database = {
           media_cache_limit_mb?: number
           mobile_hash?: string | null
           mobile_number?: string | null
+          mobile_verified_at?: string | null
           notif_mentions?: boolean
           notif_messages?: boolean
           notif_secure_chats?: boolean
@@ -2004,6 +2006,7 @@ export type Database = {
           media_cache_limit_mb?: number
           mobile_hash?: string | null
           mobile_number?: string | null
+          mobile_verified_at?: string | null
           notif_mentions?: boolean
           notif_messages?: boolean
           notif_secure_chats?: boolean
@@ -2293,6 +2296,7 @@ export type Database = {
           media_cache_limit_mb: number
           mobile_hash: string | null
           mobile_number: string | null
+          mobile_verified_at: string | null
           notif_mentions: boolean
           notif_messages: boolean
           notif_secure_chats: boolean
@@ -2394,6 +2398,7 @@ export type Database = {
           media_cache_limit_mb: number
           mobile_hash: string | null
           mobile_number: string | null
+          mobile_verified_at: string | null
           notif_mentions: boolean
           notif_messages: boolean
           notif_secure_chats: boolean
@@ -2475,6 +2480,7 @@ export type Database = {
           media_cache_limit_mb: number
           mobile_hash: string | null
           mobile_number: string | null
+          mobile_verified_at: string | null
           notif_mentions: boolean
           notif_messages: boolean
           notif_secure_chats: boolean
@@ -2544,6 +2550,7 @@ export type Database = {
           media_cache_limit_mb: number
           mobile_hash: string | null
           mobile_number: string | null
+          mobile_verified_at: string | null
           notif_mentions: boolean
           notif_messages: boolean
           notif_secure_chats: boolean
@@ -2715,6 +2722,7 @@ export type Database = {
           media_cache_limit_mb: number
           mobile_hash: string | null
           mobile_number: string | null
+          mobile_verified_at: string | null
           notif_mentions: boolean
           notif_messages: boolean
           notif_secure_chats: boolean
