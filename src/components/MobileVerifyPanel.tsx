@@ -164,8 +164,8 @@ export default function MobileVerifyPanel({ mobile }: { mobile?: string | null }
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-4">
-          <div className="glass w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-border p-5 space-y-4">
+        <div className="fixed inset-0 z-[200] flex items-start justify-center bg-black/85 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-border bg-card/95 p-5 space-y-4 mt-6 sm:mt-12 shadow-2xl">
             <div className="flex items-start justify-between gap-3">
               <h3 className="font-semibold text-base text-foreground">Verify your mobile number</h3>
               <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground">
