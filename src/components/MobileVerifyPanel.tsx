@@ -38,7 +38,8 @@ export default function MobileVerifyPanel({ mobile }: { mobile?: string | null }
 
   useEffect(() => () => { mounted.current = false; }, []);
 
-  // Initial status check — decides whether "Verify Now" should show at all.
+  // Initial status check — decides whether "Verify Now" should show at all,
+  // and restores an in-flight claim from the backend-authoritative expiry.
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -46,8 +47,17 @@ export default function MobileVerifyPanel({ mobile }: { mobile?: string | null }
         const res = await fetch('/api/public/phone-verify', { headers: await authHeaders() });
         if (!res.ok || cancelled) return;
         const json = await res.json();
-        if (json?.verified && !cancelled) setPhase('verified');
-        if (json?.gateway_number && !cancelled) setSendTo(json.gateway_number);
+        if (cancelled) return;
+        if (json?.gateway_number) setSendTo(json.gateway_number);
+        if (json?.verified) { setPhase('verified'); return; }
+        // Backend is authoritative for expiry: resume the existing pending claim.
+        if (json?.pending_expires_at) {
+          const ts = new Date(json.pending_expires_at).getTime();
+          if (Number.isFinite(ts)) {
+            setExpiresAt(ts);
+            setPhase(ts > Date.now() ? 'awaiting' : 'expired');
+          }
+        }
       } catch {}
     })();
     return () => { cancelled = true; };
@@ -66,7 +76,7 @@ export default function MobileVerifyPanel({ mobile }: { mobile?: string | null }
     return () => clearInterval(id);
   }, [expiresAt, phase]);
 
-  // Poll status while awaiting verification.
+  // Poll status while awaiting verification (also re-reads backend expiry).
   useEffect(() => {
     if (phase !== 'awaiting') return;
     let stop = false;
@@ -83,6 +93,16 @@ export default function MobileVerifyPanel({ mobile }: { mobile?: string | null }
           stop = true;
           setToken(null);
           setPhase('verified');
+          return;
+        }
+        if (json?.pending_expires_at) {
+          const ts = new Date(json.pending_expires_at).getTime();
+          if (Number.isFinite(ts)) setExpiresAt((prev) => (prev === ts ? prev : ts));
+        } else {
+          // No pending claim left on the backend → treat as expired.
+          stop = true;
+          setToken(null);
+          setPhase('expired');
         }
       } catch {}
     }, 4000);
@@ -103,7 +123,13 @@ export default function MobileVerifyPanel({ mobile }: { mobile?: string | null }
       const json = await res.json();
       setToken(json.token);
       if (json.send_to) setSendTo(json.send_to);
-      setExpiresAt(json.expires_at ? new Date(json.expires_at).getTime() : Date.now() + 10 * 60 * 1000);
+      if (!json.expires_at) {
+        // Backend must supply the expiry; never invent one client-side.
+        setPhase('error');
+        setError('Unable to start mobile verification right now. Please try again later.');
+        return;
+      }
+      setExpiresAt(new Date(json.expires_at).getTime());
       setPhase('awaiting');
     } catch {
       setPhase('error');
