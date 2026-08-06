@@ -33,6 +33,7 @@ import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminAppealsRouteImport } from './routes/admin.appeals'
 import { Route as AdminDeletedUsersRouteImport } from './routes/admin.deleted-users'
+import { Route as AdminGatewaysRouteImport } from './routes/admin.gateways'
 import { Route as AdminMarketingRouteImport } from './routes/admin.marketing'
 import { Route as AdminOffboardingAppealsRouteImport } from './routes/admin.offboarding-appeals'
 import { Route as AdminPermissionsRouteImport } from './routes/admin.permissions'
@@ -187,6 +188,11 @@ const AdminAppealsRoute = AdminAppealsRouteImport.update({
 const AdminDeletedUsersRoute = AdminDeletedUsersRouteImport.update({
   id: '/deleted-users',
   path: '/deleted-users',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminGatewaysRoute = AdminGatewaysRouteImport.update({
+  id: '/gateways',
+  path: '/gateways',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminMarketingRoute = AdminMarketingRouteImport.update({
@@ -403,6 +409,7 @@ export interface FileRoutesByFullPath {
   '/unsubscribe': typeof UnsubscribeRoute
   '/admin/appeals': typeof AdminAppealsRoute
   '/admin/deleted-users': typeof AdminDeletedUsersRoute
+  '/admin/gateways': typeof AdminGatewaysRoute
   '/admin/marketing': typeof AdminMarketingRoute
   '/admin/offboarding-appeals': typeof AdminOffboardingAppealsRoute
   '/admin/permissions': typeof AdminPermissionsRoute
@@ -463,6 +470,7 @@ export interface FileRoutesByTo {
   '/unsubscribe': typeof UnsubscribeRoute
   '/admin/appeals': typeof AdminAppealsRoute
   '/admin/deleted-users': typeof AdminDeletedUsersRoute
+  '/admin/gateways': typeof AdminGatewaysRoute
   '/admin/marketing': typeof AdminMarketingRoute
   '/admin/offboarding-appeals': typeof AdminOffboardingAppealsRoute
   '/admin/permissions': typeof AdminPermissionsRoute
@@ -525,6 +533,7 @@ export interface FileRoutesById {
   '/unsubscribe': typeof UnsubscribeRoute
   '/admin/appeals': typeof AdminAppealsRoute
   '/admin/deleted-users': typeof AdminDeletedUsersRoute
+  '/admin/gateways': typeof AdminGatewaysRoute
   '/admin/marketing': typeof AdminMarketingRoute
   '/admin/offboarding-appeals': typeof AdminOffboardingAppealsRoute
   '/admin/permissions': typeof AdminPermissionsRoute
@@ -588,6 +597,7 @@ export interface FileRouteTypes {
     | '/unsubscribe'
     | '/admin/appeals'
     | '/admin/deleted-users'
+    | '/admin/gateways'
     | '/admin/marketing'
     | '/admin/offboarding-appeals'
     | '/admin/permissions'
@@ -648,6 +658,7 @@ export interface FileRouteTypes {
     | '/unsubscribe'
     | '/admin/appeals'
     | '/admin/deleted-users'
+    | '/admin/gateways'
     | '/admin/marketing'
     | '/admin/offboarding-appeals'
     | '/admin/permissions'
@@ -709,6 +720,7 @@ export interface FileRouteTypes {
     | '/unsubscribe'
     | '/admin/appeals'
     | '/admin/deleted-users'
+    | '/admin/gateways'
     | '/admin/marketing'
     | '/admin/offboarding-appeals'
     | '/admin/permissions'
@@ -970,6 +982,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminDeletedUsersRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/gateways': {
+      id: '/admin/gateways'
+      path: '/gateways'
+      fullPath: '/admin/gateways'
+      preLoaderRoute: typeof AdminGatewaysRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/marketing': {
       id: '/admin/marketing'
       path: '/marketing'
@@ -1221,6 +1240,7 @@ declare module '@tanstack/react-router' {
 interface AdminRouteChildren {
   AdminAppealsRoute: typeof AdminAppealsRoute
   AdminDeletedUsersRoute: typeof AdminDeletedUsersRoute
+  AdminGatewaysRoute: typeof AdminGatewaysRoute
   AdminMarketingRoute: typeof AdminMarketingRoute
   AdminOffboardingAppealsRoute: typeof AdminOffboardingAppealsRoute
   AdminPermissionsRoute: typeof AdminPermissionsRoute
@@ -1233,6 +1253,7 @@ interface AdminRouteChildren {
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAppealsRoute: AdminAppealsRoute,
   AdminDeletedUsersRoute: AdminDeletedUsersRoute,
+  AdminGatewaysRoute: AdminGatewaysRoute,
   AdminMarketingRoute: AdminMarketingRoute,
   AdminOffboardingAppealsRoute: AdminOffboardingAppealsRoute,
   AdminPermissionsRoute: AdminPermissionsRoute,
