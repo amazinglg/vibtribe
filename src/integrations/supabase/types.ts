@@ -3027,11 +3027,27 @@ export type Database = {
         Args: { _gateway_id: string; _token_hash: string; _user_id: string }
         Returns: Json
       }
+      sms_gw_get_gateway_auth: { Args: { _device_id: string }; Returns: Json }
+      sms_gw_list_gateways: { Args: never; Returns: Json }
       sms_gw_phone_status: { Args: { _user_id: string }; Returns: Json }
+      sms_gw_register_gateway: {
+        Args: {
+          _created_by: string
+          _device_id: string
+          _label: string
+          _secret_hash: string
+        }
+        Returns: Json
+      }
       sms_gw_register_nonce: {
         Args: { _gateway_id: string; _nonce: string }
         Returns: boolean
       }
+      sms_gw_set_gateway_status: {
+        Args: { _device_id: string; _status: string }
+        Returns: Json
+      }
+      sms_gw_touch_gateway: { Args: { _device_id: string }; Returns: undefined }
       start_totp_enrollment: { Args: { _secret: string }; Returns: undefined }
       submit_guardian_details: {
         Args: {
