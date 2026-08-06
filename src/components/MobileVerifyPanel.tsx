@@ -139,8 +139,8 @@ export default function MobileVerifyPanel({ mobile }: { mobile?: string | null }
 
   if (phase === 'verified' && !open) {
     return (
-      <span className="flex items-center gap-1 text-xs font-medium text-emerald-500 flex-shrink-0">
-        <BadgeCheck size={14} /> Verified
+      <span className="flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-500 flex-shrink-0 border border-emerald-500/30">
+        <BadgeCheck size={12} /> Verified
       </span>
     );
   }
@@ -158,7 +158,13 @@ export default function MobileVerifyPanel({ mobile }: { mobile?: string | null }
         type="button"
         onClick={pendingWithoutToken ? () => setOpen(true) : start}
         disabled={!mobile}
-        className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50 transition-all"
+        className={[
+          'flex-shrink-0 px-2 py-1 rounded-full text-[10px] font-semibold transition-all',
+          pendingWithoutToken
+            ? 'bg-yellow-500 text-white hover:bg-yellow-400 shadow-sm'
+            : 'bg-primary text-primary-foreground hover:opacity-90',
+          'disabled:opacity-50',
+        ].join(' ')}
       >
         {pendingWithoutToken ? 'Verification Pending' : 'Verify Now'}
       </button>
