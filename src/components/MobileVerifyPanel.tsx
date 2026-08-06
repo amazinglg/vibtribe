@@ -148,15 +148,19 @@ export default function MobileVerifyPanel({ mobile }: { mobile?: string | null }
   const smsBody = token ? `VIBTRIBE VERIFY ${token}` : '';
   const smsHref = token ? `sms:${sendTo}?body=${encodeURIComponent(smsBody)}` : '#';
 
+  // A pending claim restored from the backend has no raw token (it is memory-only
+  // and returned exactly once), so opening the panel must not silently re-claim.
+  const pendingWithoutToken = phase === 'awaiting' && !token;
+
   return (
     <>
       <button
         type="button"
-        onClick={start}
+        onClick={pendingWithoutToken ? () => setOpen(true) : start}
         disabled={!mobile}
         className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50 transition-all"
       >
-        Verify Now
+        {pendingWithoutToken ? 'Verification Pending' : 'Verify Now'}
       </button>
 
       {open && (
@@ -180,6 +184,19 @@ export default function MobileVerifyPanel({ mobile }: { mobile?: string | null }
                 <p className="text-sm text-destructive">{error}</p>
                 <button onClick={start} className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold">
                   Try Again
+                </button>
+              </div>
+            )}
+
+            {pendingWithoutToken && (
+              <div className="space-y-3">
+                <p className="text-sm text-foreground">
+                  A verification is already in progress. Send the code you received earlier to{' '}
+                  <span className="font-medium">{sendTo}</span>, or request a new one.
+                </p>
+                <p className="text-xs text-muted-foreground">Expires in {fmt(remaining)}</p>
+                <button onClick={start} className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold">
+                  <RefreshCw size={14} /> Get a new code
                 </button>
               </div>
             )}
