@@ -9,7 +9,8 @@ import {
 } from '@/lib/sms-gateway.server';
 
 // Server-to-server endpoint for the dedicated Auth Hub SMS gateway.
-// HMAC-SHA256 authenticated, replay protected, idempotent by sms_id.
+// HMAC-SHA256 authenticated against a provisioned device in sms_gw.gateways,
+// replay protected, idempotent by sms_id.
 // Never logs the raw token, full MSISDN, SMS body or the shared secret.
 
 const BodySchema = z.object({
@@ -25,12 +26,6 @@ export const Route = createFileRoute('/api/public/gateway/sms-verify')({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const secret = process.env['SMS_GATEWAY_HMAC_SECRET'];
-        if (!secret) {
-          console.error('[sms-gateway] secret not configured');
-          return Response.json({ ok: false, error: 'not_configured' }, { status: 503 });
-        }
-
         // HTTPS only (allow local dev).
         const url = new URL(request.url);
         if (url.protocol !== 'https:' && url.hostname !== 'localhost' && url.hostname !== '127.0.0.1') {
@@ -61,13 +56,39 @@ export const Route = createFileRoute('/api/public/gateway/sms-verify')({
           return Response.json({ ok: false, error: 'payload_too_large' }, { status: 413 });
         }
 
-        const expected = await hmacSha256Hex(secret, `${timestamp}.${nonce}.${rawBody}`);
+        let admin;
+        try {
+          admin = adminClient();
+        } catch {
+          console.error('[sms-gateway] backend not configured');
+          return Response.json({ ok: false, error: 'not_configured' }, { status: 503 });
+        }
+
+        // Look up the provisioned device. Unknown / revoked devices are rejected.
+        const { data: gw, error: gwErr } = await admin.rpc('sms_gw_get_gateway_auth', {
+          _device_id: gatewayId,
+        });
+        if (gwErr) {
+          console.error('[sms-gateway] gateway lookup failed', { gatewayId, code: gwErr.code });
+          return Response.json({ ok: false, error: 'internal_error' }, { status: 500 });
+        }
+        const gateway = gw as { status?: string; secret_hash?: string } | null;
+        if (!gateway?.secret_hash) {
+          console.warn('[sms-gateway] unknown device', { gatewayId });
+          return Response.json({ ok: false, error: 'unknown_device' }, { status: 401 });
+        }
+        if (gateway.status !== 'active') {
+          console.warn('[sms-gateway] revoked device', { gatewayId });
+          return Response.json({ ok: false, error: 'device_revoked' }, { status: 401 });
+        }
+
+        // Signing key is the stored per-device key (a hash of the plaintext secret,
+        // which the device derives locally; the plaintext is never stored server-side).
+        const expected = await hmacSha256Hex(gateway.secret_hash, `${timestamp}.${nonce}.${rawBody}`);
         if (!timingSafeEqualHex(expected, signature)) {
           console.warn('[sms-gateway] invalid signature', { gatewayId, outcome: 'invalid_signature' });
           return Response.json({ ok: false, error: 'invalid_signature' }, { status: 401 });
         }
-
-        const admin = adminClient();
 
         // Replay protection.
         const { data: nonceOk, error: nonceErr } = await admin
@@ -112,6 +133,8 @@ export const Route = createFileRoute('/api/public/gateway/sms-verify')({
         }
 
         const res = data as any;
+        // Authenticated request processed — record liveness.
+        await admin.rpc('sms_gw_touch_gateway', { _device_id: gatewayId });
         console.info('[sms-gateway] processed', {
           gatewayId,
           sms_id: parsed.sms_id,
