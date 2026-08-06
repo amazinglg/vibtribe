@@ -1,7 +1,7 @@
 // Master-admin-only mobile verification UI (temporary controlled test).
 // Talks only to the existing /api/public/phone-verify endpoints.
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { BadgeCheck, Loader2, MessageSquare, RefreshCw, X } from 'lucide-react';
+import { BadgeCheck, Copy, Check, Loader2, MessageSquare, RefreshCw, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 type Phase = 'idle' | 'starting' | 'awaiting' | 'expired' | 'verified' | 'error';
@@ -21,6 +21,14 @@ async function authHeaders(): Promise<Record<string, string>> {
   return { Authorization: `Bearer ${token}` };
 }
 
+// Feature-detected touch/mobile environment (no UA sniffing).
+function isMobileEnv() {
+  if (typeof window === 'undefined') return false;
+  const coarse = window.matchMedia?.('(pointer: coarse)')?.matches ?? false;
+  const touch = (navigator.maxTouchPoints ?? 0) > 0;
+  return coarse && touch;
+}
+
 function fmt(ms: number) {
   const s = Math.max(0, Math.floor(ms / 1000));
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
@@ -34,9 +42,14 @@ export default function MobileVerifyPanel({ mobile }: { mobile?: string | null }
   const [sendTo, setSendTo] = useState<string>('');
   const [expiresAt, setExpiresAt] = useState<number | null>(null);
   const [remaining, setRemaining] = useState(0);
+  const [qr, setQr] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [mobileEnv, setMobileEnv] = useState(true);
   const mounted = useRef(true);
 
   useEffect(() => () => { mounted.current = false; }, []);
+
+  useEffect(() => { setMobileEnv(isMobileEnv()); }, []);
 
   // Initial status check — decides whether "Verify Now" should show at all,
   // and restores an in-flight claim from the backend-authoritative expiry.
@@ -146,7 +159,30 @@ export default function MobileVerifyPanel({ mobile }: { mobile?: string | null }
   }
 
   const smsBody = token ? `VIBTRIBE VERIFY ${token}` : '';
-  const smsHref = token ? `sms:${sendTo}?body=${encodeURIComponent(smsBody)}` : '#';
+  // Gateway number is used only to build the URI — never rendered as UI text.
+  const smsHref = token && sendTo ? `sms:${sendTo}?body=${encodeURIComponent(smsBody)}` : '#';
+
+  // Desktop fallback: encode the full SMS URI into a QR code (memory only).
+  useEffect(() => {
+    let cancelled = false;
+    if (mobileEnv || !token || !sendTo) { setQr(null); return; }
+    (async () => {
+      try {
+        const QR = (await import('qrcode')).default;
+        const url = await QR.toDataURL(smsHref, { margin: 1, width: 220 });
+        if (!cancelled) setQr(url);
+      } catch { if (!cancelled) setQr(null); }
+    })();
+    return () => { cancelled = true; };
+  }, [mobileEnv, token, sendTo, smsHref]);
+
+  const copyMessage = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(smsBody);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {}
+  }, [smsBody]);
 
   // A pending claim restored from the backend has no raw token (it is memory-only
   // and returned exactly once), so opening the panel must not silently re-claim.
@@ -197,8 +233,7 @@ export default function MobileVerifyPanel({ mobile }: { mobile?: string | null }
             {pendingWithoutToken && (
               <div className="space-y-3">
                 <p className="text-sm text-foreground">
-                  A verification is already in progress. Send the code you received earlier to{' '}
-                  <span className="font-medium">{sendTo}</span>, or request a new one.
+                  A verification is already in progress. Send the message you prepared earlier, or request a new one.
                 </p>
                 <p className="text-xs text-muted-foreground">Expires in {fmt(remaining)}</p>
                 <button onClick={start} className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold">
@@ -209,22 +244,42 @@ export default function MobileVerifyPanel({ mobile }: { mobile?: string | null }
 
             {phase === 'awaiting' && token && (
               <div className="space-y-4">
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1.5">Send the following message from your mobile phone:</p>
-                  <div className="p-3 bg-muted/50 rounded-xl text-sm font-mono font-semibold text-foreground break-all">
-                    {smsBody}
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1.5">Send it to:</p>
-                  <div className="p-3 bg-muted/50 rounded-xl text-sm font-medium text-foreground">{sendTo}</div>
-                </div>
-                <a
-                  href={smsHref}
-                  className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold"
-                >
-                  <MessageSquare size={15} /> Send SMS
-                </a>
+                {mobileEnv ? (
+                  <>
+                    <p className="text-sm text-muted-foreground">
+                      Tap below to open your Messages app with the verification SMS prepared. You still need to press Send yourself.
+                    </p>
+                    <a
+                      href={smsHref}
+                      className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold"
+                    >
+                      <MessageSquare size={15} /> Send Verification SMS
+                    </a>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm font-medium text-foreground">Open on your phone</p>
+                    <p className="text-sm text-muted-foreground">
+                      Scan this QR code with your phone to open your Messages app with the verification SMS prepared, then press Send.
+                    </p>
+                    <div className="flex justify-center">
+                      {qr ? (
+                        <img src={qr} alt="QR code to open your phone's Messages app with the verification SMS prepared" className="rounded-xl bg-white p-2" width={220} height={220} />
+                      ) : (
+                        <div className="h-[220px] w-[220px] rounded-xl bg-muted/50 flex items-center justify-center">
+                          <Loader2 size={18} className="animate-spin text-muted-foreground" />
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground text-center">Or copy the verification message</p>
+                    <button
+                      onClick={copyMessage}
+                      className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-muted text-foreground text-sm font-semibold"
+                    >
+                      {copied ? <Check size={15} /> : <Copy size={15} />} {copied ? 'Copied' : 'Copy Message'}
+                    </button>
+                  </>
+                )}
                 <div className="flex items-center justify-between text-xs">
                   <span className="flex items-center gap-2 text-muted-foreground">
                     <Loader2 size={13} className="animate-spin" /> Waiting for verification…
