@@ -41,6 +41,31 @@ export function fingerprint(tokenHash: string): string {
   return tokenHash.slice(0, 8);
 }
 
+/** SHA-256 hex of a provisioned device secret. Only the hash is ever persisted. */
+export async function hashDeviceSecret(secret: string): Promise<string> {
+  return toHex(
+    await crypto.subtle.digest('SHA-256', new TextEncoder().encode('vibtribe_gw_secret:' + secret.trim())),
+  );
+}
+
+/** Generate a backend-owned device id, e.g. gw_5f3a9c1b7d2e4680. */
+export function generateDeviceId(): string {
+  const buf = new Uint8Array(8);
+  crypto.getRandomValues(buf);
+  let s = '';
+  for (let i = 0; i < buf.length; i++) s += buf[i].toString(16).padStart(2, '0');
+  return 'gw_' + s;
+}
+
+/** Generate a high-entropy device secret (base64url, 32 random bytes). */
+export function generateDeviceSecret(): string {
+  const buf = new Uint8Array(32);
+  crypto.getRandomValues(buf);
+  let bin = '';
+  for (let i = 0; i < buf.length; i++) bin += String.fromCharCode(buf[i]);
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
 export async function hmacSha256Hex(secret: string, message: string): Promise<string> {
   const key = await crypto.subtle.importKey(
     'raw',
