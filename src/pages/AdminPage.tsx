@@ -1303,6 +1303,7 @@ export default function AdminPage() {
         <TribeDetailsSheet
           chatId={selectedTribeId}
           isOpen={!!selectedTribeId}
+          asAdmin
           onClose={() => { setSelectedTribeId(null); loadTribes(); }}
         />
       )}
