@@ -14,6 +14,8 @@ export interface ViewerSource {
   rect?: { top: number; left: number; width: number; height: number } | null;
   name?: string;
   mime?: string;
+  /** Already-decrypted bytes, when the caller has them (Capacitor safe). */
+  blob?: Blob | null;
 }
 
 interface Props {
@@ -30,8 +32,23 @@ export default function MediaViewer({ source, onClose }: Props) {
   const [url, setUrl] = useState<string | null>(null);
   const [showTrustBlock, setShowTrustBlock] = useState(false);
   const [zoomed, setZoomed] = useState(false);
+  const [chromeVisible, setChromeVisible] = useState(true);
   const trustLock = useTrustLock();
   const trustLocked = trustLock.enabled;
+  const hideTimerRef = useRef<number | null>(null);
+
+  /** Show the action bar and auto-hide it again after 3 seconds. */
+  const revealChrome = useCallback(() => {
+    setChromeVisible(true);
+    if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
+    hideTimerRef.current = window.setTimeout(() => setChromeVisible(false), 3000);
+  }, []);
+
+  useEffect(() => {
+    if (!source) return;
+    revealChrome();
+    return () => { if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current); };
+  }, [source, revealChrome]);
 
   const scale = useMotionValue(1);
   const x = useMotionValue(0);
@@ -106,9 +123,30 @@ export default function MediaViewer({ source, onClose }: Props) {
   };
 
   const fetchBlob = async (): Promise<Blob> => {
-    const res = await fetch(url!);
-    if (!res.ok) throw new Error('Failed to load media');
-    return res.blob();
+    // Prefer bytes the caller already decrypted — fetching a blob: URL can
+    // fail inside the Capacitor WebView once the object URL is recycled.
+    if (source?.blob) return source.blob;
+    if (!url) throw new Error('Media is still loading');
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('bad_status');
+      return await res.blob();
+    } catch {
+      // Last resort: re-encode the rendered bitmap from the DOM.
+      const img = imgRef.current;
+      if (img?.naturalWidth) {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0);
+          const b = await new Promise<Blob | null>((r) => canvas.toBlob(r, 'image/png'));
+          if (b) return b;
+        }
+      }
+      throw new Error('Failed to load media');
+    }
   };
 
   const runDownload = async () => {
