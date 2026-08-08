@@ -204,9 +204,9 @@ export default function MediaViewer({ source, onClose }: Props) {
             style={{ opacity: backdropOpacity }}
           />
 
-          {/* Top bar */}
+          {/* Top bar — close only */}
           <motion.div
-            className="absolute left-0 right-0 z-20 flex items-center justify-between gap-3 px-4"
+            className="absolute left-0 right-0 z-20 flex items-center justify-end px-4"
             style={{ top: 'calc(var(--safe-top, 0px) + 0.75rem)', pointerEvents: chromeVisible ? 'auto' : 'none' }}
             initial={{ opacity: 0, y: -12 }}
             animate={{ opacity: chromeVisible ? 1 : 0, y: chromeVisible ? 0 : -12 }}
@@ -214,7 +214,64 @@ export default function MediaViewer({ source, onClose }: Props) {
             transition={{ duration: 0.22 }}
             onClick={(e) => { e.stopPropagation(); revealChrome(); }}
           >
-            <div className="flex items-center gap-2">
+            <button
+              onClick={(e) => { e.stopPropagation(); onClose(); }}
+              className="p-3 rounded-full bg-black/70 text-white ring-1 ring-white/30 shadow-lg hover:bg-black/85 backdrop-blur-md transition"
+              aria-label="Close"
+            >
+              <X size={20} />
+            </button>
+          </motion.div>
+
+          {url && (
+            <div
+              className="absolute inset-0 flex items-center justify-center px-3"
+              style={{
+                paddingTop: 'calc(var(--safe-top, 0px) + 4.25rem)',
+                paddingBottom: 'calc(var(--safe-bottom, 0px) + 7.5rem)',
+              }}
+            >
+            <motion.img
+              ref={imgRef}
+              src={url}
+              crossOrigin={url.startsWith('blob:') || url.startsWith('data:') ? undefined : 'anonymous'}
+              alt={source.name || 'Media preview'}
+              draggable={false}
+              className="max-w-full max-h-full rounded-2xl object-contain select-none will-change-transform"
+              style={{ scale, x, y, translateY: dragY }}
+              initial={origin}
+              animate={{ opacity: 1, scale: 1, x: 0, y: 0 }}
+              exit={{ ...origin, transition: { duration: 0.22, ease: 'easeIn' } }}
+              transition={{ type: 'spring', stiffness: 260, damping: 28 }}
+              drag={zoomed ? true : 'y'}
+              dragElastic={zoomed ? 0.05 : 0.6}
+              dragMomentum={false}
+              onDrag={(_, info) => { if (!zoomed) dragY.set(info.offset.y); }}
+              onDragEnd={(_, info) => {
+                if (zoomed) return;
+                if (Math.abs(info.offset.y) > 140 || Math.abs(info.velocity.y) > 700) onClose();
+                else animate(dragY, 0, { type: 'spring', stiffness: 320, damping: 30 });
+              }}
+              onClick={(e) => { e.stopPropagation(); revealChrome(); handleTap(); }}
+              onTouchStart={onTouchStart}
+              onTouchMove={onTouchMove}
+              onTouchEnd={onTouchEnd}
+              onContextMenu={trustLocked ? (e) => e.preventDefault() : undefined}
+            />
+            </div>
+          )}
+
+          {/* Bottom action dock */}
+          <motion.div
+            className="absolute left-0 right-0 z-20 flex flex-col items-center gap-2 px-4"
+            style={{ bottom: 'calc(var(--safe-bottom, 0px) + 1.25rem)', pointerEvents: chromeVisible ? 'auto' : 'none' }}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: chromeVisible ? 1 : 0, y: chromeVisible ? 0 : 16 }}
+            exit={{ opacity: 0, y: 16 }}
+            transition={{ duration: 0.22 }}
+            onClick={(e) => { e.stopPropagation(); revealChrome(); }}
+          >
+            <div className="flex items-center gap-2 rounded-full bg-black/70 px-3 py-2 backdrop-blur-xl ring-1 ring-white/15 shadow-2xl">
               {!trustLocked && url && (
                 <>
                   <MediaActionButton action="download" label="Download" onRun={runDownload} />
@@ -241,54 +298,10 @@ export default function MediaViewer({ source, onClose }: Props) {
                 <ZoomIn size={16} />
               </button>
             </div>
-            <button
-              onClick={(e) => { e.stopPropagation(); onClose(); }}
-              className="p-3 rounded-full bg-black/70 text-white ring-1 ring-white/30 shadow-lg hover:bg-black/85 backdrop-blur-md transition"
-              aria-label="Close"
-            >
-              <X size={20} />
-            </button>
+            {!zoomed && (
+              <p className="text-center text-[11px] text-white/45">Double-tap to zoom · swipe to dismiss</p>
+            )}
           </motion.div>
-
-          {url && (
-            <motion.img
-              ref={imgRef}
-              src={url}
-              crossOrigin={url.startsWith('blob:') || url.startsWith('data:') ? undefined : 'anonymous'}
-              alt={source.name || 'Media preview'}
-              draggable={false}
-              className="max-w-full max-h-[86vh] rounded-2xl object-contain select-none will-change-transform"
-              style={{ scale, x, y, translateY: dragY }}
-              initial={origin}
-              animate={{ opacity: 1, scale: 1, x: 0, y: 0 }}
-              exit={{ ...origin, transition: { duration: 0.22, ease: 'easeIn' } }}
-              transition={{ type: 'spring', stiffness: 260, damping: 28 }}
-              drag={zoomed ? true : 'y'}
-              dragElastic={zoomed ? 0.05 : 0.6}
-              dragMomentum={false}
-              onDrag={(_, info) => { if (!zoomed) dragY.set(info.offset.y); }}
-              onDragEnd={(_, info) => {
-                if (zoomed) return;
-                if (Math.abs(info.offset.y) > 140 || Math.abs(info.velocity.y) > 700) onClose();
-                else animate(dragY, 0, { type: 'spring', stiffness: 320, damping: 30 });
-              }}
-              onClick={(e) => { e.stopPropagation(); revealChrome(); handleTap(); }}
-              onTouchStart={onTouchStart}
-              onTouchMove={onTouchMove}
-              onTouchEnd={onTouchEnd}
-              onContextMenu={trustLocked ? (e) => e.preventDefault() : undefined}
-            />
-          )}
-
-          {!zoomed && chromeVisible && (
-            <motion.p
-              className="absolute bottom-6 left-0 right-0 text-center text-[11px] text-white/45"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              transition={{ delay: 0.35 }}
-            >
-              Double-tap to zoom · swipe to dismiss
-            </motion.p>
-          )}
 
           <TrustLockBlockedDialog open={showTrustBlock} onClose={() => setShowTrustBlock(false)} />
         </motion.div>
