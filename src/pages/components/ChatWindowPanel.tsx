@@ -1284,6 +1284,7 @@ export default function ChatWindowPanel() {
   const sendMessage = async (overrideText?: string) => {
     const raw = overrideText ?? inputText;
     if (!raw.trim() || !selectedChatId || !user) return;
+    const replyToId = replyTarget?.id && !String(replyTarget.id).startsWith('temp-') ? replyTarget.id : null;
     // Strict E2E: 1:1 chats require both sides to have set up encryption.
     if (chatType !== 'group') {
       // If the contact object hasn't loaded yet (race with chat open), or the
@@ -1376,6 +1377,7 @@ export default function ChatWindowPanel() {
       reactions: [],
       encrypted: e2eEnabled,
       createdAt: new Date().toISOString(),
+      replyTo: replyToId,
     };
     const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
     setMessages(prev => [...prev, offline ? { ...tempMsg, status: 'pending' as const } : tempMsg]);
@@ -1387,6 +1389,7 @@ export default function ChatWindowPanel() {
       }
     }
     setShowEmoji(false);
+    setReplyTarget(null);
 
     // Declared outside the try so the offline-retry path queues the *encrypted*
     // payload, never plaintext.
@@ -1440,7 +1443,7 @@ export default function ChatWindowPanel() {
 
       const { data } = await supabase
         .from('messages')
-        .insert({ chat_id: selectedChatId, sender_id: user.id, content: contentToStore, message_status: 'sent' })
+        .insert({ chat_id: selectedChatId, sender_id: user.id, content: contentToStore, message_status: 'sent', ...(replyToId ? { reply_to: replyToId } : {}) })
         .select()
         .single();
       if (data) {
