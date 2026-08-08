@@ -3294,6 +3294,24 @@ export default function ChatWindowPanel() {
 
       {/* Input Area */}
       {(!trustLock.enabled || trustLockProtected === true) && <div className="relative z-30 px-2.5 pb-2 pt-1.5 flex-shrink-0 w-full max-w-full">
+      {replyTarget && (
+        <div className="mb-1.5 flex items-center gap-2 rounded-2xl bg-black/25 backdrop-blur-md border-l-[3px] border-primary px-3 py-2">
+          <Reply size={14} className="text-primary flex-shrink-0" />
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-bold text-primary">
+              Replying to {replyTarget.senderId === user?.id ? 'yourself' : (contact?.name || 'message')}
+            </p>
+            <p className="text-[11px] text-white/70 truncate">{formatPreviewText(replyTarget.text)}</p>
+          </div>
+          <button
+            onClick={() => setReplyTarget(null)}
+            className="p-1.5 rounded-full text-white/70 hover:text-white hover:bg-white/10"
+            aria-label="Cancel reply"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
       <div className="vt-chat-composer rounded-[22px] px-1.5 py-1 flex items-end gap-0.5 w-full max-w-full overflow-hidden">
         <button
           onClick={(e) => { e.stopPropagation(); setShowAttachMenu(v => { const next = !v; if (next) { setShowEmoji(false); setShowMoreMenu(false); setShowDisappearMenu(false); } return next; }); }}
