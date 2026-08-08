@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useRef, useEffect } from 'react';
-import { Phone, Video, Paperclip, Mic, MicOff, Send, Lock, CheckCheck, Check, Clock, ArrowLeft, Info, Trash2, ShieldCheck, Ban, ShieldOff, X, Image, FileText, Camera, VideoOff, PhoneOff, Volume2, VolumeX, Timer, MoreVertical, UserPlus, Smile, KeyRound, Shield, ShieldAlert, Plus, Flag } from 'lucide-react';
+import { Phone, Video, Paperclip, Mic, MicOff, Send, Lock, CheckCheck, Check, Clock, ArrowLeft, Info, Trash2, ShieldCheck, Ban, ShieldOff, X, Image, FileText, Camera, VideoOff, PhoneOff, Volume2, VolumeX, Timer, MoreVertical, UserPlus, Smile, KeyRound, Shield, ShieldAlert, Plus, Flag, Reply } from 'lucide-react';
 import { useChatStore } from '@/store/chatStore';
 import MarkSecureModal from '@/components/MarkSecureModal';
 import { useAuth } from '@/contexts/AuthContext';
@@ -46,6 +46,64 @@ interface Message {
   deletedForEveryone?: boolean;
   createdAt?: string;
   messageType?: string;
+  /** Id of the message this one replies to (WhatsApp-style quote). */
+  replyTo?: string | null;
+}
+
+/**
+ * Swipe a bubble to the right to reply to it (WhatsApp-style gesture).
+ * Purely presentational — reports the intent through `onReply`.
+ */
+function SwipeToReply({
+  onReply,
+  disabled,
+  children,
+}: { onReply: () => void; disabled?: boolean; children: React.ReactNode }) {
+  const [dx, setDx] = React.useState(0);
+  const startX = React.useRef(0);
+  const startY = React.useRef(0);
+  const active = React.useRef(false);
+  const reached = dx > 56;
+  return (
+    <div
+      className="relative"
+      onTouchStart={(e) => {
+        if (disabled) return;
+        startX.current = e.touches[0].clientX;
+        startY.current = e.touches[0].clientY;
+        active.current = true;
+      }}
+      onTouchMove={(e) => {
+        if (!active.current) return;
+        const cx = e.touches[0].clientX - startX.current;
+        const cy = Math.abs(e.touches[0].clientY - startY.current);
+        if (cy > 26) { active.current = false; setDx(0); return; }
+        setDx(Math.max(0, Math.min(88, cx)));
+      }}
+      onTouchEnd={() => {
+        if (active.current && dx > 56) {
+          try { navigator.vibrate?.(12); } catch {}
+          onReply();
+        }
+        active.current = false;
+        setDx(0);
+      }}
+      onTouchCancel={() => { active.current = false; setDx(0); }}
+    >
+      <div
+        className="absolute inset-y-0 left-1 flex items-center pointer-events-none"
+        style={{ opacity: Math.min(1, dx / 56) }}
+        aria-hidden
+      >
+        <span className={`w-7 h-7 rounded-full flex items-center justify-center ${reached ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'}`}>
+          <Reply size={14} />
+        </span>
+      </div>
+      <div style={{ transform: `translateX(${dx}px)`, transition: dx ? 'none' : 'transform 160ms ease-out' }}>
+        {children}
+      </div>
+    </div>
+  );
 }
 
 /**
