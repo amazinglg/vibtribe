@@ -197,7 +197,7 @@ export default function MediaViewer({ source, onClose }: Props) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          onClick={onClose}
+          onClick={() => { if (chromeVisible) onClose(); else revealChrome(); }}
         >
           <motion.div
             className="absolute inset-0 bg-black/95 backdrop-blur-xl"
@@ -206,13 +206,14 @@ export default function MediaViewer({ source, onClose }: Props) {
 
           {/* Top bar */}
           <motion.div
-            className="absolute left-0 right-0 z-20 flex items-center justify-between px-4"
-            style={{ top: 'calc(min(var(--safe-top), 2.25rem) + 0.75rem)' }}
+            className="absolute left-0 right-0 z-20 flex items-center justify-between gap-3 px-4"
+            style={{ top: 'calc(var(--safe-top, 0px) + 0.75rem)' }}
             initial={{ opacity: 0, y: -12 }}
-            animate={{ opacity: 1, y: 0 }}
+            animate={{ opacity: chromeVisible ? 1 : 0, y: chromeVisible ? 0 : -12 }}
             exit={{ opacity: 0, y: -12 }}
-            transition={{ delay: 0.08 }}
-            onClick={(e) => e.stopPropagation()}
+            transition={{ duration: 0.22 }}
+            style-pointer-events={undefined}
+            onClick={(e) => { e.stopPropagation(); revealChrome(); }}
           >
             <div className="flex items-center gap-2">
               {!trustLocked && url && (
@@ -242,8 +243,8 @@ export default function MediaViewer({ source, onClose }: Props) {
               </button>
             </div>
             <button
-              onClick={onClose}
-              className="p-3 rounded-full bg-white/15 text-white hover:bg-white/25 backdrop-blur-md transition"
+              onClick={(e) => { e.stopPropagation(); onClose(); }}
+              className="p-3 rounded-full bg-black/70 text-white ring-1 ring-white/30 shadow-lg hover:bg-black/85 backdrop-blur-md transition"
               aria-label="Close"
             >
               <X size={20} />
@@ -252,7 +253,9 @@ export default function MediaViewer({ source, onClose }: Props) {
 
           {url && (
             <motion.img
+              ref={imgRef}
               src={url}
+              crossOrigin="anonymous"
               alt={source.name || 'Media preview'}
               draggable={false}
               className="max-w-full max-h-[86vh] rounded-2xl object-contain select-none will-change-transform"
@@ -270,7 +273,7 @@ export default function MediaViewer({ source, onClose }: Props) {
                 if (Math.abs(info.offset.y) > 140 || Math.abs(info.velocity.y) > 700) onClose();
                 else animate(dragY, 0, { type: 'spring', stiffness: 320, damping: 30 });
               }}
-              onClick={(e) => { e.stopPropagation(); handleTap(); }}
+              onClick={(e) => { e.stopPropagation(); revealChrome(); handleTap(); }}
               onTouchStart={onTouchStart}
               onTouchMove={onTouchMove}
               onTouchEnd={onTouchEnd}
@@ -278,7 +281,7 @@ export default function MediaViewer({ source, onClose }: Props) {
             />
           )}
 
-          {!zoomed && (
+          {!zoomed && chromeVisible && (
             <motion.p
               className="absolute bottom-6 left-0 right-0 text-center text-[11px] text-white/45"
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
