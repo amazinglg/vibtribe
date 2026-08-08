@@ -3037,6 +3037,7 @@ export type Database = {
         Args: { _gateway_id: string; _token_hash: string; _user_id: string }
         Returns: Json
       }
+      sms_gw_delete_gateway: { Args: { _device_id: string }; Returns: Json }
       sms_gw_get_gateway_auth: { Args: { _device_id: string }; Returns: Json }
       sms_gw_list_gateways: { Args: never; Returns: Json }
       sms_gw_phone_status: { Args: { _user_id: string }; Returns: Json }
