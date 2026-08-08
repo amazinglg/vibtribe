@@ -1018,6 +1018,7 @@ export type Database = {
           message_status: Database["public"]["Enums"]["message_status"] | null
           message_type: string
           reactions: Json | null
+          reply_to: string | null
           sender_id: string | null
           updated_at: string
         }
@@ -1033,6 +1034,7 @@ export type Database = {
           message_status?: Database["public"]["Enums"]["message_status"] | null
           message_type?: string
           reactions?: Json | null
+          reply_to?: string | null
           sender_id?: string | null
           updated_at?: string
         }
@@ -1048,6 +1050,7 @@ export type Database = {
           message_status?: Database["public"]["Enums"]["message_status"] | null
           message_type?: string
           reactions?: Json | null
+          reply_to?: string | null
           sender_id?: string | null
           updated_at?: string
         }
@@ -1064,6 +1067,13 @@ export type Database = {
             columns: ["chat_id"]
             isOneToOne: false
             referencedRelation: "tribe_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_reply_to_fkey"
+            columns: ["reply_to"]
+            isOneToOne: false
+            referencedRelation: "messages"
             referencedColumns: ["id"]
           },
           {
