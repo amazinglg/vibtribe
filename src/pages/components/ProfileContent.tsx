@@ -822,6 +822,13 @@ export default function ProfileContent() {
 
   return (
     <div className="max-w-screen-2xl mx-auto px-4 lg:px-8 py-6">
+      {signingOut && (
+        <div className="fixed inset-0 z-[3000] bg-background/85 backdrop-blur-md flex flex-col items-center justify-center gap-4">
+          <div className="w-12 h-12 rounded-full border-2 border-primary/25 border-t-primary animate-spin" />
+          <p className="text-sm font-semibold text-foreground">Logging out…</p>
+          <p className="text-xs text-muted-foreground">Clearing your session from this device</p>
+        </div>
+      )}
       {/* Profile Header */}
       <div className="glass rounded-3xl border border-border p-6 mb-6 relative overflow-hidden card-3d">
         <div className="absolute inset-0 opacity-10 pointer-events-none">
