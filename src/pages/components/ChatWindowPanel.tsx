@@ -3535,6 +3535,10 @@ export default function ChatWindowPanel() {
         };
         const items: Item[] = [];
         items.push({
+          key: 'reply', label: 'Reply', icon: '↩️', gradient: 'from-primary to-fuchsia-500',
+          onClick: () => { setReplyTarget(actionMsg); setActionMsg(null); },
+        });
+        items.push({
           key: 'react', label: 'React', icon: '😊', gradient: 'from-amber-400 to-pink-500',
           onClick: () => { setReactionPickerMsg(actionMsg); setActionMsg(null); },
         });
