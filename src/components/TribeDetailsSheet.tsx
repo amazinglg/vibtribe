@@ -15,6 +15,8 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   onLeft?: () => void;
+  /** Opened from the admin panel — grants moderation controls without membership. */
+  asAdmin?: boolean;
 }
 
 interface Tribe {
@@ -56,7 +58,7 @@ function randomCode(len = 10) {
   return s;
 }
 
-export default function TribeDetailsSheet({ chatId, isOpen, onClose, onLeft }: Props) {
+export default function TribeDetailsSheet({ chatId, isOpen, onClose, onLeft, asAdmin = false }: Props) {
   const supabase = createClient();
   const { user } = useAuth();
   const [tribe, setTribe] = useState<Tribe | null>(null);
@@ -79,7 +81,8 @@ export default function TribeDetailsSheet({ chatId, isOpen, onClose, onLeft }: P
   const [shareCodeBanner, setShareCodeBanner] = useState<string | null>(null);
 
   const myRole = members.find(m => m.user_id === user?.id)?.role;
-  const isLeader = myRole === 'leader' || (tribe && tribe.created_by === user?.id);
+  const isMember = !!myRole;
+  const isLeader = myRole === 'leader' || (tribe && tribe.created_by === user?.id) || asAdmin;
   const isFounder = tribe && tribe.created_by === user?.id;
 
   const load = async () => {
@@ -562,7 +565,7 @@ export default function TribeDetailsSheet({ chatId, isOpen, onClose, onLeft }: P
                     <p className="text-sm text-foreground truncate flex items-center gap-1.5">{m.full_name}{isMeRow && <span className="text-[10px] text-muted-foreground">(you)</span>}</p>
                     {m.role === 'leader' && <p className="text-[10px] text-primary flex items-center gap-1"><Crown size={10} /> Tribe Leader{memberIsFounder ? ' · Founder' : ''}</p>}
                   </div>
-                  {isLeader && !isMeRow && !memberIsFounder && (
+                  {((isLeader && !isMeRow && !memberIsFounder) || (asAdmin && !isMeRow)) && (
                     <div className="flex items-center gap-1">
                       {m.role === 'member' ? (
                         <button onClick={() => promote(m.user_id)} className="p-1.5 bg-muted rounded-lg text-foreground" title="Promote to Leader"><Crown size={12} /></button>
@@ -579,19 +582,19 @@ export default function TribeDetailsSheet({ chatId, isOpen, onClose, onLeft }: P
         </div>
 
         {/* Leave */}
-        {!isFounder && (
+        {!isFounder && !asAdmin && isMember && (
           <div className="p-4">
             <button onClick={leaveTribe} className="w-full flex items-center justify-center gap-2 py-2.5 bg-red-500/15 text-red-400 rounded-xl text-sm font-semibold">
               <LogOut size={14} /> Leave tribe
             </button>
           </div>
         )}
-        {isFounder && (
+        {isFounder && !asAdmin && (
           <div className="p-4 text-center text-[11px] text-muted-foreground">
             As the founder, you cannot leave. Delete the tribe to disband it.
           </div>
         )}
-        {isFounder && (
+        {(isFounder || asAdmin) && (
           <div className="px-4 pb-6">
             <button
               onClick={async () => {

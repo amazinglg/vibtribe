@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ArrowLeft, RefreshCw, Radio, Copy, ShieldOff, ShieldCheck, Plus } from 'lucide-react'
+import { ArrowLeft, RefreshCw, Radio, Copy, ShieldOff, ShieldCheck, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useServerFn } from '@tanstack/react-start'
 import AppLayout from '@/components/AppLayout'
-import { listGateways, provisionGateway, setGatewayStatus, type GatewayRow } from '@/lib/gateway-admin.functions'
+import { appConfirm } from '@/components/ui/AppDialog'
+import { listGateways, provisionGateway, setGatewayStatus, deleteGateway, type GatewayRow } from '@/lib/gateway-admin.functions'
 
 type Provisioned = { device_id: string; device_secret: string; signing_key: string; label: string }
 
@@ -11,6 +12,7 @@ export default function AdminGatewaysPage() {
   const list = useServerFn(listGateways)
   const provision = useServerFn(provisionGateway)
   const setStatus = useServerFn(setGatewayStatus)
+  const removeDevice = useServerFn(deleteGateway)
 
   const [rows, setRows] = useState<GatewayRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -141,6 +143,26 @@ export default function AdminGatewaysPage() {
                 title={g.status === 'active' ? 'Revoke' : 'Re-activate'}
               >
                 {g.status === 'active' ? <ShieldOff size={15} /> : <ShieldCheck size={15} />}
+              </button>
+              <button
+                onClick={async () => {
+                  const ok = await appConfirm({
+                    title: 'Delete this device?',
+                    message: 'The device will be permanently removed and can no longer authenticate. This cannot be undone.',
+                    confirmLabel: 'Delete device',
+                    variant: 'destructive',
+                  })
+                  if (!ok) return
+                  try {
+                    await removeDevice({ data: { deviceId: g.device_id } })
+                    toast.success('Device deleted')
+                    await load()
+                  } catch { toast.error('Delete failed') }
+                }}
+                className="p-2 glass rounded-lg text-red-400 hover:text-red-300"
+                title="Delete permanently"
+              >
+                <Trash2 size={15} />
               </button>
             </div>
           ))}

@@ -14,6 +14,8 @@ export interface ViewerSource {
   rect?: { top: number; left: number; width: number; height: number } | null;
   name?: string;
   mime?: string;
+  /** Already-decrypted bytes, when the caller has them (Capacitor safe). */
+  blob?: Blob | null;
 }
 
 interface Props {
@@ -30,8 +32,23 @@ export default function MediaViewer({ source, onClose }: Props) {
   const [url, setUrl] = useState<string | null>(null);
   const [showTrustBlock, setShowTrustBlock] = useState(false);
   const [zoomed, setZoomed] = useState(false);
+  const [chromeVisible, setChromeVisible] = useState(true);
   const trustLock = useTrustLock();
   const trustLocked = trustLock.enabled;
+  const hideTimerRef = useRef<number | null>(null);
+
+  /** Show the action bar and auto-hide it again after 3 seconds. */
+  const revealChrome = useCallback(() => {
+    setChromeVisible(true);
+    if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
+    hideTimerRef.current = window.setTimeout(() => setChromeVisible(false), 3000);
+  }, []);
+
+  useEffect(() => {
+    if (!source) return;
+    revealChrome();
+    return () => { if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current); };
+  }, [source, revealChrome]);
 
   const scale = useMotionValue(1);
   const x = useMotionValue(0);
@@ -40,6 +57,7 @@ export default function MediaViewer({ source, onClose }: Props) {
   const backdropOpacity = useTransform(dragY, [-320, 0, 320], [0, 1, 0]);
   const pinchRef = useRef<{ startDist: number; startScale: number } | null>(null);
   const lastTapRef = useRef(0);
+  const imgRef = useRef<HTMLImageElement | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -106,9 +124,30 @@ export default function MediaViewer({ source, onClose }: Props) {
   };
 
   const fetchBlob = async (): Promise<Blob> => {
-    const res = await fetch(url!);
-    if (!res.ok) throw new Error('Failed to load media');
-    return res.blob();
+    // Prefer bytes the caller already decrypted — fetching a blob: URL can
+    // fail inside the Capacitor WebView once the object URL is recycled.
+    if (source?.blob) return source.blob;
+    if (!url) throw new Error('Media is still loading');
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('bad_status');
+      return await res.blob();
+    } catch {
+      // Last resort: re-encode the rendered bitmap from the DOM.
+      const img = imgRef.current;
+      if (img?.naturalWidth) {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0);
+          const b = await new Promise<Blob | null>((r) => canvas.toBlob(r, 'image/png'));
+          if (b) return b;
+        }
+      }
+      throw new Error('Failed to load media');
+    }
   };
 
   const runDownload = async () => {
@@ -158,7 +197,7 @@ export default function MediaViewer({ source, onClose }: Props) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          onClick={onClose}
+          onClick={() => { if (chromeVisible) onClose(); else revealChrome(); }}
         >
           <motion.div
             className="absolute inset-0 bg-black/95 backdrop-blur-xl"
@@ -167,13 +206,13 @@ export default function MediaViewer({ source, onClose }: Props) {
 
           {/* Top bar */}
           <motion.div
-            className="absolute left-0 right-0 z-20 flex items-center justify-between px-4"
-            style={{ top: 'calc(min(var(--safe-top), 2.25rem) + 0.75rem)' }}
+            className="absolute left-0 right-0 z-20 flex items-center justify-between gap-3 px-4"
+            style={{ top: 'calc(var(--safe-top, 0px) + 0.75rem)', pointerEvents: chromeVisible ? 'auto' : 'none' }}
             initial={{ opacity: 0, y: -12 }}
-            animate={{ opacity: 1, y: 0 }}
+            animate={{ opacity: chromeVisible ? 1 : 0, y: chromeVisible ? 0 : -12 }}
             exit={{ opacity: 0, y: -12 }}
-            transition={{ delay: 0.08 }}
-            onClick={(e) => e.stopPropagation()}
+            transition={{ duration: 0.22 }}
+            onClick={(e) => { e.stopPropagation(); revealChrome(); }}
           >
             <div className="flex items-center gap-2">
               {!trustLocked && url && (
@@ -203,8 +242,8 @@ export default function MediaViewer({ source, onClose }: Props) {
               </button>
             </div>
             <button
-              onClick={onClose}
-              className="p-3 rounded-full bg-white/15 text-white hover:bg-white/25 backdrop-blur-md transition"
+              onClick={(e) => { e.stopPropagation(); onClose(); }}
+              className="p-3 rounded-full bg-black/70 text-white ring-1 ring-white/30 shadow-lg hover:bg-black/85 backdrop-blur-md transition"
               aria-label="Close"
             >
               <X size={20} />
@@ -213,7 +252,9 @@ export default function MediaViewer({ source, onClose }: Props) {
 
           {url && (
             <motion.img
+              ref={imgRef}
               src={url}
+              crossOrigin={url.startsWith('blob:') || url.startsWith('data:') ? undefined : 'anonymous'}
               alt={source.name || 'Media preview'}
               draggable={false}
               className="max-w-full max-h-[86vh] rounded-2xl object-contain select-none will-change-transform"
@@ -231,7 +272,7 @@ export default function MediaViewer({ source, onClose }: Props) {
                 if (Math.abs(info.offset.y) > 140 || Math.abs(info.velocity.y) > 700) onClose();
                 else animate(dragY, 0, { type: 'spring', stiffness: 320, damping: 30 });
               }}
-              onClick={(e) => { e.stopPropagation(); handleTap(); }}
+              onClick={(e) => { e.stopPropagation(); revealChrome(); handleTap(); }}
               onTouchStart={onTouchStart}
               onTouchMove={onTouchMove}
               onTouchEnd={onTouchEnd}
@@ -239,7 +280,7 @@ export default function MediaViewer({ source, onClose }: Props) {
             />
           )}
 
-          {!zoomed && (
+          {!zoomed && chromeVisible && (
             <motion.p
               className="absolute bottom-6 left-0 right-0 text-center text-[11px] text-white/45"
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}

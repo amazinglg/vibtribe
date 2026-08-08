@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useRef, useEffect } from 'react';
-import { Phone, Video, Paperclip, Mic, MicOff, Send, Lock, CheckCheck, Check, Clock, ArrowLeft, Info, Trash2, ShieldCheck, Ban, ShieldOff, X, Image, FileText, Camera, VideoOff, PhoneOff, Volume2, VolumeX, Timer, MoreVertical, UserPlus, Smile, KeyRound, Shield, ShieldAlert, Plus, Flag } from 'lucide-react';
+import { Phone, Video, Paperclip, Mic, MicOff, Send, Lock, CheckCheck, Check, Clock, ArrowLeft, Info, Trash2, ShieldCheck, Ban, ShieldOff, X, Image, FileText, Camera, VideoOff, PhoneOff, Volume2, VolumeX, Timer, MoreVertical, UserPlus, Smile, KeyRound, Shield, ShieldAlert, Plus, Flag, Reply } from 'lucide-react';
 import { useChatStore } from '@/store/chatStore';
 import MarkSecureModal from '@/components/MarkSecureModal';
 import { useAuth } from '@/contexts/AuthContext';
@@ -46,6 +46,64 @@ interface Message {
   deletedForEveryone?: boolean;
   createdAt?: string;
   messageType?: string;
+  /** Id of the message this one replies to (WhatsApp-style quote). */
+  replyTo?: string | null;
+}
+
+/**
+ * Swipe a bubble to the right to reply to it (WhatsApp-style gesture).
+ * Purely presentational — reports the intent through `onReply`.
+ */
+function SwipeToReply({
+  onReply,
+  disabled,
+  children,
+}: { onReply: () => void; disabled?: boolean; children: React.ReactNode }) {
+  const [dx, setDx] = React.useState(0);
+  const startX = React.useRef(0);
+  const startY = React.useRef(0);
+  const active = React.useRef(false);
+  const reached = dx > 56;
+  return (
+    <div
+      className="relative"
+      onTouchStart={(e) => {
+        if (disabled) return;
+        startX.current = e.touches[0].clientX;
+        startY.current = e.touches[0].clientY;
+        active.current = true;
+      }}
+      onTouchMove={(e) => {
+        if (!active.current) return;
+        const cx = e.touches[0].clientX - startX.current;
+        const cy = Math.abs(e.touches[0].clientY - startY.current);
+        if (cy > 26) { active.current = false; setDx(0); return; }
+        setDx(Math.max(0, Math.min(88, cx)));
+      }}
+      onTouchEnd={() => {
+        if (active.current && dx > 56) {
+          try { navigator.vibrate?.(12); } catch {}
+          onReply();
+        }
+        active.current = false;
+        setDx(0);
+      }}
+      onTouchCancel={() => { active.current = false; setDx(0); }}
+    >
+      <div
+        className="absolute inset-y-0 left-1 flex items-center pointer-events-none"
+        style={{ opacity: Math.min(1, dx / 56) }}
+        aria-hidden
+      >
+        <span className={`w-7 h-7 rounded-full flex items-center justify-center ${reached ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'}`}>
+          <Reply size={14} />
+        </span>
+      </div>
+      <div style={{ transform: `translateX(${dx}px)`, transition: dx ? 'none' : 'transform 160ms ease-out' }}>
+        {children}
+      </div>
+    </div>
+  );
 }
 
 /**
@@ -395,6 +453,7 @@ export default function ChatWindowPanel() {
   const [contact, setContact] = useState<{ name: string; avatar: string; avatarUrl?: string | null; online: boolean; lastSeen: string; publicKey?: string; userId?: string; isContact?: boolean } | null>(null);
   const [enlargeAvatar, setEnlargeAvatar] = useState(false);
   const [lightbox, setLightbox] = useState<ViewerSource | null>(null);
+  const [replyTarget, setReplyTarget] = useState<Message | null>(null);
   const [loading, setLoading] = useState(false);
   // Chats we've already painted from the encrypted cache — never skeleton twice.
   const everCachedRef = useRef<Set<string>>(new Set());
@@ -594,6 +653,7 @@ export default function ChatWindowPanel() {
                 reactions: [],
                 encrypted: encrypted || groupEnc,
                 createdAt: newMsg.created_at,
+                replyTo: newMsg.reply_to || null,
               }]);
               // Mark as read (recipient — uses RPC to bypass RLS sender restriction)
               await supabase.rpc('mark_messages_read', { _chat_id: selectedChatId });
@@ -961,6 +1021,7 @@ export default function ChatWindowPanel() {
               messageType: (m as any).message_type || 'user',
               createdAt: m.created_at,
               deletedForEveryone: !!m.deleted_for_everyone,
+              replyTo: (m as any).reply_to || null,
             });
           }
           setMessages(out);
@@ -1284,6 +1345,7 @@ export default function ChatWindowPanel() {
   const sendMessage = async (overrideText?: string) => {
     const raw = overrideText ?? inputText;
     if (!raw.trim() || !selectedChatId || !user) return;
+    const replyToId = replyTarget?.id && !String(replyTarget.id).startsWith('temp-') ? replyTarget.id : null;
     // Strict E2E: 1:1 chats require both sides to have set up encryption.
     if (chatType !== 'group') {
       // If the contact object hasn't loaded yet (race with chat open), or the
@@ -1376,6 +1438,7 @@ export default function ChatWindowPanel() {
       reactions: [],
       encrypted: e2eEnabled,
       createdAt: new Date().toISOString(),
+      replyTo: replyToId,
     };
     const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
     setMessages(prev => [...prev, offline ? { ...tempMsg, status: 'pending' as const } : tempMsg]);
@@ -1387,6 +1450,7 @@ export default function ChatWindowPanel() {
       }
     }
     setShowEmoji(false);
+    setReplyTarget(null);
 
     // Declared outside the try so the offline-retry path queues the *encrypted*
     // payload, never plaintext.
@@ -1440,7 +1504,7 @@ export default function ChatWindowPanel() {
 
       const { data } = await supabase
         .from('messages')
-        .insert({ chat_id: selectedChatId, sender_id: user.id, content: contentToStore, message_status: 'sent' })
+        .insert({ chat_id: selectedChatId, sender_id: user.id, content: contentToStore, message_status: 'sent', ...(replyToId ? { reply_to: replyToId } : {}) })
         .select()
         .single();
       if (data) {
@@ -2615,10 +2679,10 @@ export default function ChatWindowPanel() {
         <button
           type="button"
           onClick={() => setShowE2EInfo(true)}
-          className="w-full flex items-center justify-center gap-1.5 py-1.5 bg-vt-green/5 border-b border-vt-green/10 hover:bg-vt-green/10 transition-colors"
+          className="relative z-30 w-full flex items-center justify-center gap-1.5 py-2 bg-vt-green/15 backdrop-blur-md border-b border-vt-green/30 hover:bg-vt-green/25 transition-colors shadow-sm"
         >
-          <ShieldCheck size={11} className="text-vt-green" />
-          <span className="text-[11px] text-vt-green underline-offset-2 hover:underline">{t('chat.e2eBanner')}</span>
+          <ShieldCheck size={12} className="text-vt-green" />
+          <span className="text-[11px] font-semibold text-vt-green underline-offset-2 hover:underline">{t('chat.e2eBanner')}</span>
         </button>
       )}
       {e2eEnabled && chatType !== 'group' && contact && !contact.publicKey && (
@@ -2791,6 +2855,10 @@ export default function ChatWindowPanel() {
             return (
               <React.Fragment key={msg.id}>
               {__sep}
+              <SwipeToReply
+                disabled={selectionMode || !!msg.deletedForEveryone || msg.messageType === 'system'}
+                onReply={() => setReplyTarget(msg)}
+              >
               <div
                 data-msg-id={msg.id}
                 className={`flex ${isMe ? 'justify-end' : 'justify-start'} group vt-msg-in`}
@@ -2834,6 +2902,30 @@ export default function ChatWindowPanel() {
                       }`;
                     })()}
                   >
+                    {msg.replyTo && (() => {
+                      const quoted = messages.find(mm => mm.id === msg.replyTo);
+                      const who = !quoted
+                        ? ''
+                        : quoted.senderId === user?.id
+                          ? 'You'
+                          : (chatType === 'group' ? 'Member' : (contact?.name || 'Them'));
+                      return (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const el = document.querySelector(`[data-msg-id="${msg.replyTo}"]`);
+                            el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                          }}
+                          className="mb-1.5 w-full text-left rounded-xl bg-black/20 border-l-[3px] border-primary px-2.5 py-1.5"
+                        >
+                          <span className="block text-[10px] font-bold text-primary">{who || 'Message'}</span>
+                          <span className="block text-[11px] text-white/70 line-clamp-2 break-words">
+                            {quoted ? formatPreviewText(quoted.text) : 'Original message unavailable'}
+                          </span>
+                        </button>
+                      );
+                    })()}
                     {encMedia && (encMedia.k || contactPubKeyRef.current) ? (
                       isMe && msg.mediaUrl && msg.mediaUrl.startsWith('blob:') && encMedia.type === 'image' ? (
                         <img
@@ -2850,7 +2942,7 @@ export default function ChatWindowPanel() {
                           kind={encMedia.type}
                           theirPublicKey={contactPubKeyRef.current || undefined}
                           mediaKey={encMedia.k}
-                          onImageClick={(u, r) => setLightbox({ src: u, rect: r, name: encMedia.name, mime: encMedia.mime })}
+                          onImageClick={(u, r, b) => setLightbox({ src: u, rect: r, name: encMedia.name, mime: encMedia.mime, blob: b || null })}
                         />
                       )
                     ) : imageUrl ? (
@@ -2942,6 +3034,7 @@ export default function ChatWindowPanel() {
                   )}
                 </div>
               </div>
+              </SwipeToReply>
               </React.Fragment>
             );
           })
@@ -3201,6 +3294,24 @@ export default function ChatWindowPanel() {
 
       {/* Input Area */}
       {(!trustLock.enabled || trustLockProtected === true) && <div className="relative z-30 px-2.5 pb-2 pt-1.5 flex-shrink-0 w-full max-w-full">
+      {replyTarget && (
+        <div className="mb-1.5 flex items-center gap-2 rounded-2xl bg-black/25 backdrop-blur-md border-l-[3px] border-primary px-3 py-2">
+          <Reply size={14} className="text-primary flex-shrink-0" />
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-bold text-primary">
+              Replying to {replyTarget.senderId === user?.id ? 'yourself' : (contact?.name || 'message')}
+            </p>
+            <p className="text-[11px] text-white/70 truncate">{formatPreviewText(replyTarget.text)}</p>
+          </div>
+          <button
+            onClick={() => setReplyTarget(null)}
+            className="p-1.5 rounded-full text-white/70 hover:text-white hover:bg-white/10"
+            aria-label="Cancel reply"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
       <div className="vt-chat-composer rounded-[22px] px-1.5 py-1 flex items-end gap-0.5 w-full max-w-full overflow-hidden">
         <button
           onClick={(e) => { e.stopPropagation(); setShowAttachMenu(v => { const next = !v; if (next) { setShowEmoji(false); setShowMoreMenu(false); setShowDisappearMenu(false); } return next; }); }}
@@ -3423,6 +3534,10 @@ export default function ChatWindowPanel() {
           disabled?: boolean;
         };
         const items: Item[] = [];
+        items.push({
+          key: 'reply', label: 'Reply', icon: '↩️', gradient: 'from-primary to-fuchsia-500',
+          onClick: () => { setReplyTarget(actionMsg); setActionMsg(null); },
+        });
         items.push({
           key: 'react', label: 'React', icon: '😊', gradient: 'from-amber-400 to-pink-500',
           onClick: () => { setReactionPickerMsg(actionMsg); setActionMsg(null); },

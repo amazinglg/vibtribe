@@ -114,6 +114,7 @@ export default function ProfileContent() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [changingPassword, setChangingPassword] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
   const [notifMessages, setNotifMessages] = useState(true);
   const [notifStatus, setNotifStatus] = useState(true);
@@ -548,10 +549,14 @@ export default function ProfileContent() {
   };
 
   const handleSignOut = async () => {
+    if (signingOut) return;
+    setSigningOut(true);
     try {
       await signOut();
       router({ to: '/sign-in', replace: true });
-    } catch {}
+    } catch {
+      setSigningOut(false);
+    }
   };
 
   // Keys that MUST survive an update wipe — auth session + E2E encryption material.
@@ -817,6 +822,13 @@ export default function ProfileContent() {
 
   return (
     <div className="max-w-screen-2xl mx-auto px-4 lg:px-8 py-6">
+      {signingOut && (
+        <div className="fixed inset-0 z-[3000] bg-background/85 backdrop-blur-md flex flex-col items-center justify-center gap-4">
+          <div className="w-12 h-12 rounded-full border-2 border-primary/25 border-t-primary animate-spin" />
+          <p className="text-sm font-semibold text-foreground">Logging out…</p>
+          <p className="text-xs text-muted-foreground">Clearing your session from this device</p>
+        </div>
+      )}
       {/* Profile Header */}
       <div className="glass rounded-3xl border border-border p-6 mb-6 relative overflow-hidden card-3d">
         <div className="absolute inset-0 opacity-10 pointer-events-none">
@@ -828,11 +840,12 @@ export default function ProfileContent() {
           {/* Top-right logout */}
           <button
             onClick={handleSignOut}
+            disabled={signingOut}
             className="absolute top-0 right-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all z-10"
             title="Sign Out"
           >
             <LogOut size={14} />
-            <span className="hidden sm:inline">Sign Out</span>
+            <span className="hidden sm:inline">{signingOut ? 'Signing out…' : 'Sign Out'}</span>
           </button>
           {/* Avatar */}
           <div className="relative flex-shrink-0">
