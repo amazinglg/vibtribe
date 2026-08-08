@@ -57,6 +57,7 @@ export default function MediaViewer({ source, onClose }: Props) {
   const backdropOpacity = useTransform(dragY, [-320, 0, 320], [0, 1, 0]);
   const pinchRef = useRef<{ startDist: number; startScale: number } | null>(null);
   const lastTapRef = useRef(0);
+  const imgRef = useRef<HTMLImageElement | null>(null);
 
   useEffect(() => {
     let cancelled = false;
