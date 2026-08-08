@@ -41,7 +41,7 @@ export default function CreateGroupModal({ isOpen, onClose, onCreated }: Props) 
       if (ids.length === 0) { setUsers([]); return; }
       const { data: profiles } = await supabase
         .from('user_profiles')
-        .select('id, full_name, mobile_number, avatar_url')
+        .select('id, full_name, avatar_url')
         .in('id', ids);
       const pMap = new Map((profiles || []).map((p: any) => [p.id, p]));
       const list: UserRow[] = (saved || [])
@@ -50,7 +50,6 @@ export default function CreateGroupModal({ isOpen, onClose, onCreated }: Props) 
           return {
             id: s.contact_id,
             full_name: s.contact_name || p?.full_name || 'Contact',
-            mobile_number: p?.mobile_number,
             avatar_url: p?.avatar_url,
           };
         })
