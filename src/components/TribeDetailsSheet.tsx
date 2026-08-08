@@ -15,6 +15,8 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   onLeft?: () => void;
+  /** Opened from the admin panel — grants moderation controls without membership. */
+  asAdmin?: boolean;
 }
 
 interface Tribe {
@@ -56,7 +58,7 @@ function randomCode(len = 10) {
   return s;
 }
 
-export default function TribeDetailsSheet({ chatId, isOpen, onClose, onLeft }: Props) {
+export default function TribeDetailsSheet({ chatId, isOpen, onClose, onLeft, asAdmin = false }: Props) {
   const supabase = createClient();
   const { user } = useAuth();
   const [tribe, setTribe] = useState<Tribe | null>(null);
@@ -79,7 +81,8 @@ export default function TribeDetailsSheet({ chatId, isOpen, onClose, onLeft }: P
   const [shareCodeBanner, setShareCodeBanner] = useState<string | null>(null);
 
   const myRole = members.find(m => m.user_id === user?.id)?.role;
-  const isLeader = myRole === 'leader' || (tribe && tribe.created_by === user?.id);
+  const isMember = !!myRole;
+  const isLeader = myRole === 'leader' || (tribe && tribe.created_by === user?.id) || asAdmin;
   const isFounder = tribe && tribe.created_by === user?.id;
 
   const load = async () => {
