@@ -2906,7 +2906,7 @@ export default function ChatWindowPanel() {
                         ? ''
                         : quoted.senderId === user?.id
                           ? 'You'
-                          : (chatType === 'group' ? (tribeNamesRef?.current?.[quoted.senderId] || 'Member') : (contact?.name || 'Them'));
+                          : (chatType === 'group' ? 'Member' : (contact?.name || 'Them'));
                       return (
                         <button
                           type="button"
