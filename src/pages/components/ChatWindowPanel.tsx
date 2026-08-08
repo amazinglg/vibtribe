@@ -453,6 +453,7 @@ export default function ChatWindowPanel() {
   const [contact, setContact] = useState<{ name: string; avatar: string; avatarUrl?: string | null; online: boolean; lastSeen: string; publicKey?: string; userId?: string; isContact?: boolean } | null>(null);
   const [enlargeAvatar, setEnlargeAvatar] = useState(false);
   const [lightbox, setLightbox] = useState<ViewerSource | null>(null);
+  const [replyTarget, setReplyTarget] = useState<Message | null>(null);
   const [loading, setLoading] = useState(false);
   // Chats we've already painted from the encrypted cache — never skeleton twice.
   const everCachedRef = useRef<Set<string>>(new Set());
