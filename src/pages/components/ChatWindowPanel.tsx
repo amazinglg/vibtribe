@@ -2615,10 +2615,10 @@ export default function ChatWindowPanel() {
         <button
           type="button"
           onClick={() => setShowE2EInfo(true)}
-          className="w-full flex items-center justify-center gap-1.5 py-1.5 bg-vt-green/5 border-b border-vt-green/10 hover:bg-vt-green/10 transition-colors"
+          className="relative z-30 w-full flex items-center justify-center gap-1.5 py-2 bg-vt-green/15 backdrop-blur-md border-b border-vt-green/30 hover:bg-vt-green/25 transition-colors shadow-sm"
         >
-          <ShieldCheck size={11} className="text-vt-green" />
-          <span className="text-[11px] text-vt-green underline-offset-2 hover:underline">{t('chat.e2eBanner')}</span>
+          <ShieldCheck size={12} className="text-vt-green" />
+          <span className="text-[11px] font-semibold text-vt-green underline-offset-2 hover:underline">{t('chat.e2eBanner')}</span>
         </button>
       )}
       {e2eEnabled && chatType !== 'group' && contact && !contact.publicKey && (
