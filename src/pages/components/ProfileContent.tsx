@@ -114,6 +114,7 @@ export default function ProfileContent() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [changingPassword, setChangingPassword] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
   const [notifMessages, setNotifMessages] = useState(true);
   const [notifStatus, setNotifStatus] = useState(true);
@@ -548,10 +549,14 @@ export default function ProfileContent() {
   };
 
   const handleSignOut = async () => {
+    if (signingOut) return;
+    setSigningOut(true);
     try {
       await signOut();
       router({ to: '/sign-in', replace: true });
-    } catch {}
+    } catch {
+      setSigningOut(false);
+    }
   };
 
   // Keys that MUST survive an update wipe — auth session + E2E encryption material.
@@ -828,11 +833,12 @@ export default function ProfileContent() {
           {/* Top-right logout */}
           <button
             onClick={handleSignOut}
+            disabled={signingOut}
             className="absolute top-0 right-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all z-10"
             title="Sign Out"
           >
             <LogOut size={14} />
-            <span className="hidden sm:inline">Sign Out</span>
+            <span className="hidden sm:inline">{signingOut ? 'Signing out…' : 'Sign Out'}</span>
           </button>
           {/* Avatar */}
           <div className="relative flex-shrink-0">
