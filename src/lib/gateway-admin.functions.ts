@@ -80,3 +80,19 @@ export const setGatewayStatus = createServerFn({ method: 'POST' })
     if (!out?.ok) throw new Error(out?.error || 'update_failed')
     return { ok: true as const }
   })
+
+/** Master-admin only: permanently delete a provisioned device. */
+export const deleteGateway = createServerFn({ method: 'POST' })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ deviceId: z.string().min(1).max(64) }).parse(input))
+  .handler(async ({ data, context }) => {
+    await assertMasterAdmin(context as any)
+    const { adminClient } = await import('@/lib/sms-gateway.server')
+    const { data: res, error } = await adminClient().rpc('sms_gw_delete_gateway', {
+      _device_id: data.deviceId,
+    })
+    if (error) throw new Error(error.message)
+    const out = res as any
+    if (!out?.ok) throw new Error(out?.error || 'delete_failed')
+    return { ok: true as const }
+  })
