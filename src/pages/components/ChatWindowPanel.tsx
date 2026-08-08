@@ -2853,6 +2853,10 @@ export default function ChatWindowPanel() {
             return (
               <React.Fragment key={msg.id}>
               {__sep}
+              <SwipeToReply
+                disabled={selectionMode || !!msg.deletedForEveryone || msg.messageType === 'system'}
+                onReply={() => setReplyTarget(msg)}
+              >
               <div
                 data-msg-id={msg.id}
                 className={`flex ${isMe ? 'justify-end' : 'justify-start'} group vt-msg-in`}
