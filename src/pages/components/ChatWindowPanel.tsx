@@ -3008,6 +3008,7 @@ export default function ChatWindowPanel() {
                   )}
                 </div>
               </div>
+              </SwipeToReply>
               </React.Fragment>
             );
           })
