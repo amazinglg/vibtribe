@@ -2850,7 +2850,7 @@ export default function ChatWindowPanel() {
                           kind={encMedia.type}
                           theirPublicKey={contactPubKeyRef.current || undefined}
                           mediaKey={encMedia.k}
-                          onImageClick={(u, r) => setLightbox({ src: u, rect: r, name: encMedia.name, mime: encMedia.mime })}
+                          onImageClick={(u, r, b) => setLightbox({ src: u, rect: r, name: encMedia.name, mime: encMedia.mime, blob: b || null })}
                         />
                       )
                     ) : imageUrl ? (
