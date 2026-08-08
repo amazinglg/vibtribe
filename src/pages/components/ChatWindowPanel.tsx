@@ -653,6 +653,7 @@ export default function ChatWindowPanel() {
                 reactions: [],
                 encrypted: encrypted || groupEnc,
                 createdAt: newMsg.created_at,
+                replyTo: newMsg.reply_to || null,
               }]);
               // Mark as read (recipient — uses RPC to bypass RLS sender restriction)
               await supabase.rpc('mark_messages_read', { _chat_id: selectedChatId });
