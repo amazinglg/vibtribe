@@ -207,12 +207,11 @@ export default function MediaViewer({ source, onClose }: Props) {
           {/* Top bar */}
           <motion.div
             className="absolute left-0 right-0 z-20 flex items-center justify-between gap-3 px-4"
-            style={{ top: 'calc(var(--safe-top, 0px) + 0.75rem)' }}
+            style={{ top: 'calc(var(--safe-top, 0px) + 0.75rem)', pointerEvents: chromeVisible ? 'auto' : 'none' }}
             initial={{ opacity: 0, y: -12 }}
             animate={{ opacity: chromeVisible ? 1 : 0, y: chromeVisible ? 0 : -12 }}
             exit={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.22 }}
-            style-pointer-events={undefined}
             onClick={(e) => { e.stopPropagation(); revealChrome(); }}
           >
             <div className="flex items-center gap-2">
@@ -255,7 +254,7 @@ export default function MediaViewer({ source, onClose }: Props) {
             <motion.img
               ref={imgRef}
               src={url}
-              crossOrigin="anonymous"
+              crossOrigin={url.startsWith('blob:') || url.startsWith('data:') ? undefined : 'anonymous'}
               alt={source.name || 'Media preview'}
               draggable={false}
               className="max-w-full max-h-[86vh] rounded-2xl object-contain select-none will-change-transform"
