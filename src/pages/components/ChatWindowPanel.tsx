@@ -1020,6 +1020,7 @@ export default function ChatWindowPanel() {
               messageType: (m as any).message_type || 'user',
               createdAt: m.created_at,
               deletedForEveryone: !!m.deleted_for_everyone,
+              replyTo: (m as any).reply_to || null,
             });
           }
           setMessages(out);
