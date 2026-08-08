@@ -2900,6 +2900,30 @@ export default function ChatWindowPanel() {
                       }`;
                     })()}
                   >
+                    {msg.replyTo && (() => {
+                      const quoted = messages.find(mm => mm.id === msg.replyTo);
+                      const who = !quoted
+                        ? ''
+                        : quoted.senderId === user?.id
+                          ? 'You'
+                          : (chatType === 'group' ? (tribeNamesRef?.current?.[quoted.senderId] || 'Member') : (contact?.name || 'Them'));
+                      return (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const el = document.querySelector(`[data-msg-id="${msg.replyTo}"]`);
+                            el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                          }}
+                          className="mb-1.5 w-full text-left rounded-xl bg-black/20 border-l-[3px] border-primary px-2.5 py-1.5"
+                        >
+                          <span className="block text-[10px] font-bold text-primary">{who || 'Message'}</span>
+                          <span className="block text-[11px] text-white/70 line-clamp-2 break-words">
+                            {quoted ? formatPreviewText(quoted.text) : 'Original message unavailable'}
+                          </span>
+                        </button>
+                      );
+                    })()}
                     {encMedia && (encMedia.k || contactPubKeyRef.current) ? (
                       isMe && msg.mediaUrl && msg.mediaUrl.startsWith('blob:') && encMedia.type === 'image' ? (
                         <img
