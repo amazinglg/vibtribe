@@ -18,7 +18,7 @@ interface Props {
   kind: 'image' | 'file' | 'audio' | 'video';
   theirPublicKey?: string;
   mediaKey?: string;
-  onImageClick?: (blobUrl: string, rect?: DOMRect) => void;
+  onImageClick?: (blobUrl: string, rect?: DOMRect, blob?: Blob | null) => void;
 }
 
 const blobCache = new Map<string, string>();
@@ -185,7 +185,7 @@ export default function EncryptedMedia({ url, mime, name, kind, theirPublicKey, 
             src={blobUrl}
             alt={name || 'Shared image'}
             className={`max-w-[200px] rounded-xl cursor-zoom-in ${trustLocked ? 'select-none' : ''}`}
-            onClick={(e) => onImageClick?.(blobUrl, (e.currentTarget as HTMLImageElement).getBoundingClientRect())}
+            onClick={(e) => onImageClick?.(blobUrl, (e.currentTarget as HTMLImageElement).getBoundingClientRect(), rawCache.get(url) || null)}
             onContextMenu={trustLocked ? (e) => e.preventDefault() : undefined}
             draggable={trustLocked ? false : undefined}
           />
