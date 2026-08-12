@@ -56,6 +56,22 @@ import lawyer from '@/assets/emojis/vibtribe/lawyer.png.asset.json';
 import ceo from '@/assets/emojis/vibtribe/ceo.png.asset.json';
 import dancer from '@/assets/emojis/vibtribe/dancer.png.asset.json';
 import skater from '@/assets/emojis/vibtribe/skater.png.asset.json';
+import bowflowers from '@/assets/emojis/vibtribe/bowflowers.png.asset.json';
+import bowfacepalm from '@/assets/emojis/vibtribe/bowfacepalm.png.asset.json';
+import bowgiggle from '@/assets/emojis/vibtribe/bowgiggle.png.asset.json';
+import bowkiss from '@/assets/emojis/vibtribe/bowkiss.png.asset.json';
+import bowkisslips from '@/assets/emojis/vibtribe/bowkisslips.png.asset.json';
+import bowlaugh from '@/assets/emojis/vibtribe/bowlaugh.png.asset.json';
+import bowshades from '@/assets/emojis/vibtribe/bowshades.png.asset.json';
+import bowshh from '@/assets/emojis/vibtribe/bowshh.png.asset.json';
+import bowheartpeace from '@/assets/emojis/vibtribe/bowheartpeace.png.asset.json';
+import bowhugheart from '@/assets/emojis/vibtribe/bowhugheart.png.asset.json';
+import bowdevil from '@/assets/emojis/vibtribe/bowdevil.png.asset.json';
+import bowtired from '@/assets/emojis/vibtribe/bowtired.png.asset.json';
+import bowstareyes from '@/assets/emojis/vibtribe/bowstareyes.png.asset.json';
+import bowcap from '@/assets/emojis/vibtribe/bowcap.png.asset.json';
+import bowcryheart from '@/assets/emojis/vibtribe/bowcryheart.png.asset.json';
+import bowcrown from '@/assets/emojis/vibtribe/bowcrown.png.asset.json';
 
 export interface VibTribeEmoji {
   id: string;        // stable id used in shortcode
@@ -120,6 +136,23 @@ export const VIBTRIBE_EMOJIS: VibTribeEmoji[] = [
   { id: 'ceo',          name: 'Boss Tribe',        url: ceo.url,          collection: 'vibtribe' },
   { id: 'dancer',       name: 'Dance Vibe',        url: dancer.url,       collection: 'vibtribe' },
   { id: 'skater',       name: 'Skate Tribe',       url: skater.url,       collection: 'vibtribe' },
+  // Pink Bow expressive batch
+  { id: 'bowflowers',   name: 'Bloom Bow',         url: bowflowers.url,   collection: 'vibtribe' },
+  { id: 'bowfacepalm',  name: 'Oops Bow',          url: bowfacepalm.url,  collection: 'vibtribe' },
+  { id: 'bowgiggle',    name: 'Giggle Bow',        url: bowgiggle.url,    collection: 'vibtribe' },
+  { id: 'bowkiss',      name: 'Kiss Bow',          url: bowkiss.url,      collection: 'vibtribe' },
+  { id: 'bowkisslips',  name: 'Lipstick Bow',      url: bowkisslips.url,  collection: 'vibtribe' },
+  { id: 'bowlaugh',     name: 'Laugh Bow',         url: bowlaugh.url,     collection: 'vibtribe' },
+  { id: 'bowshades',    name: 'Diva Bow',          url: bowshades.url,    collection: 'vibtribe' },
+  { id: 'bowshh',       name: 'Secret Bow',        url: bowshh.url,       collection: 'vibtribe' },
+  { id: 'bowheartpeace',name: 'Heart Bow',         url: bowheartpeace.url,collection: 'vibtribe' },
+  { id: 'bowhugheart',  name: 'Hug Bow',           url: bowhugheart.url,  collection: 'vibtribe' },
+  { id: 'bowdevil',     name: 'Naughty Bow',       url: bowdevil.url,     collection: 'vibtribe' },
+  { id: 'bowtired',     name: 'Coffee Bow',        url: bowtired.url,     collection: 'vibtribe' },
+  { id: 'bowstareyes',  name: 'Starstruck Bow',    url: bowstareyes.url,  collection: 'vibtribe' },
+  { id: 'bowcap',       name: 'Cap Bow',           url: bowcap.url,       collection: 'vibtribe' },
+  { id: 'bowcryheart',  name: 'Heartbreak Bow',    url: bowcryheart.url,  collection: 'vibtribe' },
+  { id: 'bowcrown',     name: 'Queen Bow',         url: bowcrown.url,     collection: 'vibtribe' },
 ];
 
 // Lookup map: id -> emoji (for fast shortcode rendering).
