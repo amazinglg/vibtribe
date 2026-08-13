@@ -72,6 +72,22 @@ import bowstareyes from '@/assets/emojis/vibtribe/bowstareyes.png.asset.json';
 import bowcap from '@/assets/emojis/vibtribe/bowcap.png.asset.json';
 import bowcryheart from '@/assets/emojis/vibtribe/bowcryheart.png.asset.json';
 import bowcrown from '@/assets/emojis/vibtribe/bowcrown.png.asset.json';
+import guyflowers from '@/assets/emojis/vibtribe/guyflowers.png.asset.json';
+import guyfacepalm from '@/assets/emojis/vibtribe/guyfacepalm.png.asset.json';
+import guygiggle from '@/assets/emojis/vibtribe/guygiggle.png.asset.json';
+import guykiss from '@/assets/emojis/vibtribe/guykiss.png.asset.json';
+import guykissheart from '@/assets/emojis/vibtribe/guykissheart.png.asset.json';
+import guylaugh from '@/assets/emojis/vibtribe/guylaugh.png.asset.json';
+import guyshades from '@/assets/emojis/vibtribe/guyshades.png.asset.json';
+import guyshh from '@/assets/emojis/vibtribe/guyshh.png.asset.json';
+import guyheartpeace from '@/assets/emojis/vibtribe/guyheartpeace.png.asset.json';
+import guyhugheart from '@/assets/emojis/vibtribe/guyhugheart.png.asset.json';
+import guydevil from '@/assets/emojis/vibtribe/guydevil.png.asset.json';
+import guytired from '@/assets/emojis/vibtribe/guytired.png.asset.json';
+import guystareyes from '@/assets/emojis/vibtribe/guystareyes.png.asset.json';
+import guycap from '@/assets/emojis/vibtribe/guycap.png.asset.json';
+import guycryheart from '@/assets/emojis/vibtribe/guycryheart.png.asset.json';
+import guycrown from '@/assets/emojis/vibtribe/guycrown.png.asset.json';
 
 export interface VibTribeEmoji {
   id: string;        // stable id used in shortcode
@@ -153,6 +169,23 @@ export const VIBTRIBE_EMOJIS: VibTribeEmoji[] = [
   { id: 'bowcap',       name: 'Cap Bow',           url: bowcap.url,       collection: 'vibtribe' },
   { id: 'bowcryheart',  name: 'Heartbreak Bow',    url: bowcryheart.url,  collection: 'vibtribe' },
   { id: 'bowcrown',     name: 'Queen Bow',         url: bowcrown.url,     collection: 'vibtribe' },
+  // Male expressive batch
+  { id: 'guyflowers',   name: 'Bloom Guy',         url: guyflowers.url,   collection: 'vibtribe' },
+  { id: 'guyfacepalm',  name: 'Oops Guy',          url: guyfacepalm.url,  collection: 'vibtribe' },
+  { id: 'guygiggle',    name: 'Giggle Guy',        url: guygiggle.url,    collection: 'vibtribe' },
+  { id: 'guykiss',      name: 'Kiss Guy',          url: guykiss.url,      collection: 'vibtribe' },
+  { id: 'guykissheart', name: 'Smooch Guy',        url: guykissheart.url, collection: 'vibtribe' },
+  { id: 'guylaugh',     name: 'Laugh Guy',         url: guylaugh.url,     collection: 'vibtribe' },
+  { id: 'guyshades',    name: 'Cool Guy',          url: guyshades.url,    collection: 'vibtribe' },
+  { id: 'guyshh',       name: 'Secret Guy',        url: guyshh.url,       collection: 'vibtribe' },
+  { id: 'guyheartpeace',name: 'Peace Guy',         url: guyheartpeace.url,collection: 'vibtribe' },
+  { id: 'guyhugheart',  name: 'Hug Guy',           url: guyhugheart.url,  collection: 'vibtribe' },
+  { id: 'guydevil',     name: 'Naughty Guy',       url: guydevil.url,     collection: 'vibtribe' },
+  { id: 'guytired',     name: 'Coffee Guy',        url: guytired.url,     collection: 'vibtribe' },
+  { id: 'guystareyes',  name: 'Starstruck Guy',    url: guystareyes.url,  collection: 'vibtribe' },
+  { id: 'guycap',       name: 'Cap Guy',           url: guycap.url,       collection: 'vibtribe' },
+  { id: 'guycryheart',  name: 'Heartbreak Guy',    url: guycryheart.url,  collection: 'vibtribe' },
+  { id: 'guycrown',     name: 'King Guy',          url: guycrown.url,     collection: 'vibtribe' },
 ];
 
 // Lookup map: id -> emoji (for fast shortcode rendering).
