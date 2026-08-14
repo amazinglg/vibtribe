@@ -89,6 +89,32 @@ import guycap from '@/assets/emojis/vibtribe/guycap.png.asset.json';
 import guycryheart from '@/assets/emojis/vibtribe/guycryheart.png.asset.json';
 import guycrown from '@/assets/emojis/vibtribe/guycrown.png.asset.json';
 
+import bluebow from '@/assets/emojis/vibtribe/bluebow.png.asset.json';
+import bluehibiscus from '@/assets/emojis/vibtribe/bluehibiscus.png.asset.json';
+import bluecoffee from '@/assets/emojis/vibtribe/bluecoffee.png.asset.json';
+import bluerose from '@/assets/emojis/vibtribe/bluerose.png.asset.json';
+import bluebathtub from '@/assets/emojis/vibtribe/bluebathtub.png.asset.json';
+import bluefeather from '@/assets/emojis/vibtribe/bluefeather.png.asset.json';
+import bluestarfish from '@/assets/emojis/vibtribe/bluestarfish.png.asset.json';
+import bluebouquet from '@/assets/emojis/vibtribe/bluebouquet.png.asset.json';
+import bluebutterfly from '@/assets/emojis/vibtribe/bluebutterfly.png.asset.json';
+import bluegeode from '@/assets/emojis/vibtribe/bluegeode.png.asset.json';
+import bluetree from '@/assets/emojis/vibtribe/bluetree.png.asset.json';
+import blueheart from '@/assets/emojis/vibtribe/blueheart.png.asset.json';
+import bluebed from '@/assets/emojis/vibtribe/bluebed.png.asset.json';
+import bluetiara from '@/assets/emojis/vibtribe/bluetiara.png.asset.json';
+import blueshell from '@/assets/emojis/vibtribe/blueshell.png.asset.json';
+import blueperfume from '@/assets/emojis/vibtribe/blueperfume.png.asset.json';
+import bluehandbag from '@/assets/emojis/vibtribe/bluehandbag.png.asset.json';
+import bluemoon from '@/assets/emojis/vibtribe/bluemoon.png.asset.json';
+import bluewing from '@/assets/emojis/vibtribe/bluewing.png.asset.json';
+import blueberries from '@/assets/emojis/vibtribe/blueberries.png.asset.json';
+import blueclouds from '@/assets/emojis/vibtribe/blueclouds.png.asset.json';
+import blueteacup from '@/assets/emojis/vibtribe/blueteacup.png.asset.json';
+import blueteddy from '@/assets/emojis/vibtribe/blueteddy.png.asset.json';
+import bluehydrangea from '@/assets/emojis/vibtribe/bluehydrangea.png.asset.json';
+import blueberrybowl from '@/assets/emojis/vibtribe/blueberrybowl.png.asset.json';
+
 export interface VibTribeEmoji {
   id: string;        // stable id used in shortcode
   name: string;      // human label, VibTribe-themed
@@ -186,6 +212,31 @@ export const VIBTRIBE_EMOJIS: VibTribeEmoji[] = [
   { id: 'guycap',       name: 'Cap Guy',           url: guycap.url,       collection: 'vibtribe' },
   { id: 'guycryheart',  name: 'Heartbreak Guy',    url: guycryheart.url,  collection: 'vibtribe' },
   { id: 'guycrown',     name: 'King Guy',          url: guycrown.url,     collection: 'vibtribe' },
+  { id: 'bluebow', name: 'Blue Bow', url: bluebow.url, collection: 'vibtribe' },
+  { id: 'bluehibiscus', name: 'Blue Hibiscus', url: bluehibiscus.url, collection: 'vibtribe' },
+  { id: 'bluecoffee', name: 'Blue Brew', url: bluecoffee.url, collection: 'vibtribe' },
+  { id: 'bluerose', name: 'Blue Rose', url: bluerose.url, collection: 'vibtribe' },
+  { id: 'bluebathtub', name: 'Blue Soak', url: bluebathtub.url, collection: 'vibtribe' },
+  { id: 'bluefeather', name: 'Blue Feather', url: bluefeather.url, collection: 'vibtribe' },
+  { id: 'bluestarfish', name: 'Blue Star', url: bluestarfish.url, collection: 'vibtribe' },
+  { id: 'bluebouquet', name: 'Blue Bouquet', url: bluebouquet.url, collection: 'vibtribe' },
+  { id: 'bluebutterfly', name: 'Blue Butterfly', url: bluebutterfly.url, collection: 'vibtribe' },
+  { id: 'bluegeode', name: 'Blue Geode', url: bluegeode.url, collection: 'vibtribe' },
+  { id: 'bluetree', name: 'Blue Pine', url: bluetree.url, collection: 'vibtribe' },
+  { id: 'blueheart', name: 'Blue Heart', url: blueheart.url, collection: 'vibtribe' },
+  { id: 'bluebed', name: 'Blue Dreams', url: bluebed.url, collection: 'vibtribe' },
+  { id: 'bluetiara', name: 'Blue Tiara', url: bluetiara.url, collection: 'vibtribe' },
+  { id: 'blueshell', name: 'Blue Shell', url: blueshell.url, collection: 'vibtribe' },
+  { id: 'blueperfume', name: 'Blue Scent', url: blueperfume.url, collection: 'vibtribe' },
+  { id: 'bluehandbag', name: 'Blue Bag', url: bluehandbag.url, collection: 'vibtribe' },
+  { id: 'bluemoon', name: 'Blue Moon', url: bluemoon.url, collection: 'vibtribe' },
+  { id: 'bluewing', name: 'Blue Wing', url: bluewing.url, collection: 'vibtribe' },
+  { id: 'blueberries', name: 'Blueberries', url: blueberries.url, collection: 'vibtribe' },
+  { id: 'blueclouds', name: 'Blue Cloud', url: blueclouds.url, collection: 'vibtribe' },
+  { id: 'blueteacup', name: 'Blue Teacup', url: blueteacup.url, collection: 'vibtribe' },
+  { id: 'blueteddy', name: 'Blue Teddy', url: blueteddy.url, collection: 'vibtribe' },
+  { id: 'bluehydrangea', name: 'Blue Hydrangea', url: bluehydrangea.url, collection: 'vibtribe' },
+  { id: 'blueberrybowl', name: 'Berry Bowl', url: blueberrybowl.url, collection: 'vibtribe' },
 ];
 
 // Lookup map: id -> emoji (for fast shortcode rendering).
