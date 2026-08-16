@@ -2,12 +2,12 @@
 import React, { useEffect, useState } from 'react';
 import { decryptBytes, decryptBytesWithKey } from '@/lib/encryption';
 import { signChatMediaUrl } from '@/lib/chat-media-url';
-import { FileText, Loader2, AlertTriangle, X, Eye, Download } from 'lucide-react';
+import { FileText, Loader2, AlertTriangle, X, Eye, Download, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTrustLock } from '@/contexts/TrustLockContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useChatStore } from '@/store/chatStore';
-import { saveMedia, shareMedia, copyImageToClipboard, TrustLockError } from '@/lib/media-actions';
+import { saveMedia, shareMedia, copyImageToClipboard, openMedia, resolveDocMime, TrustLockError } from '@/lib/media-actions';
 import MediaActionButton from '@/components/MediaActionButton';
 import TrustLockBlockedDialog from '@/components/TrustLockBlockedDialog';
 
@@ -127,6 +127,17 @@ export default function EncryptedMedia({ url, mime, name, kind, theirPublicKey, 
     try {
       const blob = await getBlob();
       await copyImageToClipboard(blob, { name, mime });
+    } catch (e) {
+      if (e instanceof TrustLockError) { setShowTrustBlock(true); return; }
+      throw e;
+    }
+  };
+
+  const runOpen = async () => {
+    if (trustLocked) { setShowTrustBlock(true); throw new Error('Trust Lock enabled'); }
+    try {
+      const blob = await getBlob();
+      await openMedia(blob, { name, mime });
     } catch (e) {
       if (e instanceof TrustLockError) { setShowTrustBlock(true); return; }
       throw e;
