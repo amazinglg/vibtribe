@@ -4,7 +4,6 @@ import VibTribeMark from './VibTribeMark';
 
 interface AppLogoProps {
   src?: string; // Image source (optional)
-  iconName?: string; // Icon name when no image
   size?: number; // Size for icon/image
   className?: string; // Additional classes
   onClick?: () => void; // Click handler
@@ -12,7 +11,6 @@ interface AppLogoProps {
 
 const AppLogo = memo(function AppLogo({
   src,
-  iconName = 'SparklesIcon',
   size = 64,
   className = '',
   onClick,
