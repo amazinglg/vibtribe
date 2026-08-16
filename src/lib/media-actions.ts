@@ -91,20 +91,6 @@ export async function openMedia(
     }
   }
 
-  if (isNativeWrapper()) {
-    try {
-      const { Filesystem, Directory } = await import('@capacitor/filesystem');
-      const { FileOpener } = await import('@capacitor-community/file-opener');
-      const base64 = await blobToBase64(blob);
-      await Filesystem.writeFile({ path: filename, data: base64, directory: Directory.Cache });
-      const { uri } = await Filesystem.getUri({ path: filename, directory: Directory.Cache });
-      await FileOpener.open({ filePath: uri, contentType: mime });
-      return;
-    } catch (e) {
-      console.warn('[VibTribe] native file open failed', e);
-    }
-  }
-
   // Web / PWA: hand the blob to the browser, which will preview or download.
   const objectUrl = URL.createObjectURL(new Blob([blob], { type: mime }));
   const win = typeof window !== 'undefined' ? window.open(objectUrl, '_blank', 'noopener') : null;
