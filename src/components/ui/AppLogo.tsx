@@ -1,18 +1,16 @@
 import React, { memo, useMemo } from 'react';
-import AppIcon from './AppIcon';
 import AppImage from './AppImage';
+import VibTribeMark from './VibTribeMark';
 
 interface AppLogoProps {
   src?: string; // Image source (optional)
-  iconName?: string; // Icon name when no image
   size?: number; // Size for icon/image
   className?: string; // Additional classes
   onClick?: () => void; // Click handler
 }
 
 const AppLogo = memo(function AppLogo({
-  src = '/assets/images/app_logo.png',
-  iconName = 'SparklesIcon',
+  src,
   size = 64,
   className = '',
   onClick,
@@ -27,8 +25,10 @@ const AppLogo = memo(function AppLogo({
 
   return (
     <div className={containerClassName} onClick={onClick}>
-      {/* Show image if src provided, otherwise show icon */}
-      {src ? (
+      {/* Default: crisp inline vector mark that blends with any background */}
+      {!src ? (
+        <VibTribeMark size={size} className="flex-shrink-0" />
+      ) : (
         <AppImage
           src={src}
           alt="VibTribe Logo" 
@@ -38,8 +38,6 @@ const AppLogo = memo(function AppLogo({
           priority={true}
           unoptimized={src.endsWith('.svg')}
         />
-      ) : (
-        <AppIcon name={iconName} size={size} className="flex-shrink-0" />
       )}
     </div>
   );
