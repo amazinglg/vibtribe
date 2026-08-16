@@ -8,6 +8,7 @@ export interface VtMediaPlugin {
   save(options: { data: string; mime: string; name?: string }): Promise<{ location: 'gallery' | 'downloads' }>;
   share(options: { data: string; mime: string; name?: string; text?: string }): Promise<void>;
   copyImage(options: { data: string; mime: string; name?: string }): Promise<void>;
+  open(options: { data: string; mime: string; name?: string }): Promise<void>;
 }
 
 export const VtMedia = registerPlugin<VtMediaPlugin>('VtMedia');
