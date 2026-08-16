@@ -1,6 +1,5 @@
 import React, { memo, useMemo } from 'react';
 import AppImage from './AppImage';
-import VibTribeMark from './VibTribeMark';
 
 interface AppLogoProps {
   src?: string; // Image source (optional)
@@ -10,7 +9,7 @@ interface AppLogoProps {
 }
 
 const AppLogo = memo(function AppLogo({
-  src,
+  src = '/assets/images/app_logo.png',
   size = 64,
   className = '',
   onClick,
@@ -25,20 +24,15 @@ const AppLogo = memo(function AppLogo({
 
   return (
     <div className={containerClassName} onClick={onClick}>
-      {/* Default: crisp inline vector mark that blends with any background */}
-      {!src ? (
-        <VibTribeMark size={size} className="flex-shrink-0" />
-      ) : (
-        <AppImage
-          src={src}
-          alt="VibTribe Logo" 
-          width={size}
-          height={size}
-          className="flex-shrink-0"
-          priority={true}
-          unoptimized={src.endsWith('.svg')}
-        />
-      )}
+      <AppImage
+        src={src}
+        alt="VibTribe Logo"
+        width={size}
+        height={size}
+        className="flex-shrink-0 object-contain"
+        priority={true}
+        unoptimized={src.endsWith('.svg')}
+      />
     </div>
   );
 });
