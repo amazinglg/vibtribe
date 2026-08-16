@@ -1,0 +1,12 @@
+DROP FUNCTION IF EXISTS public.sms_gw_consume_token(text,text,text,text,text,timestamptz);
+DROP FUNCTION IF EXISTS public.sms_gw_create_claim(uuid,text,text);
+DROP FUNCTION IF EXISTS public.sms_gw_delete_gateway(text);
+DROP FUNCTION IF EXISTS public.sms_gw_get_gateway_auth(text);
+DROP FUNCTION IF EXISTS public.sms_gw_list_gateways();
+DROP FUNCTION IF EXISTS public.sms_gw_phone_status(uuid);
+DROP FUNCTION IF EXISTS public.sms_gw_register_gateway(text,text,text,uuid);
+DROP FUNCTION IF EXISTS public.sms_gw_register_nonce(text,text);
+DROP FUNCTION IF EXISTS public.sms_gw_set_gateway_status(text,text);
+DROP FUNCTION IF EXISTS public.sms_gw_touch_gateway(text);
+DROP SCHEMA IF EXISTS sms_gw CASCADE;
+ALTER TABLE public.user_profiles DROP COLUMN IF EXISTS mobile_verified_at;

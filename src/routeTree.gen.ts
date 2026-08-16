@@ -33,7 +33,6 @@ import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminAppealsRouteImport } from './routes/admin.appeals'
 import { Route as AdminDeletedUsersRouteImport } from './routes/admin.deleted-users'
-import { Route as AdminGatewaysRouteImport } from './routes/admin.gateways'
 import { Route as AdminMarketingRouteImport } from './routes/admin.marketing'
 import { Route as AdminOffboardingAppealsRouteImport } from './routes/admin.offboarding-appeals'
 import { Route as AdminPermissionsRouteImport } from './routes/admin.permissions'
@@ -54,11 +53,9 @@ import { Route as HelpReportingRouteImport } from './routes/help.reporting'
 import { Route as AdminUserUserIdRouteImport } from './routes/admin.user.$userId'
 import { Route as ApiPublicAuthLoginRouteImport } from './routes/api/public/auth-login'
 import { Route as ApiPublicAuthOtpRouteImport } from './routes/api/public/auth-otp'
-import { Route as ApiPublicPhoneVerifyRouteImport } from './routes/api/public/phone-verify'
 import { Route as ApiPublicResendWebhookRouteImport } from './routes/api/public/resend-webhook'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as TribeJoinCodeRouteImport } from './routes/tribe.join.$code'
-import { Route as ApiPublicGatewaySmsVerifyRouteImport } from './routes/api/public/gateway/sms-verify'
 import { Route as ApiPublicHooksCleanupExpiredMessagesRouteImport } from './routes/api/public/hooks/cleanup-expired-messages'
 import { Route as ApiPublicHooksCleanupExpiredStatusesRouteImport } from './routes/api/public/hooks/cleanup-expired-statuses'
 import { Route as ApiPublicHooksGuardianMonthlyReminderRouteImport } from './routes/api/public/hooks/guardian-monthly-reminder'
@@ -190,11 +187,6 @@ const AdminDeletedUsersRoute = AdminDeletedUsersRouteImport.update({
   path: '/deleted-users',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminGatewaysRoute = AdminGatewaysRouteImport.update({
-  id: '/gateways',
-  path: '/gateways',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminMarketingRoute = AdminMarketingRouteImport.update({
   id: '/marketing',
   path: '/marketing',
@@ -300,11 +292,6 @@ const ApiPublicAuthOtpRoute = ApiPublicAuthOtpRouteImport.update({
   path: '/api/public/auth-otp',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicPhoneVerifyRoute = ApiPublicPhoneVerifyRouteImport.update({
-  id: '/api/public/phone-verify',
-  path: '/api/public/phone-verify',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiPublicResendWebhookRoute = ApiPublicResendWebhookRouteImport.update({
   id: '/api/public/resend-webhook',
   path: '/api/public/resend-webhook',
@@ -320,12 +307,6 @@ const TribeJoinCodeRoute = TribeJoinCodeRouteImport.update({
   path: '/tribe/join/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicGatewaySmsVerifyRoute =
-  ApiPublicGatewaySmsVerifyRouteImport.update({
-    id: '/api/public/gateway/sms-verify',
-    path: '/api/public/gateway/sms-verify',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const ApiPublicHooksCleanupExpiredMessagesRoute =
   ApiPublicHooksCleanupExpiredMessagesRouteImport.update({
     id: '/api/public/hooks/cleanup-expired-messages',
@@ -409,7 +390,6 @@ export interface FileRoutesByFullPath {
   '/unsubscribe': typeof UnsubscribeRoute
   '/admin/appeals': typeof AdminAppealsRoute
   '/admin/deleted-users': typeof AdminDeletedUsersRoute
-  '/admin/gateways': typeof AdminGatewaysRoute
   '/admin/marketing': typeof AdminMarketingRoute
   '/admin/offboarding-appeals': typeof AdminOffboardingAppealsRoute
   '/admin/permissions': typeof AdminPermissionsRoute
@@ -431,11 +411,9 @@ export interface FileRoutesByFullPath {
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
-  '/api/public/phone-verify': typeof ApiPublicPhoneVerifyRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/tribe/join/$code': typeof TribeJoinCodeRoute
-  '/api/public/gateway/sms-verify': typeof ApiPublicGatewaySmsVerifyRoute
   '/api/public/hooks/cleanup-expired-messages': typeof ApiPublicHooksCleanupExpiredMessagesRoute
   '/api/public/hooks/cleanup-expired-statuses': typeof ApiPublicHooksCleanupExpiredStatusesRoute
   '/api/public/hooks/guardian-monthly-reminder': typeof ApiPublicHooksGuardianMonthlyReminderRoute
@@ -470,7 +448,6 @@ export interface FileRoutesByTo {
   '/unsubscribe': typeof UnsubscribeRoute
   '/admin/appeals': typeof AdminAppealsRoute
   '/admin/deleted-users': typeof AdminDeletedUsersRoute
-  '/admin/gateways': typeof AdminGatewaysRoute
   '/admin/marketing': typeof AdminMarketingRoute
   '/admin/offboarding-appeals': typeof AdminOffboardingAppealsRoute
   '/admin/permissions': typeof AdminPermissionsRoute
@@ -492,11 +469,9 @@ export interface FileRoutesByTo {
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
-  '/api/public/phone-verify': typeof ApiPublicPhoneVerifyRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/tribe/join/$code': typeof TribeJoinCodeRoute
-  '/api/public/gateway/sms-verify': typeof ApiPublicGatewaySmsVerifyRoute
   '/api/public/hooks/cleanup-expired-messages': typeof ApiPublicHooksCleanupExpiredMessagesRoute
   '/api/public/hooks/cleanup-expired-statuses': typeof ApiPublicHooksCleanupExpiredStatusesRoute
   '/api/public/hooks/guardian-monthly-reminder': typeof ApiPublicHooksGuardianMonthlyReminderRoute
@@ -533,7 +508,6 @@ export interface FileRoutesById {
   '/unsubscribe': typeof UnsubscribeRoute
   '/admin/appeals': typeof AdminAppealsRoute
   '/admin/deleted-users': typeof AdminDeletedUsersRoute
-  '/admin/gateways': typeof AdminGatewaysRoute
   '/admin/marketing': typeof AdminMarketingRoute
   '/admin/offboarding-appeals': typeof AdminOffboardingAppealsRoute
   '/admin/permissions': typeof AdminPermissionsRoute
@@ -555,11 +529,9 @@ export interface FileRoutesById {
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
-  '/api/public/phone-verify': typeof ApiPublicPhoneVerifyRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/tribe/join/$code': typeof TribeJoinCodeRoute
-  '/api/public/gateway/sms-verify': typeof ApiPublicGatewaySmsVerifyRoute
   '/api/public/hooks/cleanup-expired-messages': typeof ApiPublicHooksCleanupExpiredMessagesRoute
   '/api/public/hooks/cleanup-expired-statuses': typeof ApiPublicHooksCleanupExpiredStatusesRoute
   '/api/public/hooks/guardian-monthly-reminder': typeof ApiPublicHooksGuardianMonthlyReminderRoute
@@ -597,7 +569,6 @@ export interface FileRouteTypes {
     | '/unsubscribe'
     | '/admin/appeals'
     | '/admin/deleted-users'
-    | '/admin/gateways'
     | '/admin/marketing'
     | '/admin/offboarding-appeals'
     | '/admin/permissions'
@@ -619,11 +590,9 @@ export interface FileRouteTypes {
     | '/admin/user/$userId'
     | '/api/public/auth-login'
     | '/api/public/auth-otp'
-    | '/api/public/phone-verify'
     | '/api/public/resend-webhook'
     | '/lovable/email/suppression'
     | '/tribe/join/$code'
-    | '/api/public/gateway/sms-verify'
     | '/api/public/hooks/cleanup-expired-messages'
     | '/api/public/hooks/cleanup-expired-statuses'
     | '/api/public/hooks/guardian-monthly-reminder'
@@ -658,7 +627,6 @@ export interface FileRouteTypes {
     | '/unsubscribe'
     | '/admin/appeals'
     | '/admin/deleted-users'
-    | '/admin/gateways'
     | '/admin/marketing'
     | '/admin/offboarding-appeals'
     | '/admin/permissions'
@@ -680,11 +648,9 @@ export interface FileRouteTypes {
     | '/admin/user/$userId'
     | '/api/public/auth-login'
     | '/api/public/auth-otp'
-    | '/api/public/phone-verify'
     | '/api/public/resend-webhook'
     | '/lovable/email/suppression'
     | '/tribe/join/$code'
-    | '/api/public/gateway/sms-verify'
     | '/api/public/hooks/cleanup-expired-messages'
     | '/api/public/hooks/cleanup-expired-statuses'
     | '/api/public/hooks/guardian-monthly-reminder'
@@ -720,7 +686,6 @@ export interface FileRouteTypes {
     | '/unsubscribe'
     | '/admin/appeals'
     | '/admin/deleted-users'
-    | '/admin/gateways'
     | '/admin/marketing'
     | '/admin/offboarding-appeals'
     | '/admin/permissions'
@@ -742,11 +707,9 @@ export interface FileRouteTypes {
     | '/admin/user/$userId'
     | '/api/public/auth-login'
     | '/api/public/auth-otp'
-    | '/api/public/phone-verify'
     | '/api/public/resend-webhook'
     | '/lovable/email/suppression'
     | '/tribe/join/$code'
-    | '/api/public/gateway/sms-verify'
     | '/api/public/hooks/cleanup-expired-messages'
     | '/api/public/hooks/cleanup-expired-statuses'
     | '/api/public/hooks/guardian-monthly-reminder'
@@ -795,11 +758,9 @@ export interface RootRouteChildren {
   HelpReportingRoute: typeof HelpReportingRoute
   ApiPublicAuthLoginRoute: typeof ApiPublicAuthLoginRoute
   ApiPublicAuthOtpRoute: typeof ApiPublicAuthOtpRoute
-  ApiPublicPhoneVerifyRoute: typeof ApiPublicPhoneVerifyRoute
   ApiPublicResendWebhookRoute: typeof ApiPublicResendWebhookRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   TribeJoinCodeRoute: typeof TribeJoinCodeRoute
-  ApiPublicGatewaySmsVerifyRoute: typeof ApiPublicGatewaySmsVerifyRoute
   ApiPublicHooksCleanupExpiredMessagesRoute: typeof ApiPublicHooksCleanupExpiredMessagesRoute
   ApiPublicHooksCleanupExpiredStatusesRoute: typeof ApiPublicHooksCleanupExpiredStatusesRoute
   ApiPublicHooksGuardianMonthlyReminderRoute: typeof ApiPublicHooksGuardianMonthlyReminderRoute
@@ -982,13 +943,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminDeletedUsersRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/gateways': {
-      id: '/admin/gateways'
-      path: '/gateways'
-      fullPath: '/admin/gateways'
-      preLoaderRoute: typeof AdminGatewaysRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/marketing': {
       id: '/admin/marketing'
       path: '/marketing'
@@ -1129,13 +1083,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAuthOtpRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/phone-verify': {
-      id: '/api/public/phone-verify'
-      path: '/api/public/phone-verify'
-      fullPath: '/api/public/phone-verify'
-      preLoaderRoute: typeof ApiPublicPhoneVerifyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/resend-webhook': {
       id: '/api/public/resend-webhook'
       path: '/api/public/resend-webhook'
@@ -1155,13 +1102,6 @@ declare module '@tanstack/react-router' {
       path: '/tribe/join/$code'
       fullPath: '/tribe/join/$code'
       preLoaderRoute: typeof TribeJoinCodeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/gateway/sms-verify': {
-      id: '/api/public/gateway/sms-verify'
-      path: '/api/public/gateway/sms-verify'
-      fullPath: '/api/public/gateway/sms-verify'
-      preLoaderRoute: typeof ApiPublicGatewaySmsVerifyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/cleanup-expired-messages': {
@@ -1240,7 +1180,6 @@ declare module '@tanstack/react-router' {
 interface AdminRouteChildren {
   AdminAppealsRoute: typeof AdminAppealsRoute
   AdminDeletedUsersRoute: typeof AdminDeletedUsersRoute
-  AdminGatewaysRoute: typeof AdminGatewaysRoute
   AdminMarketingRoute: typeof AdminMarketingRoute
   AdminOffboardingAppealsRoute: typeof AdminOffboardingAppealsRoute
   AdminPermissionsRoute: typeof AdminPermissionsRoute
@@ -1253,7 +1192,6 @@ interface AdminRouteChildren {
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAppealsRoute: AdminAppealsRoute,
   AdminDeletedUsersRoute: AdminDeletedUsersRoute,
-  AdminGatewaysRoute: AdminGatewaysRoute,
   AdminMarketingRoute: AdminMarketingRoute,
   AdminOffboardingAppealsRoute: AdminOffboardingAppealsRoute,
   AdminPermissionsRoute: AdminPermissionsRoute,
@@ -1301,11 +1239,9 @@ const rootRouteChildren: RootRouteChildren = {
   HelpReportingRoute: HelpReportingRoute,
   ApiPublicAuthLoginRoute: ApiPublicAuthLoginRoute,
   ApiPublicAuthOtpRoute: ApiPublicAuthOtpRoute,
-  ApiPublicPhoneVerifyRoute: ApiPublicPhoneVerifyRoute,
   ApiPublicResendWebhookRoute: ApiPublicResendWebhookRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   TribeJoinCodeRoute: TribeJoinCodeRoute,
-  ApiPublicGatewaySmsVerifyRoute: ApiPublicGatewaySmsVerifyRoute,
   ApiPublicHooksCleanupExpiredMessagesRoute:
     ApiPublicHooksCleanupExpiredMessagesRoute,
   ApiPublicHooksCleanupExpiredStatusesRoute:

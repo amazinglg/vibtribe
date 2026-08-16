@@ -24,7 +24,6 @@ import ConsentCenter from '@/components/ConsentCenter';
 import { isCapacitorWrapper, pickNativeImage, pickNativeImages } from '@/lib/native-bridge';
 import SpecificUsersPicker from '@/components/SpecificUsersPicker';
 import OfflineStorageSettings from '@/components/OfflineStorageSettings';
-import MobileVerifyPanel from '@/components/MobileVerifyPanel';
 import { invalidateVisibleAvatar } from '@/lib/visible-avatars';
 import { pruneOldAvatars } from '@/lib/avatar-cleanup';
 import {
@@ -1132,9 +1131,6 @@ export default function ProfileContent() {
                         <p className="text-xs text-muted-foreground">Mobile Number</p>
                         <p className="text-sm text-foreground font-medium">{displayMobile || <span className="text-muted-foreground italic">Not added</span>}</p>
                       </div>
-                      {(profile?.is_master_admin || profile?.role === 'master_admin') && (
-                        <MobileVerifyPanel mobile={displayMobile} />
-                      )}
                     </div>
                     {/* Username Row */}
                     <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl">
