@@ -2805,6 +2805,18 @@ export type Database = {
           policy_version: string
         }[]
       }
+      get_my_report_status: {
+        Args: { _report_id: string }
+        Returns: {
+          action_taken: string
+          created_at: string
+          id: string
+          moderated_at: string
+          reason: string
+          report_type: string
+          status: string
+        }[]
+      }
       get_my_saved_contact_profiles: {
         Args: { _ids: string[] }
         Returns: {
