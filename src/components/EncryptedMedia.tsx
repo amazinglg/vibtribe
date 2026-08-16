@@ -108,14 +108,14 @@ export default function EncryptedMedia({ url, mime, name, kind, theirPublicKey, 
   const runDownload = async () => {
     if (trustLocked) { setShowTrustBlock(true); throw new Error('Trust Lock enabled'); }
     const blob = await getBlob();
-    return saveMedia(blob, { name, mime });
+    return saveMedia(blob, { name, mime: kind === 'file' ? resolveDocMime(name, mime) : mime });
   };
 
   const runShare = async () => {
     if (trustLocked) { setShowTrustBlock(true); throw new Error('Trust Lock enabled'); }
     try {
       const blob = await getBlob();
-      await shareMedia(blob, { name, mime });
+      await shareMedia(blob, { name, mime: kind === 'file' ? resolveDocMime(name, mime) : mime });
     } catch (e) {
       if (e instanceof TrustLockError) { setShowTrustBlock(true); return; }
       throw e;
