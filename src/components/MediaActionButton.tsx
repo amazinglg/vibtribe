@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Download, Check, Loader2, Share2, Copy } from 'lucide-react';
+import { Download, Check, Loader2, Share2, Copy, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { isNativeWrapper } from '@/lib/native-bridge';
@@ -7,7 +7,7 @@ import { isNativeWrapper } from '@/lib/native-bridge';
 type Status = 'idle' | 'loading' | 'success' | 'error';
 
 interface Props {
-  action: 'download' | 'share' | 'copy';
+  action: 'download' | 'share' | 'copy' | 'open';
   onRun: () => Promise<void | { location?: string }>;
   label: string;
   className?: string;
@@ -40,13 +40,13 @@ export default function MediaActionButton({
       const loc = result?.location;
       const msg = successMessage || (action === 'download'
         ? (loc === 'gallery' ? 'Saved to your gallery' : loc === 'downloads' ? 'Saved to Downloads' : 'Saved to your device')
-        : action === 'copy' ? 'Image copied' : 'Shared');
+        : action === 'copy' ? 'Image copied' : action === 'open' ? 'Opening…' : 'Shared');
       toast.success(msg);
       setTimeout(() => setStatus('idle'), 1800);
     } catch (e: any) {
       if (e?.name === 'AbortError') { setStatus('idle'); return; }
       setStatus('error');
-      toast.error(errorMessage || e?.message || (action === 'download' ? 'Unable to save media' : action === 'copy' ? 'Unable to copy image' : 'Unable to share'));
+      toast.error(errorMessage || e?.message || (action === 'download' ? 'Unable to save media' : action === 'copy' ? 'Unable to copy image' : action === 'open' ? 'Unable to open this file' : 'Unable to share'));
       setTimeout(() => setStatus('idle'), 2200);
     }
   };
@@ -55,7 +55,7 @@ export default function MediaActionButton({
     ? 'p-2 rounded-full bg-black/60 text-white backdrop-blur-md border border-white/10 shadow-lg'
     : 'p-1.5 rounded-full bg-muted text-foreground';
 
-  const Icon = action === 'download' ? Download : action === 'copy' ? Copy : Share2;
+  const Icon = action === 'download' ? Download : action === 'copy' ? Copy : action === 'open' ? ExternalLink : Share2;
 
   return (
     <motion.button
