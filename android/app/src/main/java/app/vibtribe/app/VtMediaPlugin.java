@@ -200,6 +200,58 @@ public class VtMediaPlugin extends Plugin {
         }
     }
 
+    // ---------------------------------------------------------------- open
+
+    /**
+     * Open a document with the device's default handler (PDF viewer, Office,
+     * package installer for .apk, ...). Falls back to an app chooser.
+     */
+    @PluginMethod
+    public void open(PluginCall call) {
+        if (blockedByTrustLock(call)) return;
+        String data = call.getString("data");
+        if (data == null) { call.reject("Missing data"); return; }
+        String name = call.getString("name");
+        String mime = call.getString("mime", "application/octet-stream");
+        mime = resolveMime(name, mime);
+        String safeName = sanitize(name, mime);
+
+        try {
+            Uri uri = cacheUri(decode(data), safeName);
+            Intent view = new Intent(Intent.ACTION_VIEW);
+            view.setDataAndType(uri, mime);
+            view.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            view.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            try {
+                getContext().startActivity(view);
+            } catch (Exception noHandler) {
+                Intent chooser = Intent.createChooser(view, "Open with");
+                chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                getContext().startActivity(chooser);
+            }
+            call.resolve();
+        } catch (Exception e) {
+            Log.w(TAG, "open() failed", e);
+            call.reject("No app on this device can open this file");
+        }
+    }
+
+    /** Recover a real mime from the filename when the sender sent octet-stream. */
+    private static String resolveMime(String name, String mime) {
+        String ext = "";
+        if (name != null) {
+            int dot = name.lastIndexOf('.');
+            if (dot >= 0 && dot < name.length() - 1) ext = name.substring(dot + 1).toLowerCase();
+        }
+        if ("apk".equals(ext)) return "application/vnd.android.package-archive";
+        boolean generic = mime == null || mime.isEmpty()
+                || mime.equals("application/octet-stream") || mime.equals("binary/octet-stream");
+        if (!generic) return mime;
+        String guess = android.webkit.MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext);
+        return guess != null ? guess : "application/octet-stream";
+    }
+
     private Uri cacheUri(byte[] bytes, String name) throws Exception {
         File dir = new File(getContext().getCacheDir(), "shared");
         if (!dir.exists() && !dir.mkdirs()) throw new IllegalStateException("cache dir");

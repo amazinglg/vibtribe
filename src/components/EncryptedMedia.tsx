@@ -2,12 +2,12 @@
 import React, { useEffect, useState } from 'react';
 import { decryptBytes, decryptBytesWithKey } from '@/lib/encryption';
 import { signChatMediaUrl } from '@/lib/chat-media-url';
-import { FileText, Loader2, AlertTriangle, X, Eye, Download } from 'lucide-react';
+import { FileText, Loader2, AlertTriangle, X, Eye, Download, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTrustLock } from '@/contexts/TrustLockContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useChatStore } from '@/store/chatStore';
-import { saveMedia, shareMedia, copyImageToClipboard, TrustLockError } from '@/lib/media-actions';
+import { saveMedia, shareMedia, copyImageToClipboard, openMedia, resolveDocMime, TrustLockError } from '@/lib/media-actions';
 import MediaActionButton from '@/components/MediaActionButton';
 import TrustLockBlockedDialog from '@/components/TrustLockBlockedDialog';
 
@@ -108,14 +108,14 @@ export default function EncryptedMedia({ url, mime, name, kind, theirPublicKey, 
   const runDownload = async () => {
     if (trustLocked) { setShowTrustBlock(true); throw new Error('Trust Lock enabled'); }
     const blob = await getBlob();
-    return saveMedia(blob, { name, mime });
+    return saveMedia(blob, { name, mime: kind === 'file' ? resolveDocMime(name, mime) : mime });
   };
 
   const runShare = async () => {
     if (trustLocked) { setShowTrustBlock(true); throw new Error('Trust Lock enabled'); }
     try {
       const blob = await getBlob();
-      await shareMedia(blob, { name, mime });
+      await shareMedia(blob, { name, mime: kind === 'file' ? resolveDocMime(name, mime) : mime });
     } catch (e) {
       if (e instanceof TrustLockError) { setShowTrustBlock(true); return; }
       throw e;
@@ -127,6 +127,17 @@ export default function EncryptedMedia({ url, mime, name, kind, theirPublicKey, 
     try {
       const blob = await getBlob();
       await copyImageToClipboard(blob, { name, mime });
+    } catch (e) {
+      if (e instanceof TrustLockError) { setShowTrustBlock(true); return; }
+      throw e;
+    }
+  };
+
+  const runOpen = async () => {
+    if (trustLocked) { setShowTrustBlock(true); throw new Error('Trust Lock enabled'); }
+    try {
+      const blob = await getBlob();
+      await openMedia(blob, { name, mime });
     } catch (e) {
       if (e instanceof TrustLockError) { setShowTrustBlock(true); return; }
       throw e;
@@ -233,23 +244,29 @@ export default function EncryptedMedia({ url, mime, name, kind, theirPublicKey, 
   }
 
   // File / document
-  const isPdfLike = /pdf/i.test(mime || '');
-  const isImageDoc = /^image\//i.test(mime || '');
-  const isTextDoc = /text\/|json|xml/i.test(mime || '');
+  const docMime = resolveDocMime(name, mime);
+  const isPdfLike = /pdf/i.test(docMime);
+  const isImageDoc = /^image\//i.test(docMime);
+  const isTextDoc = /text\/|json|xml/i.test(docMime);
   const isNative = typeof (window as any).Capacitor !== 'undefined' && (window as any).Capacitor?.isNativePlatform?.();
   const canIframe = !isNative && (isPdfLike || isImageDoc || isTextDoc);
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setShowPreview(true)}
-        className="flex items-center gap-2 text-sm hover:underline"
-      >
-        <FileText size={16} />
-        <span className="truncate max-w-[160px] text-left">{name || 'file'}</span>
-        <Eye size={14} className="opacity-70" />
-      </button>
+      <div className="flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={() => (canIframe ? setShowPreview(true) : runOpen().catch(() => setShowPreview(true)))}
+          className="flex items-center gap-2 text-sm hover:underline min-w-0"
+        >
+          <FileText size={16} />
+          <span className="truncate max-w-[160px] text-left">{name || 'file'}</span>
+          {canIframe ? <Eye size={14} className="opacity-70" /> : <ExternalLink size={14} className="opacity-70" />}
+        </button>
+        {!trustLocked && (
+          <MediaActionButton action="open" label="Open file" onRun={runOpen} successMessage="Opening…" variant="inline" size={14} />
+        )}
+      </div>
 
       {showPreview && (
         <div className="fixed inset-0 z-[1500] bg-black/80 backdrop-blur-sm flex flex-col p-3" onClick={() => setShowPreview(false)}>
@@ -259,6 +276,9 @@ export default function EncryptedMedia({ url, mime, name, kind, theirPublicKey, 
               <span className="truncate text-sm">{name || 'file'}</span>
             </div>
             <div className="flex items-center gap-2">
+              {!trustLocked && (
+                <MediaActionButton action="open" label="Open file" onRun={runOpen} successMessage="Opening…" variant="inline" size={14} />
+              )}
               <ActionCluster position="inline" />
               <button
                 onClick={(e) => { e.stopPropagation(); setShowPreview(false); }}
@@ -279,19 +299,31 @@ export default function EncryptedMedia({ url, mime, name, kind, theirPublicKey, 
                 <p className="text-xs text-muted-foreground mb-4">
                   {trustLocked
                     ? '🛡️ Trust Lock is enabled — downloads are disabled in this chat.'
-                    : 'Preview is not available for this file type. Tap Download to save it to your device.'}
+                    : 'Preview is not available for this file type. Open it with an app on your device, or download it.'}
                 </p>
                 {!trustLocked && (
+                  <div className="flex items-center gap-2">
+                  <button
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      try { await runOpen(); }
+                      catch (err: any) { toast.error(err?.message || 'Unable to open this file'); }
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold"
+                  >
+                    <ExternalLink size={16} /> Open
+                  </button>
                   <button
                     onClick={async (e) => {
                       e.stopPropagation();
                       try { await runDownload(); toast.success('Saved to your device'); }
                       catch (err: any) { if (err?.name !== 'AbortError') toast.error(err?.message || 'Download failed'); }
                     }}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold"
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-muted text-foreground text-sm font-semibold"
                   >
                     <Download size={16} /> Download
                   </button>
+                  </div>
                 )}
               </div>
             )}

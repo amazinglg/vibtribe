@@ -32,6 +32,73 @@ function ensureName(name: string | undefined, mime: string): string {
   return ext ? `${safe}.${ext}` : safe;
 }
 
+const EXT_MIME: Record<string, string> = {
+  apk: 'application/vnd.android.package-archive',
+  pdf: 'application/pdf',
+  doc: 'application/msword',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  xls: 'application/vnd.ms-excel',
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  ppt: 'application/vnd.ms-powerpoint',
+  pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  txt: 'text/plain',
+  csv: 'text/csv',
+  zip: 'application/zip',
+  rar: 'application/vnd.rar',
+  '7z': 'application/x-7z-compressed',
+  json: 'application/json',
+  xml: 'application/xml',
+  epub: 'application/epub+zip',
+  mp3: 'audio/mpeg',
+  mp4: 'video/mp4',
+};
+
+/**
+ * Documents frequently arrive with a generic `application/octet-stream`
+ * mime (that's what most browsers report for .apk/.docx uploads). Android
+ * refuses to open those, so recover the real type from the filename.
+ */
+export function resolveDocMime(name: string | undefined, mime?: string): string {
+  const ext = (name || '').split('.').pop()?.toLowerCase() || '';
+  const byExt = EXT_MIME[ext];
+  if (byExt) return byExt;
+  if (mime && mime !== 'application/octet-stream' && mime !== 'binary/octet-stream') return mime;
+  return mime || 'application/octet-stream';
+}
+
+/**
+ * Open a document with the device's default handler (Android: FileProvider +
+ * ACTION_VIEW, e.g. the package installer for .apk). Falls back to opening
+ * the blob in a new tab, then to saving it.
+ */
+export async function openMedia(
+  source: Blob | string,
+  opts: { name?: string; mime?: string; trustLocked?: boolean },
+): Promise<void> {
+  if (opts.trustLocked) throw new TrustLockError();
+  const blob = await resolveBlob(source);
+  const mime = resolveDocMime(opts.name, opts.mime || blob.type);
+  const filename = ensureName(opts.name, mime);
+
+  if (hasNativeMedia()) {
+    try {
+      const base64 = await blobToBase64(blob);
+      await VtMedia.open({ data: base64, mime, name: filename });
+      return;
+    } catch (e) {
+      if (isTrustLockRejection(e)) throw new TrustLockError();
+      console.warn('[VibTribe] VtMedia.open failed, falling back', e);
+    }
+  }
+
+  // Web / PWA: hand the blob to the browser, which will preview or download.
+  const objectUrl = URL.createObjectURL(new Blob([blob], { type: mime }));
+  const win = typeof window !== 'undefined' ? window.open(objectUrl, '_blank', 'noopener') : null;
+  setTimeout(() => URL.revokeObjectURL(objectUrl), 60000);
+  if (win) return;
+  await saveMedia(blob, { name: filename, mime });
+}
+
 async function blobToBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const r = new FileReader();
