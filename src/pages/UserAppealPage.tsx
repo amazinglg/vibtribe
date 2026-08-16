@@ -28,11 +28,8 @@ export default function UserAppealPage() {
     if (!user || !reportId) return
     ;(async () => {
       const { data: rep } = await supabase
-        .from('content_reports')
-        .select('id, report_type, reason, status, action_taken, moderated_at')
-        .eq('id', reportId)
-        .maybeSingle()
-      setReportInfo(rep)
+        .rpc('get_my_report_status' as any, { _report_id: reportId })
+      setReportInfo(Array.isArray(rep) ? rep[0] ?? null : rep)
       const { data: ex } = await supabase
         .from('report_appeals' as any)
         .select('id, status, reason, reviewer_notes, reviewed_at, created_at')
