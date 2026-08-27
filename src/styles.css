@@ -551,8 +551,8 @@ html[data-trust-lock-recording="true"] body {
    ============================================================ */
 .vt-chat-aurora {
   --vt-chat-bg: #0d0221;
-  --vt-chat-wave-from: #d946ef;
-  --vt-chat-wave-to: #6b21a8;
+  --vt-chat-wave-from: #8b5cf6;
+  --vt-chat-wave-to: #4c1d95;
   background: var(--vt-chat-bg);
   color: #fff;
   isolation: isolate;
@@ -701,8 +701,9 @@ html[data-trust-lock-recording="true"] body {
 html[data-vt-theme] .vt-chat-aurora {
   --vt-chat-bg: var(--background);
   --vt-chat-fg: var(--foreground);
-  --vt-chat-wave-from: var(--pink, var(--primary));
-  --vt-chat-wave-to: var(--violet, var(--primary));
+  /* Midnight Amethyst — fixed chat header wave across all themes */
+  --vt-chat-wave-from: #8b5cf6;
+  --vt-chat-wave-to: #4c1d95;
   --vt-chat-menu-bg: var(--card);
   --vt-chat-menu-fg: var(--card-foreground);
   --vt-chat-menu-border: var(--border);
