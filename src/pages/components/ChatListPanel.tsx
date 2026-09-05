@@ -1395,7 +1395,7 @@ function ContactsTabContent({
           console.warn('[VibTribe] contact match chunk failed', e);
         }
       }
-      const merged = normalized.map(c => {
+      const mapped = normalized.map(c => {
         const h = hashByLast10.get(c.phone.slice(-10));
         const m: any = h ? userByHash.get(h) : null;
         return {
@@ -1406,7 +1406,17 @@ function ContactsTabContent({
           avatar: m?.full_name?.[0]?.toUpperCase() || c.name?.[0]?.toUpperCase() || 'U',
           avatarUrl: m?.avatar_url || null,
         };
-      }).sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }));
+      });
+      // Dedupe: one row per contact — same person may be stored with multiple numbers.
+      // Prefer the on-platform entry (or the matching userId) over off-platform duplicates.
+      const byKey = new Map<string, any>();
+      for (const c of mapped) {
+        const key = c.userId ? `u:${c.userId}` : `n:${(c.name || '').trim().toLowerCase()}`;
+        const prev = byKey.get(key);
+        if (!prev || (!prev.onPlatform && c.onPlatform)) byKey.set(key, c);
+      }
+      const merged = Array.from(byKey.values())
+        .sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }));
       const { applyAvatarPrivacy } = await import('@/lib/visible-avatars');
       const mergedPriv = await applyAvatarPrivacy(merged, 'userId', 'avatarUrl');
       setContacts(mergedPriv);

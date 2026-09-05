@@ -244,7 +244,18 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
           phone: c.phone || existing.phone,
         });
       }
-      return Array.from(byKey.values());
+      // Second pass: collapse entries that are clearly the same person saved under
+      // multiple numbers (same name) — keep the on-platform / richer entry.
+      const byName = new Map<string, Contact>();
+      for (const c of byKey.values()) {
+        const nkey = (c.name || '').trim().toLowerCase();
+        if (!nkey) continue;
+        const prev = byName.get(nkey);
+        if (!prev) { byName.set(nkey, c); continue; }
+        const score = (x: Contact) => (x.onPlatform ? 2 : 0) + (x.userId ? 1 : 0);
+        if (score(c) > score(prev)) byName.set(nkey, { ...c, phone: c.phone || prev.phone });
+      }
+      return Array.from(byName.values());
     });
     setLoading(false);
   };
