@@ -706,6 +706,9 @@ html[data-vt-theme] .vt-chat-aurora {
   /* Midnight Amethyst — fixed chat header wave across all themes */
   --vt-chat-wave-from: #8b5cf6;
   --vt-chat-wave-to: #4c1d95;
+  /* Wave fills blend into the themed chat background so light themes don't get a dark band */
+  --vt-chat-wave-back: color-mix(in srgb, var(--vt-chat-bg) 92%, var(--foreground) 8%);
+  --vt-chat-wave-front: var(--vt-chat-bg);
   --vt-chat-menu-bg: var(--card);
   --vt-chat-menu-fg: var(--card-foreground);
   --vt-chat-menu-border: var(--border);
