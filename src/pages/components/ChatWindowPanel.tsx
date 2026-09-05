@@ -2328,8 +2328,8 @@ export default function ChatWindowPanel() {
       {/* Chat Header */}
       <div className="vt-chat-header px-3 pt-3 pb-8 flex items-center gap-2 min-w-0 max-w-full">
         <svg ref={waveRef} className="vt-chat-wave" viewBox="0 0 390 120" preserveAspectRatio="none" fill="none" aria-hidden>
-          <path className="vt-chat-wave-back" d="M0 40C60 10 120 10 180 40C240 70 300 70 390 40V120H0V40Z" fill="#1e0b3b" />
-          <path d="M0 60C80 30 160 30 240 60C320 90 390 90 390 90V120H0V60Z" fill="#0d0221" />
+          <path className="vt-chat-wave-back" d="M0 40C60 10 120 10 180 40C240 70 300 70 390 40V120H0V40Z" fill="var(--vt-chat-wave-back)" />
+          <path d="M0 60C80 30 160 30 240 60C320 90 390 90 390 90V120H0V60Z" fill="var(--vt-chat-wave-front)" />
         </svg>
         <button
           className="lg:hidden -ml-1 p-2 rounded-xl text-white/90 hover:bg-white/10 active:scale-95 transition-all flex-shrink-0 relative z-10"
