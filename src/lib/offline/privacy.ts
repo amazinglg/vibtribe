@@ -25,21 +25,21 @@ const DEFAULTS: CachePrefs = { maxPrivacyMode: false, mediaCacheLimitMb: 250 };
 
 export async function loadCachePrefs(userId: string): Promise<CachePrefs> {
   try {
-    const { data } = await supabase
-      .from('user_profiles')
-      .select('max_privacy_mode, media_cache_limit_mb')
-      .eq('id', userId)
-      .maybeSingle();
-    if (!data) return DEFAULTS;
+    // Own-row settings columns are not readable through the table (column-level
+    // grants are locked down); use the security-definer own-profile RPC.
+    void userId;
+    const { data } = await supabase.rpc('get_my_full_profile');
+    const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown> | null;
+    if (!row) return DEFAULTS;
     return {
-      maxPrivacyMode: !!(data as Record<string, unknown>).max_privacy_mode,
-      mediaCacheLimitMb: (((data as Record<string, unknown>).media_cache_limit_mb as number) ??
-        250) as MediaCacheLimit,
+      maxPrivacyMode: !!row.max_privacy_mode,
+      mediaCacheLimitMb: ((row.media_cache_limit_mb as number) ?? 250) as MediaCacheLimit,
     };
   } catch {
     return DEFAULTS;
   }
 }
+
 
 export async function saveCachePrefs(
   userId: string,

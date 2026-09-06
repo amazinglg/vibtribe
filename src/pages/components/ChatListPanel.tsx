@@ -1411,10 +1411,13 @@ function ContactsTabContent({
       // Prefer the on-platform entry (or the matching userId) over off-platform duplicates.
       const byKey = new Map<string, any>();
       for (const c of mapped) {
-        const key = c.userId ? `u:${c.userId}` : `n:${(c.name || '').trim().toLowerCase()}`;
+        const nm = (c.name || '').trim().toLowerCase();
+        const named = nm && nm !== 'unknown';
+        const key = c.userId ? `u:${c.userId}` : named ? `n:${nm}` : `p:${c.phone}`;
         const prev = byKey.get(key);
         if (!prev || (!prev.onPlatform && c.onPlatform)) byKey.set(key, c);
       }
+
       const merged = Array.from(byKey.values())
         .sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }));
       const { applyAvatarPrivacy } = await import('@/lib/visible-avatars');
