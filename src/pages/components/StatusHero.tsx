@@ -59,15 +59,15 @@ export default function StatusHero() {
   // user_profiles; keeps parity with profile-photo privacy).
   useEffect(() => {
     if (!user?.id) return;
-    supabase.from('user_profiles')
-      .select('status_visibility, status_allowed_viewers')
-      .eq('id', user.id).maybeSingle()
+    supabase.rpc('get_my_full_profile')
       .then(({ data }) => {
-        if (data?.status_visibility) setVisibility(data.status_visibility as VisibilityOption);
-        if (Array.isArray((data as any)?.status_allowed_viewers)) {
-          setSelectedViewers((data as any).status_allowed_viewers);
+        const row: any = Array.isArray(data) ? data[0] : data;
+        if (row?.status_visibility) setVisibility(row.status_visibility as VisibilityOption);
+        if (Array.isArray(row?.status_allowed_viewers)) {
+          setSelectedViewers(row.status_allowed_viewers);
         }
       });
+
     loadMyStatuses();
   }, [user?.id, loadMyStatuses]);
 
