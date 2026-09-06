@@ -246,16 +246,19 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
       }
       // Second pass: collapse entries that are clearly the same person saved under
       // multiple numbers (same name) — keep the on-platform / richer entry.
+      // Distinct platform users keep their own row even if they share a name, and
+      // entries without a name are keyed by phone so they never disappear.
       const byName = new Map<string, Contact>();
       for (const c of byKey.values()) {
         const nkey = (c.name || '').trim().toLowerCase();
-        if (!nkey) continue;
-        const prev = byName.get(nkey);
-        if (!prev) { byName.set(nkey, c); continue; }
+        const key = c.userId ? `u:${c.userId}` : nkey ? `n:${nkey}` : `p:${c.phone}`;
+        const prev = byName.get(key);
+        if (!prev) { byName.set(key, c); continue; }
         const score = (x: Contact) => (x.onPlatform ? 2 : 0) + (x.userId ? 1 : 0);
-        if (score(c) > score(prev)) byName.set(nkey, { ...c, phone: c.phone || prev.phone });
+        if (score(c) > score(prev)) byName.set(key, { ...c, phone: c.phone || prev.phone });
       }
       return Array.from(byName.values());
+
     });
     setLoading(false);
   };
