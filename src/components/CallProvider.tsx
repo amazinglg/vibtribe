@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Volume2, Ear, ShieldCheck, ChevronDown, MoreVertical, Maximize2, AlertTriangle, SwitchCamera } from 'lucide-react';
+import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Volume2, Ear, ShieldCheck, ChevronDown, Maximize2, AlertTriangle, SwitchCamera } from 'lucide-react';
 import { acquireCallWakeLock, setCallAudioRoute, startOngoingCallNotification, updateOngoingCallNotification, stopOngoingCallNotification } from '@/lib/native-bridge';
 import { sendCallPush } from '@/lib/fcm-push.functions';
 
@@ -47,7 +47,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
 
   const [activeCall, setActiveCall] = useState<CallRow | null>(null);
   const [role, setRole] = useState<'caller' | 'callee' | null>(null);
-  const [callState, setCallState] = useState<'ringing' | 'connecting' | 'connected' | 'ended'>('ringing');
+  const [callState, setCallState] = useState<'ringing' | 'connecting' | 'reconnecting' | 'connected' | 'ended'>('ringing');
   const wakeLockReleaseRef = useRef<(() => void) | null>(null);
 
   // Acquire the screen wake-lock while a call is active so Android does not
@@ -101,6 +101,9 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   const ringTimerRef = useRef<any>(null);
   const durationTimerRef = useRef<any>(null);
   const ringtoneRef = useRef<HTMLAudioElement | null>(null);
+  const pendingIceRef = useRef<RTCIceCandidateInit[]>([]);
+  const recoveryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dropTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // iOS PWA workaround: keep a silent audio element playing throughout the
   // call. Safari suspends WebRTC audio (including the outbound microphone)
   // when the PWA loses foreground / screen locks. Any actively playing
@@ -276,6 +279,10 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     localStreamRef.current?.getTracks().forEach(t => t.stop());
     localStreamRef.current = null;
     remoteStreamRef.current = null;
+    pendingIceRef.current = [];
+    if (localVideoRef.current) localVideoRef.current.srcObject = null;
+    if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
+    if (remoteAudioRef.current) remoteAudioRef.current.srcObject = null;
     if (channelRef.current) {
       const ref = channelRef.current as any;
       if (ref?._chans) ref._chans.forEach((c: any) => { try { supabase.removeChannel(c); } catch {} });
@@ -286,6 +293,10 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     if (durationTimerRef.current) clearInterval(durationTimerRef.current);
     ringTimerRef.current = null;
     durationTimerRef.current = null;
+    if (recoveryTimerRef.current) clearTimeout(recoveryTimerRef.current);
+    if (dropTimerRef.current) clearTimeout(dropTimerRef.current);
+    recoveryTimerRef.current = null;
+    dropTimerRef.current = null;
     if (ringtoneRef.current) { try { ringtoneRef.current.pause(); } catch {} ringtoneRef.current = null; }
     setCallDuration(0);
     setMicMuted(false); setVideoOff(false);
@@ -295,6 +306,13 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     setRemoteVideoLive(false);
     setViewSwapped(false);
     try { stopOngoingCallNotification(); } catch {}
+    if ('mediaSession' in navigator) {
+      const ms: any = (navigator as any).mediaSession;
+      try { ms.setActionHandler('play', null); } catch {}
+      try { ms.setActionHandler('pause', null); } catch {}
+      try { ms.setActionHandler('stop', null); } catch {}
+      try { ms.metadata = null; ms.playbackState = 'none'; } catch {}
+    }
   }, [supabase]);
 
   const endCall = useCallback(async (finalStatus: 'ended' | 'declined' | 'missed' = 'ended') => {
@@ -387,13 +405,22 @@ export default function CallProvider({ children }: { children: React.ReactNode }
       }
     };
     pc.onconnectionstatechange = () => {
-      if (pc.connectionState === 'connected') setCallState('connected');
+      if (pc.connectionState === 'connected') {
+        if (recoveryTimerRef.current) clearTimeout(recoveryTimerRef.current);
+        if (dropTimerRef.current) clearTimeout(dropTimerRef.current);
+        recoveryTimerRef.current = null;
+        dropTimerRef.current = null;
+        setCallState('connected');
+      }
       // Auto-recover transient drops via ICE restart instead of dropping the call.
       // Wait briefly to ride out very short Wi-Fi hiccups before kicking ICE restart.
       if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
+        setCallState('reconnecting');
         const wait = pc.connectionState === 'failed' ? 0 : 1500;
-        setTimeout(() => {
+        if (recoveryTimerRef.current) clearTimeout(recoveryTimerRef.current);
+        recoveryTimerRef.current = setTimeout(() => {
           if (!pcRef.current || pcRef.current !== pc) return;
+          if (activeCallRef.current?.id !== call.id) return;
           const s = pc.connectionState;
           if (s !== 'disconnected' && s !== 'failed') return;
           try {
@@ -410,6 +437,13 @@ export default function CallProvider({ children }: { children: React.ReactNode }
             }
           } catch {}
         }, wait);
+        if (!dropTimerRef.current) {
+          dropTimerRef.current = setTimeout(() => {
+            if (pcRef.current !== pc || activeCallRef.current?.id !== call.id) return;
+            if (pc.connectionState === 'connected') return;
+            void endCall('ended');
+          }, 20_000);
+        }
       }
     };
     pc.oniceconnectionstatechange = () => {
@@ -419,6 +453,22 @@ export default function CallProvider({ children }: { children: React.ReactNode }
       }
     };
     return pc;
+  };
+
+  const addOrQueueIceCandidate = async (pc: RTCPeerConnection, candidate: RTCIceCandidateInit) => {
+    if (!candidate) return;
+    if (!pc.remoteDescription) {
+      pendingIceRef.current.push(candidate);
+      return;
+    }
+    try { await pc.addIceCandidate(candidate); } catch (error) { console.warn('[Call] ICE candidate rejected', error); }
+  };
+
+  const flushQueuedIceCandidates = async (pc: RTCPeerConnection) => {
+    const queued = pendingIceRef.current.splice(0);
+    for (const candidate of queued) {
+      try { await pc.addIceCandidate(candidate); } catch (error) { console.warn('[Call] queued ICE candidate rejected', error); }
+    }
   };
 
   const acquireMedia = async (type: CallType) => {
@@ -684,11 +734,14 @@ export default function CallProvider({ children }: { children: React.ReactNode }
 
       channel.on('broadcast', { event: 'answer' }, async ({ payload }) => {
         if (!pcRef.current) return;
-        try { await pcRef.current.setRemoteDescription(new RTCSessionDescription(payload.sdp)); } catch {}
+        try {
+          await pcRef.current.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+          await flushQueuedIceCandidates(pcRef.current);
+        } catch (error) { console.warn('[Call] answer rejected', error); }
       });
       channel.on('broadcast', { event: 'ice' }, async ({ payload }) => {
         if (!pcRef.current || payload.from === user.id) return;
-        try { await pcRef.current.addIceCandidate(payload.candidate); } catch {}
+        await addOrQueueIceCandidate(pcRef.current, payload.candidate);
       });
       await channel.subscribe();
 
@@ -918,6 +971,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     channel.on('broadcast', { event: 'offer' }, async ({ payload }) => {
       try {
         await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+        await flushQueuedIceCandidates(pc);
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         channel.send({ type: 'broadcast', event: 'answer', payload: { sdp: answer, from: user?.id } });
@@ -926,7 +980,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     });
     channel.on('broadcast', { event: 'ice' }, async ({ payload }) => {
       if (payload.from === user?.id) return;
-      try { await pc.addIceCandidate(payload.candidate); } catch {}
+      await addOrQueueIceCandidate(pc, payload.candidate);
     });
     await channel.subscribe();
 
