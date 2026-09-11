@@ -1079,13 +1079,10 @@ export default function CallProvider({ children }: { children: React.ReactNode }
       )}
       {activeCall && !minimized && (
         <div
-          className="fixed inset-0 z-[100] flex flex-col text-white"
-          style={{
-            background:
-              activeCall.call_type === 'video'
-                ? '#000'
-                : 'radial-gradient(ellipse at center, #1a0333 0%, #0a0118 60%, #050010 100%)',
-          }}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${activeCall.call_type === 'video' ? 'Video' : 'Voice'} call with ${remoteName}`}
+          className="vt-call-shell fixed inset-0 z-[100] flex flex-col"
         >
           {/* Full-bleed remote video for video calls */}
           {activeCall.call_type === 'video' && (
@@ -1103,10 +1100,8 @@ export default function CallProvider({ children }: { children: React.ReactNode }
                   or the peer disabled their camera — so the user never sees a
                   bare black rectangle. */}
               {(!viewSwapped && (!remoteVideoLive || callState !== 'connected')) && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center"
-                  style={{ background: 'radial-gradient(ellipse at center, #1a0333 0%, #0a0118 60%, #050010 100%)' }}
-                >
-                  <div className="w-36 h-36 rounded-full overflow-hidden bg-gradient-to-br from-purple-600 to-purple-900 flex items-center justify-center text-5xl font-bold shadow-[0_0_60px_rgba(168,85,247,0.5)]">
+                <div className="vt-call-shell absolute inset-0 flex flex-col items-center justify-center">
+                  <div className="vt-call-avatar w-36 h-36 rounded-full overflow-hidden flex items-center justify-center text-5xl font-bold">
                     {remoteAvatarUrl ? (
                       <img src={remoteAvatarUrl} alt={remoteName} className="w-full h-full object-cover" />
                     ) : (
@@ -1124,39 +1119,35 @@ export default function CallProvider({ children }: { children: React.ReactNode }
           )}
 
           {/* Top bar */}
-          <div className="relative z-10 flex items-center justify-between px-4 pt-6 pb-3" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}>
+          <div className="vt-call-topbar relative z-10 flex items-center justify-between px-4 pt-6 pb-3" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}>
             <button
               onClick={() => setMinimized(true)}
               aria-label="Minimize call"
-              className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center"
+              className="vt-call-control w-11 h-11 rounded-full flex items-center justify-center"
             >
               <ChevronDown size={22} />
             </button>
             <div className="flex-1 flex flex-col items-center min-w-0 px-2">
-              <h3 className="font-bold text-xl truncate max-w-full">{remoteName}</h3>
+              <h3 className="vt-call-title font-bold text-xl truncate max-w-full">{remoteName}</h3>
               <div className="flex items-center gap-1.5 mt-0.5">
-                <ShieldCheck size={13} className="text-purple-400" />
-                <span className="text-[11px] font-medium text-purple-300">End-to-end encrypted</span>
+                <ShieldCheck size={13} className="vt-call-status" />
+                <span className="vt-call-status text-[11px] font-medium">End-to-end encrypted</span>
               </div>
               <p className="text-sm text-white/70 mt-1 tabular-nums">
                 {callState === 'ringing' && (role === 'caller' ? `${activeCall.call_type === 'video' ? 'Video' : 'Voice'} calling…` : `Incoming ${activeCall.call_type} call`)}
                 {callState === 'connecting' && 'Connecting…'}
+                {callState === 'reconnecting' && 'Reconnecting…'}
                 {callState === 'connected' && fmt(callDuration)}
               </p>
             </div>
-            <button
-              aria-label="More"
-              className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center opacity-70"
-            >
-              <MoreVertical size={20} />
-            </button>
+            <div className="w-11" aria-hidden="true" />
           </div>
 
           {micStatus !== 'ok' && (
             <button
               onClick={() => { if (micStatus === 'failed') void recoverMicrophone('user:banner'); }}
               disabled={micStatus === 'recovering'}
-              className="relative z-10 mx-auto mt-2 flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/95 text-neutral-900 text-xs font-medium shadow-lg disabled:opacity-80"
+              className="vt-call-recovery relative z-10 mx-auto mt-2 flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium shadow-lg disabled:opacity-80"
             >
               <AlertTriangle size={13} />
               <span className="truncate">
@@ -1171,10 +1162,10 @@ export default function CallProvider({ children }: { children: React.ReactNode }
               <>
                 {/* Concentric purple pulse rings behind the avatar */}
                 <div className="relative flex items-center justify-center">
-                  <span className="absolute w-64 h-64 rounded-full border border-purple-500/20 animate-vt-ring" style={{ animationDelay: '0s' }} />
-                  <span className="absolute w-52 h-52 rounded-full border border-purple-500/30 animate-vt-ring" style={{ animationDelay: '0.4s' }} />
-                  <span className="absolute w-40 h-40 rounded-full border border-purple-500/40 animate-vt-ring" style={{ animationDelay: '0.8s' }} />
-                  <div className="relative w-32 h-32 rounded-full overflow-hidden bg-gradient-to-br from-purple-600 to-purple-900 flex items-center justify-center text-4xl font-bold shadow-[0_0_60px_rgba(168,85,247,0.5)]">
+                   <span className="vt-call-ring absolute w-64 h-64 rounded-full border animate-vt-ring" style={{ animationDelay: '0s' }} />
+                   <span className="vt-call-ring absolute w-52 h-52 rounded-full border animate-vt-ring" style={{ animationDelay: '0.4s' }} />
+                   <span className="vt-call-ring absolute w-40 h-40 rounded-full border animate-vt-ring" style={{ animationDelay: '0.8s' }} />
+                   <div className="vt-call-avatar relative w-32 h-32 rounded-full overflow-hidden flex items-center justify-center text-4xl font-bold">
                     {remoteAvatarUrl ? (
                       <img src={remoteAvatarUrl} alt={remoteName} className="w-full h-full object-cover" />
                     ) : (
@@ -1183,16 +1174,15 @@ export default function CallProvider({ children }: { children: React.ReactNode }
                   </div>
                 </div>
                 {/* Waveform */}
-                <div className="mt-16 flex items-center justify-center gap-[3px] h-16 w-full max-w-xs">
+                <div aria-hidden="true" className="mt-16 flex items-center justify-center gap-[3px] h-16 w-full max-w-xs">
                   {Array.from({ length: 48 }).map((_, i) => (
                     <span
                       key={i}
-                      className="w-[3px] rounded-full bg-purple-500"
+                      className="vt-call-wave w-[3px] rounded-full"
                       style={{
                         height: `${20 + Math.abs(Math.sin(i * 0.6)) * 40 + Math.abs(Math.cos(i * 0.9)) * 15}%`,
                         opacity: callState === 'connected' ? 0.9 : 0.35,
                         animation: callState === 'connected' ? `vt-wave 1.1s ease-in-out ${i * 0.05}s infinite` : undefined,
-                        boxShadow: '0 0 8px rgba(168, 85, 247, 0.6)',
                       }}
                     />
                   ))}
@@ -1242,39 +1232,42 @@ export default function CallProvider({ children }: { children: React.ReactNode }
 
           {/* Bottom control bar */}
           <div
-            className="relative z-10 px-6 pt-4 pb-8 flex items-center justify-center gap-4"
+            className="relative z-10 px-4 pt-4 pb-8 flex items-center justify-center"
             style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 24px)' }}
           >
             {role === 'callee' && callState === 'ringing' ? (
-              <>
+              <div className="vt-call-dock flex items-center gap-8 rounded-[28px] p-3">
                 <button
                   onClick={() => { playEndCallClick(); declineCall(); }}
-                  className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center hover:bg-red-600 shadow-lg"
+                  className="vt-call-danger w-16 h-16 rounded-full flex items-center justify-center shadow-lg"
                   aria-label="Decline"
                 >
                   <PhoneOff size={26} />
                 </button>
                 <button
                   onClick={() => acceptCall()}
-                  className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center hover:bg-green-600 shadow-lg"
+                  className="vt-call-success w-16 h-16 rounded-full flex items-center justify-center shadow-lg"
                   aria-label="Accept"
                 >
                   <Phone size={26} />
                 </button>
-              </>
+              </div>
             ) : (
-              <>
+              <div className="vt-call-dock flex max-w-full items-center gap-2 rounded-[28px] p-3">
                 <button
                   onClick={toggleMic}
                   aria-label={micMuted ? 'Unmute microphone' : 'Mute microphone'}
-                  className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${micMuted ? 'bg-red-500/30 text-red-300' : 'bg-white/10 hover:bg-white/20'}`}
+                  aria-pressed={micMuted}
+                  className={`vt-call-control w-13 h-13 rounded-full flex items-center justify-center transition-all ${micMuted ? 'text-destructive' : ''}`}
                 >
                   {micMuted ? <MicOff size={22} /> : <Mic size={22} />}
                 </button>
                 <button
                   onClick={toggleAudioRoute}
                   aria-label={audioRoute === 'speaker' ? 'Switch to earpiece' : 'Switch to speaker'}
-                  className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${audioRoute === 'speaker' ? 'bg-white text-purple-900' : 'bg-white/10 hover:bg-white/20'}`}
+                  aria-pressed={audioRoute === 'speaker'}
+                  data-active={audioRoute === 'speaker'}
+                  className="vt-call-control w-13 h-13 rounded-full flex items-center justify-center transition-all"
                 >
                   {audioRoute === 'speaker' ? <Volume2 size={22} /> : <Ear size={22} />}
                 </button>
@@ -1282,7 +1275,8 @@ export default function CallProvider({ children }: { children: React.ReactNode }
                   <button
                     onClick={toggleVideo}
                     aria-label={videoOff ? 'Turn camera on' : 'Turn camera off'}
-                    className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${videoOff ? 'bg-red-500/30 text-red-300' : 'bg-white/10 hover:bg-white/20'}`}
+                    aria-pressed={videoOff}
+                    className={`vt-call-control w-13 h-13 rounded-full flex items-center justify-center transition-all ${videoOff ? 'text-destructive' : ''}`}
                   >
                     {videoOff ? <VideoOff size={22} /> : <Video size={22} />}
                   </button>
@@ -1291,7 +1285,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
                   <button
                     onClick={switchCamera}
                     aria-label="Switch camera"
-                    className="w-14 h-14 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 transition-all"
+                    className="vt-call-control w-13 h-13 rounded-full flex items-center justify-center transition-all"
                   >
                     <SwitchCamera size={22} />
                   </button>
@@ -1299,11 +1293,11 @@ export default function CallProvider({ children }: { children: React.ReactNode }
                 <button
                   onClick={() => { playEndCallClick(); endCall('ended'); }}
                   aria-label="End call"
-                  className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center hover:bg-red-600 shadow-lg"
+                  className="vt-call-danger w-14 h-14 rounded-full flex items-center justify-center shadow-lg"
                 >
                   <PhoneOff size={26} />
                 </button>
-              </>
+              </div>
             )}
           </div>
         </div>
