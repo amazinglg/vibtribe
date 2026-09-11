@@ -244,20 +244,25 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
           phone: c.phone || existing.phone,
         });
       }
-      // Second pass: collapse entries that are clearly the same person saved under
-      // multiple numbers (same name) — keep the on-platform / richer entry.
-      // Distinct platform users keep their own row even if they share a name, and
-      // entries without a name are keyed by phone so they never disappear.
-      const byName = new Map<string, Contact>();
-      for (const c of byKey.values()) {
-        const nkey = (c.name || '').trim().toLowerCase();
-        const key = c.userId ? `u:${c.userId}` : nkey ? `n:${nkey}` : `p:${c.phone}`;
-        const prev = byName.get(key);
-        if (!prev) { byName.set(key, c); continue; }
-        const score = (x: Contact) => (x.onPlatform ? 2 : 0) + (x.userId ? 1 : 0);
-        if (score(c) > score(prev)) byName.set(key, { ...c, phone: c.phone || prev.phone });
+      // If exactly one platform account shares a saved name, its other saved
+      // numbers are aliases of that contact. Ambiguous same-name contacts remain
+      // separate, and unnamed entries always retain their phone-based identity.
+      const entries = Array.from(byKey.values());
+      const platformIdsByName = new Map<string, Set<string>>();
+      for (const c of entries) {
+        const name = (c.name || '').trim().toLowerCase();
+        if (!name || !c.userId) continue;
+        const ids = platformIdsByName.get(name) || new Set<string>();
+        ids.add(c.userId);
+        platformIdsByName.set(name, ids);
       }
-      return Array.from(byName.values());
+
+      return entries.filter(c => {
+        if (c.userId) return true;
+        const name = (c.name || '').trim().toLowerCase();
+        if (!name) return true;
+        return platformIdsByName.get(name)?.size !== 1;
+      });
 
     });
     setLoading(false);
