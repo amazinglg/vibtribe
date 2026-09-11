@@ -31,10 +31,7 @@ serve(async (req) => {
   try {
     const publicKey = Deno.env.get('VAPID_PUBLIC_KEY') || '';
     const privateKey = Deno.env.get('VAPID_PRIVATE_KEY') || '';
-    // NOTE: iOS/APNs rejects pushes whose VAPID `sub` claim points at a
-    // non-existent domain. Default MUST match the real production domain
-    // (vibtribe.in — was a typo `vibetribe.in` before which caused APNs
-    // to silently drop iOS PWA pushes).
+    // Keep Apple's VAPID subject tied to VibTribe's verified production origin.
     const subject = getVapidSubject();
     const body = await req.json().catch(() => ({}));
 
