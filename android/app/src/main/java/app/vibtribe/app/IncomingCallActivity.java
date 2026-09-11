@@ -34,7 +34,7 @@ public class IncomingCallActivity extends Activity {
     private String chatId;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final ExecutorService avatarExecutor = Executors.newSingleThreadExecutor();
-    private final Runnable autoDismiss = () -> openAppForCall(false);
+    private final Runnable autoDismiss = this::dismissRinger;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -142,6 +142,15 @@ public class IncomingCallActivity extends Activity {
         intent.setData(data);
         intent.setAction(Intent.ACTION_VIEW);
         startActivity(intent);
+        finish();
+    }
+
+    private void dismissRinger() {
+        stopRingtone();
+        try {
+            NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            if (nm != null && callId != null) nm.cancel(callId.hashCode());
+        } catch (Exception ignored) {}
         finish();
     }
 

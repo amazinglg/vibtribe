@@ -475,14 +475,26 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     if (!navigator.mediaDevices?.getUserMedia) {
       throw new Error('Media devices are not available on this device.');
     }
+    let timedOut = false;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
     const mediaPromise = navigator.mediaDevices.getUserMedia({
       audio: true,
       video: type === 'video' ? { facingMode: cameraFacing } : false,
+    }).then((stream) => {
+      if (timedOut) {
+        stream.getTracks().forEach((track) => track.stop());
+        throw new Error('Media permission request timed out.');
+      }
+      return stream;
     });
     const timeoutPromise = new Promise<never>((_, reject) => {
-      window.setTimeout(() => reject(new Error('Media permission request timed out.')), 8000);
+      timeoutId = window.setTimeout(() => {
+        timedOut = true;
+        reject(new Error('Media permission request timed out.'));
+      }, 8000);
     });
     const stream = await Promise.race([mediaPromise, timeoutPromise]);
+    if (timeoutId) clearTimeout(timeoutId);
     localStreamRef.current = stream;
     if (localVideoRef.current && type === 'video') {
       localVideoRef.current.srcObject = stream;
@@ -1051,7 +1063,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
             )}
             <span className="text-xs font-medium max-w-[110px] truncate">{remoteName}</span>
             <span className="text-xs text-white/70 tabular-nums">
-              {micStatus === 'failed' ? 'mic' : micStatus === 'recovering' ? '…' : callState === 'connected' ? fmt(callDuration) : callState === 'connecting' ? '...' : 'ring'}
+              {micStatus === 'failed' ? 'mic' : micStatus === 'recovering' ? '…' : callState === 'connected' ? fmt(callDuration) : callState === 'reconnecting' ? 'retry' : callState === 'connecting' ? '...' : 'ring'}
             </span>
             <span className="ml-1 w-7 h-7 rounded-full bg-white/10 flex items-center justify-center">
               <Maximize2 size={13} />
