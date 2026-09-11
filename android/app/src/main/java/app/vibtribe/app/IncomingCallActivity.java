@@ -10,9 +10,19 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class IncomingCallActivity extends Activity {
     public static final String ACTION_INCOMING = "app.vibtribe.app.INCOMING_CALL";
@@ -22,6 +32,9 @@ public class IncomingCallActivity extends Activity {
     private Ringtone ringtone;
     private String callId;
     private String chatId;
+    private final Handler handler = new Handler(Looper.getMainLooper());
+    private final ExecutorService avatarExecutor = Executors.newSingleThreadExecutor();
+    private final Runnable autoDismiss = () -> openAppForCall(false);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,6 +67,7 @@ public class IncomingCallActivity extends Activity {
         callId = intent.getStringExtra("callId");
         chatId = intent.getStringExtra("chatId");
         String callerName = intent.getStringExtra("callerName");
+        String callerAvatar = intent.getStringExtra("callerAvatar");
         String callType = intent.getStringExtra("callType");
         String action = intent.getAction();
 
@@ -61,6 +75,7 @@ public class IncomingCallActivity extends Activity {
         TextView typeView = findViewById(R.id.call_type);
         if (nameView != null) nameView.setText(callerName == null ? "Unknown" : callerName);
         if (typeView != null) typeView.setText("video".equals(callType) ? "Incoming video call" : "Incoming voice call");
+        loadCallerAvatar(callerAvatar);
 
         Button accept = findViewById(R.id.btn_accept);
         Button decline = findViewById(R.id.btn_decline);
@@ -70,6 +85,31 @@ public class IncomingCallActivity extends Activity {
         if (ACTION_ACCEPT.equals(action)) { openAppForCall(true); return; }
         if (ACTION_DECLINE.equals(action)) { openAppForCall(false); return; }
         startRingtone();
+        handler.removeCallbacks(autoDismiss);
+        handler.postDelayed(autoDismiss, 30000L);
+    }
+
+    private void loadCallerAvatar(String avatarUrl) {
+        if (avatarUrl == null || !avatarUrl.startsWith("https://")) return;
+        avatarExecutor.execute(() -> {
+            HttpURLConnection connection = null;
+            try {
+                connection = (HttpURLConnection) new URL(avatarUrl).openConnection();
+                connection.setConnectTimeout(4000);
+                connection.setReadTimeout(4000);
+                connection.setInstanceFollowRedirects(true);
+                Bitmap bitmap = BitmapFactory.decodeStream(connection.getInputStream());
+                if (bitmap != null) {
+                    runOnUiThread(() -> {
+                        ImageView image = findViewById(R.id.caller_avatar);
+                        if (image != null && !isFinishing()) image.setImageBitmap(bitmap);
+                    });
+                }
+            } catch (Exception ignored) {
+            } finally {
+                if (connection != null) connection.disconnect();
+            }
+        });
     }
 
     private void startRingtone() {
@@ -87,6 +127,7 @@ public class IncomingCallActivity extends Activity {
     }
 
     private void openAppForCall(boolean accept) {
+        handler.removeCallbacks(autoDismiss);
         stopRingtone();
         try {
             NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
@@ -105,7 +146,12 @@ public class IncomingCallActivity extends Activity {
     }
 
     @Override
-    protected void onDestroy() { stopRingtone(); super.onDestroy(); }
+    protected void onDestroy() {
+        handler.removeCallbacks(autoDismiss);
+        avatarExecutor.shutdownNow();
+        stopRingtone();
+        super.onDestroy();
+    }
 
     @Override
     public void onBackPressed() { openAppForCall(false); }
