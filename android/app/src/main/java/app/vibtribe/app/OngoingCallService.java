@@ -46,7 +46,10 @@ public class OngoingCallService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent == null) return START_STICKY;
+        if (intent == null) {
+            stopSelf();
+            return START_NOT_STICKY;
+        }
         String action = intent.getAction();
         if (ACTION_STOP.equals(action)) {
             stopForeground(true);
@@ -82,7 +85,7 @@ public class OngoingCallService extends Service {
             NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             if (nm != null) nm.notify(NOTIFICATION_ID, n);
         }
-        return START_STICKY;
+        return START_NOT_STICKY;
     }
 
     private Notification buildNotification() {

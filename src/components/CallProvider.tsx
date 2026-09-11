@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Volume2, Ear, ShieldCheck, ChevronDown, MoreVertical, Maximize2, AlertTriangle, SwitchCamera } from 'lucide-react';
+import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Volume2, Ear, ShieldCheck, ChevronDown, Maximize2, AlertTriangle, SwitchCamera } from 'lucide-react';
 import { acquireCallWakeLock, setCallAudioRoute, startOngoingCallNotification, updateOngoingCallNotification, stopOngoingCallNotification } from '@/lib/native-bridge';
 import { sendCallPush } from '@/lib/fcm-push.functions';
 
@@ -47,7 +47,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
 
   const [activeCall, setActiveCall] = useState<CallRow | null>(null);
   const [role, setRole] = useState<'caller' | 'callee' | null>(null);
-  const [callState, setCallState] = useState<'ringing' | 'connecting' | 'connected' | 'ended'>('ringing');
+  const [callState, setCallState] = useState<'ringing' | 'connecting' | 'reconnecting' | 'connected' | 'ended'>('ringing');
   const wakeLockReleaseRef = useRef<(() => void) | null>(null);
 
   // Acquire the screen wake-lock while a call is active so Android does not
@@ -101,6 +101,9 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   const ringTimerRef = useRef<any>(null);
   const durationTimerRef = useRef<any>(null);
   const ringtoneRef = useRef<HTMLAudioElement | null>(null);
+  const pendingIceRef = useRef<RTCIceCandidateInit[]>([]);
+  const recoveryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dropTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // iOS PWA workaround: keep a silent audio element playing throughout the
   // call. Safari suspends WebRTC audio (including the outbound microphone)
   // when the PWA loses foreground / screen locks. Any actively playing
@@ -276,6 +279,10 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     localStreamRef.current?.getTracks().forEach(t => t.stop());
     localStreamRef.current = null;
     remoteStreamRef.current = null;
+    pendingIceRef.current = [];
+    if (localVideoRef.current) localVideoRef.current.srcObject = null;
+    if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
+    if (remoteAudioRef.current) remoteAudioRef.current.srcObject = null;
     if (channelRef.current) {
       const ref = channelRef.current as any;
       if (ref?._chans) ref._chans.forEach((c: any) => { try { supabase.removeChannel(c); } catch {} });
@@ -286,6 +293,10 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     if (durationTimerRef.current) clearInterval(durationTimerRef.current);
     ringTimerRef.current = null;
     durationTimerRef.current = null;
+    if (recoveryTimerRef.current) clearTimeout(recoveryTimerRef.current);
+    if (dropTimerRef.current) clearTimeout(dropTimerRef.current);
+    recoveryTimerRef.current = null;
+    dropTimerRef.current = null;
     if (ringtoneRef.current) { try { ringtoneRef.current.pause(); } catch {} ringtoneRef.current = null; }
     setCallDuration(0);
     setMicMuted(false); setVideoOff(false);
@@ -295,6 +306,13 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     setRemoteVideoLive(false);
     setViewSwapped(false);
     try { stopOngoingCallNotification(); } catch {}
+    if ('mediaSession' in navigator) {
+      const ms: any = (navigator as any).mediaSession;
+      try { ms.setActionHandler('play', null); } catch {}
+      try { ms.setActionHandler('pause', null); } catch {}
+      try { ms.setActionHandler('stop', null); } catch {}
+      try { ms.metadata = null; ms.playbackState = 'none'; } catch {}
+    }
   }, [supabase]);
 
   const endCall = useCallback(async (finalStatus: 'ended' | 'declined' | 'missed' = 'ended') => {
@@ -387,13 +405,22 @@ export default function CallProvider({ children }: { children: React.ReactNode }
       }
     };
     pc.onconnectionstatechange = () => {
-      if (pc.connectionState === 'connected') setCallState('connected');
+      if (pc.connectionState === 'connected') {
+        if (recoveryTimerRef.current) clearTimeout(recoveryTimerRef.current);
+        if (dropTimerRef.current) clearTimeout(dropTimerRef.current);
+        recoveryTimerRef.current = null;
+        dropTimerRef.current = null;
+        setCallState('connected');
+      }
       // Auto-recover transient drops via ICE restart instead of dropping the call.
       // Wait briefly to ride out very short Wi-Fi hiccups before kicking ICE restart.
       if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
+        setCallState('reconnecting');
         const wait = pc.connectionState === 'failed' ? 0 : 1500;
-        setTimeout(() => {
+        if (recoveryTimerRef.current) clearTimeout(recoveryTimerRef.current);
+        recoveryTimerRef.current = setTimeout(() => {
           if (!pcRef.current || pcRef.current !== pc) return;
+          if (activeCallRef.current?.id !== call.id) return;
           const s = pc.connectionState;
           if (s !== 'disconnected' && s !== 'failed') return;
           try {
@@ -410,6 +437,13 @@ export default function CallProvider({ children }: { children: React.ReactNode }
             }
           } catch {}
         }, wait);
+        if (!dropTimerRef.current) {
+          dropTimerRef.current = setTimeout(() => {
+            if (pcRef.current !== pc || activeCallRef.current?.id !== call.id) return;
+            if (pc.connectionState === 'connected') return;
+            void endCall('ended');
+          }, 20_000);
+        }
       }
     };
     pc.oniceconnectionstatechange = () => {
@@ -421,18 +455,46 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     return pc;
   };
 
+  const addOrQueueIceCandidate = async (pc: RTCPeerConnection, candidate: RTCIceCandidateInit) => {
+    if (!candidate) return;
+    if (!pc.remoteDescription) {
+      pendingIceRef.current.push(candidate);
+      return;
+    }
+    try { await pc.addIceCandidate(candidate); } catch (error) { console.warn('[Call] ICE candidate rejected', error); }
+  };
+
+  const flushQueuedIceCandidates = async (pc: RTCPeerConnection) => {
+    const queued = pendingIceRef.current.splice(0);
+    for (const candidate of queued) {
+      try { await pc.addIceCandidate(candidate); } catch (error) { console.warn('[Call] queued ICE candidate rejected', error); }
+    }
+  };
+
   const acquireMedia = async (type: CallType) => {
     if (!navigator.mediaDevices?.getUserMedia) {
       throw new Error('Media devices are not available on this device.');
     }
+    let timedOut = false;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
     const mediaPromise = navigator.mediaDevices.getUserMedia({
       audio: true,
       video: type === 'video' ? { facingMode: cameraFacing } : false,
+    }).then((stream) => {
+      if (timedOut) {
+        stream.getTracks().forEach((track) => track.stop());
+        throw new Error('Media permission request timed out.');
+      }
+      return stream;
     });
     const timeoutPromise = new Promise<never>((_, reject) => {
-      window.setTimeout(() => reject(new Error('Media permission request timed out.')), 8000);
+      timeoutId = window.setTimeout(() => {
+        timedOut = true;
+        reject(new Error('Media permission request timed out.'));
+      }, 8000);
     });
     const stream = await Promise.race([mediaPromise, timeoutPromise]);
+    if (timeoutId) clearTimeout(timeoutId);
     localStreamRef.current = stream;
     if (localVideoRef.current && type === 'video') {
       localVideoRef.current.srcObject = stream;
@@ -684,11 +746,14 @@ export default function CallProvider({ children }: { children: React.ReactNode }
 
       channel.on('broadcast', { event: 'answer' }, async ({ payload }) => {
         if (!pcRef.current) return;
-        try { await pcRef.current.setRemoteDescription(new RTCSessionDescription(payload.sdp)); } catch {}
+        try {
+          await pcRef.current.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+          await flushQueuedIceCandidates(pcRef.current);
+        } catch (error) { console.warn('[Call] answer rejected', error); }
       });
       channel.on('broadcast', { event: 'ice' }, async ({ payload }) => {
         if (!pcRef.current || payload.from === user.id) return;
-        try { await pcRef.current.addIceCandidate(payload.candidate); } catch {}
+        await addOrQueueIceCandidate(pcRef.current, payload.candidate);
       });
       await channel.subscribe();
 
@@ -918,6 +983,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     channel.on('broadcast', { event: 'offer' }, async ({ payload }) => {
       try {
         await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+        await flushQueuedIceCandidates(pc);
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         channel.send({ type: 'broadcast', event: 'answer', payload: { sdp: answer, from: user?.id } });
@@ -926,7 +992,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     });
     channel.on('broadcast', { event: 'ice' }, async ({ payload }) => {
       if (payload.from === user?.id) return;
-      try { await pc.addIceCandidate(payload.candidate); } catch {}
+      await addOrQueueIceCandidate(pc, payload.candidate);
     });
     await channel.subscribe();
 
@@ -997,7 +1063,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
             )}
             <span className="text-xs font-medium max-w-[110px] truncate">{remoteName}</span>
             <span className="text-xs text-white/70 tabular-nums">
-              {micStatus === 'failed' ? 'mic' : micStatus === 'recovering' ? '…' : callState === 'connected' ? fmt(callDuration) : callState === 'connecting' ? '...' : 'ring'}
+              {micStatus === 'failed' ? 'mic' : micStatus === 'recovering' ? '…' : callState === 'connected' ? fmt(callDuration) : callState === 'reconnecting' ? 'retry' : callState === 'connecting' ? '...' : 'ring'}
             </span>
             <span className="ml-1 w-7 h-7 rounded-full bg-white/10 flex items-center justify-center">
               <Maximize2 size={13} />
@@ -1025,13 +1091,10 @@ export default function CallProvider({ children }: { children: React.ReactNode }
       )}
       {activeCall && !minimized && (
         <div
-          className="fixed inset-0 z-[100] flex flex-col text-white"
-          style={{
-            background:
-              activeCall.call_type === 'video'
-                ? '#000'
-                : 'radial-gradient(ellipse at center, #1a0333 0%, #0a0118 60%, #050010 100%)',
-          }}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${activeCall.call_type === 'video' ? 'Video' : 'Voice'} call with ${remoteName}`}
+          className="vt-call-shell fixed inset-0 z-[100] flex flex-col"
         >
           {/* Full-bleed remote video for video calls */}
           {activeCall.call_type === 'video' && (
@@ -1049,10 +1112,8 @@ export default function CallProvider({ children }: { children: React.ReactNode }
                   or the peer disabled their camera — so the user never sees a
                   bare black rectangle. */}
               {(!viewSwapped && (!remoteVideoLive || callState !== 'connected')) && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center"
-                  style={{ background: 'radial-gradient(ellipse at center, #1a0333 0%, #0a0118 60%, #050010 100%)' }}
-                >
-                  <div className="w-36 h-36 rounded-full overflow-hidden bg-gradient-to-br from-purple-600 to-purple-900 flex items-center justify-center text-5xl font-bold shadow-[0_0_60px_rgba(168,85,247,0.5)]">
+                <div className="vt-call-shell absolute inset-0 flex flex-col items-center justify-center">
+                  <div className="vt-call-avatar w-36 h-36 rounded-full overflow-hidden flex items-center justify-center text-5xl font-bold">
                     {remoteAvatarUrl ? (
                       <img src={remoteAvatarUrl} alt={remoteName} className="w-full h-full object-cover" />
                     ) : (
@@ -1070,39 +1131,35 @@ export default function CallProvider({ children }: { children: React.ReactNode }
           )}
 
           {/* Top bar */}
-          <div className="relative z-10 flex items-center justify-between px-4 pt-6 pb-3" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}>
+          <div className="vt-call-topbar relative z-10 flex items-center justify-between px-4 pt-6 pb-3" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}>
             <button
               onClick={() => setMinimized(true)}
               aria-label="Minimize call"
-              className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center"
+              className="vt-call-control w-11 h-11 rounded-full flex items-center justify-center"
             >
               <ChevronDown size={22} />
             </button>
             <div className="flex-1 flex flex-col items-center min-w-0 px-2">
-              <h3 className="font-bold text-xl truncate max-w-full">{remoteName}</h3>
+              <h3 className="vt-call-title font-bold text-xl truncate max-w-full">{remoteName}</h3>
               <div className="flex items-center gap-1.5 mt-0.5">
-                <ShieldCheck size={13} className="text-purple-400" />
-                <span className="text-[11px] font-medium text-purple-300">End-to-end encrypted</span>
+                <ShieldCheck size={13} className="vt-call-status" />
+                <span className="vt-call-status text-[11px] font-medium">End-to-end encrypted</span>
               </div>
               <p className="text-sm text-white/70 mt-1 tabular-nums">
                 {callState === 'ringing' && (role === 'caller' ? `${activeCall.call_type === 'video' ? 'Video' : 'Voice'} calling…` : `Incoming ${activeCall.call_type} call`)}
                 {callState === 'connecting' && 'Connecting…'}
+                {callState === 'reconnecting' && 'Reconnecting…'}
                 {callState === 'connected' && fmt(callDuration)}
               </p>
             </div>
-            <button
-              aria-label="More"
-              className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center opacity-70"
-            >
-              <MoreVertical size={20} />
-            </button>
+            <div className="w-11" aria-hidden="true" />
           </div>
 
           {micStatus !== 'ok' && (
             <button
               onClick={() => { if (micStatus === 'failed') void recoverMicrophone('user:banner'); }}
               disabled={micStatus === 'recovering'}
-              className="relative z-10 mx-auto mt-2 flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/95 text-neutral-900 text-xs font-medium shadow-lg disabled:opacity-80"
+              className="vt-call-recovery relative z-10 mx-auto mt-2 flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium shadow-lg disabled:opacity-80"
             >
               <AlertTriangle size={13} />
               <span className="truncate">
@@ -1117,10 +1174,10 @@ export default function CallProvider({ children }: { children: React.ReactNode }
               <>
                 {/* Concentric purple pulse rings behind the avatar */}
                 <div className="relative flex items-center justify-center">
-                  <span className="absolute w-64 h-64 rounded-full border border-purple-500/20 animate-vt-ring" style={{ animationDelay: '0s' }} />
-                  <span className="absolute w-52 h-52 rounded-full border border-purple-500/30 animate-vt-ring" style={{ animationDelay: '0.4s' }} />
-                  <span className="absolute w-40 h-40 rounded-full border border-purple-500/40 animate-vt-ring" style={{ animationDelay: '0.8s' }} />
-                  <div className="relative w-32 h-32 rounded-full overflow-hidden bg-gradient-to-br from-purple-600 to-purple-900 flex items-center justify-center text-4xl font-bold shadow-[0_0_60px_rgba(168,85,247,0.5)]">
+                   <span className="vt-call-ring absolute w-64 h-64 rounded-full border animate-vt-ring" style={{ animationDelay: '0s' }} />
+                   <span className="vt-call-ring absolute w-52 h-52 rounded-full border animate-vt-ring" style={{ animationDelay: '0.4s' }} />
+                   <span className="vt-call-ring absolute w-40 h-40 rounded-full border animate-vt-ring" style={{ animationDelay: '0.8s' }} />
+                   <div className="vt-call-avatar relative w-32 h-32 rounded-full overflow-hidden flex items-center justify-center text-4xl font-bold">
                     {remoteAvatarUrl ? (
                       <img src={remoteAvatarUrl} alt={remoteName} className="w-full h-full object-cover" />
                     ) : (
@@ -1129,16 +1186,15 @@ export default function CallProvider({ children }: { children: React.ReactNode }
                   </div>
                 </div>
                 {/* Waveform */}
-                <div className="mt-16 flex items-center justify-center gap-[3px] h-16 w-full max-w-xs">
+                <div aria-hidden="true" className="mt-16 flex items-center justify-center gap-[3px] h-16 w-full max-w-xs">
                   {Array.from({ length: 48 }).map((_, i) => (
                     <span
                       key={i}
-                      className="w-[3px] rounded-full bg-purple-500"
+                      className="vt-call-wave w-[3px] rounded-full"
                       style={{
                         height: `${20 + Math.abs(Math.sin(i * 0.6)) * 40 + Math.abs(Math.cos(i * 0.9)) * 15}%`,
                         opacity: callState === 'connected' ? 0.9 : 0.35,
                         animation: callState === 'connected' ? `vt-wave 1.1s ease-in-out ${i * 0.05}s infinite` : undefined,
-                        boxShadow: '0 0 8px rgba(168, 85, 247, 0.6)',
                       }}
                     />
                   ))}
@@ -1188,39 +1244,42 @@ export default function CallProvider({ children }: { children: React.ReactNode }
 
           {/* Bottom control bar */}
           <div
-            className="relative z-10 px-6 pt-4 pb-8 flex items-center justify-center gap-4"
+            className="relative z-10 px-4 pt-4 pb-8 flex items-center justify-center"
             style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 24px)' }}
           >
             {role === 'callee' && callState === 'ringing' ? (
-              <>
+              <div className="vt-call-dock flex items-center gap-8 rounded-[28px] p-3">
                 <button
                   onClick={() => { playEndCallClick(); declineCall(); }}
-                  className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center hover:bg-red-600 shadow-lg"
+                  className="vt-call-danger w-16 h-16 rounded-full flex items-center justify-center shadow-lg"
                   aria-label="Decline"
                 >
                   <PhoneOff size={26} />
                 </button>
                 <button
                   onClick={() => acceptCall()}
-                  className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center hover:bg-green-600 shadow-lg"
+                  className="vt-call-success w-16 h-16 rounded-full flex items-center justify-center shadow-lg"
                   aria-label="Accept"
                 >
                   <Phone size={26} />
                 </button>
-              </>
+              </div>
             ) : (
-              <>
+              <div className="vt-call-dock flex max-w-full items-center gap-2 rounded-[28px] p-3">
                 <button
                   onClick={toggleMic}
                   aria-label={micMuted ? 'Unmute microphone' : 'Mute microphone'}
-                  className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${micMuted ? 'bg-red-500/30 text-red-300' : 'bg-white/10 hover:bg-white/20'}`}
+                  aria-pressed={micMuted}
+                  className={`vt-call-control w-13 h-13 rounded-full flex items-center justify-center transition-all ${micMuted ? 'text-destructive' : ''}`}
                 >
                   {micMuted ? <MicOff size={22} /> : <Mic size={22} />}
                 </button>
                 <button
                   onClick={toggleAudioRoute}
                   aria-label={audioRoute === 'speaker' ? 'Switch to earpiece' : 'Switch to speaker'}
-                  className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${audioRoute === 'speaker' ? 'bg-white text-purple-900' : 'bg-white/10 hover:bg-white/20'}`}
+                  aria-pressed={audioRoute === 'speaker'}
+                  data-active={audioRoute === 'speaker'}
+                  className="vt-call-control w-13 h-13 rounded-full flex items-center justify-center transition-all"
                 >
                   {audioRoute === 'speaker' ? <Volume2 size={22} /> : <Ear size={22} />}
                 </button>
@@ -1228,7 +1287,8 @@ export default function CallProvider({ children }: { children: React.ReactNode }
                   <button
                     onClick={toggleVideo}
                     aria-label={videoOff ? 'Turn camera on' : 'Turn camera off'}
-                    className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${videoOff ? 'bg-red-500/30 text-red-300' : 'bg-white/10 hover:bg-white/20'}`}
+                    aria-pressed={videoOff}
+                    className={`vt-call-control w-13 h-13 rounded-full flex items-center justify-center transition-all ${videoOff ? 'text-destructive' : ''}`}
                   >
                     {videoOff ? <VideoOff size={22} /> : <Video size={22} />}
                   </button>
@@ -1237,7 +1297,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
                   <button
                     onClick={switchCamera}
                     aria-label="Switch camera"
-                    className="w-14 h-14 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 transition-all"
+                    className="vt-call-control w-13 h-13 rounded-full flex items-center justify-center transition-all"
                   >
                     <SwitchCamera size={22} />
                   </button>
@@ -1245,11 +1305,11 @@ export default function CallProvider({ children }: { children: React.ReactNode }
                 <button
                   onClick={() => { playEndCallClick(); endCall('ended'); }}
                   aria-label="End call"
-                  className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center hover:bg-red-600 shadow-lg"
+                  className="vt-call-danger w-14 h-14 rounded-full flex items-center justify-center shadow-lg"
                 >
                   <PhoneOff size={26} />
                 </button>
-              </>
+              </div>
             )}
           </div>
         </div>

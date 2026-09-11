@@ -81,6 +81,17 @@
   --aurora-magenta: #d946ef;
   --aurora-violet: #7c3aed;
   --aurora-lilac: #c084fc;
+  --call-bg: oklch(0.12 0.045 300);
+  --call-surface: oklch(0.22 0.075 300 / 0.72);
+  --call-surface-strong: oklch(0.25 0.1 298 / 0.92);
+  --call-border: oklch(0.78 0.12 300 / 0.22);
+  --call-primary: oklch(0.64 0.24 295);
+  --call-primary-deep: oklch(0.32 0.17 298);
+  --call-text: oklch(0.98 0.01 300);
+  --call-muted: oklch(0.82 0.045 295);
+  --call-success: oklch(0.72 0.18 150);
+  --call-warning: oklch(0.8 0.16 80);
+  --call-danger: oklch(0.63 0.23 25);
 }
 
 .dark { color-scheme: dark; }
@@ -524,12 +535,43 @@ html[data-trust-lock-recording="true"] body {
 }
 
 /* ---------- Call UI animations ---------- */
+.vt-call-shell {
+  background:
+    radial-gradient(circle at 50% 34%, color-mix(in oklab, var(--call-primary) 24%, transparent), transparent 35%),
+    linear-gradient(165deg, var(--call-primary-deep), var(--call-bg) 58%);
+  color: var(--call-text);
+  font-family: 'Manrope', var(--font-sans);
+}
+.vt-call-title { font-family: 'Sora', var(--font-sans); letter-spacing: 0; }
+.vt-call-topbar { background: linear-gradient(to bottom, color-mix(in oklab, var(--call-bg) 88%, transparent), transparent); }
+.vt-call-avatar {
+  background: linear-gradient(145deg, var(--call-primary), var(--call-primary-deep));
+  box-shadow: 0 0 0 1px var(--call-border), 0 22px 64px color-mix(in oklab, var(--call-primary) 38%, transparent);
+}
+.vt-call-dock {
+  background: var(--call-surface);
+  border: 1px solid var(--call-border);
+  box-shadow: 0 20px 60px color-mix(in oklab, var(--call-bg) 74%, transparent);
+  backdrop-filter: blur(28px);
+}
+.vt-call-control { background: color-mix(in oklab, var(--call-text) 11%, transparent); color: var(--call-text); }
+.vt-call-control:hover { background: color-mix(in oklab, var(--call-text) 18%, transparent); }
+.vt-call-control[data-active="true"] { background: var(--call-text); color: var(--call-primary-deep); }
+.vt-call-danger { background: var(--call-danger); color: var(--call-text); }
+.vt-call-success { background: var(--call-success); color: var(--call-bg); }
+.vt-call-status { color: var(--call-muted); }
+.vt-call-recovery { background: var(--call-warning); color: var(--call-bg); }
 @keyframes vt-ring {
   0%   { transform: scale(0.85); opacity: 0.9; }
   100% { transform: scale(1.35); opacity: 0; }
 }
 .animate-vt-ring {
   animation: vt-ring 2.4s ease-out infinite;
+}
+.vt-call-ring { border-color: color-mix(in oklab, var(--call-primary) 46%, transparent); }
+.vt-call-wave { background: var(--call-primary); box-shadow: 0 0 8px color-mix(in oklab, var(--call-primary) 62%, transparent); }
+@media (prefers-reduced-motion: reduce) {
+  .animate-vt-ring, .vt-call-wave { animation: none !important; }
 }
 @keyframes vt-wave {
   0%, 100% { transform: scaleY(0.45); }
