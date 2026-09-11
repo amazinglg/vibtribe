@@ -15,7 +15,7 @@ export type PushPayload = {
 
 const PUBLIC_KEY_CACHE = 'vt_vapid_public_key';
 const LAST_SYNC_CACHE = 'vt_push_last_subscription_sync_at';
-const SW_URL = '/sw.js?v=ios-push-v3';
+const SW_URL = '/sw.js?v=ios-push-v4';
 
 function isLovablePreviewHost(hostname: string): boolean {
   return hostname.startsWith('id-preview--')
