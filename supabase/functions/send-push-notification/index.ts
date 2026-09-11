@@ -17,15 +17,11 @@ const json = (body: unknown, status = 200) => new Response(JSON.stringify(body),
 const safeText = (value: unknown, fallback = '') => String(value || fallback).slice(0, 160);
 const safePath = (value: unknown) => typeof value === 'string' && value.startsWith('/') && !value.startsWith('//') ? value : '/';
 
-function normalizeVapidSubject(value: string | null): string {
-  const subject = String(value || '').trim();
-  // APNs validates the VAPID `sub` claim strictly. A previous environment
-  // value used the misspelled domain `vibetribe.in`, which produces
-  // `BadJwtToken` on iOS PWA pushes. Always force the verified domain.
-  if (!subject || /vibetribe\.in/i.test(subject) || !/^(mailto:|https:\/\/)/i.test(subject)) {
-    return 'mailto:support@vibtribe.in';
-  }
-  return subject;
+function getVapidSubject(): string {
+  // Apple's Web Push gateway validates this claim more strictly than other
+  // push services. Always use VibTribe's verified production origin instead
+  // of a legacy or malformed environment-provided contact value.
+  return 'https://www.vibtribe.in';
 }
 
 serve(async (req) => {
@@ -39,7 +35,7 @@ serve(async (req) => {
     // non-existent domain. Default MUST match the real production domain
     // (vibtribe.in — was a typo `vibetribe.in` before which caused APNs
     // to silently drop iOS PWA pushes).
-    const subject = normalizeVapidSubject(Deno.env.get('VAPID_SUBJECT'));
+    const subject = getVapidSubject();
     const body = await req.json().catch(() => ({}));
 
     if (body.action === 'getPublicKey') {
@@ -196,15 +192,13 @@ serve(async (req) => {
         console.warn('[push] delivery error', { status, bodyMsg, endpoint: sub.endpoint?.slice(0, 60) });
         // Stale-subscription detection:
         //  - 404/410           → endpoint gone (Chrome/FCM + Firefox)
-        //  - 401              → FCM rejects the VAPID JWT (key was rotated)
-        //  - 403 BadJwtToken / VapidPkHashMismatch → Apple/FCM rejected our VAPID auth
-        // In all of these cases the saved subscription is unusable, so we drop it
-        // and the client will re-subscribe with the current key on next visit.
+        // Only remove endpoints the provider explicitly says are gone.
+        // BadJwtToken is a sender-side VAPID failure, not a stale device
+        // subscription. Keeping the Apple endpoint allows delivery to resume
+        // as soon as sender authentication is corrected.
         if (
           status === 404 ||
-          status === 410 ||
-          status === 401 ||
-          (status === 403 && /BadJwtToken|VapidPkHashMismatch|JWT|vapid/i.test(bodyMsg))
+          status === 410
         ) {
           expired.push(sub.endpoint);
         } else {
