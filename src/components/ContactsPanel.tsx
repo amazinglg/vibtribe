@@ -157,8 +157,8 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
   const matchContactsWithPlatform = async (rawContacts: any[]) => {
     setLoading(true);
     // Normalise. Each raw contact may have multiple numbers — keep them all but tied to one display name.
-    const normalized: { name: string; phone: string }[] = [];
-    for (const c of rawContacts) {
+    const normalized: { name: string; phone: string; sourceIndex: number }[] = [];
+    for (const [sourceIndex, c] of rawContacts.entries()) {
       const name = Array.isArray(c.name) ? c.name[0] : c.name || 'Unknown';
       const phones: string[] = Array.isArray(c.tel) ? c.tel : [c.tel].filter(Boolean);
       // Dedupe phones within the same contact card (a contact may list home+mobile that resolve to the same digits)
@@ -167,7 +167,7 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
         const clean = phone.replace(/\D/g, '');
         if (clean.length < 7 || seenForContact.has(clean)) continue;
         seenForContact.add(clean);
-        normalized.push({ name, phone: clean });
+        normalized.push({ name, phone: clean, sourceIndex });
       }
     }
 
@@ -200,6 +200,15 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
     // Build cards: one per unique person. Prefer matched platform user; otherwise unique by phone.
     const platformSeen = new Set<string>();
     const phoneSeen = new Set<string>();
+    const sourcesWithPlatformMatch = new Set<number>();
+    for (const c of normalized) {
+      if (platformByLast10.has(c.phone.slice(-10))) sourcesWithPlatformMatch.add(c.sourceIndex);
+    }
+    const matchedAliasPhones = new Set(
+      normalized
+        .filter(c => sourcesWithPlatformMatch.has(c.sourceIndex) && !platformByLast10.has(c.phone.slice(-10)))
+        .map(c => c.phone),
+    );
     const result: Contact[] = [];
     for (const c of normalized) {
       const match = platformByLast10.get(c.phone.slice(-10));
@@ -216,6 +225,10 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
           isVerified: !!match.is_verified,
         });
       } else {
+        // Another number on this exact address-book card matched a VibTribe
+        // account, so this number is an alias of the same person. Do not infer
+        // aliases from display names: unrelated people can share a name.
+        if (sourcesWithPlatformMatch.has(c.sourceIndex)) continue;
         if (phoneSeen.has(c.phone)) continue;
         phoneSeen.add(c.phone);
         result.push({ name: c.name, phone: c.phone, onPlatform: false });
@@ -244,25 +257,8 @@ export default function ContactsPanel({ onClose, onStartChat }: ContactsPanelPro
           phone: c.phone || existing.phone,
         });
       }
-      // If exactly one platform account shares a saved name, its other saved
-      // numbers are aliases of that contact. Ambiguous same-name contacts remain
-      // separate, and unnamed entries always retain their phone-based identity.
       const entries = Array.from(byKey.values());
-      const platformIdsByName = new Map<string, Set<string>>();
-      for (const c of entries) {
-        const name = (c.name || '').trim().toLowerCase();
-        if (!name || !c.userId) continue;
-        const ids = platformIdsByName.get(name) || new Set<string>();
-        ids.add(c.userId);
-        platformIdsByName.set(name, ids);
-      }
-
-      return entries.filter(c => {
-        if (c.userId) return true;
-        const name = (c.name || '').trim().toLowerCase();
-        if (!name) return true;
-        return platformIdsByName.get(name)?.size !== 1;
-      });
+      return entries.filter(c => c.userId || !matchedAliasPhones.has(c.phone));
 
     });
     setLoading(false);
