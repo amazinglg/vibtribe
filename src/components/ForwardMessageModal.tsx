@@ -70,9 +70,9 @@ export default function ForwardMessageModal({ isOpen, onClose, messages, attachm
         });
         let profMap: Record<string, any> = {};
         if (otherIds.size > 0) {
-          const { data: profs } = await supabase
-            .from('user_profiles').select('id, full_name, avatar_url')
-            .in('id', Array.from(otherIds));
+          const { data: profs } = await supabase.rpc('get_public_profile_snippets', {
+            _ids: Array.from(otherIds),
+          });
           (profs || []).forEach((p: any) => { profMap[p.id] = p; });
         }
         const out: Target[] = (chats || []).map((c: any) => {
@@ -179,11 +179,12 @@ export default function ForwardMessageModal({ isOpen, onClose, messages, attachm
           const { data: mrows } = await supabase.from('chat_members').select('user_id').eq('chat_id', chatId);
           const ids = (mrows || []).map((r: any) => r.user_id);
           if (ids.length) {
-            const { data: profs } = await supabase.from('user_profiles').select('id, public_key').in('id', ids);
+            const { data: profs } = await supabase.rpc('get_public_profile_snippets', { _ids: ids });
             members = (profs || []).filter((p: any) => !!p.public_key).map((p: any) => ({ userId: p.id, publicKey: p.public_key }));
           }
         } else if (tgt.otherUserId) {
-          const { data: prof } = await supabase.from('user_profiles').select('public_key').eq('id', tgt.otherUserId).single();
+          const { data: profs } = await supabase.rpc('get_public_profile_snippets', { _ids: [tgt.otherUserId] });
+          const prof = profs?.[0];
           otherPk = prof?.public_key || null;
           if (!otherPk) { failCount++; continue; }
         }

@@ -817,8 +817,8 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     let callerName = 'Unknown'; let callerAvatar = 'U';
     let callerAvatarUrl: string | null = null;
     try {
-      const { data: p } = await supabase
-        .from('user_profiles').select('full_name, avatar_url').eq('id', row.caller_id).maybeSingle();
+      const { data: profiles } = await supabase.rpc('get_public_profile_snippets', { _ids: [row.caller_id] });
+      const p = profiles?.[0];
       if (p?.full_name) { callerName = p.full_name; callerAvatar = p.full_name[0]?.toUpperCase() || 'U'; }
       if (p?.avatar_url) callerAvatarUrl = p.avatar_url;
     } catch {}
@@ -915,11 +915,13 @@ export default function CallProvider({ children }: { children: React.ReactNode }
           } catch {}
           if (!data) return;
           // Populate remote-party display info, then join immediately.
-          supabase.from('user_profiles').select('full_name, avatar_url').eq('id', data.caller_id).maybeSingle()
-            .then(({ data: p }) => {
+          supabase.rpc('get_public_profile_snippets', { _ids: [data.caller_id] })
+            .then(({ data: profiles }) => {
+              const p = profiles?.[0];
               const name = p?.full_name || 'Unknown';
               setRemoteName(name);
               setRemoteAvatar((name[0] || 'U').toUpperCase());
+              setRemoteAvatarUrl(p?.avatar_url || null);
               void acceptCall(data);
             });
         });

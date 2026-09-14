@@ -282,14 +282,19 @@ export async function registerNativePushNotifications(
 
       PushNotifications.addListener('registration', async (token) => {
         try {
-          await (supabase as unknown as { from: (t: string) => { upsert: (v: unknown, o?: unknown) => Promise<unknown> } }).from('fcm_tokens').upsert({
-            user_id: userId,
-            token: token.value,
-            platform: 'android',
-            updated_at: new Date().toISOString(),
-          }, { onConflict: 'token' });
+          const { data, error } = await supabase.rpc('claim_fcm_token', {
+            _token: token.value,
+            _platform: 'android',
+          });
+          if (error || data !== true) {
+            console.warn('[VibTribe] fcm token claim failed', error?.message || 'Token was not saved');
+            done(null);
+            return;
+          }
         } catch (e) {
-          console.warn('[VibTribe] fcm token upsert failed', e);
+          console.warn('[VibTribe] fcm token claim failed', e);
+          done(null);
+          return;
         }
         done(token.value);
       });
