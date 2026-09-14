@@ -2604,6 +2604,10 @@ export type Database = {
       can_view_status_owner: { Args: { _owner_id: string }; Returns: boolean }
       cancel_totp_enrollment: { Args: never; Returns: undefined }
       check_otp_rate_limit: { Args: { _email: string }; Returns: number }
+      claim_fcm_token: {
+        Args: { _platform?: string; _token: string }
+        Returns: boolean
+      }
       claim_push_subscription: {
         Args: { _auth: string; _endpoint: string; _p256dh: string }
         Returns: undefined
@@ -2832,6 +2836,7 @@ export type Database = {
           is_verified: boolean
           last_seen: string
           profile_photo_visibility: string
+          public_key: string
           username: string
         }[]
       }
