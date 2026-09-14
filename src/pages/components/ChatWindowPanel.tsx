@@ -951,10 +951,7 @@ export default function ChatWindowPanel() {
               .eq('chat_id', selectedChatId);
             const memberIds = (memberRows || []).map((r: any) => r.user_id);
             if (memberIds.length) {
-              const { data: profs } = await supabase
-                .from('user_profiles')
-                .select('id, public_key')
-                .in('id', memberIds);
+              const { data: profs } = await supabase.rpc('get_public_profile_snippets', { _ids: memberIds });
               const members: GroupMember[] = (profs || [])
                 .filter((p: any) => !!p.public_key)
                 .map((p: any) => ({ userId: p.id, publicKey: p.public_key }));
@@ -1043,11 +1040,8 @@ export default function ChatWindowPanel() {
         tribeMembersRef.current = [];
 
         const otherUserId = chat.participant_one === user.id ? chat.participant_two : chat.participant_one;
-        const { data: otherUser } = await supabase
-          .from('user_profiles')
-          .select('full_name, is_online, last_seen, public_key, avatar_url, profile_photo_visibility')
-          .eq('id', otherUserId)
-          .single();
+        const { data: otherProfiles } = await supabase.rpc('get_public_profile_snippets', { _ids: [otherUserId] });
+        const otherUser = otherProfiles?.[0];
 
         if (otherUser) {
           const hasE2E = !!otherUser.public_key;
@@ -1332,12 +1326,8 @@ export default function ChatWindowPanel() {
     if (!senderId) return null;
     const cached = senderPubKeyCacheRef.current.get(senderId);
     if (cached) return cached;
-    const { data } = await supabase
-      .from('user_profiles')
-      .select('public_key')
-      .eq('id', senderId)
-      .maybeSingle();
-    const pk = (data as any)?.public_key || null;
+    const { data } = await supabase.rpc('get_public_profile_snippets', { _ids: [senderId] });
+    const pk = data?.[0]?.public_key || null;
     if (pk) senderPubKeyCacheRef.current.set(senderId, pk);
     return pk;
   };
@@ -1364,11 +1354,8 @@ export default function ChatWindowPanel() {
             ? (chatRow.participant_one === user.id ? chatRow.participant_two : chatRow.participant_one)
             : null;
           if (otherId) {
-            const { data: prof } = await supabase
-              .from('user_profiles')
-              .select('public_key, full_name')
-              .eq('id', otherId)
-              .maybeSingle();
+            const { data: profiles } = await supabase.rpc('get_public_profile_snippets', { _ids: [otherId] });
+            const prof = profiles?.[0];
             if (prof?.public_key) {
               effectivePubKey = prof.public_key;
               contactPubKeyRef.current = prof.public_key;
@@ -1405,10 +1392,7 @@ export default function ChatWindowPanel() {
           .eq('chat_id', selectedChatId);
         const memberIds = (memberRows || []).map((r: any) => r.user_id);
         if (memberIds.length) {
-          const { data: profs } = await supabase
-            .from('user_profiles')
-            .select('id, public_key')
-            .in('id', memberIds);
+          const { data: profs } = await supabase.rpc('get_public_profile_snippets', { _ids: memberIds });
           const members: GroupMember[] = (profs || [])
             .filter((p: any) => !!p.public_key)
             .map((p: any) => ({ userId: p.id, publicKey: p.public_key }));
@@ -1579,8 +1563,7 @@ export default function ChatWindowPanel() {
           .from('chat_members').select('user_id').eq('chat_id', selectedChatId);
         const memberIds = (memberRows || []).map((r: any) => r.user_id);
         if (memberIds.length) {
-          const { data: profs } = await supabase
-            .from('user_profiles').select('id, public_key').in('id', memberIds);
+          const { data: profs } = await supabase.rpc('get_public_profile_snippets', { _ids: memberIds });
           groupMembers = (profs || [])
             .filter((p: any) => !!p.public_key)
             .map((p: any) => ({ userId: p.id, publicKey: p.public_key }));

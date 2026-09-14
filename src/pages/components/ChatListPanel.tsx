@@ -461,10 +461,7 @@ export default function ChatListPanel() {
       ));
       const otherProfilesMap = new Map<string, any>();
       if (otherIds.length) {
-        const { data: profs } = await supabase
-          .from('user_profiles')
-          .select('id, full_name, is_online, last_seen, public_key, avatar_url, profile_photo_visibility, is_verified')
-          .in('id', otherIds);
+        const { data: profs } = await supabase.rpc('get_public_profile_snippets', { _ids: otherIds });
         for (const p of (profs || [])) otherProfilesMap.set(p.id, p);
       }
 
@@ -493,11 +490,8 @@ export default function ChatListPanel() {
               const cached = otherProfilesMap.get(lastMsg.sender_id);
               if (cached?.public_key) senderPk = cached.public_key;
               else {
-                const { data: sp } = await supabase
-                  .from('user_profiles')
-                  .select('public_key')
-                  .eq('id', lastMsg.sender_id)
-                  .maybeSingle();
+                const { data: senderProfiles } = await supabase.rpc('get_public_profile_snippets', { _ids: [lastMsg.sender_id] });
+                const sp = senderProfiles?.[0];
                 senderPk = sp?.public_key || null;
               }
               if (senderPk) {
@@ -551,11 +545,8 @@ export default function ChatListPanel() {
         // current user is a participant of.
         if (!otherUser && otherUserId) {
           try {
-            const { data: p } = await supabase
-              .from('user_profiles')
-              .select('id, full_name, is_online, last_seen, public_key, avatar_url, profile_photo_visibility, is_verified')
-              .eq('id', otherUserId)
-              .maybeSingle();
+            const { data: fallbackProfiles } = await supabase.rpc('get_public_profile_snippets', { _ids: [otherUserId] });
+            const p = fallbackProfiles?.[0];
             if (p) {
               otherUser = p;
               otherProfilesMap.set(otherUserId, p);
@@ -1084,11 +1075,8 @@ export default function ChatListPanel() {
                 if (!isTribe && participantId) {
                   let profileSnap: any = undefined;
                   try {
-                    const { data: p } = await supabase
-                      .from('user_profiles')
-                      .select('id, full_name, username, avatar_url')
-                      .eq('id', participantId)
-                      .maybeSingle();
+                    const { data: reportProfiles } = await supabase.rpc('get_public_profile_snippets', { _ids: [participantId] });
+                    const p = reportProfiles?.[0];
                     if (p) profileSnap = { id: p.id, full_name: p.full_name, username: p.username, avatar_url: p.avatar_url };
                   } catch {}
                   setReportTarget({
