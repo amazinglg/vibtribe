@@ -4,51 +4,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { ensurePushSubscription, attachPushSubscriptionChangeListener, shouldRefreshPushSubscription, registerNewMessagePushServiceWorker } from '@/lib/pushNotifications';
 import { useChatStore } from '@/store/chatStore';
 
-// Ringtone audio context for incoming calls
-let ringtoneInterval: ReturnType<typeof setInterval> | null = null;
-
-function playRingtone() {
-  if (typeof window === 'undefined') return;
-  try {
-    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioCtx) return;
-
-    const ctx = new AudioCtx();
-
-    const playBeep = (startTime: number) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(880, startTime);
-      osc.frequency.setValueAtTime(660, startTime + 0.15);
-      gain.gain.setValueAtTime(0.4, startTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.4);
-      osc.start(startTime);
-      osc.stop(startTime + 0.4);
-    };
-
-    const now = ctx.currentTime;
-    playBeep(now);
-    playBeep(now + 0.5);
-
-    // Repeat every 2 seconds
-    ringtoneInterval = setInterval(() => {
-      const t = ctx.currentTime;
-      playBeep(t);
-      playBeep(t + 0.5);
-    }, 2000);
-  } catch {}
-}
-
-function stopRingtone() {
-  if (ringtoneInterval) {
-    clearInterval(ringtoneInterval);
-    ringtoneInterval = null;
-  }
-}
-
 export default function ServiceWorkerRegistration() {
   const { user } = useAuth();
   const { setSelectedChatId } = useChatStore();
@@ -119,7 +74,6 @@ export default function ServiceWorkerRegistration() {
 
     const handleSWMessage = (event: MessageEvent) => {
       if (event.data?.type === 'INCOMING_CALL') {
-        playRingtone();
         const payload = event.data?.payload || {};
         window.dispatchEvent(new CustomEvent('vt-incoming-call', {
           detail: { callId: payload.callId, chatId: payload.chatId || null },
@@ -128,7 +82,6 @@ export default function ServiceWorkerRegistration() {
         event.data?.type === 'CALL_DECLINED' ||
         event.data?.type === 'ANSWER_CALL'
       ) {
-        stopRingtone();
         const payload = event.data?.payload || {};
         const chatId = payload.chatId;
         if (chatId) setSelectedChatId(chatId);
@@ -162,7 +115,6 @@ export default function ServiceWorkerRegistration() {
       }
       window.removeEventListener('vt-open-chat', handleOpenChat as EventListener);
       window.removeEventListener('popstate', openChatFromUrl);
-      stopRingtone();
     };
   }, [setSelectedChatId]);
 
