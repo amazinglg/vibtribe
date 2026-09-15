@@ -54,6 +54,7 @@ import { Route as AdminUserUserIdRouteImport } from './routes/admin.user.$userId
 import { Route as ApiPublicAuthLoginRouteImport } from './routes/api/public/auth-login'
 import { Route as ApiPublicAuthOtpRouteImport } from './routes/api/public/auth-otp'
 import { Route as ApiPublicResendWebhookRouteImport } from './routes/api/public/resend-webhook'
+import { Route as LovableEmailEventsRouteImport } from './routes/lovable/email/events'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as TribeJoinCodeRouteImport } from './routes/tribe.join.$code'
 import { Route as ApiPublicHooksCleanupExpiredMessagesRouteImport } from './routes/api/public/hooks/cleanup-expired-messages'
@@ -297,6 +298,11 @@ const ApiPublicResendWebhookRoute = ApiPublicResendWebhookRouteImport.update({
   path: '/api/public/resend-webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LovableEmailEventsRoute = LovableEmailEventsRouteImport.update({
+  id: '/lovable/email/events',
+  path: '/lovable/email/events',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   id: '/lovable/email/suppression',
   path: '/lovable/email/suppression',
@@ -412,6 +418,7 @@ export interface FileRoutesByFullPath {
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
+  '/lovable/email/events': typeof LovableEmailEventsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/tribe/join/$code': typeof TribeJoinCodeRoute
   '/api/public/hooks/cleanup-expired-messages': typeof ApiPublicHooksCleanupExpiredMessagesRoute
@@ -470,6 +477,7 @@ export interface FileRoutesByTo {
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
+  '/lovable/email/events': typeof LovableEmailEventsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/tribe/join/$code': typeof TribeJoinCodeRoute
   '/api/public/hooks/cleanup-expired-messages': typeof ApiPublicHooksCleanupExpiredMessagesRoute
@@ -530,6 +538,7 @@ export interface FileRoutesById {
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
+  '/lovable/email/events': typeof LovableEmailEventsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/tribe/join/$code': typeof TribeJoinCodeRoute
   '/api/public/hooks/cleanup-expired-messages': typeof ApiPublicHooksCleanupExpiredMessagesRoute
@@ -591,6 +600,7 @@ export interface FileRouteTypes {
     | '/api/public/auth-login'
     | '/api/public/auth-otp'
     | '/api/public/resend-webhook'
+    | '/lovable/email/events'
     | '/lovable/email/suppression'
     | '/tribe/join/$code'
     | '/api/public/hooks/cleanup-expired-messages'
@@ -649,6 +659,7 @@ export interface FileRouteTypes {
     | '/api/public/auth-login'
     | '/api/public/auth-otp'
     | '/api/public/resend-webhook'
+    | '/lovable/email/events'
     | '/lovable/email/suppression'
     | '/tribe/join/$code'
     | '/api/public/hooks/cleanup-expired-messages'
@@ -708,6 +719,7 @@ export interface FileRouteTypes {
     | '/api/public/auth-login'
     | '/api/public/auth-otp'
     | '/api/public/resend-webhook'
+    | '/lovable/email/events'
     | '/lovable/email/suppression'
     | '/tribe/join/$code'
     | '/api/public/hooks/cleanup-expired-messages'
@@ -759,6 +771,7 @@ export interface RootRouteChildren {
   ApiPublicAuthLoginRoute: typeof ApiPublicAuthLoginRoute
   ApiPublicAuthOtpRoute: typeof ApiPublicAuthOtpRoute
   ApiPublicResendWebhookRoute: typeof ApiPublicResendWebhookRoute
+  LovableEmailEventsRoute: typeof LovableEmailEventsRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   TribeJoinCodeRoute: typeof TribeJoinCodeRoute
   ApiPublicHooksCleanupExpiredMessagesRoute: typeof ApiPublicHooksCleanupExpiredMessagesRoute
@@ -1090,6 +1103,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicResendWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lovable/email/events': {
+      id: '/lovable/email/events'
+      path: '/lovable/email/events'
+      fullPath: '/lovable/email/events'
+      preLoaderRoute: typeof LovableEmailEventsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lovable/email/suppression': {
       id: '/lovable/email/suppression'
       path: '/lovable/email/suppression'
@@ -1240,6 +1260,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAuthLoginRoute: ApiPublicAuthLoginRoute,
   ApiPublicAuthOtpRoute: ApiPublicAuthOtpRoute,
   ApiPublicResendWebhookRoute: ApiPublicResendWebhookRoute,
+  LovableEmailEventsRoute: LovableEmailEventsRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   TribeJoinCodeRoute: TribeJoinCodeRoute,
   ApiPublicHooksCleanupExpiredMessagesRoute:
