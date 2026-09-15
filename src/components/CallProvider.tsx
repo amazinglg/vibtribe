@@ -766,6 +766,46 @@ export default function CallProvider({ children }: { children: React.ReactNode }
         });
         void recoverMicrophone('auto:foreground');
       }
+      if (activeCall.call_type === 'video' && !videoOff) {
+        const videoSender = sendersRef.current.video;
+        const videoTrack = videoSender?.track;
+        if (!videoTrack || videoTrack.readyState === 'ended' || videoTrack.muted) {
+          void navigator.mediaDevices.getUserMedia({
+            audio: false,
+            video: {
+              facingMode: { ideal: cameraFacing },
+              width: { ideal: 640, max: 1280 },
+              height: { ideal: 480, max: 720 },
+              frameRate: { ideal: 24, max: 30 },
+            },
+          }).then(async (fresh) => {
+            const replacement = fresh.getVideoTracks()[0];
+            if (!replacement || !sendersRef.current.video) return;
+            await sendersRef.current.video.replaceTrack(replacement);
+            const local = localStreamRef.current;
+            if (local) {
+              local.getVideoTracks().forEach((oldTrack) => {
+                try { oldTrack.stop(); } catch {}
+                local.removeTrack(oldTrack);
+              });
+              local.addTrack(replacement);
+              if (localVideoRef.current) {
+                localVideoRef.current.srcObject = local;
+                void localVideoRef.current.play().catch(() => {});
+              }
+            }
+          }).catch((error) => console.warn('[Call][iOS] camera recovery failed', error));
+        } else {
+          if (localVideoRef.current && localStreamRef.current) {
+            localVideoRef.current.srcObject = localStreamRef.current;
+            void localVideoRef.current.play().catch(() => {});
+          }
+          if (remoteVideoRef.current && remoteStreamRef.current) {
+            remoteVideoRef.current.srcObject = remoteStreamRef.current;
+            void remoteVideoRef.current.play().catch(() => {});
+          }
+        }
+      }
     };
     document.addEventListener('visibilitychange', verify);
     window.addEventListener('focus', verify);
@@ -775,7 +815,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
       window.removeEventListener('focus', verify);
       window.removeEventListener('pageshow', verify);
     };
-  }, [activeCall, recoverMicrophone]);
+  }, [activeCall, recoverMicrophone, videoOff, cameraFacing]);
 
   // Attach the watcher to whatever audio track is currently in flight
   // whenever the active call changes.
