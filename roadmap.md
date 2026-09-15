@@ -6,4 +6,4 @@
 - [x] Add delivery events receiver
 - [x] Remove replaced legacy queue routes
 - [x] Keep the independent marketing and unsubscribe system unchanged
-- [ ] Verify the app
+- [x] Verify the app

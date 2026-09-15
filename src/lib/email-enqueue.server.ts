@@ -1,10 +1,8 @@
-// Server-only helper for enqueuing transactional emails from within trusted
-// server code (cron hooks, admin server functions) WITHOUT going through the
-// user-authenticated /lovable/email/transactional/send route.
+// Server-only compatibility helper for transactional emails from trusted
+// server code. Delivery goes through Lovable's managed email service.
 //
 // SECURITY: This module uses the service-role Supabase client and MUST NOT be
-// imported from any client-reachable module at top level. Load it inside a
-// handler with `await import(...)`.
+// imported from client-reachable modules.
 
 import { sendTemplateEmail } from './email-templates/send-email'
 import { supabaseAdmin } from '@/integrations/supabase/client.server'
