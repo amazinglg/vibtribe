@@ -1,6 +1,8 @@
-# Current tasks
+# Email update
 
-- [x] Restore iOS installed-PWA push delivery for new messages and incoming calls.
-- [x] Preserve different phone contacts that share the same saved name.
-- [x] Restore safe chat/call profile details after private profile access hardening.
-- [x] Allow signed-in devices to securely reclaim reused Android push tokens.
+- [ ] Inventory legacy email senders and scaffolds
+- [ ] Re-render authentication email templates
+- [ ] Convert app email senders
+- [ ] Add delivery events receiver
+- [ ] Remove replaced legacy email files
+- [ ] Verify the app
