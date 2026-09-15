@@ -2624,10 +2624,6 @@ export type Database = {
         Args: { _member_ids: string[]; _name: string }
         Returns: string
       }
-      delete_email: {
-        Args: { message_id: number; queue_name: string }
-        Returns: boolean
-      }
       delete_message_for_everyone: {
         Args: { _msg_id: string }
         Returns: undefined
@@ -2641,11 +2637,6 @@ export type Database = {
       edit_my_message: {
         Args: { _msg_id: string; _new_content: string }
         Returns: undefined
-      }
-      email_queue_dispatch: { Args: never; Returns: undefined }
-      enqueue_email: {
-        Args: { payload: Json; queue_name: string }
-        Returns: number
       }
       expire_premium_users: { Args: never; Returns: undefined }
       expire_seen_messages: { Args: { p_chat_id: string }; Returns: undefined }
@@ -2952,15 +2943,6 @@ export type Database = {
         Args: { _user_id: string }
         Returns: undefined
       }
-      move_to_dlq: {
-        Args: {
-          dlq_name: string
-          message_id: number
-          payload: Json
-          source_queue: string
-        }
-        Returns: number
-      }
       pre_login_lookup: {
         Args: { _identifier: string }
         Returns: {
@@ -2977,14 +2959,6 @@ export type Database = {
         Returns: boolean
       }
       rate_limits_cleanup: { Args: never; Returns: undefined }
-      read_email_batch: {
-        Args: { batch_size: number; queue_name: string; vt: number }
-        Returns: {
-          message: Json
-          msg_id: number
-          read_ct: number
-        }[]
-      }
       record_consent: {
         Args: { _consent_type: string; _policy_version: string }
         Returns: string
