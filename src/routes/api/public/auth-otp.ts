@@ -1,13 +1,7 @@
-import * as React from 'react'
-import { render } from '@react-email/components'
 import { createClient } from '@supabase/supabase-js'
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
-import { template as otpTemplate } from '@/lib/email-templates/otp-code'
-
-const SITE_NAME = 'vibtribe'
-const SENDER_DOMAIN = 'notify.www.vibtribe.in'
-const FROM_DOMAIN = 'www.vibtribe.in'
+import { enqueueTransactionalEmail } from '@/lib/email-enqueue.server'
 
 function getAdminClient() {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
@@ -29,73 +23,19 @@ function syntheticEmail(mobileFull: string): string {
 }
 
 async function enqueueOtpEmail(
-  supabase: ReturnType<typeof getAdminClient>,
+  _supabase: ReturnType<typeof getAdminClient>,
   to: string,
   code: string,
   purpose: 'signup' | 'password_reset',
   name?: string,
 ) {
-  const subj = typeof otpTemplate.subject === 'function'
-    ? otpTemplate.subject({ purpose })
-    : otpTemplate.subject
-  const element = React.createElement(otpTemplate.component, { code, purpose, name })
-  const html = await render(element)
-  const text = await render(element, { plainText: true })
-  const messageId = crypto.randomUUID()
-
-  // The Lovable Email API requires an unsubscribe_token + idempotency_key for any
-  // email NOT routed through the Supabase Auth hook (which is the only source of
-  // run_id). Our OTP flow is a custom server route, so we send as transactional
-  // (still via the high-priority auth_emails queue) and provide both fields.
-  const normalizedTo = to.trim().toLowerCase()
-  let unsubscribeToken: string
-  const { data: existingTok } = await supabase
-    .from('email_unsubscribe_tokens')
-    .select('token, used_at')
-    .eq('email', normalizedTo)
-    .maybeSingle()
-  if (existingTok?.token && !existingTok.used_at) {
-    unsubscribeToken = existingTok.token
-  } else {
-    const bytes = new Uint8Array(32)
-    crypto.getRandomValues(bytes)
-    const fresh = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('')
-    await supabase
-      .from('email_unsubscribe_tokens')
-      .upsert({ token: fresh, email: normalizedTo }, { onConflict: 'email', ignoreDuplicates: true })
-    const { data: stored } = await supabase
-      .from('email_unsubscribe_tokens')
-      .select('token')
-      .eq('email', normalizedTo)
-      .maybeSingle()
-    unsubscribeToken = stored?.token ?? fresh
-  }
-
-  await supabase.from('email_send_log').insert({
-    message_id: messageId,
-    template_name: `otp_${purpose}`,
-    recipient_email: to,
-    status: 'pending',
+  const result = await enqueueTransactionalEmail({
+    templateName: 'otp-code',
+    recipientEmail: to,
+    templateData: { code, purpose, name },
+    idempotencyKey: `otp-${purpose}-${to.trim().toLowerCase()}-${code}`,
   })
-
-  const { error } = await supabase.rpc('enqueue_email', {
-    queue_name: 'auth_emails',
-    payload: {
-      message_id: messageId,
-      to,
-      from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
-      sender_domain: SENDER_DOMAIN,
-      subject: subj,
-      html,
-      text,
-      purpose: 'transactional',
-      label: `otp_${purpose}`,
-      idempotency_key: messageId,
-      unsubscribe_token: unsubscribeToken,
-      queued_at: new Date().toISOString(),
-    },
-  })
-  if (error) throw new Error(error.message)
+  if (!result.ok && result.status !== 'suppressed') throw new Error(result.error || 'OTP email failed')
 }
 
 const emailSchema = z.string().trim().toLowerCase().email().max(255)
@@ -387,62 +327,15 @@ export const Route = createFileRoute('/api/public/auth-otp')({
 
           // Fire welcome email (non-blocking)
           try {
-            const welcomeId = crypto.randomUUID()
-            const { template: welcomeTpl } = await import('@/lib/email-templates/welcome')
-            const el = React.createElement(welcomeTpl.component, { name: payload.fullName })
-            const html = await render(el)
-            const text = await render(el, { plainText: true })
-            const subj = typeof welcomeTpl.subject === 'function'
-              ? (welcomeTpl.subject as (d: Record<string, any>) => string)({ name: payload.fullName })
-              : welcomeTpl.subject
-            // Get/create unsubscribe token (required for transactional purpose)
-            const normalizedTo = payload.email.trim().toLowerCase()
-            let unsubToken: string
-            const { data: existingTok } = await supabase
-              .from('email_unsubscribe_tokens')
-              .select('token, used_at')
-              .eq('email', normalizedTo)
-              .maybeSingle()
-            if (existingTok?.token && !existingTok.used_at) {
-              unsubToken = existingTok.token
-            } else {
-              const bytes = new Uint8Array(32)
-              crypto.getRandomValues(bytes)
-              const fresh = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('')
-              await supabase
-                .from('email_unsubscribe_tokens')
-                .upsert({ token: fresh, email: normalizedTo }, { onConflict: 'email', ignoreDuplicates: true })
-              const { data: stored } = await supabase
-                .from('email_unsubscribe_tokens')
-                .select('token')
-                .eq('email', normalizedTo)
-                .maybeSingle()
-              unsubToken = stored?.token ?? fresh
-            }
-            await supabase.from('email_send_log').insert({
-              message_id: welcomeId,
-              template_name: 'welcome',
-              recipient_email: payload.email,
-              status: 'pending',
+            const welcome = await enqueueTransactionalEmail({
+              templateName: 'welcome',
+              recipientEmail: payload.email,
+              templateData: { name: payload.fullName },
+              idempotencyKey: `welcome-${created.user.id}`,
             })
-            await supabase.rpc('enqueue_email', {
-              queue_name: 'transactional_emails',
-              payload: {
-                message_id: welcomeId,
-                to: payload.email,
-                from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
-                sender_domain: SENDER_DOMAIN,
-                subject: subj,
-                html, text,
-                purpose: 'transactional',
-                label: 'welcome',
-                idempotency_key: welcomeId,
-                unsubscribe_token: unsubToken,
-                queued_at: new Date().toISOString(),
-              },
-            })
+            if (!welcome.ok && welcome.status !== 'suppressed') throw new Error(welcome.error || 'Welcome email failed')
           } catch (e) {
-            console.error('welcome email enqueue failed', e)
+            console.error('welcome email send failed', e)
           }
 
           return Response.json({ ok: true, authEmail })
