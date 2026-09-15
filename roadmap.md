@@ -5,5 +5,6 @@
 - [x] Convert transactional app email senders
 - [x] Add delivery events receiver
 - [x] Remove replaced legacy queue routes
-- [x] Keep the independent marketing and unsubscribe system unchanged
+- [x] Preserve the independent promotional email unsubscribe flow
+- [x] Remove legacy email setup migrations and unsubscribe scaffold
 - [x] Verify the app

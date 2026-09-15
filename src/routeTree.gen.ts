@@ -47,12 +47,12 @@ import { Route as BlogVibtribeVsSignalVsTelegramRouteImport } from './routes/blo
 import { Route as BlogWhatsappAlternativesIndiaRouteImport } from './routes/blog.whatsapp-alternatives-india'
 import { Route as DownloadAndroidRouteImport } from './routes/download.android'
 import { Route as DownloadIosRouteImport } from './routes/download.ios'
-import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as GuardianConsentTokenRouteImport } from './routes/guardian-consent.$token'
 import { Route as HelpReportingRouteImport } from './routes/help.reporting'
 import { Route as AdminUserUserIdRouteImport } from './routes/admin.user.$userId'
 import { Route as ApiPublicAuthLoginRouteImport } from './routes/api/public/auth-login'
 import { Route as ApiPublicAuthOtpRouteImport } from './routes/api/public/auth-otp'
+import { Route as ApiPublicMarketingUnsubscribeRouteImport } from './routes/api/public/marketing-unsubscribe'
 import { Route as ApiPublicResendWebhookRouteImport } from './routes/api/public/resend-webhook'
 import { Route as LovableEmailEventsRouteImport } from './routes/lovable/email/events'
 import { Route as TribeJoinCodeRouteImport } from './routes/tribe.join.$code'
@@ -260,11 +260,6 @@ const DownloadIosRoute = DownloadIosRouteImport.update({
   path: '/download/ios',
   getParentRoute: () => rootRouteImport,
 } as any)
-const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
-  id: '/email/unsubscribe',
-  path: '/email/unsubscribe',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const GuardianConsentTokenRoute = GuardianConsentTokenRouteImport.update({
   id: '/guardian-consent/$token',
   path: '/guardian-consent/$token',
@@ -290,6 +285,12 @@ const ApiPublicAuthOtpRoute = ApiPublicAuthOtpRouteImport.update({
   path: '/api/public/auth-otp',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicMarketingUnsubscribeRoute =
+  ApiPublicMarketingUnsubscribeRouteImport.update({
+    id: '/api/public/marketing-unsubscribe',
+    path: '/api/public/marketing-unsubscribe',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicResendWebhookRoute = ApiPublicResendWebhookRouteImport.update({
   id: '/api/public/resend-webhook',
   path: '/api/public/resend-webhook',
@@ -390,13 +391,13 @@ export interface FileRoutesByFullPath {
   '/blog/whatsapp-alternatives-india': typeof BlogWhatsappAlternativesIndiaRoute
   '/download/android': typeof DownloadAndroidRoute
   '/download/ios': typeof DownloadIosRoute
-  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/guardian-consent/$token': typeof GuardianConsentTokenRoute
   '/help/reporting': typeof HelpReportingRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
+  '/api/public/marketing-unsubscribe': typeof ApiPublicMarketingUnsubscribeRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
   '/lovable/email/events': typeof LovableEmailEventsRoute
   '/tribe/join/$code': typeof TribeJoinCodeRoute
@@ -446,13 +447,13 @@ export interface FileRoutesByTo {
   '/blog/whatsapp-alternatives-india': typeof BlogWhatsappAlternativesIndiaRoute
   '/download/android': typeof DownloadAndroidRoute
   '/download/ios': typeof DownloadIosRoute
-  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/guardian-consent/$token': typeof GuardianConsentTokenRoute
   '/help/reporting': typeof HelpReportingRoute
   '/admin': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
+  '/api/public/marketing-unsubscribe': typeof ApiPublicMarketingUnsubscribeRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
   '/lovable/email/events': typeof LovableEmailEventsRoute
   '/tribe/join/$code': typeof TribeJoinCodeRoute
@@ -504,13 +505,13 @@ export interface FileRoutesById {
   '/blog/whatsapp-alternatives-india': typeof BlogWhatsappAlternativesIndiaRoute
   '/download/android': typeof DownloadAndroidRoute
   '/download/ios': typeof DownloadIosRoute
-  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/guardian-consent/$token': typeof GuardianConsentTokenRoute
   '/help/reporting': typeof HelpReportingRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
+  '/api/public/marketing-unsubscribe': typeof ApiPublicMarketingUnsubscribeRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
   '/lovable/email/events': typeof LovableEmailEventsRoute
   '/tribe/join/$code': typeof TribeJoinCodeRoute
@@ -563,13 +564,13 @@ export interface FileRouteTypes {
     | '/blog/whatsapp-alternatives-india'
     | '/download/android'
     | '/download/ios'
-    | '/email/unsubscribe'
     | '/guardian-consent/$token'
     | '/help/reporting'
     | '/admin/'
     | '/admin/user/$userId'
     | '/api/public/auth-login'
     | '/api/public/auth-otp'
+    | '/api/public/marketing-unsubscribe'
     | '/api/public/resend-webhook'
     | '/lovable/email/events'
     | '/tribe/join/$code'
@@ -619,13 +620,13 @@ export interface FileRouteTypes {
     | '/blog/whatsapp-alternatives-india'
     | '/download/android'
     | '/download/ios'
-    | '/email/unsubscribe'
     | '/guardian-consent/$token'
     | '/help/reporting'
     | '/admin'
     | '/admin/user/$userId'
     | '/api/public/auth-login'
     | '/api/public/auth-otp'
+    | '/api/public/marketing-unsubscribe'
     | '/api/public/resend-webhook'
     | '/lovable/email/events'
     | '/tribe/join/$code'
@@ -676,13 +677,13 @@ export interface FileRouteTypes {
     | '/blog/whatsapp-alternatives-india'
     | '/download/android'
     | '/download/ios'
-    | '/email/unsubscribe'
     | '/guardian-consent/$token'
     | '/help/reporting'
     | '/admin/'
     | '/admin/user/$userId'
     | '/api/public/auth-login'
     | '/api/public/auth-otp'
+    | '/api/public/marketing-unsubscribe'
     | '/api/public/resend-webhook'
     | '/lovable/email/events'
     | '/tribe/join/$code'
@@ -727,11 +728,11 @@ export interface RootRouteChildren {
   BlogWhatsappAlternativesIndiaRoute: typeof BlogWhatsappAlternativesIndiaRoute
   DownloadAndroidRoute: typeof DownloadAndroidRoute
   DownloadIosRoute: typeof DownloadIosRoute
-  EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   GuardianConsentTokenRoute: typeof GuardianConsentTokenRoute
   HelpReportingRoute: typeof HelpReportingRoute
   ApiPublicAuthLoginRoute: typeof ApiPublicAuthLoginRoute
   ApiPublicAuthOtpRoute: typeof ApiPublicAuthOtpRoute
+  ApiPublicMarketingUnsubscribeRoute: typeof ApiPublicMarketingUnsubscribeRoute
   ApiPublicResendWebhookRoute: typeof ApiPublicResendWebhookRoute
   LovableEmailEventsRoute: typeof LovableEmailEventsRoute
   TribeJoinCodeRoute: typeof TribeJoinCodeRoute
@@ -1013,13 +1014,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DownloadIosRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/email/unsubscribe': {
-      id: '/email/unsubscribe'
-      path: '/email/unsubscribe'
-      fullPath: '/email/unsubscribe'
-      preLoaderRoute: typeof EmailUnsubscribeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/guardian-consent/$token': {
       id: '/guardian-consent/$token'
       path: '/guardian-consent/$token'
@@ -1053,6 +1047,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/auth-otp'
       fullPath: '/api/public/auth-otp'
       preLoaderRoute: typeof ApiPublicAuthOtpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/marketing-unsubscribe': {
+      id: '/api/public/marketing-unsubscribe'
+      path: '/api/public/marketing-unsubscribe'
+      fullPath: '/api/public/marketing-unsubscribe'
+      preLoaderRoute: typeof ApiPublicMarketingUnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/resend-webhook': {
@@ -1192,11 +1193,11 @@ const rootRouteChildren: RootRouteChildren = {
   BlogWhatsappAlternativesIndiaRoute: BlogWhatsappAlternativesIndiaRoute,
   DownloadAndroidRoute: DownloadAndroidRoute,
   DownloadIosRoute: DownloadIosRoute,
-  EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   GuardianConsentTokenRoute: GuardianConsentTokenRoute,
   HelpReportingRoute: HelpReportingRoute,
   ApiPublicAuthLoginRoute: ApiPublicAuthLoginRoute,
   ApiPublicAuthOtpRoute: ApiPublicAuthOtpRoute,
+  ApiPublicMarketingUnsubscribeRoute: ApiPublicMarketingUnsubscribeRoute,
   ApiPublicResendWebhookRoute: ApiPublicResendWebhookRoute,
   LovableEmailEventsRoute: LovableEmailEventsRoute,
   TribeJoinCodeRoute: TribeJoinCodeRoute,
