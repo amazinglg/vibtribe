@@ -8,7 +8,7 @@ export const Route = createFileRoute('/api/public/hooks/cleanup-expired-statuses
     handlers: {
       POST: async ({ request }) => {
         // Require the service-role key as a Bearer token (same pattern as
-        // /lovable/email/queue/process). pg_cron sends it; anyone else gets 401.
+        // scheduled server hooks). pg_cron sends it; anyone else gets 401.
         const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
         if (!serviceKey) {
           return new Response('Server misconfigured', { status: 500 })

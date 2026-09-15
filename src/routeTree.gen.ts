@@ -54,7 +54,7 @@ import { Route as AdminUserUserIdRouteImport } from './routes/admin.user.$userId
 import { Route as ApiPublicAuthLoginRouteImport } from './routes/api/public/auth-login'
 import { Route as ApiPublicAuthOtpRouteImport } from './routes/api/public/auth-otp'
 import { Route as ApiPublicResendWebhookRouteImport } from './routes/api/public/resend-webhook'
-import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
+import { Route as LovableEmailEventsRouteImport } from './routes/lovable/email/events'
 import { Route as TribeJoinCodeRouteImport } from './routes/tribe.join.$code'
 import { Route as ApiPublicHooksCleanupExpiredMessagesRouteImport } from './routes/api/public/hooks/cleanup-expired-messages'
 import { Route as ApiPublicHooksCleanupExpiredStatusesRouteImport } from './routes/api/public/hooks/cleanup-expired-statuses'
@@ -63,9 +63,7 @@ import { Route as ApiPublicHooksIncompleteSignupRemindersRouteImport } from './r
 import { Route as ApiPublicHooksRetentionSweepRouteImport } from './routes/api/public/hooks/retention-sweep'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
-import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
-import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -297,9 +295,9 @@ const ApiPublicResendWebhookRoute = ApiPublicResendWebhookRouteImport.update({
   path: '/api/public/resend-webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
-  id: '/lovable/email/suppression',
-  path: '/lovable/email/suppression',
+const LovableEmailEventsRoute = LovableEmailEventsRouteImport.update({
+  id: '/lovable/email/events',
+  path: '/lovable/email/events',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TribeJoinCodeRoute = TribeJoinCodeRouteImport.update({
@@ -347,22 +345,10 @@ const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
   path: '/lovable/email/auth/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LovableEmailQueueProcessRoute =
-  LovableEmailQueueProcessRouteImport.update({
-    id: '/lovable/email/queue/process',
-    path: '/lovable/email/queue/process',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const LovableEmailTransactionalPreviewRoute =
   LovableEmailTransactionalPreviewRouteImport.update({
     id: '/lovable/email/transactional/preview',
     path: '/lovable/email/transactional/preview',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const LovableEmailTransactionalSendRoute =
-  LovableEmailTransactionalSendRouteImport.update({
-    id: '/lovable/email/transactional/send',
-    path: '/lovable/email/transactional/send',
     getParentRoute: () => rootRouteImport,
   } as any)
 
@@ -412,7 +398,7 @@ export interface FileRoutesByFullPath {
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
-  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/lovable/email/events': typeof LovableEmailEventsRoute
   '/tribe/join/$code': typeof TribeJoinCodeRoute
   '/api/public/hooks/cleanup-expired-messages': typeof ApiPublicHooksCleanupExpiredMessagesRoute
   '/api/public/hooks/cleanup-expired-statuses': typeof ApiPublicHooksCleanupExpiredStatusesRoute
@@ -421,9 +407,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/retention-sweep': typeof ApiPublicHooksRetentionSweepRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
-  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
-  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -470,7 +454,7 @@ export interface FileRoutesByTo {
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
-  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/lovable/email/events': typeof LovableEmailEventsRoute
   '/tribe/join/$code': typeof TribeJoinCodeRoute
   '/api/public/hooks/cleanup-expired-messages': typeof ApiPublicHooksCleanupExpiredMessagesRoute
   '/api/public/hooks/cleanup-expired-statuses': typeof ApiPublicHooksCleanupExpiredStatusesRoute
@@ -479,9 +463,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/retention-sweep': typeof ApiPublicHooksRetentionSweepRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
-  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
-  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -530,7 +512,7 @@ export interface FileRoutesById {
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
-  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/lovable/email/events': typeof LovableEmailEventsRoute
   '/tribe/join/$code': typeof TribeJoinCodeRoute
   '/api/public/hooks/cleanup-expired-messages': typeof ApiPublicHooksCleanupExpiredMessagesRoute
   '/api/public/hooks/cleanup-expired-statuses': typeof ApiPublicHooksCleanupExpiredStatusesRoute
@@ -539,9 +521,7 @@ export interface FileRoutesById {
   '/api/public/hooks/retention-sweep': typeof ApiPublicHooksRetentionSweepRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
-  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
-  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -591,7 +571,7 @@ export interface FileRouteTypes {
     | '/api/public/auth-login'
     | '/api/public/auth-otp'
     | '/api/public/resend-webhook'
-    | '/lovable/email/suppression'
+    | '/lovable/email/events'
     | '/tribe/join/$code'
     | '/api/public/hooks/cleanup-expired-messages'
     | '/api/public/hooks/cleanup-expired-statuses'
@@ -600,9 +580,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/retention-sweep'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
-    | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
-    | '/lovable/email/transactional/send'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -649,7 +627,7 @@ export interface FileRouteTypes {
     | '/api/public/auth-login'
     | '/api/public/auth-otp'
     | '/api/public/resend-webhook'
-    | '/lovable/email/suppression'
+    | '/lovable/email/events'
     | '/tribe/join/$code'
     | '/api/public/hooks/cleanup-expired-messages'
     | '/api/public/hooks/cleanup-expired-statuses'
@@ -658,9 +636,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/retention-sweep'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
-    | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
-    | '/lovable/email/transactional/send'
   id:
     | '__root__'
     | '/'
@@ -708,7 +684,7 @@ export interface FileRouteTypes {
     | '/api/public/auth-login'
     | '/api/public/auth-otp'
     | '/api/public/resend-webhook'
-    | '/lovable/email/suppression'
+    | '/lovable/email/events'
     | '/tribe/join/$code'
     | '/api/public/hooks/cleanup-expired-messages'
     | '/api/public/hooks/cleanup-expired-statuses'
@@ -717,9 +693,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/retention-sweep'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
-    | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
-    | '/lovable/email/transactional/send'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -759,7 +733,7 @@ export interface RootRouteChildren {
   ApiPublicAuthLoginRoute: typeof ApiPublicAuthLoginRoute
   ApiPublicAuthOtpRoute: typeof ApiPublicAuthOtpRoute
   ApiPublicResendWebhookRoute: typeof ApiPublicResendWebhookRoute
-  LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
+  LovableEmailEventsRoute: typeof LovableEmailEventsRoute
   TribeJoinCodeRoute: typeof TribeJoinCodeRoute
   ApiPublicHooksCleanupExpiredMessagesRoute: typeof ApiPublicHooksCleanupExpiredMessagesRoute
   ApiPublicHooksCleanupExpiredStatusesRoute: typeof ApiPublicHooksCleanupExpiredStatusesRoute
@@ -768,9 +742,7 @@ export interface RootRouteChildren {
   ApiPublicHooksRetentionSweepRoute: typeof ApiPublicHooksRetentionSweepRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
-  LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
-  LovableEmailTransactionalSendRoute: typeof LovableEmailTransactionalSendRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1090,11 +1062,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicResendWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lovable/email/suppression': {
-      id: '/lovable/email/suppression'
-      path: '/lovable/email/suppression'
-      fullPath: '/lovable/email/suppression'
-      preLoaderRoute: typeof LovableEmailSuppressionRouteImport
+    '/lovable/email/events': {
+      id: '/lovable/email/events'
+      path: '/lovable/email/events'
+      fullPath: '/lovable/email/events'
+      preLoaderRoute: typeof LovableEmailEventsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tribe/join/$code': {
@@ -1153,25 +1125,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lovable/email/queue/process': {
-      id: '/lovable/email/queue/process'
-      path: '/lovable/email/queue/process'
-      fullPath: '/lovable/email/queue/process'
-      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/lovable/email/transactional/preview': {
       id: '/lovable/email/transactional/preview'
       path: '/lovable/email/transactional/preview'
       fullPath: '/lovable/email/transactional/preview'
       preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lovable/email/transactional/send': {
-      id: '/lovable/email/transactional/send'
-      path: '/lovable/email/transactional/send'
-      fullPath: '/lovable/email/transactional/send'
-      preLoaderRoute: typeof LovableEmailTransactionalSendRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -1240,7 +1198,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAuthLoginRoute: ApiPublicAuthLoginRoute,
   ApiPublicAuthOtpRoute: ApiPublicAuthOtpRoute,
   ApiPublicResendWebhookRoute: ApiPublicResendWebhookRoute,
-  LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
+  LovableEmailEventsRoute: LovableEmailEventsRoute,
   TribeJoinCodeRoute: TribeJoinCodeRoute,
   ApiPublicHooksCleanupExpiredMessagesRoute:
     ApiPublicHooksCleanupExpiredMessagesRoute,
@@ -1253,9 +1211,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksRetentionSweepRoute: ApiPublicHooksRetentionSweepRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
-  LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
-  LovableEmailTransactionalSendRoute: LovableEmailTransactionalSendRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

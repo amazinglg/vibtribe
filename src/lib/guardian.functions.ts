@@ -1,78 +1,23 @@
-import * as React from 'react'
-import { render } from '@react-email/components'
 import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware'
-import { template as guardianOtpTemplate } from '@/lib/email-templates/guardian-otp'
-import { template as guardianConsentRequestTemplate } from '@/lib/email-templates/guardian-consent-request'
+import { enqueueTransactionalEmail } from '@/lib/email-enqueue.server'
 
-const SITE_NAME = 'VibTribe'
-const SENDER_DOMAIN = 'notify.www.vibtribe.in'
-const FROM_DOMAIN = 'www.vibtribe.in'
 const SITE_ORIGIN = 'https://www.vibtribe.in'
 
-async function enqueueTemplateEmail(params: {
-  supabase: any
+async function sendGuardianEmail(params: {
   to: string
-  subject: string
-  html: string
-  text: string
-  label: string
-  queueName?: 'auth_emails' | 'transactional_emails'
+  templateName: 'guardian-otp' | 'guardian-consent-request'
+  templateData: Record<string, any>
+  idempotencyKey: string
 }) {
-  const { supabase, to, subject, html, text, label, queueName = 'auth_emails' } = params
-  const messageId = crypto.randomUUID()
-  const normalizedTo = to.trim().toLowerCase()
-
-  // Ensure unsubscribe token exists
-  let unsubscribeToken: string
-  const { data: existing } = await supabase
-    .from('email_unsubscribe_tokens')
-    .select('token, used_at')
-    .eq('email', normalizedTo)
-    .maybeSingle()
-  if (existing?.token && !existing.used_at) {
-    unsubscribeToken = existing.token
-  } else {
-    const bytes = new Uint8Array(32)
-    crypto.getRandomValues(bytes)
-    const fresh = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('')
-    await supabase
-      .from('email_unsubscribe_tokens')
-      .upsert({ token: fresh, email: normalizedTo }, { onConflict: 'email', ignoreDuplicates: true })
-    const { data: stored } = await supabase
-      .from('email_unsubscribe_tokens')
-      .select('token')
-      .eq('email', normalizedTo)
-      .maybeSingle()
-    unsubscribeToken = stored?.token ?? fresh
-  }
-
-  await supabase.from('email_send_log').insert({
-    message_id: messageId,
-    template_name: label,
-    recipient_email: to,
-    status: 'pending',
+  const result = await enqueueTransactionalEmail({
+    templateName: params.templateName,
+    recipientEmail: params.to,
+    templateData: params.templateData,
+    idempotencyKey: params.idempotencyKey,
   })
-
-  const { error } = await supabase.rpc('enqueue_email', {
-    queue_name: queueName,
-    payload: {
-      message_id: messageId,
-      to,
-      from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
-      sender_domain: SENDER_DOMAIN,
-      subject,
-      html,
-      text,
-      purpose: 'transactional',
-      label,
-      idempotency_key: messageId,
-      unsubscribe_token: unsubscribeToken,
-      queued_at: new Date().toISOString(),
-    },
-  })
-  if (error) throw new Error(error.message)
+  if (!result.ok && result.status !== 'suppressed') throw new Error(result.error || 'Email send failed')
 }
 
 /**
@@ -111,21 +56,11 @@ export const submitGuardianDetails = createServerFn({ method: 'POST' })
       .maybeSingle()
     const minorName = (minor?.full_name || minor?.username || 'A young user') as string
 
-    const otpEl = React.createElement(guardianOtpTemplate.component, {
-      code: row.otp_code,
-      minorName,
-      guardianName: data.guardianName,
-    })
-    const subject = typeof guardianOtpTemplate.subject === 'string'
-      ? guardianOtpTemplate.subject
-      : (guardianOtpTemplate.subject as (d: Record<string, any>) => string)({})
-    await enqueueTemplateEmail({
-      supabase,
+    await sendGuardianEmail({
       to: data.guardianEmail,
-      subject,
-      html: await render(otpEl),
-      text: await render(otpEl, { plainText: true }),
-      label: 'guardian_otp',
+      templateName: 'guardian-otp',
+      templateData: { code: row.otp_code, minorName, guardianName: data.guardianName },
+      idempotencyKey: `guardian-otp-${context.userId}-${row.consent_token}`,
     })
 
     return { ok: true, guardianEmail: row.guardian_email }
@@ -164,23 +99,11 @@ export const verifyGuardianEmailOtp = createServerFn({ method: 'POST' })
     const minorName = (minor?.full_name || minor?.username || 'A young user') as string
     const consentUrl = `${SITE_ORIGIN}/guardian-consent/${row.consent_token}`
 
-    const el = React.createElement(guardianConsentRequestTemplate.component, {
-      consentUrl,
-      minorName,
-      guardianName: row.guardian_name,
-      relationship: row.relationship,
-    })
-    const subject = typeof guardianConsentRequestTemplate.subject === 'function'
-      ? guardianConsentRequestTemplate.subject({ minorName })
-      : guardianConsentRequestTemplate.subject
-    await enqueueTemplateEmail({
-      supabase,
+    await sendGuardianEmail({
       to: row.guardian_email,
-      subject,
-      html: await render(el),
-      text: await render(el, { plainText: true }),
-      label: 'guardian_consent_request',
-      queueName: 'transactional_emails',
+      templateName: 'guardian-consent-request',
+      templateData: { consentUrl, minorName, guardianName: row.guardian_name, relationship: row.relationship },
+      idempotencyKey: `guardian-consent-${context.userId}-${row.consent_token}`,
     })
 
     return { ok: true as const, sentTo: row.guardian_email as string }
@@ -240,21 +163,11 @@ export const resendGuardianOtp = createServerFn({ method: 'POST' })
       .maybeSingle()
     const minorName = (minor?.full_name || minor?.username || 'A young user') as string
 
-    const otpEl = React.createElement(guardianOtpTemplate.component, {
-      code: row.otp_code,
-      minorName,
-      guardianName: existing.guardian_name,
-    })
-    const subject = typeof guardianOtpTemplate.subject === 'string'
-      ? guardianOtpTemplate.subject
-      : (guardianOtpTemplate.subject as (d: Record<string, any>) => string)({})
-    await enqueueTemplateEmail({
-      supabase,
+    await sendGuardianEmail({
       to: existing.guardian_email,
-      subject,
-      html: await render(otpEl),
-      text: await render(otpEl, { plainText: true }),
-      label: 'guardian_otp',
+      templateName: 'guardian-otp',
+      templateData: { code: row.otp_code, minorName, guardianName: existing.guardian_name },
+      idempotencyKey: `guardian-otp-resend-${context.userId}-${row.consent_token || crypto.randomUUID()}`,
     })
     return { ok: true as const }
   })

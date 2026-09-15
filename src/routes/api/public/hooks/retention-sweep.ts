@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { enqueueTransactionalEmail } from '@/lib/email-enqueue.server'
 
 /**
  * DPDP §8(7) — Inactive-account retention.
@@ -132,14 +133,6 @@ async function enqueueRetentionEmail(
   admin: any,
   args: { to: string; name: string; daysLeft: number; userId: string; kind: 'warn' | 'final' },
 ): Promise<boolean> {
-  // Honour suppression list.
-  const { data: suppressed } = await admin
-    .from('suppressed_emails')
-    .select('email')
-    .eq('email', args.to.toLowerCase())
-    .maybeSingle()
-  if (suppressed) return false
-
   const title = `Your VibTribe account will be deleted in ${args.daysLeft} days`
   const body =
     `Hi ${args.name}, we noticed you haven't used VibTribe in nearly 3 years. ` +
@@ -149,17 +142,14 @@ async function enqueueRetentionEmail(
 
   const idem = `retention-${args.kind}-${args.userId}-${new Date().toISOString().slice(0, 10)}`
 
-  const { error } = await admin.rpc('enqueue_email', {
-    queue_name: 'transactional_emails',
-    payload: {
-      template_name: 'notification',
-      recipient_email: args.to,
-      idempotency_key: idem,
-      template_data: { title, body, link: '/' },
-    },
+  const result = await enqueueTransactionalEmail({
+    templateName: 'notification',
+    recipientEmail: args.to,
+    idempotencyKey: idem,
+    templateData: { title, body, link: '/' },
   })
-  if (error) {
-    console.warn('[retention] enqueue failed', error)
+  if (!result.ok) {
+    if (result.status !== 'suppressed') console.warn('[retention] send failed', result.error)
     return false
   }
   return true

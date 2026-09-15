@@ -1,7 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import * as React from 'react'
-import { render } from '@react-email/components'
-import { template as guardianConsentRequestTemplate } from '@/lib/email-templates/guardian-consent-request'
+import { enqueueTransactionalEmail } from '@/lib/email-enqueue.server'
 
 /**
  * DPDP-aligned monthly guardian reminder.
@@ -32,34 +30,19 @@ export const Route = createFileRoute('/api/public/hooks/guardian-monthly-reminde
         for (const row of (due ?? []) as any[]) {
           try {
             const consentUrl = `${SITE_ORIGIN}/guardian-consent/${row.consent_token}`
-            const el = React.createElement(guardianConsentRequestTemplate.component, {
-              consentUrl,
-              minorName: row.minor_full_name,
-              guardianName: row.guardian_name,
-              relationship: 'guardian',
-            })
-            const html = await render(el)
-            const text = await render(el, { plainText: true })
-            const subject = `Monthly reminder: consent still active for ${row.minor_full_name}`
-
             const idem = `guardian-reminder-${row.id}-${new Date().toISOString().slice(0, 7)}`
-            const { error: qErr } = await supabaseAdmin.rpc('enqueue_email', {
-              queue_name: 'transactional_emails',
-              payload: {
-                message_id: crypto.randomUUID(),
-                to: row.guardian_email,
-                from: 'VibTribe <noreply@www.vibtribe.in>',
-                sender_domain: 'notify.www.vibtribe.in',
-                subject,
-                html,
-                text,
-                purpose: 'transactional',
-                label: 'guardian_monthly_reminder',
-                idempotency_key: idem,
-                queued_at: new Date().toISOString(),
+            const result = await enqueueTransactionalEmail({
+              templateName: 'guardian-consent-request',
+              recipientEmail: row.guardian_email,
+              idempotencyKey: idem,
+              templateData: {
+                consentUrl,
+                minorName: row.minor_full_name,
+                guardianName: row.guardian_name,
+                relationship: 'guardian',
               },
             })
-            if (qErr) { summary.errors.push(qErr.message); continue }
+            if (!result.ok && result.status !== 'suppressed') { summary.errors.push(result.error || 'Email send failed'); continue }
             await supabaseAdmin.rpc('mark_guardian_reminded' as any, { _id: row.id })
             summary.sent++
           } catch (e: any) {
