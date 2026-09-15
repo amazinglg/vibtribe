@@ -45,6 +45,7 @@ interface Message {
   editedAt?: string | null;
   deletedForEveryone?: boolean;
   createdAt?: string;
+  expiresAt?: string | null;
   messageType?: string;
   /** Id of the message this one replies to (WhatsApp-style quote). */
   replyTo?: string | null;
@@ -849,17 +850,21 @@ export default function ChatWindowPanel() {
    * with the device Cache Master Key — nothing readable is ever written.
    */
   const persistChatCache = async (list: any[]) => {
-    if (!user || !selectedChatId || !list?.length) return;
+    if (!user || !selectedChatId || !list) return;
     try {
-      const { putMessages, trimChat } = await import('@/lib/offline');
-      await putMessages(
+      const { replaceMessages, trimChat } = await import('@/lib/offline');
+      const now = Date.now();
+      await replaceMessages(
         user.id,
         selectedChatId,
-        list.map((m: any) => ({
-          ...m,
-          id: m.id,
-          created_at: m.createdAt || new Date().toISOString(),
-        })),
+        list
+          .filter((m: any) => !m.expiresAt || new Date(m.expiresAt).getTime() > now)
+          .map((m: any) => ({
+            ...m,
+            id: m.id,
+            created_at: m.createdAt || new Date().toISOString(),
+            expires_at: m.expiresAt || null,
+          })),
       );
       await trimChat(selectedChatId);
     } catch {}
@@ -867,11 +872,10 @@ export default function ChatWindowPanel() {
 
   const loadChatData = async () => {
     if (!selectedChatId || !user) return;
-    // Stage 3 — cache-first conversation. Paint whatever the encrypted cache
-    // already holds for this chat, then reconcile silently over the network.
-    // A skeleton is only shown when this conversation has never been cached.
+    // Use encrypted messages immediately only when offline. While online, the
+    // server is authoritative so hard-deleted rows can never flash on screen.
     let paintedFromCache = false;
-    try {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) try {
       const { getCachedMessages, noteChatUsage } = await import('@/lib/offline');
       const cached = await getCachedMessages(user.id, selectedChatId);
       if (cached.length) {
@@ -1089,6 +1093,7 @@ export default function ChatWindowPanel() {
         .from('messages')
         .select('*')
         .eq('chat_id', selectedChatId)
+        .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
         .order('created_at', { ascending: true });
 
       const otherKey = contactPubKeyRef.current;
@@ -1118,6 +1123,7 @@ export default function ChatWindowPanel() {
           editedAt: (m as any).edited_at || null,
           deletedForEveryone: tombstone,
           createdAt: m.created_at,
+          expiresAt: (m as any).expires_at || null,
         });
       }
       setMessages(decryptedMsgs);
@@ -1127,6 +1133,7 @@ export default function ChatWindowPanel() {
       {
         const firstUnread = (msgs || []).find((m: any) =>
           m.sender_id && m.sender_id !== user.id && m.message_status !== 'read'
+            && (!m.expires_at || new Date(m.expires_at).getTime() > Date.now())
             && !(Array.isArray((m as any).deleted_for) && (m as any).deleted_for.includes(user.id))
         );
         firstUnreadIdRef.current = firstUnread ? firstUnread.id : null;
@@ -2142,7 +2149,7 @@ export default function ChatWindowPanel() {
       sendPushNotification(supabase, {
         user_id: contact.userId, chat_id: selectedChatId,
         title: `📞 Incoming Voice Call`, body: `${callerName} is calling you on VibTribe`,
-        tag: `call-${contact.userId}`, url: '/', type: 'voice_call',
+        tag: `call-${callRow.id}`, url: '/', type: 'voice_call',
         callerId: user?.id, callId: callRow.id,
       }).catch(() => {});
     }
@@ -2156,7 +2163,7 @@ export default function ChatWindowPanel() {
       sendPushNotification(supabase, {
         user_id: contact.userId, chat_id: selectedChatId,
         title: `📹 Incoming Video Call`, body: `${callerName} is calling you on VibTribe`,
-        tag: `call-${contact.userId}`, url: '/', type: 'video_call',
+        tag: `call-${callRow.id}`, url: '/', type: 'video_call',
         callerId: user?.id, callId: callRow.id,
       }).catch(() => {});
     }
@@ -2179,7 +2186,7 @@ export default function ChatWindowPanel() {
           chat_id: selectedChatId,
           title: `📹 Incoming Video Call`,
           body: `${callerName} is calling you on VibTribe`,
-          tag: `call-${contact.userId}`,
+          tag: `call-${callRow.id}`,
           url: '/',
           type: 'video_call',
           callerId: user?.id,
@@ -2199,7 +2206,7 @@ export default function ChatWindowPanel() {
           chat_id: selectedChatId,
           title: `📞 Incoming Voice Call`,
           body: `${callerName} is calling you on VibTribe`,
-          tag: `call-${contact.userId}`,
+          tag: `call-${callRow.id}`,
           url: '/',
           type: 'voice_call',
           callerId: user?.id,
