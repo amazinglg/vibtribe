@@ -34,7 +34,7 @@ function UnsubscribePage() {
     const t = new URLSearchParams(window.location.search).get('token') || ''
     setToken(t)
     if (!t) { setStatus('error'); return }
-    fetch(`/email/unsubscribe?token=${encodeURIComponent(t)}`)
+    fetch(`/api/public/marketing-unsubscribe?token=${encodeURIComponent(t)}`)
       .then(r => r.json())
       .then(d => {
         if (d?.used) setStatus('used')
@@ -45,7 +45,7 @@ function UnsubscribePage() {
   }, [])
 
   const confirm = async () => {
-    const r = await fetch('/email/unsubscribe', {
+    const r = await fetch('/api/public/marketing-unsubscribe', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token }),
     })
@@ -66,7 +66,7 @@ function UnsubscribePage() {
         {status === 'ready' && (
           <>
             <p className="text-muted-foreground text-sm mb-6">
-              You're about to unsubscribe <strong>{email}</strong> from app emails. Auth emails (password resets, verification codes) will still be sent.
+               You're about to unsubscribe <strong>{email}</strong> from promotional emails. Account and security emails will still be sent.
             </p>
             <div className="flex flex-col gap-3">
               <button onClick={confirm} className="gradient-primary text-white font-semibold py-3 px-6 rounded-xl">

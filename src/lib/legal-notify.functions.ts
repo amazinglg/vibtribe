@@ -10,7 +10,7 @@ import {
 const OFFBOARD_DAYS = 15
 
 function buildUnsubUrl(token: string): string {
-  return `https://www.vibtribe.in/email/unsubscribe?token=${encodeURIComponent(token)}`
+  return `https://www.vibtribe.in/unsubscribe?token=${encodeURIComponent(token)}`
 }
 
 async function getOrCreateUnsubToken(email: string): Promise<string> {
