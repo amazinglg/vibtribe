@@ -47,7 +47,6 @@ import { Route as BlogVibtribeVsSignalVsTelegramRouteImport } from './routes/blo
 import { Route as BlogWhatsappAlternativesIndiaRouteImport } from './routes/blog.whatsapp-alternatives-india'
 import { Route as DownloadAndroidRouteImport } from './routes/download.android'
 import { Route as DownloadIosRouteImport } from './routes/download.ios'
-import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as GuardianConsentTokenRouteImport } from './routes/guardian-consent.$token'
 import { Route as HelpReportingRouteImport } from './routes/help.reporting'
 import { Route as AdminUserUserIdRouteImport } from './routes/admin.user.$userId'
@@ -261,11 +260,6 @@ const DownloadIosRoute = DownloadIosRouteImport.update({
   path: '/download/ios',
   getParentRoute: () => rootRouteImport,
 } as any)
-const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
-  id: '/email/unsubscribe',
-  path: '/email/unsubscribe',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const GuardianConsentTokenRoute = GuardianConsentTokenRouteImport.update({
   id: '/guardian-consent/$token',
   path: '/guardian-consent/$token',
@@ -397,7 +391,6 @@ export interface FileRoutesByFullPath {
   '/blog/whatsapp-alternatives-india': typeof BlogWhatsappAlternativesIndiaRoute
   '/download/android': typeof DownloadAndroidRoute
   '/download/ios': typeof DownloadIosRoute
-  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/guardian-consent/$token': typeof GuardianConsentTokenRoute
   '/help/reporting': typeof HelpReportingRoute
   '/admin/': typeof AdminIndexRoute
@@ -454,7 +447,6 @@ export interface FileRoutesByTo {
   '/blog/whatsapp-alternatives-india': typeof BlogWhatsappAlternativesIndiaRoute
   '/download/android': typeof DownloadAndroidRoute
   '/download/ios': typeof DownloadIosRoute
-  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/guardian-consent/$token': typeof GuardianConsentTokenRoute
   '/help/reporting': typeof HelpReportingRoute
   '/admin': typeof AdminIndexRoute
@@ -513,7 +505,6 @@ export interface FileRoutesById {
   '/blog/whatsapp-alternatives-india': typeof BlogWhatsappAlternativesIndiaRoute
   '/download/android': typeof DownloadAndroidRoute
   '/download/ios': typeof DownloadIosRoute
-  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/guardian-consent/$token': typeof GuardianConsentTokenRoute
   '/help/reporting': typeof HelpReportingRoute
   '/admin/': typeof AdminIndexRoute
@@ -573,7 +564,6 @@ export interface FileRouteTypes {
     | '/blog/whatsapp-alternatives-india'
     | '/download/android'
     | '/download/ios'
-    | '/email/unsubscribe'
     | '/guardian-consent/$token'
     | '/help/reporting'
     | '/admin/'
@@ -630,7 +620,6 @@ export interface FileRouteTypes {
     | '/blog/whatsapp-alternatives-india'
     | '/download/android'
     | '/download/ios'
-    | '/email/unsubscribe'
     | '/guardian-consent/$token'
     | '/help/reporting'
     | '/admin'
@@ -688,7 +677,6 @@ export interface FileRouteTypes {
     | '/blog/whatsapp-alternatives-india'
     | '/download/android'
     | '/download/ios'
-    | '/email/unsubscribe'
     | '/guardian-consent/$token'
     | '/help/reporting'
     | '/admin/'
@@ -740,7 +728,6 @@ export interface RootRouteChildren {
   BlogWhatsappAlternativesIndiaRoute: typeof BlogWhatsappAlternativesIndiaRoute
   DownloadAndroidRoute: typeof DownloadAndroidRoute
   DownloadIosRoute: typeof DownloadIosRoute
-  EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   GuardianConsentTokenRoute: typeof GuardianConsentTokenRoute
   HelpReportingRoute: typeof HelpReportingRoute
   ApiPublicAuthLoginRoute: typeof ApiPublicAuthLoginRoute
@@ -1027,13 +1014,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DownloadIosRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/email/unsubscribe': {
-      id: '/email/unsubscribe'
-      path: '/email/unsubscribe'
-      fullPath: '/email/unsubscribe'
-      preLoaderRoute: typeof EmailUnsubscribeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/guardian-consent/$token': {
       id: '/guardian-consent/$token'
       path: '/guardian-consent/$token'
@@ -1213,7 +1193,6 @@ const rootRouteChildren: RootRouteChildren = {
   BlogWhatsappAlternativesIndiaRoute: BlogWhatsappAlternativesIndiaRoute,
   DownloadAndroidRoute: DownloadAndroidRoute,
   DownloadIosRoute: DownloadIosRoute,
-  EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   GuardianConsentTokenRoute: GuardianConsentTokenRoute,
   HelpReportingRoute: HelpReportingRoute,
   ApiPublicAuthLoginRoute: ApiPublicAuthLoginRoute,
