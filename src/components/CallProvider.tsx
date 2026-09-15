@@ -863,7 +863,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
         if (!pcRef.current || payload.from === user.id) return;
         await addOrQueueIceCandidate(pcRef.current, payload.candidate);
       });
-      await channel.subscribe();
+      await waitForChannel(channel);
 
       // Subscribe to status changes for this call
       const statusChan = supabase
@@ -875,7 +875,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
             // CRITICAL: clear the ring timeout so it doesn't fire mid-call
             // and force-end an active call after 30s.
             if (ringTimerRef.current) { clearTimeout(ringTimerRef.current); ringTimerRef.current = null; }
-            if (ringtoneRef.current) { try { ringtoneRef.current.pause(); } catch {} ringtoneRef.current = null; }
+            stopRingtone();
             const pc = setupPeerConnection(callRow, true);
             const stream = localStreamRef.current || await acquireMedia(opts.type);
             addTracksToPC(pc, stream);
@@ -1075,7 +1075,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     if (!call) return;
     if (!row && role !== 'callee') return;
     if (ringTimerRef.current) { clearTimeout(ringTimerRef.current); ringTimerRef.current = null; }
-    if (ringtoneRef.current) { try { ringtoneRef.current.pause(); } catch {} ringtoneRef.current = null; }
+    stopRingtone();
     if (row) {
       // Auto-answer path: ensure state reflects the accepted call.
       setActiveCall(call);
@@ -1087,8 +1087,15 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     const channel = supabase.channel(`call:${call.id}`, { config: { broadcast: { ack: false } } });
     channelRef.current = channel;
     const pc = setupPeerConnection(call, false);
-    const stream = await acquireMedia(call.call_type).catch(() => null);
-    if (stream) addTracksToPC(pc, stream);
+    const stream = await acquireMedia(call.call_type).catch((error) => {
+      console.error('[Call] callee media acquisition failed', error);
+      return null;
+    });
+    if (!stream) {
+      setCallState('ringing');
+      return;
+    }
+    addTracksToPC(pc, stream);
 
     channel.on('broadcast', { event: 'offer' }, async ({ payload }) => {
       try {
@@ -1104,7 +1111,15 @@ export default function CallProvider({ children }: { children: React.ReactNode }
       if (payload.from === user?.id) return;
       await addOrQueueIceCandidate(pc, payload.candidate);
     });
-    await channel.subscribe();
+    try {
+      await waitForChannel(channel);
+    } catch (error) {
+      console.error('[Call] callee signaling unavailable', error);
+      cleanup();
+      setActiveCall(null);
+      setRole(null);
+      return;
+    }
 
     // Mark accepted (this triggers caller to send offer)
     await supabase.from('calls').update({ status: 'accepted', accepted_at: new Date().toISOString() }).eq('id', call.id);
