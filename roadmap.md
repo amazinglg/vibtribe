@@ -1,8 +1,9 @@
 # Email update
 
-- [ ] Inventory legacy email senders and scaffolds
-- [ ] Re-render authentication email templates
-- [ ] Convert app email senders
-- [ ] Add delivery events receiver
-- [ ] Remove replaced legacy email files
+- [x] Inventory legacy email senders and scaffolds
+- [x] Re-render authentication email templates
+- [x] Convert transactional app email senders
+- [x] Add delivery events receiver
+- [x] Remove replaced legacy queue routes
+- [x] Keep the independent marketing and unsubscribe system unchanged
 - [ ] Verify the app
