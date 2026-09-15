@@ -53,6 +53,7 @@ import { Route as HelpReportingRouteImport } from './routes/help.reporting'
 import { Route as AdminUserUserIdRouteImport } from './routes/admin.user.$userId'
 import { Route as ApiPublicAuthLoginRouteImport } from './routes/api/public/auth-login'
 import { Route as ApiPublicAuthOtpRouteImport } from './routes/api/public/auth-otp'
+import { Route as ApiPublicMarketingUnsubscribeRouteImport } from './routes/api/public/marketing-unsubscribe'
 import { Route as ApiPublicResendWebhookRouteImport } from './routes/api/public/resend-webhook'
 import { Route as LovableEmailEventsRouteImport } from './routes/lovable/email/events'
 import { Route as TribeJoinCodeRouteImport } from './routes/tribe.join.$code'
@@ -290,6 +291,12 @@ const ApiPublicAuthOtpRoute = ApiPublicAuthOtpRouteImport.update({
   path: '/api/public/auth-otp',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicMarketingUnsubscribeRoute =
+  ApiPublicMarketingUnsubscribeRouteImport.update({
+    id: '/api/public/marketing-unsubscribe',
+    path: '/api/public/marketing-unsubscribe',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicResendWebhookRoute = ApiPublicResendWebhookRouteImport.update({
   id: '/api/public/resend-webhook',
   path: '/api/public/resend-webhook',
@@ -397,6 +404,7 @@ export interface FileRoutesByFullPath {
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
+  '/api/public/marketing-unsubscribe': typeof ApiPublicMarketingUnsubscribeRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
   '/lovable/email/events': typeof LovableEmailEventsRoute
   '/tribe/join/$code': typeof TribeJoinCodeRoute
@@ -453,6 +461,7 @@ export interface FileRoutesByTo {
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
+  '/api/public/marketing-unsubscribe': typeof ApiPublicMarketingUnsubscribeRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
   '/lovable/email/events': typeof LovableEmailEventsRoute
   '/tribe/join/$code': typeof TribeJoinCodeRoute
@@ -511,6 +520,7 @@ export interface FileRoutesById {
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth-otp': typeof ApiPublicAuthOtpRoute
+  '/api/public/marketing-unsubscribe': typeof ApiPublicMarketingUnsubscribeRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
   '/lovable/email/events': typeof LovableEmailEventsRoute
   '/tribe/join/$code': typeof TribeJoinCodeRoute
@@ -570,6 +580,7 @@ export interface FileRouteTypes {
     | '/admin/user/$userId'
     | '/api/public/auth-login'
     | '/api/public/auth-otp'
+    | '/api/public/marketing-unsubscribe'
     | '/api/public/resend-webhook'
     | '/lovable/email/events'
     | '/tribe/join/$code'
@@ -626,6 +637,7 @@ export interface FileRouteTypes {
     | '/admin/user/$userId'
     | '/api/public/auth-login'
     | '/api/public/auth-otp'
+    | '/api/public/marketing-unsubscribe'
     | '/api/public/resend-webhook'
     | '/lovable/email/events'
     | '/tribe/join/$code'
@@ -683,6 +695,7 @@ export interface FileRouteTypes {
     | '/admin/user/$userId'
     | '/api/public/auth-login'
     | '/api/public/auth-otp'
+    | '/api/public/marketing-unsubscribe'
     | '/api/public/resend-webhook'
     | '/lovable/email/events'
     | '/tribe/join/$code'
@@ -732,6 +745,7 @@ export interface RootRouteChildren {
   HelpReportingRoute: typeof HelpReportingRoute
   ApiPublicAuthLoginRoute: typeof ApiPublicAuthLoginRoute
   ApiPublicAuthOtpRoute: typeof ApiPublicAuthOtpRoute
+  ApiPublicMarketingUnsubscribeRoute: typeof ApiPublicMarketingUnsubscribeRoute
   ApiPublicResendWebhookRoute: typeof ApiPublicResendWebhookRoute
   LovableEmailEventsRoute: typeof LovableEmailEventsRoute
   TribeJoinCodeRoute: typeof TribeJoinCodeRoute
@@ -1055,6 +1069,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAuthOtpRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/marketing-unsubscribe': {
+      id: '/api/public/marketing-unsubscribe'
+      path: '/api/public/marketing-unsubscribe'
+      fullPath: '/api/public/marketing-unsubscribe'
+      preLoaderRoute: typeof ApiPublicMarketingUnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/resend-webhook': {
       id: '/api/public/resend-webhook'
       path: '/api/public/resend-webhook'
@@ -1197,6 +1218,7 @@ const rootRouteChildren: RootRouteChildren = {
   HelpReportingRoute: HelpReportingRoute,
   ApiPublicAuthLoginRoute: ApiPublicAuthLoginRoute,
   ApiPublicAuthOtpRoute: ApiPublicAuthOtpRoute,
+  ApiPublicMarketingUnsubscribeRoute: ApiPublicMarketingUnsubscribeRoute,
   ApiPublicResendWebhookRoute: ApiPublicResendWebhookRoute,
   LovableEmailEventsRoute: LovableEmailEventsRoute,
   TribeJoinCodeRoute: TribeJoinCodeRoute,
