@@ -110,10 +110,12 @@ export default function ChatListPanel() {
     try { return !localStorage.getItem(CHATS_MARKER_KEY); } catch { return true; }
   });
 
-  // Instant paint from the encrypted cache, before any network work starts.
+  // Use the encrypted list only while offline. When online, wait for the
+  // authoritative list so a previously hidden/deleted chat can never flash.
   useEffect(() => {
     let cancelled = false;
     if (!user?.id) return;
+    if (typeof navigator !== 'undefined' && navigator.onLine) return;
     (async () => {
       try {
         const { readChatSummaries } = await import('@/lib/offline');
@@ -649,9 +651,16 @@ export default function ChatListPanel() {
         setSelectedChatId(chatList[0].id);
       }
     } catch (err) {
-      // On error, only fall back to demo chats if we have nothing cached.
-      // Otherwise keep the cached list so we don't blank the UI.
-      if (chats.length === 0) setChats(getDemoChats());
+      // Network unavailable: preserve offline access using the encrypted list.
+      if (chats.length === 0 && user?.id) {
+        try {
+          const { readChatSummaries } = await import('@/lib/offline');
+          const cached = await readChatSummaries<Chat>(user.id);
+          setChats(cached.length ? cached : getDemoChats());
+        } catch {
+          setChats(getDemoChats());
+        }
+      }
     } finally {
       setLoading(false);
     }
@@ -699,6 +708,10 @@ export default function ChatListPanel() {
           );
       }
       setChats(prev => prev.filter(c => c.id !== chatId));
+      if (user?.id) {
+        const { deleteChat } = await import('@/lib/offline');
+        await deleteChat(chatId);
+      }
       if (selectedChatId === chatId) setSelectedChatId(null);
     } catch {
       setChats(prev => prev.filter(c => c.id !== chatId));

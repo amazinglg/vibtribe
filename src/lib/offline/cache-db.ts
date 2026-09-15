@@ -203,7 +203,33 @@ export async function putChatSummaries(
   userId: string,
   chats: Array<{ id: string; updated_at: string; [k: string]: unknown }>,
 ): Promise<void> {
-  if (!cacheAvailable() || !chats.length) return;
+  if (!cacheAvailable()) return;
+  const existing = await all<CachedChatRow>(
+    STORE.chats,
+    'by_user_updated',
+    IDBKeyRange.bound([userId, ''], [userId, '\uffff']),
+  ).catch(() => []);
+  const incomingIds = new Set(chats.map((chat) => chat.id));
+  const staleIds = existing.filter((row) => !incomingIds.has(row.id)).map((row) => row.id);
+  if (staleIds.length) {
+    await txMany(STORE.chats, (store) => {
+      for (const id of staleIds) store.delete(id);
+    });
+    for (const id of staleIds) {
+      const messages = await all<CachedMessageRow>(
+        STORE.messages,
+        'by_chat_created',
+        IDBKeyRange.bound([id, ''], [id, '\uffff']),
+      ).catch(() => []);
+      const owned = messages.filter((row) => row.user_id === userId);
+      if (owned.length) {
+        await txMany(STORE.messages, (store) => {
+          for (const row of owned) store.delete(row.id);
+        });
+      }
+    }
+  }
+  if (!chats.length) return;
   const key = await getCacheKey(userId);
   if (!key) return;
   const rows: CachedChatRow[] = [];
@@ -286,6 +312,30 @@ export async function putMessages(
     });
   }
   await txMany(STORE.messages, (s) => { for (const r of rows) s.put(r); });
+}
+
+/** Replace the server-backed cache for a chat while preserving pending outbox rows. */
+export async function replaceMessages(
+  userId: string,
+  chatId: string,
+  messages: Array<{ id: string; created_at: string; updated_at?: string; [k: string]: unknown }>,
+): Promise<void> {
+  if (!cacheAvailable()) return;
+  const existing = await all<CachedMessageRow>(
+    STORE.messages,
+    'by_chat_created',
+    IDBKeyRange.bound([chatId, ''], [chatId, '\uffff']),
+  ).catch(() => []);
+  const incomingIds = new Set(messages.map((message) => message.id));
+  const stale = existing.filter(
+    (row) => row.user_id === userId && row.sync_state !== 'pending' && !incomingIds.has(row.id),
+  );
+  if (stale.length) {
+    await txMany(STORE.messages, (store) => {
+      for (const row of stale) store.delete(row.id);
+    });
+  }
+  await putMessages(userId, chatId, messages, 'synced');
 }
 
 export async function readMessages<T = Record<string, unknown>>(

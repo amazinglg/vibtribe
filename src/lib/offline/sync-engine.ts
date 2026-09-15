@@ -38,6 +38,8 @@ export interface CachedMessage {
   message_type?: string | null;
   reactions?: unknown;
   edited_at?: string | null;
+  expires_at?: string | null;
+  expiresAt?: string | null;
   deleted_for_everyone?: boolean;
   deleted_for?: string[];
   pending?: boolean;
@@ -89,7 +91,15 @@ export async function getCachedMessages(
   limit = 2000,
 ): Promise<CachedMessage[]> {
   const rows = await readMessages<CachedMessage>(userId, chatId, limit);
-  return rows.sort((a, b) => a.created_at.localeCompare(b.created_at));
+  const now = Date.now();
+  const visible = rows.filter((row) => {
+    const expiry = row.expires_at || row.expiresAt;
+    if (expiry && new Date(expiry).getTime() <= now) return false;
+    return !Array.isArray(row.deleted_for) || !row.deleted_for.includes(userId);
+  });
+  const hiddenIds = rows.filter((row) => !visible.includes(row)).map((row) => row.id);
+  if (hiddenIds.length) await deleteMessages(hiddenIds);
+  return visible.sort((a, b) => a.created_at.localeCompare(b.created_at));
 }
 
 export async function hasCachedChat(chatId: string): Promise<boolean> {
