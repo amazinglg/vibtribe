@@ -1,36 +1,8 @@
-import * as React from 'react'
-import { render } from '@react-email/components'
 import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware'
 import { supabaseAdmin } from '@/integrations/supabase/client.server'
-import { template as ticketReplyTpl } from '@/lib/email-templates/ticket-reply'
-
-const SITE_NAME = 'vibtribe'
-const SENDER_DOMAIN = 'notify.www.vibtribe.in'
-const FROM_DOMAIN = 'www.vibtribe.in'
-
-async function getOrCreateUnsubToken(email: string): Promise<string> {
-  const normalized = email.trim().toLowerCase()
-  const { data: existing } = await supabaseAdmin
-    .from('email_unsubscribe_tokens')
-    .select('token, used_at')
-    .eq('email', normalized)
-    .maybeSingle()
-  if (existing?.token && !existing.used_at) return existing.token
-  const bytes = new Uint8Array(32)
-  crypto.getRandomValues(bytes)
-  const fresh = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('')
-  await supabaseAdmin
-    .from('email_unsubscribe_tokens')
-    .upsert({ token: fresh, email: normalized }, { onConflict: 'email', ignoreDuplicates: true })
-  const { data: stored } = await supabaseAdmin
-    .from('email_unsubscribe_tokens')
-    .select('token')
-    .eq('email', normalized)
-    .maybeSingle()
-  return stored?.token ?? fresh
-}
+import { enqueueTransactionalEmail } from '@/lib/email-enqueue.server'
 
 export const replyToTicket = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
@@ -99,54 +71,19 @@ export const replyToTicket = createServerFn({ method: 'POST' })
     let emailError: string | null = null
     if (ticket.email) {
       try {
-        // Suppression check
-        const { data: suppressed } = await supabaseAdmin
-          .from('suppressed_emails')
-          .select('id')
-          .eq('email', ticket.email.toLowerCase())
-          .maybeSingle()
-        if (suppressed) {
-          emailError = 'Recipient unsubscribed'
-        } else {
-          const unsubscribeToken = await getOrCreateUnsubToken(ticket.email)
-          const element = React.createElement(ticketReplyTpl.component, {
+          const result = await enqueueTransactionalEmail({
+            templateName: 'ticket-reply',
+            recipientEmail: ticket.email,
+            idempotencyKey: `ticket-reply-${data.ticketId}-${inserted.id}`,
+            templateData: {
             name: ticket.name,
             ticketTitle: ticket.issue_title,
             ticketDescription: ticket.issue_description,
             reply: data.body,
-          })
-          const html = await render(element)
-          const text = await render(element, { plainText: true })
-          const subject = typeof ticketReplyTpl.subject === 'function'
-            ? ticketReplyTpl.subject({ ticketTitle: ticket.issue_title })
-            : ticketReplyTpl.subject
-          const messageId = crypto.randomUUID()
-          await supabaseAdmin.from('email_send_log').insert({
-            message_id: messageId,
-            template_name: 'ticket-reply',
-            recipient_email: ticket.email,
-            status: 'pending',
-          })
-          const { error: qErr } = await supabaseAdmin.rpc('enqueue_email', {
-            queue_name: 'transactional_emails',
-            payload: {
-              message_id: messageId,
-              to: ticket.email,
-              from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
-              sender_domain: SENDER_DOMAIN,
-              subject,
-              html,
-              text,
-              purpose: 'transactional',
-              label: 'ticket-reply',
-              idempotency_key: messageId,
-              unsubscribe_token: unsubscribeToken,
-              queued_at: new Date().toISOString(),
             },
           })
-          if (qErr) emailError = qErr.message
-          else emailQueued = true
-        }
+          emailQueued = result.ok
+          emailError = result.error ?? (result.status === 'suppressed' ? 'Recipient suppressed' : null)
       } catch (e: any) {
         emailError = e?.message || 'Failed to send email'
       }
