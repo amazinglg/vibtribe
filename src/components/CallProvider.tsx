@@ -101,6 +101,8 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   const ringTimerRef = useRef<any>(null);
   const durationTimerRef = useRef<any>(null);
   const ringtoneRef = useRef<HTMLAudioElement | null>(null);
+  const ringtoneContextRef = useRef<AudioContext | null>(null);
+  const ringtonePulseRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pendingIceRef = useRef<RTCIceCandidateInit[]>([]);
   const recoveryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dropTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -126,6 +128,31 @@ export default function CallProvider({ children }: { children: React.ReactNode }
 
   useEffect(() => { activeCallRef.current = activeCall; }, [activeCall]);
   useEffect(() => { callDurationRef.current = callDuration; }, [callDuration]);
+
+  // iOS only permits programmatic sound after an explicit interaction. Prime
+  // one reusable audio context on the first tap so a later realtime incoming
+  // call can ring while the PWA is open.
+  useEffect(() => {
+    const unlockAudio = () => {
+      try {
+        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = ringtoneContextRef.current || new AudioCtx();
+        ringtoneContextRef.current = ctx;
+        void ctx.resume?.();
+        const source = ctx.createBufferSource();
+        source.buffer = ctx.createBuffer(1, 1, 22050);
+        source.connect(ctx.destination);
+        source.start(0);
+      } catch {}
+    };
+    document.addEventListener('pointerdown', unlockAudio, { once: true, passive: true });
+    document.addEventListener('touchend', unlockAudio, { once: true, passive: true });
+    return () => {
+      document.removeEventListener('pointerdown', unlockAudio);
+      document.removeEventListener('touchend', unlockAudio);
+    };
+  }, []);
 
   // Post / update the persistent Android ongoing-call notification whenever
   // the call reaches the connected state (with mute + end actions), so the
@@ -272,6 +299,21 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     }
   }, [videoOff, activeCall]);
 
+  // WebKit replaces media DOM nodes when the call is minimized, restored, or
+  // the main/PiP views are swapped. Rebind both streams after every such
+  // transition; otherwise live tracks continue while the video appears frozen.
+  useEffect(() => {
+    if (!activeCall || activeCall.call_type !== 'video') return;
+    const local = localStreamRef.current;
+    const remote = remoteStreamRef.current;
+    const localEl = localVideoRef.current;
+    const remoteEl = remoteVideoRef.current;
+    if (local && localEl && localEl.srcObject !== local) localEl.srcObject = local;
+    if (remote && remoteEl && remoteEl.srcObject !== remote) remoteEl.srcObject = remote;
+    if (localEl) void localEl.play().catch(() => {});
+    if (remoteEl) void remoteEl.play().catch(() => {});
+  }, [activeCall, minimized, viewSwapped, videoOff, remoteVideoLive]);
+
   const cleanup = useCallback(() => {
     try { pcRef.current?.close(); } catch {}
     pcRef.current = null;
@@ -298,6 +340,8 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     recoveryTimerRef.current = null;
     dropTimerRef.current = null;
     if (ringtoneRef.current) { try { ringtoneRef.current.pause(); } catch {} ringtoneRef.current = null; }
+    if (ringtonePulseRef.current) clearInterval(ringtonePulseRef.current);
+    ringtonePulseRef.current = null;
     setCallDuration(0);
     setMicMuted(false); setVideoOff(false);
     setMinimized(false);
@@ -351,16 +395,43 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     setCallState('ended');
   }, [activeCall, role, supabase, user?.id, cleanup, callDuration]);
 
+  const stopRingtone = () => {
+    if (ringtonePulseRef.current) clearInterval(ringtonePulseRef.current);
+    ringtonePulseRef.current = null;
+    if (ringtoneRef.current) {
+      try { ringtoneRef.current.pause(); } catch {}
+      ringtoneRef.current = null;
+    }
+  };
+
   const playRingtone = (kind: 'outgoing' | 'incoming') => {
+    stopRingtone();
     try {
-      const audio = new Audio(
-        kind === 'incoming'
-          ? 'data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA='
-          : 'data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA='
-      );
-      audio.loop = true;
-      audio.play().catch(() => {});
-      ringtoneRef.current = audio;
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = ringtoneContextRef.current || new AudioCtx();
+      ringtoneContextRef.current = ctx;
+      void ctx.resume?.();
+      const pulse = () => {
+        if (ctx.state === 'suspended') void ctx.resume?.();
+        const now = ctx.currentTime;
+        const notes = kind === 'incoming' ? [880, 660] : [440, 520];
+        notes.forEach((frequency, index) => {
+          const oscillator = ctx.createOscillator();
+          const gain = ctx.createGain();
+          oscillator.connect(gain);
+          gain.connect(ctx.destination);
+          const start = now + index * 0.42;
+          oscillator.frequency.setValueAtTime(frequency, start);
+          gain.gain.setValueAtTime(0.001, start);
+          gain.gain.exponentialRampToValueAtTime(kind === 'incoming' ? 0.35 : 0.18, start + 0.025);
+          gain.gain.exponentialRampToValueAtTime(0.001, start + 0.32);
+          oscillator.start(start);
+          oscillator.stop(start + 0.34);
+        });
+      };
+      pulse();
+      ringtonePulseRef.current = setInterval(pulse, kind === 'incoming' ? 1800 : 2200);
     } catch {}
   };
 
@@ -377,11 +448,22 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     remoteStreamRef.current = remoteStream;
 
     pc.ontrack = (e) => {
-      e.streams[0]?.getTracks().forEach(t => remoteStream.addTrack(t));
+      const incomingTracks = e.streams[0]?.getTracks() || [e.track];
+      incomingTracks.forEach((track) => {
+        if (!remoteStream.getTracks().some((existing) => existing.id === track.id)) {
+          try { remoteStream.addTrack(track); } catch {}
+        }
+      });
       // Attach to elements (re-attach in case ref mounts later)
       requestAnimationFrame(() => {
-        if (remoteVideoRef.current) remoteVideoRef.current.srcObject = remoteStream;
-        if (remoteAudioRef.current) remoteAudioRef.current.srcObject = remoteStream;
+        if (remoteVideoRef.current) {
+          remoteVideoRef.current.srcObject = remoteStream;
+          void remoteVideoRef.current.play().catch(() => {});
+        }
+        if (remoteAudioRef.current) {
+          remoteAudioRef.current.srcObject = remoteStream;
+          void remoteAudioRef.current.play().catch(() => {});
+        }
       });
       // Track whether the remote has a video track so we can hide the
       // avatar backdrop the moment their camera comes through.
@@ -479,7 +561,12 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
     const mediaPromise = navigator.mediaDevices.getUserMedia({
       audio: true,
-      video: type === 'video' ? { facingMode: cameraFacing } : false,
+      video: type === 'video' ? {
+        facingMode: { ideal: cameraFacing },
+        width: { ideal: 640, max: 1280 },
+        height: { ideal: 480, max: 720 },
+        frameRate: { ideal: 24, max: 30 },
+      } : false,
     }).then((stream) => {
       if (timedOut) {
         stream.getTracks().forEach((track) => track.stop());
@@ -578,6 +665,27 @@ export default function CallProvider({ children }: { children: React.ReactNode }
       }
     });
   };
+
+  const waitForChannel = (channel: any, timeoutMs = 8000) => new Promise<void>((resolve, reject) => {
+    let settled = false;
+    const timer = window.setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      reject(new Error('Call signaling timed out.'));
+    }, timeoutMs);
+    channel.subscribe((status: string) => {
+      if (settled) return;
+      if (status === 'SUBSCRIBED') {
+        settled = true;
+        clearTimeout(timer);
+        resolve();
+      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+        settled = true;
+        clearTimeout(timer);
+        reject(new Error(`Call signaling ${status.toLowerCase()}.`));
+      }
+    });
+  });
 
   // Attach lifecycle watchers to the outbound audio track so we can react
   // when iOS suspends/ends it. Idempotent — safe to call whenever a fresh
