@@ -19,5 +19,5 @@
 # Project monitoring fixes
 
 - [x] Prevent slow iPhone permission prompts from silently cancelling accepted calls
-- [ ] Correct chat participation permission errors
-- [ ] Verify both fixes
+- [x] Correct chat participation permission errors
+- [x] Verify both fixes
