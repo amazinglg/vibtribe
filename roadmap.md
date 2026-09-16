@@ -15,3 +15,9 @@
 - [x] Prune removed chats and messages from encrypted device storage
 - [x] Use per-call urgent iPhone notifications with Answer and Decline actions
 - [x] Verify type safety and the app rendering
+
+# Project monitoring fixes
+
+- [x] Prevent slow iPhone permission prompts from silently cancelling accepted calls
+- [ ] Correct chat participation permission errors
+- [ ] Verify both fixes
