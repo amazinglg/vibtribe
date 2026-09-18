@@ -2210,21 +2210,6 @@ export type Database = {
           role: string
         }[]
       }
-      _my_profile_privilege_guard: {
-        Args: never
-        Returns: {
-          account_status: string
-          is_master_admin: boolean
-          is_premium: boolean
-          is_suspended: boolean
-          is_verified: boolean
-          premium_expires_at: string
-          premium_granted_at: string
-          premium_granted_by: string
-          premium_source: string
-          role: string
-        }[]
-      }
       _profile_guard: {
         Args: { _id: string }
         Returns: {
