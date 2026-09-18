@@ -26,7 +26,6 @@ import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as StatusScreenRouteImport } from './routes/status-screen'
-import { Route as SubprocessorsRouteImport } from './routes/subprocessors'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as ThemePreviewRouteImport } from './routes/theme-preview'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
@@ -148,11 +147,6 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const StatusScreenRoute = StatusScreenRouteImport.update({
   id: '/status-screen',
   path: '/status-screen',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SubprocessorsRoute = SubprocessorsRouteImport.update({
-  id: '/subprocessors',
-  path: '/subprocessors',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TermsRoute = TermsRouteImport.update({
@@ -371,7 +365,6 @@ export interface FileRoutesByFullPath {
   '/sign-up': typeof SignUpRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/status-screen': typeof StatusScreenRoute
-  '/subprocessors': typeof SubprocessorsRoute
   '/terms': typeof TermsRoute
   '/theme-preview': typeof ThemePreviewRoute
   '/unsubscribe': typeof UnsubscribeRoute
@@ -427,7 +420,6 @@ export interface FileRoutesByTo {
   '/sign-up': typeof SignUpRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/status-screen': typeof StatusScreenRoute
-  '/subprocessors': typeof SubprocessorsRoute
   '/terms': typeof TermsRoute
   '/theme-preview': typeof ThemePreviewRoute
   '/unsubscribe': typeof UnsubscribeRoute
@@ -485,7 +477,6 @@ export interface FileRoutesById {
   '/sign-up': typeof SignUpRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/status-screen': typeof StatusScreenRoute
-  '/subprocessors': typeof SubprocessorsRoute
   '/terms': typeof TermsRoute
   '/theme-preview': typeof ThemePreviewRoute
   '/unsubscribe': typeof UnsubscribeRoute
@@ -544,7 +535,6 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/sitemap.xml'
     | '/status-screen'
-    | '/subprocessors'
     | '/terms'
     | '/theme-preview'
     | '/unsubscribe'
@@ -600,7 +590,6 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/sitemap.xml'
     | '/status-screen'
-    | '/subprocessors'
     | '/terms'
     | '/theme-preview'
     | '/unsubscribe'
@@ -657,7 +646,6 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/sitemap.xml'
     | '/status-screen'
-    | '/subprocessors'
     | '/terms'
     | '/theme-preview'
     | '/unsubscribe'
@@ -715,7 +703,6 @@ export interface RootRouteChildren {
   SignUpRoute: typeof SignUpRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StatusScreenRoute: typeof StatusScreenRoute
-  SubprocessorsRoute: typeof SubprocessorsRoute
   TermsRoute: typeof TermsRoute
   ThemePreviewRoute: typeof ThemePreviewRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
@@ -865,13 +852,6 @@ declare module '@tanstack/react-router' {
       path: '/status-screen'
       fullPath: '/status-screen'
       preLoaderRoute: typeof StatusScreenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/subprocessors': {
-      id: '/subprocessors'
-      path: '/subprocessors'
-      fullPath: '/subprocessors'
-      preLoaderRoute: typeof SubprocessorsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/terms': {
@@ -1180,7 +1160,6 @@ const rootRouteChildren: RootRouteChildren = {
   SignUpRoute: SignUpRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StatusScreenRoute: StatusScreenRoute,
-  SubprocessorsRoute: SubprocessorsRoute,
   TermsRoute: TermsRoute,
   ThemePreviewRoute: ThemePreviewRoute,
   UnsubscribeRoute: UnsubscribeRoute,
