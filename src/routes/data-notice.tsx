@@ -11,11 +11,11 @@ export const Route = createFileRoute('/data-notice')({
       { title: 'Data Notice — VibTribe (DPDP Act, 2023)' },
       { name: 'description', content: 'How VibTribe collects, processes, retains and shares your personal data — published under India\u2019s Digital Personal Data Protection Act, 2023.' },
       { property: 'og:title', content: 'VibTribe Data Notice' },
-      { property: 'og:description', content: 'A clear, itemised notice of what data we process, why, on what legal basis, for how long, and with whom.' },
+      { property: 'og:description', content: 'A clear, itemised notice of what data we process, why, on what legal basis, and for how long.' },
       { property: 'og:url', content: 'https://www.vibtribe.in/data-notice' },
       { property: 'og:type', content: 'website' },
       { name: 'twitter:title', content: 'VibTribe Data Notice' },
-      { name: 'twitter:description', content: 'A clear, itemised notice of what data we process, why, on what legal basis, for how long, and with whom.' },
+      { name: 'twitter:description', content: 'A clear, itemised notice of what data we process, why, on what legal basis, and for how long.' },
       ...socialImageMeta(),
     ],
     links: [{ rel: 'canonical', href: 'https://www.vibtribe.in/data-notice' }],
@@ -29,26 +29,25 @@ type Row = {
   purpose: string;
   basis: string;
   retention: string;
-  subprocessors: string;
   rights: string;
 };
 
 const ROWS: Row[] = [
-  { element: 'Mobile number', purpose: 'Account identifier and contact discovery', basis: 'Contract performance', retention: 'Until account deletion', subprocessors: 'Lovable Cloud', rights: 'Export, delete' },
-  { element: 'Email address (mandatory)', purpose: 'OTP verification at signup, password recovery, transactional & support emails. Marketing emails only if you opt in.', basis: 'Contract performance (OTP/recovery) & consent (marketing)', retention: 'Until account deletion', subprocessors: 'Resend', rights: 'Export, delete; withdraw marketing consent any time' },
-  { element: 'Display name, username, bio', purpose: 'Profile rendering & contact identification', basis: 'Contract performance', retention: 'Until account deletion', subprocessors: 'Lovable Cloud, Cloudflare (CDN)', rights: 'Edit, export, delete' },
-  { element: 'Profile photo / avatar', purpose: 'Profile rendering. Stored in a private storage bucket; served only via short-lived signed URLs to viewers permitted by your visibility setting (All / Contacts / Nobody). No public URLs are issued.', basis: 'Contract performance & granular consent (visibility setting)', retention: 'Until removed by you or account deletion', subprocessors: 'Lovable Cloud (private storage), Cloudflare (signed-URL delivery)', rights: 'Change visibility, remove, export, delete' },
-  { element: 'Tribe (group) avatar', purpose: 'Group identification. Stored in a private storage bucket; served via short-lived signed URLs only to current members of that tribe.', basis: 'Contract performance', retention: 'Until removed by tribe admin or tribe deletion', subprocessors: 'Lovable Cloud (private storage), Cloudflare (signed-URL delivery)', rights: 'Tribe admins may replace or remove; members may leave the tribe' },
-  { element: 'Date of birth', purpose: 'Age verification. Users under 13 are blocked from sign-up. Users aged 13–17 must complete verifiable parental / guardian consent (DPDP §9) before using the app. Users 18+ sign up directly.', basis: 'Legal obligation', retention: 'Until account deletion (guardian consent record kept for audit)', subprocessors: 'Lovable Cloud', rights: 'Export, delete' },
-  { element: 'Guardian consent record (13–17 only)', purpose: 'Store the parent / legal guardian\u2019s name, email, mobile, relationship, IP, user-agent and timestamps used to prove verifiable consent under DPDP §9. Automatically retired when the user turns 18 (historical record kept for audit).', basis: 'Legal obligation', retention: 'Until account deletion; retired automatically at age 18 but retained for compliance audit', subprocessors: 'Lovable Cloud, Resend (consent request email)', rights: 'Guardian may withdraw consent at any time from the consent link' },
-  { element: 'Chats, media, status, reactions (end-to-end encrypted)', purpose: 'Deliver messaging service. Content is end-to-end encrypted — VibTribe cannot read it. Stored only as ciphertext.', basis: 'Contract performance', retention: 'Auto-deleted after 24 hours by default (user-configurable); ciphertext stored only until delivered & expired, or sooner if deleted by you', subprocessors: 'Lovable Cloud (encrypted storage), Cloudflare (encrypted delivery)', rights: 'Delete per-message or whole account' },
-  { element: 'Phone contacts (hashes only)', purpose: 'Match which of your contacts already use VibTribe', basis: 'Granular consent (Consent Center toggle)', retention: 'Hashes refreshed on each sync; deletable on demand', subprocessors: 'Lovable Cloud', rights: 'Withdraw consent any time' },
-  { element: 'Device tokens (FCM / APNs / Web Push)', purpose: 'Deliver push notifications to Android (Capacitor app via FCM), iOS (APNs) and web browsers', basis: 'Consent', retention: 'Until sign-out or token expiry', subprocessors: 'Google Firebase Cloud Messaging (Android & Web), Apple Push Notification Service (iOS)', rights: 'Disable in OS / app settings' },
-  { element: 'Device & session metadata (IP, user-agent, app version)', purpose: 'Security, fraud prevention, debugging', basis: 'Legitimate interests & legal obligation', retention: '90 days for session logs', subprocessors: 'Lovable Cloud, Cloudflare', rights: 'Export' },
-  { element: 'Consent records', purpose: 'Demonstrate lawful basis (DPDP §6)', basis: 'Legal obligation', retention: 'Lifetime of account + 3 years', subprocessors: 'Lovable Cloud', rights: 'Export' },
-  { element: 'Incomplete sign-up reminder emails', purpose: 'If you verify your email but do not complete onboarding, send up to three reminders (approx. 24 h, 72 h, 7 days) to help you finish. Reminders stop the moment onboarding completes.', basis: 'Legitimate interests (completing the account creation you started)', retention: 'Send counters cleared on onboarding completion or account deletion', subprocessors: 'Resend', rights: 'Complete onboarding or delete the account to stop reminders' },
-  { element: 'Admin offboarding notification email', purpose: 'When an administrator removes an account, notify the registered email address with the reason (General, Breach of Terms & Conditions, or Incomplete Sign-up) and inform you that associated personal data is deleted immediately.', basis: 'Legal obligation & legitimate interests (transparency, DPDP §5)', retention: 'Email delivery log retained per Resend policy; account data deleted immediately, subject to limited legal / security / fraud-prevention retention', subprocessors: 'Resend', rights: 'Grievance redressal via the Grievance Officer' },
-  { element: 'Analytics (page views, anonymised events)', purpose: 'Improve product & SEO', basis: 'Granular consent (Analytics cookies toggle)', retention: '14 months', subprocessors: 'Google Tag Manager / Google Analytics', rights: 'Withdraw consent any time' },
+  { element: 'Mobile number', purpose: 'Account identifier and contact discovery', basis: 'Contract performance', retention: 'Until account deletion', rights: 'Export, delete' },
+  { element: 'Email address (mandatory)', purpose: 'OTP verification at signup, password recovery, transactional & support emails. Marketing emails only if you opt in.', basis: 'Contract performance (OTP/recovery) & consent (marketing)', retention: 'Until account deletion', rights: 'Export, delete; withdraw marketing consent any time' },
+  { element: 'Display name, username, bio', purpose: 'Profile rendering & contact identification', basis: 'Contract performance', retention: 'Until account deletion', rights: 'Edit, export, delete' },
+  { element: 'Profile photo / avatar', purpose: 'Profile rendering. Stored in a private storage bucket; served only via short-lived signed URLs to viewers permitted by your visibility setting (All / Contacts / Nobody). No public URLs are issued.', basis: 'Contract performance & granular consent (visibility setting)', retention: 'Until removed by you or account deletion', rights: 'Change visibility, remove, export, delete' },
+  { element: 'Tribe (group) avatar', purpose: 'Group identification. Stored in a private storage bucket; served via short-lived signed URLs only to current members of that tribe.', basis: 'Contract performance', retention: 'Until removed by tribe admin or tribe deletion', rights: 'Tribe admins may replace or remove; members may leave the tribe' },
+  { element: 'Date of birth', purpose: 'Age verification. Users under 13 are blocked from sign-up. Users aged 13–17 must complete verifiable parental / guardian consent (DPDP §9) before using the app. Users 18+ sign up directly.', basis: 'Legal obligation', retention: 'Until account deletion (guardian consent record kept for audit)', rights: 'Export, delete' },
+  { element: 'Guardian consent record (13–17 only)', purpose: 'Store the parent / legal guardian\u2019s name, email, mobile, relationship, IP, user-agent and timestamps used to prove verifiable consent under DPDP §9. Automatically retired when the user turns 18 (historical record kept for audit).', basis: 'Legal obligation', retention: 'Until account deletion; retired automatically at age 18 but retained for compliance audit', rights: 'Guardian may withdraw consent at any time from the consent link' },
+  { element: 'Chats, media, status, reactions (end-to-end encrypted)', purpose: 'Deliver messaging service. Content is end-to-end encrypted — VibTribe cannot read it. Stored only as ciphertext.', basis: 'Contract performance', retention: 'Auto-deleted after 24 hours by default (user-configurable); ciphertext stored only until delivered & expired, or sooner if deleted by you', rights: 'Delete per-message or whole account' },
+  { element: 'Phone contacts (hashes only)', purpose: 'Match which of your contacts already use VibTribe', basis: 'Granular consent (Consent Center toggle)', retention: 'Hashes refreshed on each sync; deletable on demand', rights: 'Withdraw consent any time' },
+  { element: 'Device tokens (FCM / APNs / Web Push)', purpose: 'Deliver push notifications to Android (Capacitor app via FCM), iOS (APNs) and web browsers', basis: 'Consent', retention: 'Until sign-out or token expiry', rights: 'Disable in OS / app settings' },
+  { element: 'Device & session metadata (IP, user-agent, app version)', purpose: 'Security, fraud prevention, debugging', basis: 'Legitimate interests & legal obligation', retention: '90 days for session logs', rights: 'Export' },
+  { element: 'Consent records', purpose: 'Demonstrate lawful basis (DPDP §6)', basis: 'Legal obligation', retention: 'Lifetime of account + 3 years', rights: 'Export' },
+  { element: 'Incomplete sign-up reminder emails', purpose: 'If you verify your email but do not complete onboarding, send up to three reminders (approx. 24 h, 72 h, 7 days) to help you finish. Reminders stop the moment onboarding completes.', basis: 'Legitimate interests (completing the account creation you started)', retention: 'Send counters cleared on onboarding completion or account deletion', rights: 'Complete onboarding or delete the account to stop reminders' },
+  { element: 'Admin offboarding notification email', purpose: 'When an administrator removes an account, notify the registered email address with the reason (General, Breach of Terms & Conditions, or Incomplete Sign-up) and inform you that associated personal data is deleted immediately.', basis: 'Legal obligation & legitimate interests (transparency, DPDP §5)', retention: 'Email delivery log retained per Resend policy; account data deleted immediately, subject to limited legal / security / fraud-prevention retention', rights: 'Grievance redressal via the Grievance Officer' },
+  { element: 'Analytics (page views, anonymised events)', purpose: 'Improve product & SEO', basis: 'Granular consent (Analytics cookies toggle)', retention: '14 months', rights: 'Withdraw consent any time' },
 ];
 
 function DataNoticePage() {
@@ -97,7 +96,6 @@ function DataNoticePage() {
                   <th className="text-left p-3 font-semibold">Purpose</th>
                   <th className="text-left p-3 font-semibold">Legal basis</th>
                   <th className="text-left p-3 font-semibold">Retention</th>
-                  <th className="text-left p-3 font-semibold">Subprocessors</th>
                   <th className="text-left p-3 font-semibold">Your rights</th>
                 </tr>
               </thead>
@@ -108,7 +106,6 @@ function DataNoticePage() {
                     <td className="p-3 text-muted-foreground">{r.purpose}</td>
                     <td className="p-3 text-muted-foreground">{r.basis}</td>
                     <td className="p-3 text-muted-foreground">{r.retention}</td>
-                    <td className="p-3 text-muted-foreground">{r.subprocessors}</td>
                     <td className="p-3 text-muted-foreground">{r.rights}</td>
                   </tr>
                 ))}
@@ -140,7 +137,7 @@ function DataNoticePage() {
               For DPDP-related grievances, write to <a href="mailto:Labhansh.garg@outlook.com" className="text-primary hover:underline">Labhansh.garg@outlook.com</a>. We acknowledge within 72 hours and resolve within the timelines required by the DPDP Act, 2023 and IT Rules, 2021.
             </p>
             <p className="text-xs text-muted-foreground mt-3">
-              See also: <Link to="/subprocessors" className="text-primary hover:underline">Subprocessors</Link> · <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
+              See also: <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
             </p>
           </div>
         </div>
