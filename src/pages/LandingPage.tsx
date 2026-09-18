@@ -479,7 +479,6 @@ export default function LandingPage() {
             <Link to="/terms" className="hover:text-foreground transition-colors">{t('landing.footer.terms')}</Link>
             <Link to="/privacy" className="hover:text-foreground transition-colors">{t('landing.footer.privacy')}</Link>
             <Link to="/data-notice" className="hover:text-foreground transition-colors">Data Notice</Link>
-            <Link to="/subprocessors" className="hover:text-foreground transition-colors">Subprocessors</Link>
             <Link to="/child-safety" className="hover:text-foreground transition-colors">Child Safety</Link>
             <a href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Google Play</a>
             <Link to="/help/reporting" className="hover:text-foreground transition-colors">Reporting</Link>
