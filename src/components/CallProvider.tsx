@@ -84,6 +84,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   const [videoOff, setVideoOff] = useState(false);
   const [cameraFacing, setCameraFacing] = useState<'user' | 'environment'>('user');
   const [audioRoute, setAudioRoute] = useState<'earpiece' | 'speaker'>('earpiece');
+  const audioRouteRef = useRef<'earpiece' | 'speaker'>('earpiece');
   // When true, the call collapses to a small floating pill so the user can
   // interact with the chat / rest of the app while the call keeps running.
   const [minimized, setMinimized] = useState(false);
@@ -245,8 +246,8 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   // Apply the selected audio route to the remote audio/video elements
   // (setSinkId on web) and to the native bridge (Android WebView).
   const applyAudioRoute = useCallback(async (route: 'earpiece' | 'speaker') => {
+    audioRouteRef.current = route;
     setAudioRoute(route);
-    setCallAudioRoute(route);
     try {
       const md: any = navigator.mediaDevices;
       if (!md?.enumerateDevices) return;
@@ -267,11 +268,32 @@ export default function CallProvider({ children }: { children: React.ReactNode }
       await setSink(remoteAudioRef.current);
       await setSink(remoteVideoRef.current as unknown as HTMLMediaElement);
     } catch {}
+    // Apply the Android route last. WebView playback/setSinkId can reset the
+    // system route while a media element starts, especially on Android 12+.
+    await setCallAudioRoute(route);
   }, []);
 
   const toggleAudioRoute = useCallback(() => {
     applyAudioRoute(audioRoute === 'speaker' ? 'earpiece' : 'speaker');
   }, [audioRoute, applyAudioRoute]);
+
+  // WebView may reset its output when the peer connects or the app resumes.
+  // Reassert the user's selected route after those lifecycle transitions.
+  useEffect(() => {
+    if (!activeCall || callState !== 'connected') return;
+    const reapply = () => { void applyAudioRoute(audioRouteRef.current); };
+    reapply();
+    window.addEventListener('focus', reapply);
+    window.addEventListener('pageshow', reapply);
+    window.addEventListener('vt-app-resumed', reapply as EventListener);
+    document.addEventListener('visibilitychange', reapply);
+    return () => {
+      window.removeEventListener('focus', reapply);
+      window.removeEventListener('pageshow', reapply);
+      window.removeEventListener('vt-app-resumed', reapply as EventListener);
+      document.removeEventListener('visibilitychange', reapply);
+    };
+  }, [activeCall?.id, callState, applyAudioRoute]);
 
   // When the call overlay mounts AFTER media was already acquired (we now
   // acquire mic/camera inside the click gesture, before the dialog renders),
@@ -982,9 +1004,8 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   }, [user?.id, supabase, handleIncomingCall]);
 
   useEffect(() => {
-    if (!user?.id || activeCall || typeof window === 'undefined') return;
+    if (!user?.id || typeof window === 'undefined') return;
     const handleCallUrl = () => {
-      if (activeCallRef.current) return;
       const params = new URLSearchParams(window.location.search);
       const answerId = params.get('answerCall');
       const callId = params.get('call');
@@ -1018,6 +1039,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
       }
       return;
     }
+    if (activeCallRef.current) return;
     if (declineId) {
       // Lockscreen ringer "Decline" tapped — mark the call declined and clear the param.
       supabase.from('calls')
