@@ -5,8 +5,10 @@ import android.app.DownloadManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.os.Bundle;
 import android.os.Looper;
@@ -132,7 +134,26 @@ public class MainActivity extends BridgeActivity {
                 // MODE_IN_COMMUNICATION is the correct mode for VoIP/WebRTC calls;
                 // it enables the earpiece as the default output when speaker is off.
                 am.setMode(AudioManager.MODE_IN_COMMUNICATION);
-                am.setSpeakerphoneOn(on);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    int wantedType = on
+                        ? AudioDeviceInfo.TYPE_BUILTIN_SPEAKER
+                        : AudioDeviceInfo.TYPE_BUILTIN_EARPIECE;
+                    AudioDeviceInfo wantedDevice = null;
+                    for (AudioDeviceInfo device : am.getAvailableCommunicationDevices()) {
+                        if (device.getType() == wantedType) {
+                            wantedDevice = device;
+                            break;
+                        }
+                    }
+                    if (wantedDevice != null) {
+                        am.setCommunicationDevice(wantedDevice);
+                    } else {
+                        am.clearCommunicationDevice();
+                        am.setSpeakerphoneOn(on);
+                    }
+                } else {
+                    am.setSpeakerphoneOn(on);
+                }
             } catch (Exception e) {
                 Log.w("VibTribeCall", "setSpeakerOn failed", e);
             }
@@ -143,6 +164,9 @@ public class MainActivity extends BridgeActivity {
             try {
                 AudioManager am = (AudioManager) activity.getSystemService(Context.AUDIO_SERVICE);
                 if (am == null) return;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    am.clearCommunicationDevice();
+                }
                 am.setSpeakerphoneOn(false);
                 am.setMode(AudioManager.MODE_NORMAL);
             } catch (Exception e) {
