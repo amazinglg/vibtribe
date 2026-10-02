@@ -36,7 +36,7 @@ export function openNativeDeepLink(target?: string | null, payload: NativeDeepLi
     if (chatId) {
       window.dispatchEvent(new CustomEvent('vt-open-chat', { detail: { chatId, callId } }));
     }
-    if (callId) {
+    if (callId || /[?&](?:endCall|muteCall)=/.test(path)) {
       window.dispatchEvent(new CustomEvent('vt-call-url'));
     }
   } catch {}

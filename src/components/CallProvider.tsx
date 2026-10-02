@@ -57,6 +57,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
       acquireCallWakeLock().then((release) => { wakeLockReleaseRef.current = release; });
       // Route audio: video calls → speaker, voice → earpiece (initial default).
       const initial = activeCall.call_type === 'video' ? 'speaker' : 'earpiece';
+      audioRouteRef.current = initial;
       setAudioRoute(initial);
       setCallAudioRoute(initial);
     } else if (wakeLockReleaseRef.current) {
@@ -249,6 +250,9 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     audioRouteRef.current = route;
     setAudioRoute(route);
     try {
+      // Android's communication device is controlled by AudioManager. Setting
+      // the WebView's "default" sink can override its earpiece selection.
+      if ((window as any).VtCall?.setSpeakerOn) return await setCallAudioRoute(route);
       const md: any = navigator.mediaDevices;
       if (!md?.enumerateDevices) return;
       const devices = await md.enumerateDevices();
@@ -286,12 +290,13 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     window.addEventListener('focus', reapply);
     window.addEventListener('pageshow', reapply);
     window.addEventListener('vt-app-resumed', reapply as EventListener);
-    document.addEventListener('visibilitychange', reapply);
+    const onVisible = () => { if (document.visibilityState === 'visible') reapply(); };
+    document.addEventListener('visibilitychange', onVisible);
     return () => {
       window.removeEventListener('focus', reapply);
       window.removeEventListener('pageshow', reapply);
       window.removeEventListener('vt-app-resumed', reapply as EventListener);
-      document.removeEventListener('visibilitychange', reapply);
+      document.removeEventListener('visibilitychange', onVisible);
     };
   }, [activeCall?.id, callState, applyAudioRoute]);
 
