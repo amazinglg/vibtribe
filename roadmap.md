@@ -28,4 +28,5 @@
 - [x] Make the earpiece and speaker control reliably change Android output
 - [x] Preserve the ongoing-call service when the app leaves the foreground
 - [x] Make active-call notification controls reach the current call
-- [x] Verify preview checks; Android compilation needs a local Android SDK and Java installation
+- [x] Verify preview checks
+- [ ] Verify Android compilation and physical-device call routing (blocked: Android SDK, Java, and test phone unavailable here)
