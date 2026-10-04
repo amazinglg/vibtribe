@@ -3,7 +3,7 @@ import StatusScreenPage from "@/pages/StatusScreenPage";
 
 const TITLE = "Status Editor — VibTribe";
 const DESCRIPTION = "Create and manage your private VibTribe status updates.";
-const URL = "https://vibtribe.lovable.app/status-screen";
+const URL = "https://www.vibtribe.in/status-screen";
 
 export const Route = createFileRoute("/status-screen")({
   component: StatusScreenPage,

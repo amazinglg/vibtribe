@@ -41,6 +41,13 @@
 # SEO findings
 
 - [x] Give the internal status editor unique, non-indexable metadata
-- [x] Point crawler rules and sitemap entries to the published project domain
+- [x] Point crawler rules and sitemap entries to the main custom domain
 - [x] Complete Google Search Console verification and submit the sitemap
 - [x] Verify the updated SEO output
+
+# Main-domain SEO consistency
+
+- [x] Align the sitemap, crawler rules, and remaining page metadata with www.vibtribe.in
+- [x] Verify the main-domain sitemap in preview and confirm both domains currently serve pages
+- [ ] Confirm the published sitemap updates after publishing (blocked: unpublished changes)
+- [ ] Confirm www.vibtribe.in is set as Primary so other addresses redirect there (blocked: domain setting is not exposed by this status check)
