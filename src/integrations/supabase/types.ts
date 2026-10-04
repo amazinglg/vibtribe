@@ -2853,6 +2853,7 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_admin_user: { Args: never; Returns: boolean }
+      is_authenticated_broadcast_reader: { Args: never; Returns: boolean }
       is_chat_muted: {
         Args: { _chat_id: string; _user_id: string }
         Returns: boolean
