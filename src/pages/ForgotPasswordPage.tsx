@@ -19,7 +19,7 @@ export default function ForgotPasswordPage() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [step, setStep] = useState<'identifier' | 'verify' | 'done'>('identifier');
+  const [step, setStep] = useState<'identifier' | 'verify' | 'password' | 'done'>('identifier');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [otpStatus, setOtpStatus] = useState<OTPStatus>('idle');
@@ -60,14 +60,40 @@ export default function ForgotPasswordPage() {
     }
   };
 
-  const handleReset = async (e: React.FormEvent) => {
+  const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     if (!/^\d{6}$/.test(otp)) { setError('Enter the 6-digit code from your email'); setOtpStatus('error'); return; }
+    setLoading(true);
+    setOtpStatus('verifying');
+    try {
+      const res = await fetch('/api/public/auth-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'verify_reset', identifier: identifier.trim(), code: otp }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j?.error || 'Invalid or expired code');
+      setOtpStatus('success');
+      setTimeout(() => {
+        setStep('password');
+        setOtpStatus('idle');
+      }, 350);
+    } catch (err: any) {
+      setError(err.message || 'Invalid or expired code');
+      setOtpStatus('error');
+      setTimeout(() => setOtpStatus('idle'), 500);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
     if (newPassword.length < 6) { setError('Password must be at least 6 characters'); return; }
     if (newPassword !== confirmPassword) { setError('Passwords do not match'); return; }
     setLoading(true);
-    setOtpStatus('verifying');
     try {
       const res = await fetch('/api/public/auth-otp', {
         method: 'POST',
@@ -76,13 +102,10 @@ export default function ForgotPasswordPage() {
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j?.error || 'Failed to reset password');
-      setOtpStatus('success');
       setStep('done');
       setTimeout(() => navigate({ to: '/sign-in', replace: true }), 2000);
     } catch (err: any) {
       setError(err.message || 'Failed to reset password');
-      setOtpStatus('error');
-      setTimeout(() => setOtpStatus('idle'), 500);
     } finally {
       setLoading(false);
     }
@@ -135,13 +158,36 @@ export default function ForgotPasswordPage() {
               onBack={() => { setStep('identifier'); setOtp(''); setNewPassword(''); setConfirmPassword(''); setError(''); setOtpStatus('idle'); }}
               backLabel="Back"
             >
-              <form onSubmit={handleReset} className="space-y-5">
+              <form onSubmit={handleVerify} className="space-y-5">
                 <OTPInput
                   value={otp}
                   onChange={v => { setOtp(v); setError(''); if (otpStatus === 'error') setOtpStatus('idle'); }}
                   status={otpStatus}
                   disabled={loading}
                 />
+                {error && <VerificationError message={error} />}
+                {otpStatus === 'verifying' && <VerificationLoader message="Checking your code…" />}
+                <button type="submit" disabled={loading || otp.length !== 6} className="otp-primary-btn">
+                  {loading ? (
+                    <><Loader2 size={18} className="animate-spin" /><span>Verifying…</span></>
+                  ) : (
+                    <><span>Verify code</span><ArrowRight size={18} /></>
+                  )}
+                </button>
+                <div className="flex justify-center pt-1">
+                  <ResendButton onResend={handleResendCode} />
+                </div>
+              </form>
+            </VerificationCard>
+          ) : step === 'password' ? (
+            <VerificationCard
+              title="Create a new password"
+              subtitle="Your code is verified. Choose a new password for your account."
+              icon={<Lock size={26} className="text-white" />}
+              onBack={() => { setStep('verify'); setNewPassword(''); setConfirmPassword(''); setError(''); }}
+              backLabel="Back"
+            >
+              <form onSubmit={handleReset} className="space-y-5">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">New password</label>
                   <div className="relative">
@@ -153,8 +199,9 @@ export default function ForgotPasswordPage() {
                       placeholder="At least 6 characters"
                       className="w-full pl-9 pr-12 py-3 bg-input border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all text-sm"
                       autoComplete="new-password"
+                      autoFocus
                     />
-                    <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                    <button type="button" aria-label={showPassword ? 'Hide password' : 'Show password'} onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
@@ -174,17 +221,13 @@ export default function ForgotPasswordPage() {
                   </div>
                 </div>
                 {error && <VerificationError message={error} />}
-                {otpStatus === 'verifying' && <VerificationLoader message="End-to-end secured verification…" />}
-                <button type="submit" disabled={loading || otp.length !== 6 || !newPassword} className="otp-primary-btn">
+                <button type="submit" disabled={loading || !newPassword || !confirmPassword} className="otp-primary-btn">
                   {loading ? (
                     <><Loader2 size={18} className="animate-spin" /><span>Resetting…</span></>
                   ) : (
                     <><span>Reset password</span><ArrowRight size={18} /></>
                   )}
                 </button>
-                <div className="flex justify-center pt-1">
-                  <ResendButton onResend={handleResendCode} />
-                </div>
               </form>
             </VerificationCard>
           ) : (
