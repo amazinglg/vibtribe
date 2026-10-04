@@ -79,6 +79,11 @@ const ResetPwd = z.object({
   code: codeSchema,
   newPassword: passwordSchema,
 })
+const VerifyReset = z.object({
+  action: z.literal('verify_reset'),
+  identifier: identifierSchema,
+  code: codeSchema,
+})
 
 const SendVerifyExisting = z.object({
   action: z.literal('send_verify_existing'),
@@ -91,7 +96,7 @@ const VerifyExisting = z.object({
 })
 
 const Body = z.discriminatedUnion('action', [
-  SendSignup, SendReset, CreateAccount, ResetPwd, SendVerifyExisting, VerifyExisting,
+  SendSignup, SendReset, CreateAccount, VerifyReset, ResetPwd, SendVerifyExisting, VerifyExisting,
 ])
 
 function jerr(status: number, error: string) {
@@ -236,6 +241,61 @@ export const Route = createFileRoute('/api/public/auth-otp')({
               } catch (e) { console.error('enqueue otp reset failed', e) }
             }
           }
+          return Response.json({ ok: true })
+        }
+
+        // VERIFY RESET OTP without consuming it. The same code is consumed only
+        // when the user submits a new password, keeping verification and the
+        // password form as two separate steps.
+        if (payload.action === 'verify_reset') {
+          const id = payload.identifier.toLowerCase()
+          const digits = id.replace(/\D/g, '')
+          const { data: prof } = await supabase
+            .from('user_profiles')
+            .select('real_email')
+            .or(
+              [
+                `real_email.eq.${id}`,
+                `email.eq.${id}`,
+                ...(digits.length >= 10 ? [`mobile_number.like.%${digits.slice(-10)}`] : []),
+              ].join(','),
+            )
+            .limit(1)
+            .maybeSingle()
+
+          const email = prof?.real_email?.trim().toLowerCase()
+          if (!email) return jerr(400, 'Invalid or expired code')
+
+          const { data: record } = await supabase
+            .from('email_otp_codes')
+            .select('id, code_hash, expires_at, attempts')
+            .eq('email', email)
+            .eq('purpose', 'password_reset')
+            .is('consumed_at', null)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle()
+
+          if (!record || new Date(record.expires_at).getTime() < Date.now() || record.attempts >= 5) {
+            return jerr(400, 'Invalid or expired code')
+          }
+
+          const digest = await crypto.subtle.digest(
+            'SHA-256',
+            new TextEncoder().encode(payload.code),
+          )
+          const codeHash = Array.from(new Uint8Array(digest))
+            .map(byte => byte.toString(16).padStart(2, '0'))
+            .join('')
+
+          if (codeHash !== record.code_hash) {
+            await supabase
+              .from('email_otp_codes')
+              .update({ attempts: record.attempts + 1 })
+              .eq('id', record.id)
+            return jerr(400, 'Invalid or expired code')
+          }
+
           return Response.json({ ok: true })
         }
 

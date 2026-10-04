@@ -33,7 +33,7 @@
 
 # Password recovery flow
 
-- [ ] Keep all six verification-code boxes inside narrow phone screens
-- [ ] Verify the code before showing new-password fields
-- [ ] Reset the password only after successful code verification
+- [x] Keep all six verification-code boxes inside narrow phone screens
+- [x] Verify the code before showing new-password fields
+- [x] Reset the password only after successful code verification
 - [ ] Verify the phone layout and recovery flow

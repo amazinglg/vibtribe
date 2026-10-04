@@ -129,7 +129,7 @@ export default function OTPInput({
 
   return (
     <div
-      className={`otp-group flex justify-between items-center gap-2 sm:gap-2.5 ${isError ? 'otp-shake' : ''}`}
+      className={`otp-group grid grid-cols-6 items-center gap-1.5 sm:gap-2.5 ${isError ? 'otp-shake' : ''}`}
       role="group"
       aria-label={ariaLabel}
       aria-invalid={isError || undefined}
