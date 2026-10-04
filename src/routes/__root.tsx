@@ -103,6 +103,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "application-name", content: "VibTribe" },
       { name: "robots", content: "index, follow, max-image-preview:large, max-snippet:-1" },
       { name: "google-site-verification", content: "_7pZ-_k7opEpd_fm0t_TuqMAaszj-iXzJiGrjKNymq0" },
+      { name: "google-site-verification", content: "9x0SgDo2LPIOhs_qGTm4qQlzDeJdU5p8raJ1ev9A_HI" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },

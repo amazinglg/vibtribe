@@ -37,3 +37,10 @@
 - [x] Verify the code before showing new-password fields
 - [x] Reset the password only after successful code verification
 - [x] Verify the phone layout and recovery flow
+
+# SEO findings
+
+- [x] Give the internal status editor unique, non-indexable metadata
+- [x] Point crawler rules and sitemap entries to the published project domain
+- [ ] Complete Google Search Console verification and submit the sitemap
+- [ ] Verify the updated SEO output
