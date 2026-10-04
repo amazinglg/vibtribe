@@ -30,3 +30,10 @@
 - [x] Make active-call notification controls reach the current call
 - [x] Verify preview checks
 - [ ] Verify Android compilation and physical-device call routing (blocked: Android SDK, Java, and test phone unavailable here)
+
+# Password recovery flow
+
+- [ ] Keep all six verification-code boxes inside narrow phone screens
+- [ ] Verify the code before showing new-password fields
+- [ ] Reset the password only after successful code verification
+- [ ] Verify the phone layout and recovery flow
