@@ -48,12 +48,9 @@ export default function ForceReleaseListener() {
 
     const checkLatest = async (firstRun: boolean) => {
       try {
-        const { data } = await (supabase as any)
-          .from('app_releases_public')
-          .select('id')
-          .order('released_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+        const { data: releases } = await (supabase as any)
+          .rpc('latest_app_release_marker');
+        const data = releases?.[0];
         if (cancelled) return;
         if (data?.id) {
           const last = localStorage.getItem(STORAGE_KEY);

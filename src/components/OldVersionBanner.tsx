@@ -89,12 +89,9 @@ export default function OldVersionBanner() {
     let cancelled = false;
     (async () => {
       try {
-        const { data: release } = await (supabase as any)
-          .from('app_releases_public')
-          .select('version, released_at')
-          .order('released_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+        const { data: releases } = await (supabase as any)
+          .rpc('latest_app_release_marker');
+        const release = releases?.[0];
         if (cancelled || !release) return;
 
         if (p === 'ios-native' || p === 'android-native') {
