@@ -8,6 +8,13 @@
       "when": 1791102194707,
       "tag": "0000_secure_authenticated_broadcast_reads",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791109643223,
+      "tag": "0001_scope_release_markers_and_profile_photo_reads",
+      "breakpoints": true
     }
   ]
 }

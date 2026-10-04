@@ -2900,6 +2900,14 @@ export type Database = {
         Args: { _code: string; _email: string; _purpose: string }
         Returns: undefined
       }
+      latest_app_release_marker: {
+        Args: never
+        Returns: {
+          id: string
+          released_at: string
+          version: string
+        }[]
+      }
       list_pending_signup_reminders: {
         Args: { _limit?: number }
         Returns: {
