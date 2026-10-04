@@ -42,5 +42,5 @@
 
 - [x] Give the internal status editor unique, non-indexable metadata
 - [x] Point crawler rules and sitemap entries to the published project domain
-- [ ] Complete Google Search Console verification and submit the sitemap
-- [ ] Verify the updated SEO output
+- [x] Complete Google Search Console verification and submit the sitemap
+- [x] Verify the updated SEO output
