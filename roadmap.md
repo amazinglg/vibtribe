@@ -41,6 +41,11 @@
 # SEO findings
 
 - [x] Give the internal status editor unique, non-indexable metadata
-- [x] Point crawler rules and sitemap entries to the published project domain
+- [x] Point crawler rules and sitemap entries to the main custom domain
 - [x] Complete Google Search Console verification and submit the sitemap
 - [x] Verify the updated SEO output
+
+# Main-domain SEO consistency
+
+- [x] Align the sitemap, crawler rules, and remaining page metadata with www.vibtribe.in
+- [ ] Verify the main-domain sitemap in the live preview and check domain redirects (preview validation pending)
