@@ -19,4 +19,4 @@ Disallow: /guardian-setup
 Disallow: /guardian-consent/
 Disallow: /tribe/join/
 
-Sitemap: https://www.vibtribe.in/sitemap.xml
+Sitemap: https://vibtribe.lovable.app/sitemap.xml
