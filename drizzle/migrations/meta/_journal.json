@@ -15,6 +15,13 @@
       "when": 1791109643223,
       "tag": "0001_scope_release_markers_and_profile_photo_reads",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791118526838,
+      "tag": "0002_vibz_social_posts_and_moderation",
+      "breakpoints": true
     }
   ]
 }

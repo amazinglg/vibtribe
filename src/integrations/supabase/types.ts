@@ -2142,6 +2142,256 @@ export type Database = {
         }
         Relationships: []
       }
+      vibein: {
+        Row: {
+          created_at: string
+          creator_id: string
+          follower_id: string
+        }
+        Insert: {
+          created_at?: string
+          creator_id: string
+          follower_id: string
+        }
+        Update: {
+          created_at?: string
+          creator_id?: string
+          follower_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vibein_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vibein_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vibz_comments: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vibz_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "vibz_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vibz_comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vibz_likes: {
+        Row: {
+          created_at: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vibz_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "vibz_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vibz_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vibz_moderation: {
+        Row: {
+          action: string
+          actor_id: string | null
+          categories: string[]
+          confidence: number | null
+          created_at: string
+          details: string | null
+          email_status: string | null
+          id: string
+          post_id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          categories?: string[]
+          confidence?: number | null
+          created_at?: string
+          details?: string | null
+          email_status?: string | null
+          id?: string
+          post_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          categories?: string[]
+          confidence?: number | null
+          created_at?: string
+          details?: string | null
+          email_status?: string | null
+          id?: string
+          post_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vibz_moderation_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "vibz_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vibz_posts: {
+        Row: {
+          caption: string
+          categories: string[]
+          comments_count: number
+          confidence: number | null
+          created_at: string
+          creator_id: string
+          deleted_at: string | null
+          duration_seconds: number
+          id: string
+          likes_count: number
+          media_path: string
+          media_type: string
+          review_notes: string | null
+          reviewed_at: string | null
+          shares_count: number
+          status: string
+        }
+        Insert: {
+          caption?: string
+          categories?: string[]
+          comments_count?: number
+          confidence?: number | null
+          created_at?: string
+          creator_id: string
+          deleted_at?: string | null
+          duration_seconds: number
+          id?: string
+          likes_count?: number
+          media_path: string
+          media_type?: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          shares_count?: number
+          status?: string
+        }
+        Update: {
+          caption?: string
+          categories?: string[]
+          comments_count?: number
+          confidence?: number | null
+          created_at?: string
+          creator_id?: string
+          deleted_at?: string | null
+          duration_seconds?: number
+          id?: string
+          likes_count?: number
+          media_path?: string
+          media_type?: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          shares_count?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vibz_posts_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vibz_shares: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vibz_shares_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "vibz_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vibz_shares_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       app_releases_public: {
@@ -3070,6 +3320,53 @@ export type Database = {
         Returns: Json
       }
       verify_guardian_email_otp: { Args: { _code: string }; Returns: boolean }
+      vibz_feed: {
+        Args: { _cursor?: string; _limit?: number }
+        Returns: {
+          caption: string
+          comments_count: number
+          created_at: string
+          creator_avatar: string
+          creator_bio: string
+          creator_id: string
+          creator_name: string
+          creator_username: string
+          id: string
+          liked: boolean
+          likes_count: number
+          media_path: string
+          shares_count: number
+          vibed_in: boolean
+        }[]
+      }
+      vibz_profile: {
+        Args: { _id: string }
+        Returns: {
+          avatar_url: string
+          bio: string
+          full_name: string
+          id: string
+          total_comments: number
+          total_likes: number
+          total_shares: number
+          username: string
+          vibed_in: boolean
+          vibein_count: number
+          vibemates: number
+        }[]
+      }
+      vibz_search: {
+        Args: { _q: string }
+        Returns: {
+          avatar_url: string
+          bio: string
+          full_name: string
+          id: string
+          username: string
+          vibed_in: boolean
+          vibemates: number
+        }[]
+      }
       visible_avatar_urls: {
         Args: { _owner_ids: string[] }
         Returns: {
