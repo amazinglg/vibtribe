@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from '@tanstack/react-router';
 import AppLogo from '@/components/ui/AppLogo';
 import Wordmark from '@/components/ui/Wordmark';
-import { MessageCircle, CircleDot, User, Bell, Shield, Lock, ChevronLeft, ChevronRight, LogOut, Search } from 'lucide-react';
+import { MessageCircle, CircleDot, User, Bell, Shield, Lock, ChevronLeft, ChevronRight, LogOut, Search, Clapperboard } from 'lucide-react';
 import SecureVaultModal from './SecureVaultModal';
 import { useAuth } from '@/contexts/AuthContext';
 import PWAInstallBanner from './PWAInstallBanner';
@@ -36,6 +36,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const NAV_ITEMS = [
     { href: '/', label: t('nav.chats'), icon: MessageCircle, badge: 0 },
     { href: '/status-screen', label: t('nav.status'), icon: CircleDot, badge: 0 },
+    { href: '/vibz', label: 'VibZ', icon: Clapperboard, badge: 0 },
     { href: '/profile-screen', label: t('nav.profile'), icon: User, badge: 0 },
   ];
 
@@ -44,6 +45,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     ? t('nav.messages')
     : pathname.startsWith('/status')
       ? t('nav.status')
+      : pathname.startsWith('/vibz')
+        ? 'VibZ'
       : pathname.startsWith('/profile')
         ? t('nav.profile')
         : pathname.startsWith('/admin')

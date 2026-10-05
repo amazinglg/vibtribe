@@ -51,3 +51,10 @@
 - [x] Verify the main-domain sitemap in preview and confirm both domains currently serve pages
 - [ ] Confirm the published sitemap updates after publishing (blocked: unpublished changes)
 - [ ] Confirm www.vibtribe.in is set as Primary so other addresses redirect there (blocked: domain setting is not exposed by this status check)
+
+# VibZ social video
+
+- [x] Add separate posts, VibeIn, engagement, moderation and private video storage
+- [ ] Build the video feed, upload, discovery and creator profiles
+- [ ] Connect admin review, removal email and safety policy
+- [ ] Check mobile/desktop interactions and deployment readiness

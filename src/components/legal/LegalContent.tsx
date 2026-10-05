@@ -37,6 +37,7 @@ export function TermsConditionsContent() {
       <ul className="list-disc pl-5 space-y-1">
         <li>Send spam, scams, phishing, or unsolicited bulk messages.</li>
         <li>Share illegal content, child sexual abuse material, terrorism-related content, or anything that violates Indian law or the IT Act, 2000.</li>
+        <li>Post nudity, sexual content, pornography or soft-pornographic content, or other content that violates our Community Guidelines. VibTribe does not tolerate or promote such content or CSAM.</li>
         <li>Harass, threaten, defame, or stalk any person.</li>
         <li>Distribute malware or attempt to break, probe, or reverse-engineer the platform.</li>
         <li>Infringe intellectual-property rights or share content you do not own or have permission to share.</li>
@@ -56,6 +57,7 @@ export function TermsConditionsContent() {
 
       <h2 className="text-lg font-semibold mt-6">6. User Content</h2>
       <p>You retain ownership of the content you send. You grant us a limited licence to transmit, store, and display that content solely to operate the App. We do not claim ownership of your messages, media, or status updates.</p>
+      <p><strong>VibZ and Community Guidelines.</strong> VibZ videos are visible to signed-in VibTribe members, not end-to-end encrypted, and screened for safety before publication. VibTribe does not tolerate or promote nudity, sexual content, pornography/soft-pornographic content, CSAM, or other content that violates our Community Guidelines. Suspected severe abuse may be quarantined immediately; administrators make final removal decisions. Do not share confidential material in a VibZ.</p>
 
       <h2 className="text-lg font-semibold mt-6">7. Suspension &amp; Termination</h2>
       <p>We may suspend or terminate your account at any time, with or without notice, if we reasonably believe you have violated these Terms, applicable law, or if your account poses a security or safety risk to other users. You may delete your own account at any time from Profile &rarr; Danger Zone &rarr; Delete My Account.</p>

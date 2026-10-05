@@ -20,6 +20,7 @@ import { template as offboardingGeneral } from './offboarding-general'
 import { template as offboardingTermsBreach } from './offboarding-terms-breach'
 import { template as offboardingIncompleteSignup } from './offboarding-incomplete-signup'
 import { template as sadToSeeYouGo } from './sad-to-see-you-go'
+import { template as vibzRemoved } from './vibz-removed'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'otp-code': otpCode,
@@ -33,4 +34,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'offboarding-terms-breach': offboardingTermsBreach,
   'offboarding-incomplete-signup': offboardingIncompleteSignup,
   'sad-to-see-you-go': sadToSeeYouGo,
+  'vibz-removed': vibzRemoved,
 }

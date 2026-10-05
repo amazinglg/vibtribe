@@ -1,0 +1,3 @@
+import {createFileRoute} from '@tanstack/react-router'
+import AlteredVibzPage from '@/pages/AlteredVibzPage'
+export const Route=createFileRoute('/admin/altered-vibz')({component:AlteredVibzPage,head:()=>({meta:[{title:'Altered VibZ — VibTribe Admin'},{name:'description',content:'Review flagged VibZ and moderation decisions.'},{name:'robots',content:'noindex, nofollow'},{property:'og:title',content:'Altered VibZ — VibTribe Admin'},{property:'og:description',content:'Review flagged VibZ and moderation decisions.'},{property:'og:type',content:'website'},{name:'twitter:card',content:'summary'}]})})

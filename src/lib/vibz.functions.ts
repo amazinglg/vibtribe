@@ -13,7 +13,7 @@ export const getVibzFeed = createServerFn({ method: 'POST' }).middleware([requir
       ensure(error)
       return posts ?? []
     }
-    const { data: posts, error } = await context.supabase.rpc('vibz_feed', { _cursor: data.cursor ?? null, _limit: 20 })
+    const { data: posts, error } = await context.supabase.rpc('vibz_feed', { _cursor: data.cursor, _limit: 20 })
     ensure(error)
     return posts ?? []
   })
