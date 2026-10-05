@@ -29,7 +29,9 @@ import { Route as StatusScreenRouteImport } from './routes/status-screen'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as ThemePreviewRouteImport } from './routes/theme-preview'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
+import { Route as VibzRouteImport } from './routes/vibz'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminAlteredVibzRouteImport } from './routes/admin.altered-vibz'
 import { Route as AdminAppealsRouteImport } from './routes/admin.appeals'
 import { Route as AdminDeletedUsersRouteImport } from './routes/admin.deleted-users'
 import { Route as AdminMarketingRouteImport } from './routes/admin.marketing'
@@ -48,6 +50,7 @@ import { Route as DownloadAndroidRouteImport } from './routes/download.android'
 import { Route as DownloadIosRouteImport } from './routes/download.ios'
 import { Route as GuardianConsentTokenRouteImport } from './routes/guardian-consent.$token'
 import { Route as HelpReportingRouteImport } from './routes/help.reporting'
+import { Route as VibzCreatorIdRouteImport } from './routes/vibz.$creatorId'
 import { Route as AdminUserUserIdRouteImport } from './routes/admin.user.$userId'
 import { Route as ApiPublicAuthLoginRouteImport } from './routes/api/public/auth-login'
 import { Route as ApiPublicAuthOtpRouteImport } from './routes/api/public/auth-otp'
@@ -164,9 +167,19 @@ const UnsubscribeRoute = UnsubscribeRouteImport.update({
   path: '/unsubscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VibzRoute = VibzRouteImport.update({
+  id: '/vibz',
+  path: '/vibz',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAlteredVibzRoute = AdminAlteredVibzRouteImport.update({
+  id: '/altered-vibz',
+  path: '/altered-vibz',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminAppealsRoute = AdminAppealsRouteImport.update({
@@ -263,6 +276,11 @@ const HelpReportingRoute = HelpReportingRouteImport.update({
   id: '/help/reporting',
   path: '/help/reporting',
   getParentRoute: () => rootRouteImport,
+} as any)
+const VibzCreatorIdRoute = VibzCreatorIdRouteImport.update({
+  id: '/$creatorId',
+  path: '/$creatorId',
+  getParentRoute: () => VibzRoute,
 } as any)
 const AdminUserUserIdRoute = AdminUserUserIdRouteImport.update({
   id: '/user/$userId',
@@ -368,6 +386,8 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/theme-preview': typeof ThemePreviewRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/vibz': typeof VibzRouteWithChildren
+  '/admin/altered-vibz': typeof AdminAlteredVibzRoute
   '/admin/appeals': typeof AdminAppealsRoute
   '/admin/deleted-users': typeof AdminDeletedUsersRoute
   '/admin/marketing': typeof AdminMarketingRoute
@@ -386,6 +406,7 @@ export interface FileRoutesByFullPath {
   '/download/ios': typeof DownloadIosRoute
   '/guardian-consent/$token': typeof GuardianConsentTokenRoute
   '/help/reporting': typeof HelpReportingRoute
+  '/vibz/$creatorId': typeof VibzCreatorIdRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
@@ -423,6 +444,8 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/theme-preview': typeof ThemePreviewRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/vibz': typeof VibzRouteWithChildren
+  '/admin/altered-vibz': typeof AdminAlteredVibzRoute
   '/admin/appeals': typeof AdminAppealsRoute
   '/admin/deleted-users': typeof AdminDeletedUsersRoute
   '/admin/marketing': typeof AdminMarketingRoute
@@ -441,6 +464,7 @@ export interface FileRoutesByTo {
   '/download/ios': typeof DownloadIosRoute
   '/guardian-consent/$token': typeof GuardianConsentTokenRoute
   '/help/reporting': typeof HelpReportingRoute
+  '/vibz/$creatorId': typeof VibzCreatorIdRoute
   '/admin': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
@@ -480,6 +504,8 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/theme-preview': typeof ThemePreviewRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/vibz': typeof VibzRouteWithChildren
+  '/admin/altered-vibz': typeof AdminAlteredVibzRoute
   '/admin/appeals': typeof AdminAppealsRoute
   '/admin/deleted-users': typeof AdminDeletedUsersRoute
   '/admin/marketing': typeof AdminMarketingRoute
@@ -498,6 +524,7 @@ export interface FileRoutesById {
   '/download/ios': typeof DownloadIosRoute
   '/guardian-consent/$token': typeof GuardianConsentTokenRoute
   '/help/reporting': typeof HelpReportingRoute
+  '/vibz/$creatorId': typeof VibzCreatorIdRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/user/$userId': typeof AdminUserUserIdRoute
   '/api/public/auth-login': typeof ApiPublicAuthLoginRoute
@@ -538,6 +565,8 @@ export interface FileRouteTypes {
     | '/terms'
     | '/theme-preview'
     | '/unsubscribe'
+    | '/vibz'
+    | '/admin/altered-vibz'
     | '/admin/appeals'
     | '/admin/deleted-users'
     | '/admin/marketing'
@@ -556,6 +585,7 @@ export interface FileRouteTypes {
     | '/download/ios'
     | '/guardian-consent/$token'
     | '/help/reporting'
+    | '/vibz/$creatorId'
     | '/admin/'
     | '/admin/user/$userId'
     | '/api/public/auth-login'
@@ -593,6 +623,8 @@ export interface FileRouteTypes {
     | '/terms'
     | '/theme-preview'
     | '/unsubscribe'
+    | '/vibz'
+    | '/admin/altered-vibz'
     | '/admin/appeals'
     | '/admin/deleted-users'
     | '/admin/marketing'
@@ -611,6 +643,7 @@ export interface FileRouteTypes {
     | '/download/ios'
     | '/guardian-consent/$token'
     | '/help/reporting'
+    | '/vibz/$creatorId'
     | '/admin'
     | '/admin/user/$userId'
     | '/api/public/auth-login'
@@ -649,6 +682,8 @@ export interface FileRouteTypes {
     | '/terms'
     | '/theme-preview'
     | '/unsubscribe'
+    | '/vibz'
+    | '/admin/altered-vibz'
     | '/admin/appeals'
     | '/admin/deleted-users'
     | '/admin/marketing'
@@ -667,6 +702,7 @@ export interface FileRouteTypes {
     | '/download/ios'
     | '/guardian-consent/$token'
     | '/help/reporting'
+    | '/vibz/$creatorId'
     | '/admin/'
     | '/admin/user/$userId'
     | '/api/public/auth-login'
@@ -706,6 +742,7 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   ThemePreviewRoute: typeof ThemePreviewRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
+  VibzRoute: typeof VibzRouteWithChildren
   AppealOffboardingTokenRoute: typeof AppealOffboardingTokenRoute
   AppealReportIdRoute: typeof AppealReportIdRoute
   BlogEndToEndEncryptionExplainedRoute: typeof BlogEndToEndEncryptionExplainedRoute
@@ -875,11 +912,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/vibz': {
+      id: '/vibz'
+      path: '/vibz'
+      fullPath: '/vibz'
+      preLoaderRoute: typeof VibzRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/': {
       id: '/admin/'
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/altered-vibz': {
+      id: '/admin/altered-vibz'
+      path: '/altered-vibz'
+      fullPath: '/admin/altered-vibz'
+      preLoaderRoute: typeof AdminAlteredVibzRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/appeals': {
@@ -1008,6 +1059,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HelpReportingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/vibz/$creatorId': {
+      id: '/vibz/$creatorId'
+      path: '/$creatorId'
+      fullPath: '/vibz/$creatorId'
+      preLoaderRoute: typeof VibzCreatorIdRouteImport
+      parentRoute: typeof VibzRoute
+    }
     '/admin/user/$userId': {
       id: '/admin/user/$userId'
       path: '/user/$userId'
@@ -1117,6 +1175,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminAlteredVibzRoute: typeof AdminAlteredVibzRoute
   AdminAppealsRoute: typeof AdminAppealsRoute
   AdminDeletedUsersRoute: typeof AdminDeletedUsersRoute
   AdminMarketingRoute: typeof AdminMarketingRoute
@@ -1129,6 +1188,7 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminAlteredVibzRoute: AdminAlteredVibzRoute,
   AdminAppealsRoute: AdminAppealsRoute,
   AdminDeletedUsersRoute: AdminDeletedUsersRoute,
   AdminMarketingRoute: AdminMarketingRoute,
@@ -1141,6 +1201,16 @@ const AdminRouteChildren: AdminRouteChildren = {
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
+interface VibzRouteChildren {
+  VibzCreatorIdRoute: typeof VibzCreatorIdRoute
+}
+
+const VibzRouteChildren: VibzRouteChildren = {
+  VibzCreatorIdRoute: VibzCreatorIdRoute,
+}
+
+const VibzRouteWithChildren = VibzRoute._addFileChildren(VibzRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -1163,6 +1233,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   ThemePreviewRoute: ThemePreviewRoute,
   UnsubscribeRoute: UnsubscribeRoute,
+  VibzRoute: VibzRouteWithChildren,
   AppealOffboardingTokenRoute: AppealOffboardingTokenRoute,
   AppealReportIdRoute: AppealReportIdRoute,
   BlogEndToEndEncryptionExplainedRoute: BlogEndToEndEncryptionExplainedRoute,
