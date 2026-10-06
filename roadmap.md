@@ -57,4 +57,5 @@
 - [x] Add separate posts, VibeIn, engagement, moderation and private video storage
 - [x] Build the video feed, upload, discovery and creator profiles
 - [x] Connect admin review, removal email and safety policy
-- [ ] Check mobile/desktop interactions and deployment readiness
+- [x] Verify type safety, preview build, signed-out experience, and live AI safety screening
+- [ ] Check signed-in mobile/desktop interactions (blocked: no authenticated preview account selected)
