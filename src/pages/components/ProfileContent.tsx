@@ -25,6 +25,7 @@ import { isCapacitorWrapper, pickNativeImage, pickNativeImages } from '@/lib/nat
 import SpecificUsersPicker from '@/components/SpecificUsersPicker';
 import OfflineStorageSettings from '@/components/OfflineStorageSettings';
 import { invalidateVisibleAvatar } from '@/lib/visible-avatars';
+import VibzProfileSummary from '@/components/VibzProfileSummary';
 import { pruneOldAvatars } from '@/lib/avatar-cleanup';
 import {
   AlertDialog,
@@ -984,6 +985,7 @@ export default function ProfileContent() {
                     </Link>
                   )}
                 </div>
+                {user?.id && <VibzProfileSummary userId={user.id} />}
               </>
             )}
           </div>
