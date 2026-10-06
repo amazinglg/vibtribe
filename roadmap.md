@@ -55,6 +55,6 @@
 # VibZ social video
 
 - [x] Add separate posts, VibeIn, engagement, moderation and private video storage
-- [ ] Build the video feed, upload, discovery and creator profiles
-- [ ] Connect admin review, removal email and safety policy
+- [x] Build the video feed, upload, discovery and creator profiles
+- [x] Connect admin review, removal email and safety policy
 - [ ] Check mobile/desktop interactions and deployment readiness
