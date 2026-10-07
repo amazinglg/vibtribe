@@ -36,7 +36,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const NAV_ITEMS = [
     { href: '/', label: t('nav.chats'), icon: MessageCircle, badge: 0 },
     { href: '/status-screen', label: t('nav.status'), icon: CircleDot, badge: 0 },
-    { href: '/vibz', label: 'VibZ', icon: Clapperboard, badge: 0 },
+    ...(isAdmin?.() ? [{ href: '/vibz', label: 'VibZ', icon: Clapperboard, badge: 0 }] : []),
     { href: '/profile-screen', label: t('nav.profile'), icon: User, badge: 0 },
   ];
 

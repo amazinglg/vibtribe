@@ -66,6 +66,14 @@ async function inspectVideo(file:File):Promise<{duration:number;frames:string[]}
 }
 
 export default function VibzExperience({profileId}:{profileId?:string}) {
+  const {user,loading,isAdmin}=useAuth()
+  if(loading)return <p className="p-8 text-center text-muted-foreground">Loading…</p>
+  if(!user)return <p className="p-8 text-center">Sign in to watch VibZ.</p>
+  if(!isAdmin?.())return <div className="p-8 text-center"><p className="text-muted-foreground">VibZ is currently available to admins only.</p><Button asChild variant="outline" className="mt-4"><Link to="/">Back to Chats</Link></Button></div>
+  return <AdminVibzExperience profileId={profileId}/>
+}
+
+function AdminVibzExperience({profileId}:{profileId?:string}) {
   const {user}=useAuth();const feedFn=useServerFn(getVibzFeed);const profileFn=useServerFn(getVibzProfile);const searchFn=useServerFn(searchVibzPeople);const createFn=useServerFn(createVibz);const reviewFn=useServerFn(reviewVibzUpload)
   const [posts,setPosts]=useState<Post[]>([]);const [person,setPerson]=useState<Person|null>(null);const [selected,setSelected]=useState<string|null>(profileId??null);const [mode,setMode]=useState<'feed'|'search'|'create'>(profileId?'feed':'feed');const [loading,setLoading]=useState(true);const [error,setError]=useState('');const [query,setQuery]=useState('');const [results,setResults]=useState<Person[]>([]);const [file,setFile]=useState<File|null>(null);const [preview,setPreview]=useState('');const [caption,setCaption]=useState('');const [duration,setDuration]=useState(0);const [frames,setFrames]=useState<string[]>([]);const [busy,setBusy]=useState(false);const [uploadProgress,setUploadProgress]=useState(0);const [chooseOpen,setChooseOpen]=useState(false);const input=useRef<HTMLInputElement>(null)
   const refresh=useCallback(async()=>{setLoading(true);setError('');try{const list=await feedFn({data:{creatorId:selected??undefined}});setPosts(list as Post[]);if(selected)setPerson(await profileFn({data:{id:selected}}) as Person|null);else setPerson(null)}catch(e){setError(e instanceof Error?e.message:'Could not load VibZ')}finally{setLoading(false)}},[selected,feedFn,profileFn])
