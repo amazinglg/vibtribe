@@ -54,7 +54,7 @@
 
 # VibZ social video
 
-- [ ] Restrict VibZ navigation and profile entry points to admins and master admins without reducing their existing controls
+- [x] Restrict VibZ navigation and profile entry points to admins and master admins without reducing their existing controls
 - [x] Add separate posts, VibeIn, engagement, moderation and private video storage
 - [x] Build the video feed, upload, discovery and creator profiles
 - [x] Connect admin review, removal email and safety policy
