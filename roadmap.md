@@ -54,6 +54,7 @@
 
 # VibZ social video
 
+- [ ] Correct protected-profile upload checks and expand phone video selection with matching file formats
 - [x] Restrict VibZ navigation and profile entry points to admins and master admins without reducing their existing controls
 - [x] Add separate posts, VibeIn, engagement, moderation and private video storage
 - [x] Build the video feed, upload, discovery and creator profiles

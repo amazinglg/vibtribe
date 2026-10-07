@@ -44,7 +44,9 @@ export const createVibz = createServerFn({ method: 'POST' }).middleware([require
     const { data: object, error: objectError } = await context.supabase.storage.from('vibz-media').info(data.mediaPath)
     ensure(objectError)
     if (!object || Number(object.metadata?.size ?? 0) > 50 * 1024 * 1024) throw new Error('Video file is unavailable or too large')
-    const { data: post, error } = await context.supabase.from('vibz_posts').insert({ creator_id:context.userId, media_path:data.mediaPath, duration_seconds:data.duration,caption:data.caption,status:'pending' }).select('id').single()
+    const mediaType = String(object.metadata?.mimetype ?? 'video/mp4')
+    if (!mediaType.startsWith('video/')) throw new Error('Please choose a video file')
+    const { data: post, error } = await context.supabase.from('vibz_posts').insert({ creator_id:context.userId, media_path:data.mediaPath, media_type:mediaType, duration_seconds:data.duration,caption:data.caption,status:'pending' }).select('id').single()
     ensure(error)
     return post?.id
   })
